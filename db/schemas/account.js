@@ -17,8 +17,6 @@ var accountSchema = new Schema({
     lastUsed: Number,
     enabled: Boolean,
     errorCounter: Number,
-    hasError: Boolean,
-    lastError: String,
     accessToken: String,
     clientToken: String,
     requestIp: String
