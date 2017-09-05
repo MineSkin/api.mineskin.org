@@ -3,7 +3,10 @@ var mongoose = require('mongoose')
 var trafficSchema = new Schema(
     {
         ip: String,
-        lastRequest: Number
+        lastRequest: {
+            type: Date,
+            expires: 3600
+        }
     },
     {
         collection: "traffic"

@@ -26,7 +26,7 @@ module.exports.checkTraffic = function (req, res) {
                 } else {
                     var time = Date.now() / 1000;
 
-                    if (traffic.lastRequest > time - delay) {
+                    if ((traffic.lastRequest.getTime()/1000) > time - delay) {
                         res.status(429).json({error: "Too many requests", nextRequest: time + delay + 10, delay: delay});
                         fullfill(false, delay);
                     } else {
@@ -49,6 +49,7 @@ module.exports.validateImage = function (req, res, file) {
 
     try {
         var dimensions = imageSize(file);
+        console.log(("Dimensions: " + JSON.stringify(dimensions)).debug);
         if ((dimensions.width !== 64) || (dimensions.height !== 64 && dimensions.height !== 32)) {
             res.status(400).json({error: "Invalid skin dimensions. Must be 64x32 or 64x64. (Were " + dimensions.width + "x" + dimensions.height + ")"});
             return false;
@@ -93,6 +94,7 @@ module.exports.skinToJson = function (skin, delay) {
             }
         },
         timestamp: skin.time,
+        duration:skin.generateDuration,
         accountId: skin.account,
         private: (skin.visibility !== 0),
         views: skin.views,

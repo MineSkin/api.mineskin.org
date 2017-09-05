@@ -80,7 +80,7 @@ module.exports = function (app) {
                                                     account.errorCounter = 0;
                                                     account.save(function (err, account) {
                                                         if (err) return console.log(err);
-                                                        Traffic.update({ip: req.realAddress}, {lastRequest: Date.now() / 1000}, {upsert: true}, function (err, traffic) {
+                                                        Traffic.update({ip: req.realAddress}, {lastRequest: new Date()}, {upsert: true}, function (err, traffic) {
                                                             if (err) return console.log(err);
 
                                                             getAndSaveSkinData(account, {
@@ -173,7 +173,7 @@ module.exports = function (app) {
                                                 account.errorCounter = 0;
                                                 account.save(function (err, account) {
                                                     if (err) return console.log(err);
-                                                    Traffic.update({ip: req.realAddress}, {lastRequest: Date.now() / 1000}, {upsert: true}, function (err, traffic) {
+                                                    Traffic.update({ip: req.realAddress}, {lastRequest: new Date()}, {upsert: true}, function (err, traffic) {
                                                         if (err) return console.log(err);
 
                                                         getAndSaveSkinData(account, {

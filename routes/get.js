@@ -14,7 +14,7 @@ module.exports = function (app) {
             Traffic.findOne({ip: ip}, function (err, traffic) {
                 if (err) return console.log(err);
                 if (traffic) {
-                    res.json({delay: delay, next: traffic.lastRequest + delay, nextRelative: (traffic.lastRequest + delay) - (Date.now() / 1000)});
+                    res.json({delay: delay, next: (traffic.lastRequest.getTime()/1000) + delay, nextRelative: ((traffic.lastRequest.getTime()/1000) + delay) - (Date.now() / 1000)});
                 } else {
                     res.json({delay: delay, next: Date.now() / 1000, nextRelative: 0});
                 }
