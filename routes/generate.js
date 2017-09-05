@@ -262,7 +262,7 @@ module.exports = function (app) {
                         if (err) return console.log(err);
 
                         var file = fs.createWriteStream(path);
-                        https.get(skinTexture.url, function (response) {
+                        http.get(skinTexture.url, function (response) {
                             response.pipe(file);
 
                             fs.readFile(path, function (err, buf) {
