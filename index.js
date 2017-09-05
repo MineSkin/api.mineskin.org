@@ -50,7 +50,10 @@ app.set('view engine', 'ejs');
 // create a write stream (in append mode)
 var accessLogStream = fs.createWriteStream(path.join(__dirname, 'access.log'), {flags: 'a'})
 // setup the logger
-app.use(morgan('combined', {stream: accessLogStream}))
+app.use(morgan('combined', {stream: accessLogStream}));
+morgan.token('remote-addr', function (req) {
+    return req.headers['x-real-ip'] || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+});
 
 colors.setTheme({
     silly: 'rainbow',
@@ -103,7 +106,7 @@ Skin.find({}, function (err, skins) {
             invalid.push(skin.id);
         }
     });
-    console.log((""+invalid).debug)
+    console.log(("" + invalid).debug)
 })
 
 function exitHandler(err) {
