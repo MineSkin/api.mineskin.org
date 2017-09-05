@@ -36,7 +36,7 @@ module.exports = function (app) {
     })
 
     function doRender(req, res, url, type, options) {
-        http.get("http://tools.inventivetalent.org/skinrender/3d.php?headOnly=" + (type === "head") + "&user=" + url + options, function (response) {
+       request("http://tools.inventivetalent.org/skinrender/3d.php?headOnly=" + (type === "head") + "&user=" + url + options, function (err,response,body) {
             if (response.statusCode === 200) {
                 res.writeHead(200, {
                     "Content-Type": "image/png",

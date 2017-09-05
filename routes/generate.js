@@ -11,6 +11,7 @@ module.exports = function (app) {
     var md5 = require("md5");
     var uuid = require("uuid/v4");
     var mongoose = require("mongoose");
+    var request = require("request");
 
 
     var authentication = require("../generator/authentication");
@@ -57,7 +58,7 @@ module.exports = function (app) {
                     if (err) return console.log(err);
 
                     var file = fs.createWriteStream(path);
-                    https.get(url, function (response) {
+                    request(url, function (err,response,body) {
                         response.pipe(file);
 
                         fs.readFile(path, function (err, buf) {
@@ -262,7 +263,7 @@ module.exports = function (app) {
                         if (err) return console.log(err);
 
                         var file = fs.createWriteStream(path);
-                        http.get(skinTexture.url, function (response) {
+                        request(skinTexture.url, function (err,response,body) {
                             response.pipe(file);
 
                             fs.readFile(path, function (err, buf) {
