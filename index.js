@@ -90,6 +90,7 @@ app.get("/decrypt/:text", function (req, res) {
 require("./routes/generate")(app);
 require("./routes/get")(app);
 require("./routes/render")(app);
+require("./routes/util")(app);
 require("./routes/admin")(app);
 
 // TODO: remove
