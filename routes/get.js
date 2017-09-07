@@ -14,7 +14,7 @@ module.exports = function (app) {
             Traffic.findOne({ip: ip}, function (err, traffic) {
                 if (err) return console.log(err);
                 if (traffic) {
-                    res.json({delay: delay, next: (traffic.lastRequest.getTime()/1000) + delay, nextRelative: ((traffic.lastRequest.getTime()/1000) + delay) - (Date.now() / 1000)});
+                    res.json({delay: delay, next: (traffic.lastRequest.getTime() / 1000) + delay, nextRelative: ((traffic.lastRequest.getTime() / 1000) + delay) - (Date.now() / 1000)});
                 } else {
                     res.json({delay: delay, next: Date.now() / 1000, nextRelative: 0});
                 }
@@ -33,7 +33,7 @@ module.exports = function (app) {
         Util.getGeneratorDelay().then(function (delay) {
             stats.delay = delay;
 
-            Skin.find({}, "duplicate views visibility time name type", function (err, skins) {
+            Skin.find({}, "duplicate views visibility time name type via", function (err, skins) {
                 if (err) return console.log(err);
                 stats.unique = skins.length;
 
@@ -51,6 +51,9 @@ module.exports = function (app) {
                 stats.genUrl = 0;
                 stats.genUser = 0;
 
+                stats.viaApi = 0;
+                stats.viaWebsite = 0;
+
 
                 skins.forEach(function (skin) {
                     stats.duplicate += skin.duplicate;
@@ -66,6 +69,9 @@ module.exports = function (app) {
                     if (skin.type === "upload") stats.genUpload++;
                     if (skin.type === "url") stats.genUrl++;
                     if (skin.type === "user") stats.genUser++;
+
+                    if (skin.via === "api") stats.viaApi++;
+                    if (skin.via === "website") stats.viaWebsite++;
                 })
                 stats.total = stats.unique + stats.duplicate;
 
@@ -103,7 +109,7 @@ module.exports = function (app) {
         if (req.query.filter) {
             query.name = {'$regex': ".*" + req.query.filter + ".*"};
         }
-        Skin.count(query,function (err, count) {
+        Skin.count(query, function (err, count) {
             if (err) return console.log(err);
             Skin
                 .find(query)
