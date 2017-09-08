@@ -12,8 +12,11 @@ module.exports.getSkinData = function (account, cb) {
         }
         console.log(response.statusCode.toString().debug);
         console.log(body.debug)
-        if (response.statusCode !== 200 && response.statusCode !== 204) {
+        if (response.statusCode !== 200) {
             return cb(response.statusCode, null);
+        }
+        if(!body) {
+            cb(null, null);
         }
         var json = JSON.parse(body);
         cb(null, {

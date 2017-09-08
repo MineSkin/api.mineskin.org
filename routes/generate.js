@@ -58,7 +58,7 @@ module.exports = function (app) {
                     if (err) return console.log(err);
 
                     var file = fs.createWriteStream(path);
-                    request(url, function (err,response,body) {
+                    request(url, function (err, response, body) {
                         response.pipe(file);
 
                         fs.readFile(path, function (err, buf) {
@@ -259,11 +259,12 @@ module.exports = function (app) {
                     name: name,
                     via: (req.headers["referer"] && req.headers["referer"].indexOf("mineskin.org") > -1) ? "website" : "api"
                 }, function (skinTexture, cb) {// Generate the file hash from the skin's texture url
+                    if (!skinTexture) return;
                     tmp.file(function (err, path, fd, fileCleanup) {
                         if (err) return console.log(err);
 
                         var file = fs.createWriteStream(path);
-                        request(skinTexture.url, function (err,response,body) {
+                        request(skinTexture.url, function (err, response, body) {
                             response.pipe(file);
 
                             fs.readFile(path, function (err, buf) {
