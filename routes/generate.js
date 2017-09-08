@@ -231,6 +231,11 @@ module.exports = function (app) {
             longUuid = longUuid.substring(0, 8) + "-" + longUuid.substring(8, 8 + 4) + "-" + longUuid.substring(12, 12 + 4) + "-" + longUuid.substring(16, 16 + 4) + "-" + longUuid.substring(20, 20 + 12);
         }
 
+        if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(longUuid)) {
+            res.status(400).json({error: "Invalid UUID"});
+            return;
+        }
+
         var genStart = Date.now();
 
         Util.checkTraffic(req, res).then(function (allowed, generatorDelay) {
