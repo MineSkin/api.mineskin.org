@@ -59,6 +59,7 @@ module.exports = function (app) {
 
                     var file = fs.createWriteStream(path);
                     request(url, function (err, response, body) {
+                        if (err) return console.log(err);
                         response.pipe(file);
 
                         fs.readFile(path, function (err, buf) {
@@ -270,6 +271,7 @@ module.exports = function (app) {
 
                         var file = fs.createWriteStream(path);
                         request(skinTexture.url, function (err, response, body) {
+                            if (err) return console.log(err);
                             response.pipe(file);
 
                             fs.readFile(path, function (err, buf) {
