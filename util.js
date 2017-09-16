@@ -55,7 +55,8 @@ module.exports.validateImage = function (req, res, file) {
             return false;
         }
     } catch (e) {
-        res.status(500).json({error: "Failed to get image size", err: e});
+        console.log(e)
+        res.status(500).json({error: "Failed to get image dimensions", err: e});
         return;
     }
 
