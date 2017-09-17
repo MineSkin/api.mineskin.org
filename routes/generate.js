@@ -64,8 +64,8 @@ module.exports = function (app) {
                             res.status(500).json({"error": "Failed to download image", code: response.statusCode});
                             return;
                         }
-                        fs.writeFile(fd, response.body, "binary", function () {
-
+                        fs.writeFile(fd, response.body, "binary", function (err) {
+                            if (err) return console.log(err);
                             fs.readFile(path, function (err, buf) {
                                 if (err) return console.log(err);
                                 var fileHash = md5(buf);
@@ -278,7 +278,8 @@ module.exports = function (app) {
                         request(skinTexture.url, {"encoding": "binary"}, function (err, response, body) {
                             if (err) return console.log(err);
 
-                            fs.write(fd, response.body, "binary", function () {
+                            fs.write(fd, response.body, "binary", function (err) {
+                                if(err) return console.log(err);
                                 fs.readFile(path, function (err, buf) {
                                     if (err) return console.log(err);
                                     var fileHash = md5(buf);
