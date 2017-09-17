@@ -99,7 +99,7 @@ module.exports = function (app) {
                                                                         res.status(500).json({error: "Failed to get skin data", err: err, accountId: account.id});
                                                                         console.log(("Failed to download skin data").warn)
 
-                                                                        console.log("=> FAIL\n".red);
+                                                                        console.log(("=> FAIL #"+account.errorCounter+"\n").red);
                                                                     } else {
                                                                         res.json(Util.skinToJson(skin, generatorDelay));
 
@@ -112,7 +112,7 @@ module.exports = function (app) {
                                                         res.status(500).json({error: "Failed to generate skin data", err: result, accountId: account.id});
                                                         console.log(("Failed to generate skin data").warn)
 
-                                                        console.log("=> FAIL\n".red);
+                                                        console.log(("=> FAIL #"+account.errorCounter+"\n").red);
                                                     }
                                                 })
                                             })
@@ -193,7 +193,7 @@ module.exports = function (app) {
                                                                 res.status(500).json({error: "Failed to get skin data", err: err, accountId: account.id});
                                                                 console.log(("Failed to download skin data").warn)
 
-                                                                console.log("=> FAIL\n".red);
+                                                                console.log(("=> FAIL #"+account.errorCounter+"\n").red);
                                                             } else {
                                                                 res.json(Util.skinToJson(skin, generatorDelay));
 
@@ -206,7 +206,7 @@ module.exports = function (app) {
                                                 res.status(500).json({error: "Failed to upload skin data (" + result + ")", err: result, accountId: account.id});
                                                 console.log(("Failed to upload skin data").warn)
 
-                                                console.log("=> FAIL\n".red);
+                                                console.log(("=> FAIL #"+account.errorCounter+"\n").red);
                                             }
                                         })
                                     })
@@ -294,7 +294,7 @@ module.exports = function (app) {
                         res.status(500).json({error: "Failed to get skin data", err: err});
                         console.log(("Failed to download skin data").warn)
 
-                        console.log("=> FAIL\n".red);
+                        console.log(("=> FAIL\n").red);
                     } else {
                         res.json(Util.skinToJson(skin, generatorDelay));
 
