@@ -80,15 +80,14 @@ module.exports = function (app) {
                                         // cleanup();
                                         if (validImage) {
                                             skinChanger.getAvailableAccount(req, res, function (account) {
-                                                skinChanger.generateUrl(account, url, model, function (result) {
-                                                    fileCleanup();
-                                                    if (result === true) {
-                                                        account.errorCounter = 0;
-                                                        account.save(function (err, account) {
-                                                            if (err) return console.log(err);
-                                                            Traffic.update({ip: req.realAddress}, {lastRequest: new Date()}, {upsert: true}, function (err, traffic) {
+                                                Traffic.update({ip: req.realAddress}, {lastRequest: new Date()}, {upsert: true}, function (err, traffic) {
+                                                    if (err) return console.log(err);
+                                                    skinChanger.generateUrl(account, url, model, function (result) {
+                                                        fileCleanup();
+                                                        if (result === true) {
+                                                            account.errorCounter = 0;
+                                                            account.save(function (err, account) {
                                                                 if (err) return console.log(err);
-
                                                                 getAndSaveSkinData(account, {
                                                                     type: "url",
                                                                     model: model,
@@ -100,7 +99,7 @@ module.exports = function (app) {
                                                                         res.status(500).json({error: "Failed to get skin data", err: err, accountId: account.id});
                                                                         console.log(("Failed to download skin data").warn)
 
-                                                                        console.log(("=> FAIL #"+account.errorCounter+"\n").red);
+                                                                        console.log(("=> FAIL #" + account.errorCounter + "\n").red);
                                                                     } else {
                                                                         res.json(Util.skinToJson(skin, generatorDelay));
 
@@ -108,13 +107,13 @@ module.exports = function (app) {
                                                                     }
                                                                 })
                                                             })
-                                                        })
-                                                    } else {
-                                                        res.status(500).json({error: "Failed to generate skin data", err: result, accountId: account.id});
-                                                        console.log(("Failed to generate skin data").warn)
+                                                        } else {
+                                                            res.status(500).json({error: "Failed to generate skin data", err: result, accountId: account.id});
+                                                            console.log(("Failed to generate skin data").warn)
 
-                                                        console.log(("=> FAIL #"+account.errorCounter+"\n").red);
-                                                    }
+                                                            console.log(("=> FAIL #" + account.errorCounter + "\n").red);
+                                                        }
+                                                    })
                                                 })
                                             })
                                         }
@@ -174,15 +173,14 @@ module.exports = function (app) {
                                 // cleanup();
                                 if (validImage) {
                                     skinChanger.getAvailableAccount(req, res, function (account) {
-                                        skinChanger.generateUpload(account, buf, model, function (result) {
-                                            fileCleanup();
-                                            if (result === true) {
-                                                account.errorCounter = 0;
-                                                account.save(function (err, account) {
-                                                    if (err) return console.log(err);
-                                                    Traffic.update({ip: req.realAddress}, {lastRequest: new Date()}, {upsert: true}, function (err, traffic) {
+                                        Traffic.update({ip: req.realAddress}, {lastRequest: new Date()}, {upsert: true}, function (err, traffic) {
+                                            if (err) return console.log(err);
+                                            skinChanger.generateUpload(account, buf, model, function (result) {
+                                                fileCleanup();
+                                                if (result === true) {
+                                                    account.errorCounter = 0;
+                                                    account.save(function (err, account) {
                                                         if (err) return console.log(err);
-
                                                         getAndSaveSkinData(account, {
                                                             type: "upload",
                                                             model: model,
@@ -194,7 +192,7 @@ module.exports = function (app) {
                                                                 res.status(500).json({error: "Failed to get skin data", err: err, accountId: account.id});
                                                                 console.log(("Failed to download skin data").warn)
 
-                                                                console.log(("=> FAIL #"+account.errorCounter+"\n").red);
+                                                                console.log(("=> FAIL #" + account.errorCounter + "\n").red);
                                                             } else {
                                                                 res.json(Util.skinToJson(skin, generatorDelay));
 
@@ -202,13 +200,13 @@ module.exports = function (app) {
                                                             }
                                                         });
                                                     })
-                                                })
-                                            } else {
-                                                res.status(500).json({error: "Failed to upload skin data (" + result + ")", err: result, accountId: account.id});
-                                                console.log(("Failed to upload skin data").warn)
+                                                } else {
+                                                    res.status(500).json({error: "Failed to upload skin data (" + result + ")", err: result, accountId: account.id});
+                                                    console.log(("Failed to upload skin data").warn)
 
-                                                console.log(("=> FAIL #"+account.errorCounter+"\n").red);
-                                            }
+                                                    console.log(("=> FAIL #" + account.errorCounter + "\n").red);
+                                                }
+                                            })
                                         })
                                     })
                                 }
@@ -280,7 +278,7 @@ module.exports = function (app) {
                             if (err) return console.log(err);
 
                             fs.write(fd, response.body, "binary", function (err) {
-                                if(err) return console.log(err);
+                                if (err) return console.log(err);
                                 fs.readFile(path, function (err, buf) {
                                     if (err) return console.log(err);
                                     var fileHash = md5(buf);

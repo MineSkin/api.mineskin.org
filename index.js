@@ -16,6 +16,7 @@ var unirest = require("unirest");
 var crypto = require('crypto');
 var fs = require('fs')
 var morgan = require('morgan')
+var rfs = require("rotating-file-stream");
 var path = require('path')
 var colors = require("colors");
 var config = require("./config");
@@ -46,11 +47,17 @@ app.use(function (req, res, next) {
 
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
+app.use(express.static('public'))
 
-// create a write stream (in append mode)
-var accessLogStream = fs.createWriteStream(path.join(__dirname, 'access.log'), {flags: 'a'})
+// create a rotating write stream
+var accessLogStream = rfs('access.log', {
+    interval: '1d', // rotate daily
+    path: path.join(__dirname, 'log'),
+    compress: "gzip"
+})
+
 // setup the logger
-app.use(morgan('combined', {stream: accessLogStream}));
+app.use(morgan('combined', {stream: accessLogStream}))
 morgan.token('remote-addr', function (req) {
     return req.headers['x-real-ip'] || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 });
