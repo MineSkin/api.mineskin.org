@@ -345,7 +345,6 @@ module.exports = function (app) {
                         via: options.via || "api",//TODO,
                         apiVer: "node"
                     });
-                    console.log(skin)
                     skin.save(function (err, skin) {
                         if (err) return console.log(err);
                         console.log(("[Generator] New Skin saved (#" + skin.id + "). Generated in " + (Date.now() - genStart) + "ms").info);
