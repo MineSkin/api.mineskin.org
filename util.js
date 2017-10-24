@@ -26,7 +26,7 @@ module.exports.checkTraffic = function (req, res) {
                 } else {
                     var time = Date.now() / 1000;
 
-                    if ((traffic.lastRequest.getTime()/1000) > time - delay) {
+                    if ((traffic.lastRequest.getTime() / 1000) > time - delay) {
                         res.status(429).json({error: "Too many requests", nextRequest: time + delay + 10, delay: delay});
                         fullfill(false, delay);
                     } else {
@@ -91,11 +91,15 @@ module.exports.skinToJson = function (skin, delay) {
             texture: {
                 value: skin.value,
                 signature: skin.signature,
-                url: skin.url
+                url: skin.url,
+                urls:{
+                    skin:skin.url,
+                    cape:skin.capeUrl
+                }
             }
         },
         timestamp: skin.time,
-        duration:skin.generateDuration,
+        duration: skin.generateDuration,
         accountId: skin.account,
         private: (skin.visibility !== 0),
         views: skin.views,

@@ -25,6 +25,7 @@ var skinSchema = new Schema({
     value: String,
     signature: String,
     url: String,
+    capeUrl: String,
     time: Number,
     generateDuration: Number,
     account: Number,

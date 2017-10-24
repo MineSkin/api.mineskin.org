@@ -319,6 +319,9 @@ module.exports = function (app) {
                 var textures = JSON.parse(new Buffer(skinData.value, 'base64').toString('utf8')).textures;
                 console.log(JSON.stringify(textures).debug);
                 var skinTexture = textures.SKIN;
+                var capeTexture = textures.CAPE || {url: null};
+                console.log("Skin: " + JSON.stringify(skinTexture));
+                console.log("Cape: "+JSON.stringify(capeTexture))
 
                 var fileHashCallback = function (fileHash) {
                     var skin = new Skin({
@@ -332,6 +335,7 @@ module.exports = function (app) {
                         value: skinData.value,
                         signature: skinData.signature,
                         url: skinTexture.url,
+                        capeUrl: capeTexture.url,
                         time: Date.now() / 1000,
                         generateDuration: Date.now() - genStart,
                         account: account.id,
@@ -341,6 +345,7 @@ module.exports = function (app) {
                         via: options.via || "api",//TODO,
                         apiVer: "node"
                     });
+                    console.log(skin)
                     skin.save(function (err, skin) {
                         if (err) return console.log(err);
                         console.log(("[Generator] New Skin saved (#" + skin.id + "). Generated in " + (Date.now() - genStart) + "ms").info);
