@@ -86,15 +86,16 @@ module.exports.skinToJson = function (skin, delay) {
     return {
         id: skin.id,
         name: skin.name,
+        model: skin.model,
         data: {
             uuid: skin.uuid,
             texture: {
                 value: skin.value,
                 signature: skin.signature,
                 url: skin.url,
-                urls:{
-                    skin:skin.url,
-                    cape:skin.capeUrl
+                urls: {
+                    skin: skin.url,
+                    cape: skin.capeUrl
                 }
             }
         },
