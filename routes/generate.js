@@ -319,7 +319,7 @@ module.exports = function (app) {
                 var textures = JSON.parse(new Buffer(skinData.value, 'base64').toString('utf8')).textures;
                 console.log(JSON.stringify(textures).debug);
                 var skinTexture = textures.SKIN;
-                var capeTexture = textures.CAPE || {url: null};
+                var capeTexture = textures.CAPE || {url: undefined};
                 console.log("Skin: " + JSON.stringify(skinTexture));
                 console.log("Cape: "+JSON.stringify(capeTexture))
 
