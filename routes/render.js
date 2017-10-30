@@ -45,6 +45,17 @@ module.exports = function (app) {
                 res.status(404).end();
             }
         })
+    });
+
+    app.get("/render/texture/:id/cape", function (req, res) {
+        Skin.findOne({id: req.params.id}, function (err, skin) {
+            if (err) return console.log(err);
+            if (skin && skin.capeUrl) {
+                request(skin.capeUrl).pipe(res);
+            } else {
+                res.status(404).end();
+            }
+        })
     })
 
     function doRender(req, res, url, type, options) {
