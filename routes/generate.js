@@ -8,6 +8,7 @@ module.exports = function (app) {
     var fileType = require("file-type");
     var imageSize = require("image-size");
     var tmp = require("tmp");
+    tmp.setGracefulCleanup();
     var md5 = require("md5");
     var uuid = require("uuid/v4");
     var mongoose = require("mongoose");

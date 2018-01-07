@@ -118,9 +118,12 @@ Skin.find({}, function (err, skins) {
 
 function exitHandler(err) {
     if (err) {
-        console.log(err)
+        console.log("\n\n\n\n\n\n\n\n");
+        console.log(err);
+        console.log("\n\n\n");
+    }else {
+        process.exit();
     }
-    process.exit();
 }
 
 
