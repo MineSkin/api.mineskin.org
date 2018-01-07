@@ -23,6 +23,7 @@ module.exports = function (app) {
     var Account = require("../db/schemas/account").Account;
     var Skin = require("../db/schemas/skin").Skin;
     var Traffic = require("../db/schemas/traffic").Traffic;
+    var Stat = require("../db/schemas/stat").Stat;
 
 
     app.post("/generate/url", function (req, res) {
@@ -101,10 +102,12 @@ module.exports = function (app) {
                                                                         console.log(("Failed to download skin data").warn)
 
                                                                         console.log(("=> FAIL #" + account.errorCounter + "\n").red);
+                                                                        increaseStat("generate.fail");
                                                                     } else {
                                                                         res.json(Util.skinToJson(skin, generatorDelay));
 
                                                                         console.log("=> SUCCESS\n".green);
+                                                                        increaseStat("generate.success");
                                                                     }
                                                                 })
                                                             })
@@ -113,6 +116,7 @@ module.exports = function (app) {
                                                             console.log(("Failed to generate skin data").warn)
 
                                                             console.log(("=> FAIL #" + account.errorCounter + "\n").red);
+                                                            increaseStat("generate.fail");
                                                         }
                                                     })
                                                 })
@@ -194,10 +198,12 @@ module.exports = function (app) {
                                                                 console.log(("Failed to download skin data").warn)
 
                                                                 console.log(("=> FAIL #" + account.errorCounter + "\n").red);
+                                                                increaseStat("generate.fail");
                                                             } else {
                                                                 res.json(Util.skinToJson(skin, generatorDelay));
 
                                                                 console.log("=> SUCCESS\n".green);
+                                                                increaseStat("generate.success");
                                                             }
                                                         });
                                                     })
@@ -206,6 +212,7 @@ module.exports = function (app) {
                                                     console.log(("Failed to upload skin data").warn)
 
                                                     console.log(("=> FAIL #" + account.errorCounter + "\n").red);
+                                                    increaseStat("generate.fail");
                                                 }
                                             })
                                         })
@@ -296,10 +303,12 @@ module.exports = function (app) {
                         console.log(("Failed to download skin data").warn)
 
                         console.log(("=> FAIL\n").red);
+                        increaseStat("generate.fail");
                     } else {
                         res.json(Util.skinToJson(skin, generatorDelay));
 
                         console.log("=> SUCCESS\n".green);
+                        increaseStat("generate.success");
                     }
                 })
             })
@@ -362,5 +371,16 @@ module.exports = function (app) {
         })
     }
 
+    function increaseStat(key, amount, cb) {
+        if (!amount) amount = 1;
+        Stat.findOne({key: key}, function (err, stat) {
+            if (err) return console.log(err);
+            if (!stat) {
+                return console.warn("Invalid Stat key: " + key);
+            }
+            stat.value += amount;
+            stat.save(cb);
+        })
+    };
 
 }
