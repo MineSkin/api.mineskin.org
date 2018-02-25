@@ -88,6 +88,8 @@ module.exports = function (app) {
                                                         fileCleanup();
                                                         if (result === true) {
                                                             account.errorCounter = 0;
+                                                            if (!account.successCounter) account.successCounter = 0;
+                                                            account.successCounter++;
                                                             account.save(function (err, account) {
                                                                 if (err) return console.log(err);
                                                                 getAndSaveSkinData(account, {
@@ -184,6 +186,8 @@ module.exports = function (app) {
                                                 fileCleanup();
                                                 if (result === true) {
                                                     account.errorCounter = 0;
+                                                    if (!account.successCounter) account.successCounter = 0;
+                                                    account.successCounter++;
                                                     account.save(function (err, account) {
                                                         if (err) return console.log(err);
                                                         getAndSaveSkinData(account, {
@@ -331,7 +335,7 @@ module.exports = function (app) {
                 var skinTexture = textures.SKIN;
                 var capeTexture = textures.CAPE || {url: undefined};
                 console.log("Skin: " + JSON.stringify(skinTexture));
-                console.log("Cape: "+JSON.stringify(capeTexture))
+                console.log("Cape: " + JSON.stringify(capeTexture))
 
                 var fileHashCallback = function (fileHash) {
                     var skin = new Skin({
