@@ -62,15 +62,25 @@ module.exports = function (app) {
 
                     // var file = fs.createWriteStream(path);
                     request(url, {"encoding": "binary"}, function (err, response, body) {
-                        if (err) return console.log(err);
+                        if (err) {
+                            fileCleanup();
+                            return console.log(err);
+                        }
                         if (response.statusCode !== 200) {
                             res.status(500).json({"error": "Failed to download image", code: response.statusCode});
+                            fileCleanup();
                             return;
                         }
                         fs.writeFile(fd, response.body, "binary", function (err) {
-                            if (err) return console.log(err);
+                            if (err) {
+                                fileCleanup();
+                                return console.log(err);
+                            }
                             fs.readFile(path, function (err, buf) {
-                                if (err) return console.log(err);
+                                if (err) {
+                                    fileCleanup();
+                                    return console.log(err);
+                                }
                                 var fileHash = md5(buf);
                                 console.log("Hash: " + fileHash)
 
@@ -83,7 +93,10 @@ module.exports = function (app) {
                                         if (validImage) {
                                             skinChanger.getAvailableAccount(req, res, function (account) {
                                                 Traffic.update({ip: req.realAddress}, {lastRequest: new Date()}, {upsert: true}, function (err, traffic) {
-                                                    if (err) return console.log(err);
+                                                    if (err) {
+                                                        fileCleanup();
+                                                        return console.log(err);
+                                                    }
                                                     skinChanger.generateUrl(account, url, model, function (result) {
                                                         fs.close(fd);
                                                         fileCleanup();
@@ -167,10 +180,16 @@ module.exports = function (app) {
                 if (err) return console.log(err);
 
                 fileUpload.mv(path, function (err) {
-                    if (err) return console.log(err);
+                    if (err) {
+                        fileCleanup();
+                        return console.log(err);
+                    }
 
                     fs.readFile(path, function (err, buf) {
-                        if (err) return console.log(err);
+                        if (err) {
+                            fileCleanup();
+                            return console.log(err);
+                        }
                         var fileHash = md5(buf);
 
                         skinChanger.findExistingSkin(fileHash, name, model, visibility, function (existingSkin) {
@@ -182,7 +201,10 @@ module.exports = function (app) {
                                 if (validImage) {
                                     skinChanger.getAvailableAccount(req, res, function (account) {
                                         Traffic.update({ip: req.realAddress}, {lastRequest: new Date()}, {upsert: true}, function (err, traffic) {
-                                            if (err) return console.log(err);
+                                            if (err) {
+                                                fileCleanup();
+                                                return console.log(err);
+                                            }
                                             skinChanger.generateUpload(account, buf, model, function (result) {
                                                 fs.close(fd);
                                                 fileCleanup();
@@ -289,10 +311,16 @@ module.exports = function (app) {
 
                         // var file = fs.createWriteStream(path);
                         request(skinTexture.url, {"encoding": "binary"}, function (err, response, body) {
-                            if (err) return console.log(err);
+                            if (err) {
+                                fileCleanup();
+                                return console.log(err);
+                            }
 
                             fs.write(fd, response.body, "binary", function (err) {
-                                if (err) return console.log(err);
+                                if (err) {
+                                    fileCleanup();
+                                    return console.log(err);
+                                }
                                 fs.readFile(path, function (err, buf) {
                                     if (err) return console.log(err);
                                     var fileHash = md5(buf);
