@@ -85,6 +85,7 @@ module.exports = function (app) {
                                                 Traffic.update({ip: req.realAddress}, {lastRequest: new Date()}, {upsert: true}, function (err, traffic) {
                                                     if (err) return console.log(err);
                                                     skinChanger.generateUrl(account, url, model, function (result) {
+                                                        fs.close(fd);
                                                         fileCleanup();
                                                         if (result === true) {
                                                             account.errorCounter = 0;
@@ -183,6 +184,7 @@ module.exports = function (app) {
                                         Traffic.update({ip: req.realAddress}, {lastRequest: new Date()}, {upsert: true}, function (err, traffic) {
                                             if (err) return console.log(err);
                                             skinChanger.generateUpload(account, buf, model, function (result) {
+                                                fs.close(fd);
                                                 fileCleanup();
                                                 if (result === true) {
                                                     account.errorCounter = 0;
@@ -296,6 +298,7 @@ module.exports = function (app) {
                                     var fileHash = md5(buf);
 
                                     cb(fileHash);
+                                    fs.close(fd);
                                     fileCleanup();
                                 })
                             });
