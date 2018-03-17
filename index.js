@@ -121,9 +121,8 @@ function exitHandler(err) {
         console.log("\n\n\n\n\n\n\n\n");
         console.log(err);
         console.log("\n\n\n");
-    }else {
-        process.exit();
     }
+    process.exit();
 }
 
 

@@ -58,7 +58,7 @@ module.exports = function (app) {
                 }
 
                 tmp.file(function (err, path, fd, fileCleanup) {
-                    if (err) return console.log(err);
+                    if (err) throw err;
 
                     // var file = fs.createWriteStream(path);
                     request(url, {"encoding": "binary"}, function (err, response, body) {
@@ -177,7 +177,7 @@ module.exports = function (app) {
             if (!allowed) return;
 
             tmp.file(function (err, path, fd, fileCleanup) {
-                if (err) return console.log(err);
+                if (err) throw err;
 
                 fileUpload.mv(path, function (err) {
                     if (err) {
@@ -307,7 +307,7 @@ module.exports = function (app) {
                 }, function (skinTexture, cb) {// Generate the file hash from the skin's texture url
                     if (!skinTexture) return;
                     tmp.file(function (err, path, fd, fileCleanup) {
-                        if (err) return console.log(err);
+                        if (err) throw err;
 
                         // var file = fs.createWriteStream(path);
                         request(skinTexture.url, {"encoding": "binary"}, function (err, response, body) {
