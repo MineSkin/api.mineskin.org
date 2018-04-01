@@ -51,7 +51,7 @@ module.exports = function (app) {
             if (!allowed) return;
 
             remoteFileSize(url, function (err, remoteSize) {
-                if (err) return console.log(err);
+                if (err) /*return*/ console.log(err);
                 if (remoteSize <= 0 || remoteSize > 102400) {
                     res.status(400).json({error: "Invalid file size"});
                     return;
