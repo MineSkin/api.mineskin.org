@@ -7,6 +7,7 @@ module.exports = function (app) {
     var Account = require("../db/schemas/account").Account;
     var Skin = require("../db/schemas/skin").Skin;
     var Traffic = require("../db/schemas/traffic").Traffic;
+    var Stat = require("../db/schemas/stat").Stat;
 
     app.get("/get/delay", function (req, res) {
         var ip = req.realAddress;
@@ -79,7 +80,19 @@ module.exports = function (app) {
                     if (err) return console.log(err);
                     stats.accounts = count;
 
-                    res.json(stats);
+                    Stat.find({}, function (err, s) {
+                        var generateSuccess = 0;
+                        var generateFail = 0;
+                        s.forEach(function (stat) {
+                            if (stat.key === "generate.success") generateSuccess = stat.value;
+                            if (stat.key === "generate.fail") generateFail = stat.value;
+                        })
+
+                        var generateTotal = generateSuccess + generateFail;
+                        stats.successRate = Number((generateSuccess / generateTotal).toFixed(3));
+
+                        res.json(stats);
+                    })
                 })
             })
         })
