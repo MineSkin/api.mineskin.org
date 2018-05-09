@@ -27,7 +27,7 @@
     "node-persist": "^2.0.11",
     "node-rest-client": "^2.2.0",
     "object.values": "^1.0.4",
-    "parse-domain": "^1.1.0",
+    "parse-domain": "^2.0.0",
     "q": "^1.5.0",
     "random-ip": "0.0.1",
     "randomstring": "^1.1.5",
