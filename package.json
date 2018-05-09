@@ -24,7 +24,7 @@
     "mongoose": "^5.0.17",
     "mongoose-paginate": "^5.0.3",
     "morgan": "^1.8.2",
-    "node-persist": "^2.0.11",
+    "node-persist": "^3.0.0",
     "node-rest-client": "^2.2.0",
     "object.values": "^1.0.4",
     "parse-domain": "^2.0.0",
