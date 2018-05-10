@@ -359,6 +359,48 @@ module.exports = function (app) {
         })
     })
 
+    app.post("/accountManager/deleteAccount", function (req, res) {
+        if (!req.body.token) {
+            res.status(400).json({error: "Missing token"})
+            return;
+        }
+        if (!req.body.username) {
+            res.status(400).json({error: "Missing username"})
+            return;
+        }
+        if (!req.body.uuid) {
+            res.status(400).json({error: "Missing UUID"})
+            return;
+        }
+
+        getUser(req.body.token, function (response, body) {
+            if (body.error) {
+                res.status(response.statusCode).json({error: body.error, msg: body.errorMessage})
+            } else {
+                if (body.username !== req.body.username) {
+                    res.status(400).json({error: "username mismatch"})
+                    return;
+                }
+
+                Account.findOne({username: req.body.username, uuid: req.body.uuid, enabled: false}, function (err, account) {
+                    if (err) return console.log(err);
+                    if (!account) {
+                        res.status(404).json({error: "Account not found"})
+                        return;
+                    }
+
+                    account.remove(function (err, account) {
+                        if (err) return console.log(err);
+                        res.json({
+                            success: true,
+                            msg: "Account removed"
+                        })
+                    });
+                })
+            }
+        })
+    })
+
     function getUser(token, cb) {
         request({
             method: "GET",
