@@ -102,6 +102,7 @@ require("./routes/get")(app);
 require("./routes/render")(app);
 require("./routes/util")(app);
 require("./routes/admin")(app);
+require("./routes/accountManager")(app);
 
 // TODO: remove
 Skin.find({}, function (err, skins) {

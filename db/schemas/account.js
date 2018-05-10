@@ -17,9 +17,14 @@ var accountSchema = new Schema({
     lastUsed: Number,
     enabled: Boolean,
     errorCounter: Number,
-    successCounter:Number,
+    successCounter: Number,
     accessToken: String,
     clientToken: String,
-    requestIp: String
+    requestIp: String,
+    type: {
+        type: String,
+        enum: ["internal", "external"],
+        default: "internal"
+    }
 }, {id: false})
 module.exports.Account = mongoose.model("Account", accountSchema);
