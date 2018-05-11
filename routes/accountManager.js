@@ -246,7 +246,7 @@ module.exports = function (app) {
                 if (body.error) {
                     res.status(response.statusCode).json({error: body.error, msg: body.errorMessage})
                 } else {
-                    if (body.username !== req.body.username) {
+                    if (body.username.toLowerCase() !== req.body.username.toLowerCase()) {
                         res.status(400).json({error: "username mismatch"})
                         return;
                     }
@@ -333,7 +333,7 @@ module.exports = function (app) {
             if (body.error) {
                 res.status(response.statusCode).json({error: body.error, msg: body.errorMessage})
             } else {
-                if (body.username !== req.body.username) {
+                if (body.username.toLowerCase() !== req.body.username.toLowerCase()) {
                     res.status(400).json({error: "username mismatch"})
                     return;
                 }
@@ -377,7 +377,7 @@ module.exports = function (app) {
             if (body.error) {
                 res.status(response.statusCode).json({error: body.error, msg: body.errorMessage})
             } else {
-                if (body.username !== req.body.username) {
+                if (body.username.toLowerCase() !== req.body.username.toLowerCase()) {
                     res.status(400).json({error: "username mismatch"})
                     return;
                 }
