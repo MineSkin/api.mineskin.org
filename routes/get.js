@@ -79,7 +79,7 @@ module.exports = function (app) {
                 });
                 stats.total = stats.unique + stats.duplicate;
 
-                stats.avgDuration = totalDuration / skins.length;
+                stats.avgDuration = Number((totalDuration / skins.length).toFixed(4));
 
                 Account.count({enabled: true}, function (err, count) {
                     if (err) return console.log(err);
