@@ -33,6 +33,7 @@ var skinSchema = new Schema({
     duplicate: Number,
     views: Number,
     via: String,
+    ua: String,
     apiVer: String
 }, {id: false})
 module.exports.Skin = mongoose.model("Skin", skinSchema);
