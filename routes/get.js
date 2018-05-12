@@ -34,7 +34,7 @@ module.exports = function (app) {
         Util.getGeneratorDelay().then(function (delay) {
             stats.delay = delay;
 
-            Skin.find({}, "duplicate views visibility time name type via", function (err, skins) {
+            Skin.find({}, "duplicate views visibility time name type via generateDuration", function (err, skins) {
                 if (err) return console.log(err);
                 stats.unique = skins.length;
 
@@ -55,7 +55,7 @@ module.exports = function (app) {
                 stats.viaApi = 0;
                 stats.viaWebsite = 0;
 
-
+                var totalDuration = 0;
                 skins.forEach(function (skin) {
                     stats.duplicate += skin.duplicate;
                     stats.views += skin.views;
@@ -73,8 +73,13 @@ module.exports = function (app) {
 
                     if (skin.via === "api") stats.viaApi++;
                     if (skin.via === "website") stats.viaWebsite++;
-                })
+
+                    if (skin.generateDuration)
+                        totalDuration += skin.generateDuration;
+                });
                 stats.total = stats.unique + stats.duplicate;
+
+                stats.avgDuration = totalDuration / skins.length;
 
                 Account.count({enabled: true}, function (err, count) {
                     if (err) return console.log(err);
