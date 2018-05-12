@@ -23,63 +23,27 @@ module.exports = function (app) {
         })
     })
 
+    app.get("/get/stats/today", function (req, res) {
+        var lastDay = new Date(new Date() - 8.64e+7) / 1000;
+
+        Skin.find({time: {'$gt': lastDay}}, "duplicate views visibility time name type via generateDuration", function (err, skins) {
+            if (err) return console.log(err);
+            var stats = buildSkinStats(skins);
+
+            res.json(stats)
+        })
+    });
+
     app.get("/get/stats/:details?", function (req, res) {
         var stats = {};
-
-        var lastHour = new Date(new Date() - 3.6e+6) / 1000;
-        var lastDay = new Date(new Date() - 8.64e+7) / 1000;
-        var lastMonth = new Date(new Date() - 2.628e+9) / 1000;
-        var lastYear = new Date(new Date() - 3.154e+10) / 1000;
 
         Util.getGeneratorDelay().then(function (delay) {
             stats.delay = delay;
 
             Skin.find({}, "duplicate views visibility time name type via generateDuration", function (err, skins) {
                 if (err) return console.log(err);
-                stats.unique = skins.length;
-
-                stats.duplicate = 0;
-                stats.views = 0;
-                stats.private = 0;
-                stats.withNames = 0;
-
-                stats.lastHour = 0;
-                stats.lastDay = 0;
-                stats.lastMonth = 0;
-                stats.lastYear = 0;
-
-                stats.genUpload = 0;
-                stats.genUrl = 0;
-                stats.genUser = 0;
-
-                stats.viaApi = 0;
-                stats.viaWebsite = 0;
-
-                var totalDuration = 0;
-                skins.forEach(function (skin) {
-                    stats.duplicate += skin.duplicate;
-                    stats.views += skin.views;
-                    if (skin.visibility !== 0) stats.private++;
-                    if (skin.name && skin.name.length > 0) stats.withNames++;
-
-                    if (skin.time > lastHour) stats.lastHour++;
-                    if (skin.time > lastDay) stats.lastDay++;
-                    if (skin.time > lastMonth) stats.lastMonth++;
-                    if (skin.time > lastYear) stats.lastYear++;
-
-                    if (skin.type === "upload") stats.genUpload++;
-                    if (skin.type === "url") stats.genUrl++;
-                    if (skin.type === "user") stats.genUser++;
-
-                    if (skin.via === "api") stats.viaApi++;
-                    if (skin.via === "website") stats.viaWebsite++;
-
-                    if (skin.generateDuration)
-                        totalDuration += skin.generateDuration;
-                });
-                stats.total = stats.unique + stats.duplicate;
-
-                stats.avgDuration = Number((totalDuration / skins.length).toFixed(4));
+                var skinStats = buildSkinStats(skins);
+                Object.assign(stats, skinStats);
 
                 Account.count({enabled: true}, function (err, count) {
                     if (err) return console.log(err);
@@ -101,7 +65,64 @@ module.exports = function (app) {
                 })
             })
         })
-    })
+    });
+
+
+    function buildSkinStats(skins) {
+        var lastHour = new Date(new Date() - 3.6e+6) / 1000;
+        var lastDay = new Date(new Date() - 8.64e+7) / 1000;
+        var lastMonth = new Date(new Date() - 2.628e+9) / 1000;
+        var lastYear = new Date(new Date() - 3.154e+10) / 1000;
+
+        var stats = {};
+
+        stats.unique = skins.length;
+
+        stats.duplicate = 0;
+        stats.views = 0;
+        stats.private = 0;
+        stats.withNames = 0;
+
+        stats.lastHour = 0;
+        stats.lastDay = 0;
+        stats.lastMonth = 0;
+        stats.lastYear = 0;
+
+        stats.genUpload = 0;
+        stats.genUrl = 0;
+        stats.genUser = 0;
+
+        stats.viaApi = 0;
+        stats.viaWebsite = 0;
+
+        var totalDuration = 0;
+        skins.forEach(function (skin) {
+            stats.duplicate += skin.duplicate;
+            stats.views += skin.views;
+            if (skin.visibility !== 0) stats.private++;
+            if (skin.name && skin.name.length > 0) stats.withNames++;
+
+            if (skin.time > lastHour) stats.lastHour++;
+            if (skin.time > lastDay) stats.lastDay++;
+            if (skin.time > lastMonth) stats.lastMonth++;
+            if (skin.time > lastYear) stats.lastYear++;
+
+            if (skin.type === "upload") stats.genUpload++;
+            if (skin.type === "url") stats.genUrl++;
+            if (skin.type === "user") stats.genUser++;
+
+            if (skin.via === "api") stats.viaApi++;
+            if (skin.via === "website") stats.viaWebsite++;
+
+            if (skin.generateDuration)
+                totalDuration += skin.generateDuration;
+        });
+        stats.total = stats.unique + stats.duplicate;
+
+        stats.avgDuration = Number((totalDuration / skins.length).toFixed(4));
+
+        return stats;
+    }
 
     app.get("/get/id/:id", function (req, res) {
         Skin.findOne({id: req.params.id}, function (err, skin) {
