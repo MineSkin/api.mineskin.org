@@ -401,6 +401,27 @@ module.exports = function (app) {
         })
     })
 
+    app.get("/accountManager/listAccounts", function (req, res) {
+        Account.find({}, "id lastUsed enabled errorCounter successCounter type", function (err, accounts) {
+            if (err) return console.log(err);
+
+            var accs = [];
+            accounts.forEach(function (acc) {
+                if (!acc.successCounter) acc.successCounter = 0;
+                if (!acc.errorCounter) acc.errorCounter = 0;
+                var total = acc.successCounter + acc.errorCounter;
+                accs.push({
+                    id: acc.id,
+                    lastUsed: acc.lastUsed,
+                    enabled: acc.enabled,
+                    type: acc.type,
+                    successRate: Number((acc.successCounter / total).toFixed(3))
+                })
+            });
+            res.json(accs)
+        })
+    })
+
     function getUser(token, cb) {
         request({
             method: "GET",
