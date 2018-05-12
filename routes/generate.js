@@ -116,7 +116,8 @@ module.exports = function (app) {
                                                                     model: model,
                                                                     visibility: visibility,
                                                                     name: name,
-                                                                    via: (req.headers["referer"] && req.headers["referer"].indexOf("mineskin.org") > -1) ? "website" : "api"
+                                                                    via: (req.headers["referer"] && req.headers["referer"].indexOf("mineskin.org") > -1) ? "website" : "api",
+                                                                    ua: req.headers["user-agent"]
                                                                 }, fileHash, uuid(), genStart, function (err, skin) {
                                                                     if (err) {
                                                                         res.status(500).json({error: "Failed to get skin data", err: err, accountId: account.id});
@@ -227,7 +228,8 @@ module.exports = function (app) {
                                                             model: model,
                                                             visibility: visibility,
                                                             name: name,
-                                                            via: (req.headers["referer"] && req.headers["referer"].indexOf("mineskin.org") > -1) ? "website" : "api"
+                                                            via: (req.headers["referer"] && req.headers["referer"].indexOf("mineskin.org") > -1) ? "website" : "api",
+                                                            ua: req.headers["user-agent"]
                                                         }, fileHash, uuid(), genStart, function (err, skin) {
                                                             if (err) {
                                                                 res.status(500).json({error: "Failed to get skin data", err: err, accountId: account.id});
@@ -311,7 +313,8 @@ module.exports = function (app) {
                     model: "unknown",
                     visibility: visibility,
                     name: name,
-                    via: (req.headers["referer"] && req.headers["referer"].indexOf("mineskin.org") > -1) ? "website" : "api"
+                    via: (req.headers["referer"] && req.headers["referer"].indexOf("mineskin.org") > -1) ? "website" : "api",
+                    ua: req.headers["user-agent"]
                 }, function (skinTexture, cb) {// Generate the file hash from the skin's texture url
                     if (!skinTexture) return;
                     tmp.file(function (err, path, fd, fileCleanup) {
@@ -398,6 +401,7 @@ module.exports = function (app) {
                         duplicate: 0,
                         views: 1,
                         via: options.via || "api",//TODO,
+                        ua: options.ua,
                         apiVer: "node"
                     });
                     skin.save(function (err, skin) {
