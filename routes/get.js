@@ -23,47 +23,96 @@ module.exports = function (app) {
         })
     })
 
-    app.get("/get/stats/today", function (req, res) {
-        var lastDay = new Date(new Date() - 8.64e+7) / 1000;
-
-        Skin.find({time: {'$gt': lastDay}}, "duplicate views visibility time name type via generateDuration", function (err, skins) {
-            if (err) return console.log(err);
-            var stats = buildSkinStats(skins);
-
-            res.json(stats)
-        })
-    });
-
     app.get("/get/stats/:details?", function (req, res) {
         var stats = {};
 
         Util.getGeneratorDelay().then(function (delay) {
             stats.delay = delay;
 
-            Skin.find({}, "duplicate views visibility time name type via generateDuration", function (err, skins) {
+            // Skin.find({}, "duplicate views visibility time name type via generateDuration", function (err, skins) {
+            //     if (err) return console.log(err);
+            //     var skinStats = buildSkinStats(skins);
+            //     Object.assign(stats, skinStats);
+            //
+            //     Account.count({enabled: true}, function (err, count) {
+            //         if (err) return console.log(err);
+            //         stats.accounts = count;
+            //
+            //         Stat.find({}, function (err, s) {
+            //             var generateSuccess = 0;
+            //             var generateFail = 0;
+            //             s.forEach(function (stat) {
+            //                 if (stat.key === "generate.success") generateSuccess = stat.value;
+            //                 if (stat.key === "generate.fail") generateFail = stat.value;
+            //             })
+            //
+            //             var generateTotal = generateSuccess + generateFail;
+            //             stats.successRate = Number((generateSuccess / generateTotal).toFixed(3));
+            //
+            //             res.json(stats);
+            //         })
+            //     })
+            // })
+
+            Account.count({enabled: true}, function (err, count) {
                 if (err) return console.log(err);
-                var skinStats = buildSkinStats(skins);
-                Object.assign(stats, skinStats);
-
-                Account.count({enabled: true}, function (err, count) {
+                stats.accounts = count;
+                Stat.find({$or: [{key: "generate.success"}, {key: "generate.fail"}]}, function (err, s) {
                     if (err) return console.log(err);
-                    stats.accounts = count;
+                    var generateSuccess = 0;
+                    var generateFail = 0;
+                    s.forEach(function (stat) {
+                        if (stat.key === "generate.success") generateSuccess = stat.value;
+                        if (stat.key === "generate.fail") generateFail = stat.value;
+                    })
+                    var generateTotal = generateSuccess + generateFail;
+                    stats.successRate = Number((generateSuccess / generateTotal).toFixed(3));
 
-                    Stat.find({}, function (err, s) {
-                        var generateSuccess = 0;
-                        var generateFail = 0;
-                        s.forEach(function (stat) {
-                            if (stat.key === "generate.success") generateSuccess = stat.value;
-                            if (stat.key === "generate.fail") generateFail = stat.value;
-                        })
 
-                        var generateTotal = generateSuccess + generateFail;
-                        stats.successRate = Number((generateSuccess / generateTotal).toFixed(3));
+                    Skin.aggregate([
+                        {
+                            "$group":
+                                {
+                                    _id: "$type",
+                                    duplicate: {$sum: "$duplicate"},
+                                    views: {$sum: "$views"},
+                                    count: {$sum: 1}
+                                }
+                        }
+                    ], function (err, agg) {
+                        if (err) return console.log(err);
+                        var user = agg[0];
+                        var url = agg[1];
+                        var upload = agg[2];
+
+                        stats.genUpload = upload.count;
+                        stats.genUrl = url.count;
+                        stats.genUser = user.count;
+
+                        stats.unique = user.count + url.count + upload.count;
+
+                        stats.duplicate = user.duplicate + url.duplicate + upload.duplicate;
+                        stats.views = user.views + url.views + upload.views;
+                        stats.private = 0;
+                        stats.withNames = 0;
+
+                        stats.lastHour = 0;
+                        stats.lastDay = 0;
+                        stats.lastMonth = 0;
+                        stats.lastYear = 0;
+
+
+                        stats.viaApi = 0;
+                        stats.viaWebsite = 0;
+
+                        stats.total = stats.unique + stats.duplicate;
 
                         res.json(stats);
                     })
                 })
             })
+
+
         })
     });
 
