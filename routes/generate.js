@@ -93,6 +93,8 @@ module.exports = function (app) {
                                 skinChanger.findExistingSkin(fileHash, name, model, visibility, function (existingSkin) {
                                     if (existingSkin) {
                                         res.json(Util.skinToJson(existingSkin, generatorDelay));
+                                        fs.close(fd);
+                                        fileCleanup();
                                     } else {
                                         var validImage = Util.validateImage(req, res, path);
                                         // cleanup();
@@ -205,6 +207,8 @@ module.exports = function (app) {
                         skinChanger.findExistingSkin(fileHash, name, model, visibility, function (existingSkin) {
                             if (existingSkin) {
                                 res.json(Util.skinToJson(existingSkin, generatorDelay));
+                                fs.close(fd);
+                                fileCleanup();
                             } else {
                                 var validImage = Util.validateImage(req, res, path);
                                 // cleanup();
