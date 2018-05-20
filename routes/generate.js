@@ -79,6 +79,8 @@ module.exports = function (app) {
                                 fs.close(fd);
                                 return console.log(err);
                             }
+                            fs.close(fd);
+
                             fs.readFile(path, function (err, buf) {
                                 if (err) {
                                     fileCleanup();
