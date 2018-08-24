@@ -384,43 +384,57 @@ module.exports = function (app) {
                 var skinTexture = textures.SKIN;
                 var capeTexture = textures.CAPE || {url: undefined};
                 console.log("Skin: " + JSON.stringify(skinTexture));
-                console.log("Cape: " + JSON.stringify(capeTexture))
+                console.log("Cape: " + JSON.stringify(capeTexture));
 
-                var fileHashCallback = function (fileHash) {
-                    var skin = new Skin({
-                        // '_id': mongoose.Types.ObjectId(md5(fileHash + options.name + Date.now())),
-                        id: lastId + 1,
-                        hash: fileHash,
-                        name: options.name,
-                        model: options.model,
-                        visibility: options.visibility,
-                        uuid: uuid,
-                        value: skinData.value,
-                        signature: skinData.signature,
-                        url: skinTexture.url,
-                        capeUrl: capeTexture.url,
-                        time: Date.now() / 1000,
-                        generateDuration: Date.now() - genStart,
-                        account: account.id,
-                        type: options.type,
-                        duplicate: 0,
-                        views: 1,
-                        via: options.via || "api",//TODO,
-                        ua: options.ua,
-                        apiVer: "node"
-                    });
-                    skin.save(function (err, skin) {
-                        if (err) return console.log(err);
-                        console.log(("[Generator] New Skin saved (#" + skin.id + "). Generated in " + (Date.now() - genStart) + "ms").info);
-                        cb(null, skin);
-                    })
-                };
+                // check for duplicates again, this time using the skin's URL
+                Skin.findOne({name: options.name, visibility: options.visibility, url: skinTexture.url}, function (err, skin) {
+                    if (skin) {// skin with that url already exists
+                        console.log("[Generator] Found duplicate skin with same URL");
 
-                if (typeof fileHash === "function") {
-                    fileHash(skinTexture, fileHashCallback);
-                } else {
-                    fileHashCallback(fileHash);
-                }
+                        skin.duplicate += 1;
+                        skin.save(function (err, skin) {
+                            if (err) return console.log(err);
+
+                            cb(null, skin);
+                        });
+                    }else{
+                        var fileHashCallback = function (fileHash) {
+                            var skin = new Skin({
+                                // '_id': mongoose.Types.ObjectId(md5(fileHash + options.name + Date.now())),
+                                id: lastId + 1,
+                                hash: fileHash,
+                                name: options.name,
+                                model: options.model,
+                                visibility: options.visibility,
+                                uuid: uuid,
+                                value: skinData.value,
+                                signature: skinData.signature,
+                                url: skinTexture.url,
+                                capeUrl: capeTexture.url,
+                                time: Date.now() / 1000,
+                                generateDuration: Date.now() - genStart,
+                                account: account.id,
+                                type: options.type,
+                                duplicate: 0,
+                                views: 1,
+                                via: options.via || "api",//TODO,
+                                ua: options.ua,
+                                apiVer: "node"
+                            });
+                            skin.save(function (err, skin) {
+                                if (err) return console.log(err);
+                                console.log(("[Generator] New Skin saved (#" + skin.id + "). Generated in " + (Date.now() - genStart) + "ms").info);
+                                cb(null, skin);
+                            })
+                        };
+
+                        if (typeof fileHash === "function") {
+                            fileHash(skinTexture, fileHashCallback);
+                        } else {
+                            fileHashCallback(fileHash);
+                        }
+                    }
+                })
             })
         })
     }
