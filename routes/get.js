@@ -107,7 +107,37 @@ module.exports = function (app) {
 
                         stats.total = stats.unique + stats.duplicate;
 
-                        res.json(stats);
+                        if (req.params.details) {
+                            var lastHour = new Date(new Date() - 3.6e+6) / 1000;
+                            var lastDay = new Date(new Date() - 8.64e+7) / 1000;
+                            var lastMonth = new Date(new Date() - 2.628e+9) / 1000;
+                            var lastYear = new Date(new Date() - 3.154e+10) / 1000;
+
+                            Skin.aggregate([
+                                {
+                                    $group: {
+                                        _id: null,
+                                        lastYear: {$sum: {$cond: [{$gte: ["$time", lastYear]}, 1, 0]}},
+                                        lastMonth: {$sum: {$cond: [{$gte: ["$time", lastMonth]}, 1, 0]}},
+                                        lastDay: {$sum: {$cond: [{$gte: ["$time", lastDay]}, 1, 0]}},
+                                        lastHour: {$sum: {$cond: [{$gte: ["$time", lastHour]}, 1, 0]}}
+                                    }
+                                }
+                            ], function (err, agg1) {
+                                if (err) return console.log(err);
+
+                                stats.lastYear = agg1[0].lastYear;
+                                stats.lastMonth = agg1[0].lastMonth;
+                                stats.lastDay = agg1[0].lastDay;
+                                stats.lastHour = agg1[0].lastHour;
+
+                                res.json(stats);
+                            })
+
+
+                        } else {
+                            res.json(stats);
+                        }
                     })
                 })
             })
