@@ -104,19 +104,6 @@ require("./routes/util")(app);
 require("./routes/admin")(app);
 require("./routes/accountManager")(app);
 
-// TODO: remove
-Skin.find({}, function (err, skins) {
-    var invalid = [];
-    skins.forEach(function (skin) {
-        if (skin._id === undefined || typeof skin._id !== "object") {
-            console.log(("Invalid _id field for skin #" + skin.id).error);
-            console.log(("" + skin).debug)
-            invalid.push(skin.id);
-        }
-    });
-    console.log(("" + invalid).debug)
-})
-
 function exitHandler(err) {
     if (err) {
         console.log("\n\n\n\n\n\n\n\n");
