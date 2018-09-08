@@ -386,6 +386,11 @@ module.exports = function (app) {
                 console.log("Skin: " + JSON.stringify(skinTexture));
                 console.log("Cape: " + JSON.stringify(capeTexture));
 
+                if (!skinTexture) {
+                    cb("Skin URL is null", null);
+                    return;
+                }
+
                 // check for duplicates again, this time using the skin's URL
                 Skin.findOne({name: options.name, visibility: options.visibility, url: skinTexture.url}, function (err, skin) {
                     if (skin) {// skin with that url already exists
@@ -434,7 +439,7 @@ module.exports = function (app) {
                             fileHashCallback(fileHash);
                         }
                     }
-                })
+                });
             })
         })
     }
