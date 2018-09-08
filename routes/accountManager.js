@@ -116,9 +116,11 @@ module.exports = function (app) {
 
                     var questions = JSON.parse(body);
                     var answers = [];
-                    questions.forEach(function (question) {
-                        answers.push({id: question.answer.id, answer: req.body.securityAnswer});
-                    });
+                    if(questions) {
+                        questions.forEach(function (question) {
+                            answers.push({id: question.answer.id, answer: req.body.securityAnswer});
+                        });
+                    }
 
                     // Post answers
                     request({
