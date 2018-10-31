@@ -42,12 +42,13 @@ app.use(expressValidator());
 app.use(fileUpload());
 app.use(function (req, res, next) {
     req.realAddress = req.header("x-real-ip") || req.realAddress;
+    res.header("X-Mineskin-Server", config.server || "default");
     next();
 })
 
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
-app.use(express.static('public'))
+app.use(express.static(__dirname, {dotfiles: 'allow'}));
 
 // create a rotating write stream
 var accessLogStream = rfs('access.log', {
