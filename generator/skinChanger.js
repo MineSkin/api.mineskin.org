@@ -13,7 +13,7 @@ var Traffic = require("../db/schemas/traffic").Traffic;
 module.exports = {};
 
 module.exports.findExistingSkin = function (hash, name, model, visibility, cb) {
-    Skin.findOne({hash: hash, name: name, model: model, visibility: visibility}, function (err, skin) {
+    Skin.findOne({hash: hash, name: name, model: model, visibility: visibility}).lean().exec( function (err, skin) {
         if (err) return console.log(err);
         if (skin) {
             skin.duplicate += 1;

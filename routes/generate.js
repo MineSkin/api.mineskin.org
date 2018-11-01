@@ -370,7 +370,7 @@ module.exports = function (app) {
 
     // fileHash can either be the hash, or a callback to get the hash
     function getAndSaveSkinData(account, options, fileHash, uuid, genStart, cb) {
-        Skin.findOne({}).sort({id: -1}).exec(function (err, last) {
+        Skin.findOne({}).sort({id: -1}).lean().exec(function (err, last) {
             if (err) return console.log(err);
             var lastId = last.id;
             dataFetcher.getSkinData(account, function (err, skinData) {

@@ -12,7 +12,7 @@ module.exports = function (app) {
     app.get("/get/delay", function (req, res) {
         var ip = req.realAddress;
         Util.getGeneratorDelay().then(function (delay) {
-            Traffic.findOne({ip: ip}, function (err, traffic) {
+            Traffic.findOne({ip: ip}).lean().exec( function (err, traffic) {
                 if (err) return console.log(err);
                 if (traffic) {
                     res.json({delay: delay, next: (traffic.lastRequest.getTime() / 1000) + delay, nextRelative: ((traffic.lastRequest.getTime() / 1000) + delay) - (Date.now() / 1000)});
@@ -57,7 +57,7 @@ module.exports = function (app) {
             Account.count({enabled: true}, function (err, count) {
                 if (err) return console.log(err);
                 stats.accounts = count;
-                Stat.find({$or: [{key: "generate.success"}, {key: "generate.fail"}]}, function (err, s) {
+                Stat.find({$or: [{key: "generate.success"}, {key: "generate.fail"}]}).lean().exec( function (err, s) {
                     if (err) return console.log(err);
                     var generateSuccess = 0;
                     var generateFail = 0;
@@ -204,7 +204,7 @@ module.exports = function (app) {
     }
 
     app.get("/get/id/:id", function (req, res) {
-        Skin.findOne({id: req.params.id}, function (err, skin) {
+        Skin.findOne({id: req.params.id}).exec( function (err, skin) {
             if (err) return console.log(err);
             if (skin) {
                 skin.views += 1;
@@ -235,6 +235,7 @@ module.exports = function (app) {
                 .limit(size)
                 .select({'_id': 0, id: 1, name: 1, url: 1})
                 .sort({id: sort})
+                .lean()
                 .exec(function (err, skins) {
                     if (err) return console.log(err)
 
@@ -242,8 +243,8 @@ module.exports = function (app) {
                         skins: skins,
                         page: {
                             index: page,
-                            amount: Math.round(count / size),
-                            total: count
+                            // amount: Math.round(count / size),
+                            // total: count
                         },
                         filter: req.query.filter
                     })

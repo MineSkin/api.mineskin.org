@@ -18,7 +18,7 @@ module.exports = function (app) {
             return;
         }
 
-        Account.findOne({username: req.query.username, type: "external"}, "username uuid lastUsed enabled hasError lastError successCounter errorCounter", function (err, account) {
+        Account.findOne({username: req.query.username, type: "external"}, "username uuid lastUsed enabled hasError lastError successCounter errorCounter").lean().exec(function (err, account) {
             if (err) return console.log(err);
             if (!account) {
                 res.status(404).json({error: "Account not found"})
@@ -209,7 +209,7 @@ module.exports = function (app) {
             return;
         }
 
-        Account.findOne({username: req.query.username, uuid: req.query.uuid, type: "external"}, "enabled", function (err, acc) {
+        Account.findOne({username: req.query.username, uuid: req.query.uuid, type: "external"}, "enabled").lean().exec(function (err, acc) {
             if (err) return console.log(err);
             res.json({
                 exists: !!acc,

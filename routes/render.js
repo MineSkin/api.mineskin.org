@@ -23,7 +23,7 @@ module.exports = function (app) {
     })
 
     app.get("/render/:id/:type(head|skin)", function (req, res) {
-        Skin.findOne({id: req.params.id}, function (err, skin) {
+        Skin.findOne({id: req.params.id}).lean().exec( function (err, skin) {
             if (err) return console.log(err);
             if (skin) {
                 var options = req.query.options || "&aa=true";
@@ -37,7 +37,7 @@ module.exports = function (app) {
 
     // Helper route to avoid CORS issues
     app.get("/render/texture/:id", function (req, res) {
-        Skin.findOne({id: req.params.id}, function (err, skin) {
+        Skin.findOne({id: req.params.id}).lean().exec( function (err, skin) {
             if (err) return console.log(err);
             if (skin) {
                 request(skin.url).pipe(res);
@@ -48,7 +48,7 @@ module.exports = function (app) {
     });
 
     app.get("/render/texture/:id/cape", function (req, res) {
-        Skin.findOne({id: req.params.id}, function (err, skin) {
+        Skin.findOne({id: req.params.id}).lean().exec( function (err, skin) {
             if (err) return console.log(err);
             if (skin && skin.capeUrl) {
                 request(skin.capeUrl).pipe(res);

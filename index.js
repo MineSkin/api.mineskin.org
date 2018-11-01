@@ -46,8 +46,6 @@ app.use(function (req, res, next) {
     next();
 })
 
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'ejs');
 app.use(express.static(__dirname, {dotfiles: 'allow'}));
 
 // create a rotating write stream
@@ -77,11 +75,6 @@ colors.setTheme({
 
 // Databse
 require("./db/db")(mongoose, config);
-
-// Schemas
-var Account = require("./db/schemas/account").Account;
-var Skin = require("./db/schemas/skin").Skin;
-var Traffic = require("./db/schemas/traffic").Traffic;
 
 
 // API methods
