@@ -46,7 +46,7 @@ app.use(function (req, res, next) {
     next();
 })
 
-app.use(express.static(__dirname, {dotfiles: 'allow'}));
+app.use("/.well-known",express.static(".well-known"));
 
 // create a rotating write stream
 var accessLogStream = rfs('access.log', {
