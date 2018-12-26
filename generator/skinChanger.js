@@ -82,6 +82,7 @@ module.exports.generateUrl = function (account, url, model, cb) {
                         }
                     })
                 } else {
+                    account.successCounter = 0;
                     account.errorCounter++;
                     account.save(function (err, account) {
                         cb("Challenges failed");
@@ -89,6 +90,7 @@ module.exports.generateUrl = function (account, url, model, cb) {
                 }
             })
         } else {
+            account.successCounter = 0;
             account.errorCounter++;
             account.save(function (err, account) {
                 cb("Authentication failed - " + authErr.errorMessage);
@@ -138,6 +140,7 @@ module.exports.generateUpload = function (account, fileBuf, model, cb) {
                         }
                     });
                 } else {
+                    account.successCounter = 0;
                     account.errorCounter++;
                     account.save(function (err, account) {
                         console.log(("Challenges failed").warn);
@@ -146,6 +149,7 @@ module.exports.generateUpload = function (account, fileBuf, model, cb) {
                 }
             })
         } else {
+            account.successCounter = 0;
             account.errorCounter++;
             account.save(function (err, account) {
                 cb("Authentication failed - " + authErr.errorMessage);
