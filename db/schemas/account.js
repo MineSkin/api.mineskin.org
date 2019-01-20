@@ -14,8 +14,14 @@ var accountSchema = new Schema({
     passwordNew: String,
     security: String,
     uuid: String,
-    lastUsed: Number,
-    enabled: Boolean,
+    lastUsed: {
+        type: Number,
+        index: true
+    },
+    enabled: {
+        type: Boolean,
+        index: true
+    },
     errorCounter: Number,
     successCounter: Number,
     accessToken: String,
