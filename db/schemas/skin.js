@@ -19,12 +19,19 @@ var skinSchema = new Schema({
     },
     model: {
         type: String,
-        enum: ["steve", "slim", "unknown"]
+        enum: ["steve", "slim", "unknown"],
+        index: true
     },
-    visibility: Number,
+    visibility: {
+        type: Number,
+        index: true
+    },
     value: String,
     signature: String,
-    url: String,
+    url: {
+        type: String,
+        index: true
+    },
     capeUrl: String,
     time: Number,
     generateDuration: Number,
