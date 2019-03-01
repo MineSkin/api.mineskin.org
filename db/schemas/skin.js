@@ -40,6 +40,7 @@ var skinSchema = new Schema({
     duplicate: Number,
     views: Number,
     via: String,
+    server: String,
     ua: String,
     apiVer: String
 }, {id: false})

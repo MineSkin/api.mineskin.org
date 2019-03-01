@@ -1,4 +1,4 @@
-module.exports = function (app, optimus) {
+module.exports = function (app, config, optimus) {
 
 
     var SKIN_COUNTER = 1000000;
@@ -425,6 +425,7 @@ module.exports = function (app, optimus) {
                             duplicate: 0,
                             views: 1,
                             via: options.via || "api",//TODO,
+                            server: config.server || "default",
                             ua: options.ua,
                             apiVer: "node"
                         });

@@ -94,7 +94,7 @@ var optimus = new Optimus(config.optimus.prime, config.optimus.inverse, config.o
 console.log("Optimus Test:", optimus.encode(Math.floor(Date.now() / 10)));
 
 /// Routes
-require("./routes/generate")(app, optimus);
+require("./routes/generate")(app, config, optimus);
 require("./routes/get")(app);
 require("./routes/render")(app);
 require("./routes/util")(app);

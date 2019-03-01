@@ -1,6 +1,7 @@
 var config = {};
 
 config.port = 3017;
+config.server = "default";
 
 config.optimus = {
     prime: 0,
