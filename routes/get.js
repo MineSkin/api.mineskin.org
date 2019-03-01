@@ -54,7 +54,7 @@ module.exports = function (app) {
             //     })
             // })
 
-            Account.count({enabled: true}, function (err, count) {
+            Account.countDocuments({enabled: true}, function (err, count) {
                 if (err) return console.log(err);
                 stats.accounts = count;
                 Stat.find({$or: [{key: "generate.success"}, {key: "generate.fail"}]}).lean().exec(function (err, s) {
@@ -227,7 +227,7 @@ module.exports = function (app) {
         if (req.query.filter) {
             query.name = {'$regex': ".*" + req.query.filter + ".*"};
         }
-        Skin.count(query, function (err, count) {
+        Skin.countDocuments(query, function (err, count) {
             if (err) return console.log(err);
             Skin
                 .find(query)
