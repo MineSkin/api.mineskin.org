@@ -233,8 +233,8 @@ module.exports = function (app) {
                 .find(query)
                 .skip(size * (page - 1))
                 .limit(size)
-                .select({'_id': 0, id: 1, name: 1, url: 1})
-                .sort({id: sort})
+                .select({'_id': 0, id: 1, name: 1, url: 1, time: 1})
+                .sort({time: sort})
                 .lean()
                 .exec(function (err, skins) {
                     if (err) return console.log(err)
