@@ -1,4 +1,4 @@
-module.exports = function (app) {
+module.exports = function (app, optimus) {
 
 
     var SKIN_COUNTER = 1000000;
@@ -27,13 +27,6 @@ module.exports = function (app) {
     var Skin = require("../db/schemas/skin").Skin;
     var Traffic = require("../db/schemas/traffic").Traffic;
     var Stat = require("../db/schemas/stat").Stat;
-
-
-    Skin.findOne({}).sort({id: -1}).lean().exec(function (err, last) {
-        if (err) throw err;
-        SKIN_COUNTER = last.id;
-        console.info("Set SKIN_COUNTER to " + SKIN_COUNTER);
-    });
 
 
     app.post("/generate/url", function (req, res) {
@@ -380,7 +373,6 @@ module.exports = function (app) {
 
     // fileHash can either be the hash, or a callback to get the hash
     function getAndSaveSkinData(account, options, fileHash, uuid, genStart, cb) {
-        var lastId = SKIN_COUNTER++;
         dataFetcher.getSkinData(account, function (err, skinData) {
             if (err) {
                 cb(err, null);
@@ -412,9 +404,11 @@ module.exports = function (app) {
                     });
                 } else {
                     var fileHashCallback = function (fileHash) {
+                        var rand = Math.ceil((Date.now() - 1500000000000)+Math.random());
+                        var newId = optimus.encode(rand);
                         var skin = new Skin({
                             // '_id': mongoose.Types.ObjectId(md5(fileHash + options.name + Date.now())),
-                            id: lastId + 1,
+                            id: newId,
                             hash: fileHash,
                             name: options.name,
                             model: options.model,

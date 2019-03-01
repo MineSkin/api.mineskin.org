@@ -2,6 +2,12 @@ var config = {};
 
 config.port = 3017;
 
+config.optimus = {
+    prime: 0,
+    inverse: 0,
+    random: 0
+};
+
 config.mongo = {
     useTunnel: false,
     tunnel: {

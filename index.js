@@ -17,6 +17,7 @@ var crypto = require('crypto');
 var fs = require('fs')
 var morgan = require('morgan')
 var rfs = require("rotating-file-stream");
+var Optimus = require("optimus-js");
 var path = require('path')
 var colors = require("colors");
 var config = require("./config");
@@ -76,7 +77,6 @@ colors.setTheme({
 // Databse
 require("./db/db")(mongoose, config);
 
-
 // API methods
 app.get("/", function (req, res) {
     res.json({msg: "Hi!"});
@@ -90,8 +90,11 @@ app.get("/decrypt/:text", function (req, res) {
     res.json({dec: Util.crypto.decrypt(req.params.text)});
 });
 
+var optimus = new Optimus(config.optimus.prime, config.optimus.inverse, config.optimus.random);
+console.log("Optimus Test:", optimus.encode(Math.floor(Date.now() / 10)));
+
 /// Routes
-require("./routes/generate")(app);
+require("./routes/generate")(app, optimus);
 require("./routes/get")(app);
 require("./routes/render")(app);
 require("./routes/util")(app);
