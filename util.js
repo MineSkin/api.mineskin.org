@@ -102,6 +102,7 @@ module.exports.skinToJson = function (skin, delay) {
         timestamp: skin.time,
         duration: skin.generateDuration,
         accountId: skin.account,
+        server: skin.server,
         private: (skin.visibility !== 0),
         views: skin.views,
         nextRequest: delay || 0
