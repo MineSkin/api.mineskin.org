@@ -18,7 +18,7 @@
     "express-validator": "^3.2.0",
     "extend": "^3.0.2",
     "file-type": "^6.1.0",
-    "image-size": "^0.6.1",
+    "image-size": "^0.7.2",
     "ip": "^1.1.5",
     "md5": "^2.2.1",
     "mongoose": "^5.0.17",
