@@ -15,7 +15,7 @@
     "express": "^4.16.4",
     "express-fileupload": "^0.4.0",
     "express-session": "^1.15.3",
-    "express-validator": "^3.2.0",
+    "express-validator": "^5.3.1",
     "extend": "^3.0.2",
     "file-type": "^6.1.0",
     "image-size": "^0.6.1",
