@@ -28,7 +28,7 @@
     "mongoose-paginate": "^5.0.3",
     "morgan": "^1.8.2",
     "mpath": ">=0.5.1",
-    "mime": ">=1.4.1",
+    "mime": ">=2.4.0",
     "node-persist": "^3.0.0",
     "node-rest-client": "^3.1.0",
     "object.values": "^1.0.4",
