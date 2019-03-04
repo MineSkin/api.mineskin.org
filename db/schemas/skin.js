@@ -3,7 +3,8 @@ var mongoose = require('mongoose')
 var skinSchema = new Schema({
     id: {
         type: Number,
-        index: true
+        index: true,
+        unique: true
     },
     hash: {
         type: String,
