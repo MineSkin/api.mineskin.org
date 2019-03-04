@@ -22,7 +22,7 @@
     "file-type": "^10.8.0",
     "image-size": "^0.7.2",
     "ip": "^1.1.5",
-    "hoek": ">=4.2.1",
+    "hoek": ">=6.1.2",
     "md5": "^2.2.1",
     "mongoose": "^5.0.17",
     "mongoose-paginate": "^5.0.3",
