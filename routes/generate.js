@@ -47,6 +47,10 @@ module.exports = function (app, config, optimus) {
             res.status(400).json({error: "URL is required"});
             return;
         }
+        if (!url.startsWith("http")) {
+            res.status(400).json({error: "Invalid URL"});
+            return;
+        }
 
         var genStart = Date.now();
 
