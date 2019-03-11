@@ -221,6 +221,7 @@ module.exports = function (app) {
     app.get("/get/list/:page?", function (req, res) {
         var page = Math.max(req.params.page || 1, 1);
         var size = Math.max(req.query.size || 16, 1);
+        size = Math.min(64, size);
         var sort = req.query.sort || -1;
 
         var query = {visibility: 0};
