@@ -12,7 +12,7 @@ module.exports.getSkinData = function (account, cb) {
         }
         console.log(response.statusCode.toString().debug);
         console.log(body.debug)
-        if (response.statusCode !== 200) {
+        if (response.statusCode <200||response.statusCode>230) {
             return cb(response.statusCode, null);
         }
         if(!body) {

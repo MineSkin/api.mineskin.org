@@ -64,16 +64,22 @@ module.exports = function (app) {
             },
             json: true,
             body: {
+                agent:{
+                    name:"Minecraft",
+                    version: 1
+                },
                 username: req.body.username,
-                password: req.body.password
+                password: new Buffer(req.body.password, "base64").toString("ascii"),
+                requestUser: true
             }
         }, function (err, response, body) {
-            console.log("Refresh Body:".debug)
+            console.log("Auth Body:".debug)
             console.log(("" + JSON.stringify(body)).debug);
             if (err) {
                 return console.log(err);
             }
             if (body.error) {
+                console.error(body);
                 res.status(response.statusCode).json({error: body.error, msg: body.errorMessage})
             } else {
                 res.json({
@@ -103,7 +109,7 @@ module.exports = function (app) {
         }, function (err, response, body) {
             if (err) return console.log(err);
 
-            if (!response || response.statusCode !== 200) {// Not yet answered
+            if (!response || response.statusCode <200||response.statusCode>230) {// Not yet answered
                 // Get the questions
                 request({
                     url: urls.security.challenges,
@@ -117,6 +123,7 @@ module.exports = function (app) {
                     var questions = JSON.parse(body);
                     var answers = [];
                     if(questions) {
+                        console.log(questions);
                         questions.forEach(function (question) {
                             answers.push({id: question.answer.id, answer: req.body.securityAnswer});
                         });
@@ -168,6 +175,7 @@ module.exports = function (app) {
 
         getUser(req.query.token, function (response, body) {
             if (body.error) {
+                console.error(body);
                 res.status(response.statusCode).json({error: body.error, msg: body.errorMessage})
             } else {
                 res.json({
@@ -187,6 +195,7 @@ module.exports = function (app) {
 
         getProfile(req.query.token, function (response, body) {
             if (body.error) {
+                console.error(body.error);
                 res.status(response.statusCode).json({error: body.error, msg: body.errorMessage})
             } else {
                 res.json({
@@ -292,6 +301,7 @@ module.exports = function (app) {
                                     enabled: true,
                                     lastUsed: 0,
                                     errorCounter: 0,
+                                    successCounter:0,
                                     requestIp: ""
                                 });
                                 account.save(function (err, account) {

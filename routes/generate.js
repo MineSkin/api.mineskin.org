@@ -74,7 +74,7 @@ module.exports = function (app, config, optimus) {
                             fs.close(fd);
                             return console.log(err);
                         }
-                        if (response.statusCode !== 200) {
+                        if (response.statusCode < 200 ||response.statusCode>230) {
                             res.status(500).json({"error": "Failed to download image", code: response.statusCode});
                             fileCleanup();
                             fs.close(fd);

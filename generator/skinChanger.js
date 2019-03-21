@@ -62,6 +62,7 @@ module.exports.generateUrl = function (account, url, model, cb) {
                         method: "POST",
                         url: urls.skin.replace(":uuid", account.uuid),
                         headers: {
+                            "User-Agent": "MineSkin.org",
                             "Content-Type": "application/x-www-form-urlencoded",
                             "Authorization": "Bearer " + account.accessToken,
                             "X-Forwarded-For": account.requestIp,
@@ -114,6 +115,7 @@ module.exports.generateUpload = function (account, fileBuf, model, cb) {
                         method: "PUT",
                         url: urls.skin.replace(":uuid", account.uuid),
                         headers: {
+                            "User-Agent": "MineSkin.org",
                             "Content-Type": "multipart/form-data",
                             "Authorization": "Bearer " + account.accessToken,
                             "X-Forwarded-For": account.requestIp,
