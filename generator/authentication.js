@@ -49,7 +49,7 @@ module.exports.authenticate = function (account, cb) {
             // Get new token
             // account.clientToken = body.clientToken;
             account.accessToken = body.accessToken;
-            account.save(function (err,account) {
+            account.save(function (err, account) {
                 cb(null, account);
             })
         })
@@ -105,7 +105,7 @@ module.exports.authenticate = function (account, cb) {
                         // Login
                         // module.exports.signout(account, function (err) {
                         //     if (err) console.log((err).warn);
-                            loginCallback(account);
+                        loginCallback(account);
                         // })
                     })
                 } else {
@@ -139,7 +139,7 @@ module.exports.authenticate = function (account, cb) {
         }, function (err, response, body) {
             console.log("[Auth] Validate Body:".debug)
             console.log(("" + JSON.stringify(body)).debug);
-            if (err || body.error||response.statusCode<200||response.statusCode>230) {
+            if (err || response.statusCode < 200 || response.statusCode > 230 || (body && body.error)) {
                 console.info("[Auth] Couldn't validate tokens");
                 console.log(err)
                 refresh();
@@ -168,7 +168,7 @@ module.exports.authenticate = function (account, cb) {
         //     }
         // })
     } else {
-        console.log(("[Auth] Account (#"+account.id+") doesn't have accessToken").debug);
+        console.log(("[Auth] Account (#" + account.id + ") doesn't have accessToken").debug);
         // Login
         loginCallback(account);
     }
@@ -242,7 +242,7 @@ module.exports.completeChallenges = function (account, cb) {
                         // Challenges completed
                         cb(account);
                     } else {
-                        console.log(("[Auth] (#"+account.id+") Failed to complete security challenges").warn);
+                        console.log(("[Auth] (#" + account.id + ") Failed to complete security challenges").warn);
                         cb();
                     }
                 })
