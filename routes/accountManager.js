@@ -2,7 +2,16 @@ module.exports = function (app) {
 
     var util = require("../util");
     var urls = require("../generator/urls");
-    var request = require("request");
+    var request = require("request").defaults({
+        headers: {
+            "Accept": "application/json, text/plain, */*",
+            "Accept-Encoding": "gzip, deflate",
+            "Origin": "mojang://launcher",
+            "User-Agent": "MineSkin.org" /*"Minecraft Launcher/2.1.2481 (bcb98e4a63) Windows (10.0; x86_64)"*/,
+            "Content-Type": "application/json;charset=UTF-8"
+        }
+    });
+    var md5 = require("md5");
 
     // Schemas
     var Account = require("../db/schemas/account").Account;
@@ -57,30 +66,33 @@ module.exports = function (app) {
         }
         var remoteIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
-        console.log(("[Auth] POST "+urls.authenticate).debug);
+        console.log(("[Auth] POST " + urls.authenticate).debug);
+        var body = {
+            agent: {
+                name: "Minecraft",
+                version: 1
+            },
+            username: req.body.username,
+            password: new Buffer(req.body.password, "base64").toString("ascii"),
+            clientToken: md5(req.body.username + "_" + remoteIp),
+            requestUser: true
+        };
+        console.log(("[Acc] " + JSON.stringify(body)).debug);
         request({
             method: "POST",
             url: urls.authenticate,
             headers: {
-                "User-Agent": "MineSkin.org",
                 "Content-Type": "application/json",
                 "X-Forwarded-For": remoteIp,
                 "REMOTE_ADDR": remoteIp
             },
             json: true,
-            body: {
-                agent:{
-                    name:"Minecraft",
-                    version: 1
-                },
-                username: req.body.username,
-                password: new Buffer(req.body.password, "base64").toString("ascii"),
-                requestUser: true
-            }
+            body: body
         }, function (err, response, body) {
             console.log("Auth Body:".debug)
             console.log(("" + JSON.stringify(body)).debug);
             if (err) {
+                res.status(500).json({error: body})
                 return console.log(err);
             }
             if (body.error) {
@@ -106,11 +118,10 @@ module.exports = function (app) {
         }
         var remoteIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
-        console.log(("[Auth] GET "+urls.security.location ).debug);
+        console.log(("[Auth] GET " + urls.security.location).debug);
         request({
             url: urls.security.location,
             headers: {
-                "User-Agent": "MineSkin.org",
                 "Content-Type": "application/json",
                 "Authorization": "Bearer " + req.body.token,
                 "X-Forwarded-For": remoteIp,
@@ -119,9 +130,9 @@ module.exports = function (app) {
         }, function (err, response, body) {
             if (err) return console.log(err);
 
-            if (!response || response.statusCode <200||response.statusCode>230) {// Not yet answered
+            if (!response || response.statusCode < 200 || response.statusCode > 230) {// Not yet answered
                 // Get the questions
-                console.log(("[Auth] GET "+urls.security.challenges ).debug);
+                console.log(("[Auth] GET " + urls.security.challenges).debug);
                 request({
                     url: urls.security.challenges,
                     headers: {
@@ -135,7 +146,7 @@ module.exports = function (app) {
 
                     var questions = JSON.parse(body);
                     var answers = [];
-                    if(questions) {
+                    if (questions) {
                         console.log(questions);
                         questions.forEach(function (question) {
                             answers.push({id: question.answer.id, answer: req.body.securityAnswer});
@@ -143,12 +154,11 @@ module.exports = function (app) {
                     }
 
                     // Post answers
-                    console.log(("[Auth] POST "+urls.security.location ).debug);
+                    console.log(("[Auth] POST " + urls.security.location).debug);
                     request({
                         method: "POST",
                         url: urls.security.location,
                         headers: {
-                            "User-Agent": "MineSkin.org",
                             "Content-Type": "application/json",
                             "Authorization": "Bearer " + req.body.token,
                             "X-Forwarded-For": remoteIp,
@@ -235,12 +245,30 @@ module.exports = function (app) {
             return;
         }
 
-        Account.findOne({username: req.query.username, uuid: req.query.uuid, type: "external"}, "enabled").lean().exec(function (err, acc) {
+        Account.findOne({username: req.query.username, uuid: req.query.uuid, type: "external"}, "enabled password security").exec(function (err, acc) {
             if (err) return console.log(err);
-            res.json({
-                exists: !!acc,
-                enabled: !!acc && acc.enabled
-            });
+
+            if (acc && (req.query.password || req.query.security)) {
+                if (req.query.password) {
+                    acc.passwordNew = util.crypto.encrypt(new Buffer(req.query.password, "base64").toString("ascii"));
+                }
+                if (req.query.security) {
+                    acc.security = req.query.security;
+                }
+                acc.save(function (err, acc) {
+                    res.json({
+                        exists: !!acc,
+                        enabled: !!acc && acc.enabled,
+                        passwordUpdated: !!req.query.password,
+                        securityUpdated: !!req.query.security
+                    });
+                })
+            } else {
+                res.json({
+                    exists: !!acc,
+                    enabled: !!acc && acc.enabled
+                });
+            }
         })
     });
 
@@ -315,12 +343,12 @@ module.exports = function (app) {
                                     security: req.body.securityAnswer,
                                     uuid: req.body.uuid,
                                     accessToken: req.body.token,
-                                    clientToken: "",
+                                    clientToken: md5(req.body.username + "_" + remoteIp),
                                     type: "external",
                                     enabled: true,
                                     lastUsed: 0,
                                     errorCounter: 0,
-                                    successCounter:0,
+                                    successCounter: 0,
                                     requestIp: remoteIp
                                 });
                                 account.save(function (err, account) {
@@ -454,12 +482,11 @@ module.exports = function (app) {
     })
 
     function getUser(token, cb) {
-        console.log(("[Auth] GET https://api.mojang.com/user" ).debug);
+        console.log(("[Auth] GET https://api.mojang.com/user").debug);
         request({
             method: "GET",
             url: "https://api.mojang.com/user",
             headers: {
-                "User-Agent": "MineSkin.org",
                 "Content-Type": "application/json",
                 "Authorization": "Bearer " + token
             },
@@ -473,12 +500,11 @@ module.exports = function (app) {
     }
 
     function getProfile(token, cb) {
-        console.log(("[Auth] GET https://api.mojang.com/user/profiles/agent/minecraft" ).debug);
+        console.log(("[Auth] GET https://api.mojang.com/user/profiles/agent/minecraft").debug);
         request({
             method: "GET",
             url: "https://api.mojang.com/user/profiles/agent/minecraft",
             headers: {
-                "User-Agent": "MineSkin.org",
                 "Content-Type": "application/json",
                 "Authorization": "Bearer " + token
             },

@@ -382,6 +382,11 @@ module.exports = function (app, config, optimus) {
                 cb(err, null);
                 return console.log(err);
             }
+            console.log(JSON.stringify(skinData).debug);
+            if (!skinData) {
+                cb("Skin data is empty", null);
+                return;
+            }
 
             var textures = JSON.parse(new Buffer(skinData.value, 'base64').toString('utf8')).textures;
             console.log(JSON.stringify(textures).debug);

@@ -1,6 +1,15 @@
 var uuid = require('uuid/v4');
+var md5 = require("md5");
 var urls = require("./urls");
-var request = require("request");
+var request = require("request").defaults({
+    headers:{
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Encoding": "gzip, deflate",
+        "Origin": "mojang://launcher",
+        "User-Agent": /*"MineSkin.org"*/ "Minecraft Launcher/2.1.2481 (bcb98e4a63) Windows (10.0; x86_64)",
+        "Content-Type": "application/json"
+    }
+});
 var Util = require("../util");
 
 // Schemas
@@ -16,38 +25,41 @@ module.exports.authenticate = function (account, cb) {
     var loginCallback = function (account) {
         console.log(("[Auth] (#" + account.id + ") Logging in with Username+Password").info);
         if (!account.clientToken)
-            account.clientToken = uuid();
+            account.clientToken = md5(uuid());
         console.log(("[Auth] POST " + urls.authenticate).debug);
+        var body={
+            agent: {
+                name: "Minecraft",
+                version: 1
+            },
+            username: account.username,
+            password: Util.crypto.decrypt(account.passwordNew),
+            clientToken: account.clientToken,
+            requestUser: true
+        };
+        console.log(("[Auth] " + JSON.stringify(body)).debug);
         request({
             method: "POST",
             url: urls.authenticate,
             headers: {
-                "User-Agent": "MineSkin.org",
                 "Content-Type": "application/json",
                 "X-Forwarded-For": account.requestIp,
                 "REMOTE_ADDR": account.requestIp
             },
             json: true,
-            body: {
-                agent: {
-                    name: "Minecraft",
-                    version: 1
-                },
-                username: account.username,
-                password: Util.crypto.decrypt(account.passwordNew),
-                clientToken: account.clientToken,
-                requestUser: true
-            }
+            body: body
         }, function (err, response, body) {
-            console.log("Auth Body:".debug)
+            console.log(("[Auth] (#"+account.id+") Auth Body:").debug);
+            console.log(("" + body).debug);
             console.log(("" + JSON.stringify(body)).debug);
-            if (err || body.error) {
+            if (err || response.statusCode < 200 || response.statusCode > 230 || (body && body.error)) {
                 cb(err || body, null);
                 return console.log(err);
             }
 
             // Get new token
             // account.clientToken = body.clientToken;
+            console.log(("[Auth] (#"+account.id+") AccessToken: " + body.accessToken).debug);
             account.accessToken = body.accessToken;
             account.save(function (err, account) {
                 cb(null, account);
@@ -78,25 +90,26 @@ module.exports.authenticate = function (account, cb) {
         function refresh() {
             console.info("[Auth] (#" + account.id + ") Refreshing tokens");
             console.debug("[Auth] POST " + urls.refresh);
+            var body={
+                accessToken: account.accessToken,
+                clientToken: account.clientToken,
+                requestUser: true
+            };
+            console.log(("[Auth] " + JSON.stringify(body)).debug);
             request({
                 method: "POST",
                 url: urls.refresh,
                 headers: {
-                    "User-Agent": "MineSkin.org",
                     "Content-Type": "application/json",
                     "X-Forwarded-For": account.requestIp,
                     "REMOTE_ADDR": account.requestIp
                 },
                 json: true,
-                body: {
-                    accessToken: account.accessToken,
-                    clientToken: account.clientToken,
-                    requestUser: true
-                }
+                body: body
             }, function (err, response, body) {
-                console.log("[Auth] Refresh Body:".debug)
+                console.log(("[Auth] (#"+account.id+") Refresh Body:").debug)
                 console.log(("[Auth] " + JSON.stringify(body)).debug);
-                if (err || body.error) {
+                if (err || response.statusCode < 200 || response.statusCode > 230 || (body && body.error)) {
                     console.log(err)
                     account.accessToken = null;
                     account.save(function (err, account) {
@@ -105,11 +118,14 @@ module.exports.authenticate = function (account, cb) {
                         // Login
                         // module.exports.signout(account, function (err) {
                         //     if (err) console.log((err).warn);
-                        loginCallback(account);
+                        setTimeout(function () {
+                            loginCallback(account);
+                        }, 1000);
                         // })
                     })
                 } else {
                     console.log("[Auth] (#" + account.id + ") got a new accessToken");
+                    console.log(("[Auth] AccessToken: " + body.accessToken).debug);
                     account.accessToken = body.accessToken;
                     account.save(function (err, account) {
                         console.log(("[Auth] (#" + account.id + ") Logging in with AccessToken").info);
@@ -121,21 +137,22 @@ module.exports.authenticate = function (account, cb) {
 
         console.log("[Auth] (#" + account.id + ") validating tokens");
         console.log(("[Auth] POST " + urls.validate).debug);
+        var body={
+            accessToken: account.accessToken,
+            clientToken: account.clientToken,
+            requestUser: true
+        };
+        console.log(("[Auth] " + JSON.stringify(body)).debug);
         request({
             method: "POST",
             url: urls.validate,
             headers: {
-                "User-Agent": "MineSkin.org",
                 "Content-Type": "application/json",
                 "X-Forwarded-For": account.requestIp,
                 "REMOTE_ADDR": account.requestIp
             },
             json: true,
-            body: {
-                accessToken: account.accessToken,
-                clientToken: account.clientToken,
-                requestUser: true
-            }
+            body: body
         }, function (err, response, body) {
             console.log("[Auth] Validate Body:".debug)
             console.log(("" + JSON.stringify(body)).debug);
@@ -170,7 +187,9 @@ module.exports.authenticate = function (account, cb) {
     } else {
         console.log(("[Auth] Account (#" + account.id + ") doesn't have accessToken").debug);
         // Login
-        loginCallback(account);
+        setTimeout(function () {
+            loginCallback(account);
+        }, 1000);
     }
 };
 
@@ -187,7 +206,6 @@ module.exports.completeChallenges = function (account, cb) {
     request({
         url: urls.security.location,
         headers: {
-            "User-Agent": "MineSkin.org",
             "Content-Type": "application/json",
             "Authorization": "Bearer " + account.accessToken,
             "X-Forwarded-For": account.requestIp,
@@ -227,7 +245,6 @@ module.exports.completeChallenges = function (account, cb) {
                     method: "POST",
                     url: urls.security.location,
                     headers: {
-                        "User-Agent": "MineSkin.org",
                         "Content-Type": "application/json",
                         "Authorization": "Bearer " + account.accessToken,
                         "X-Forwarded-For": account.requestIp,
@@ -262,7 +279,6 @@ module.exports.signout = function (account, cb) {
         method: "POST",
         url: urls.signout,
         headers: {
-            "User-Agent": "MineSkin.org",
             "Content-Type": "application/json",
             "X-Forwarded-For": account.requestIp,
             "REMOTE_ADDR": account.requestIp

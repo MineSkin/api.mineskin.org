@@ -54,10 +54,10 @@ module.exports = function (app) {
             //     })
             // })
 
-            Account.countDocuments({enabled: true}, function (err, count) {
+            Account.count({enabled: true}, function (err, count) {
                 if (err) return console.log(err);
                 stats.accounts = count;
-                Account.countDocuments({enabled: true, errorCounter: {$lt: 100}}, function (err, healthyCount) {
+                Account.count({enabled: true, errorCounter: {$lt: 100}}, function (err, healthyCount) {
                     if (err) return console.log(err);
                     stats.healthyAccounts = healthyCount;
                     Stat.find({$or: [{key: "generate.success"}, {key: "generate.fail"}]}).lean().exec(function (err, s) {
@@ -232,7 +232,7 @@ module.exports = function (app) {
         if (req.query.filter) {
             query.name = {'$regex': ".*" + req.query.filter + ".*"};
         }
-        Skin.countDocuments(query, function (err, count) {
+        Skin.count(query, function (err, count) {
             if (err) return console.log(err);
             Skin
                 .find(query)

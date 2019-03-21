@@ -40,9 +40,9 @@ module.exports.getAvailableAccount = function (req, res, cb) {
             //     // account.clientToken = null;
             // }
             account.lastUsed = time;
-            account.save();
-
-            cb(account);
+            account.save(function (err,account) {
+                cb(account);
+            });
         }
     })
 }

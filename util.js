@@ -73,7 +73,7 @@ module.exports.validateImage = function (req, res, file) {
 
 module.exports.getGeneratorDelay = function () {
     return new Promise(function (fullfill, reject) {
-        Account.countDocuments({enabled: true}, function (err, count) {
+        Account.count({enabled: true}, function (err, count) {
             if (err) return console.log(err);
 
             var delay = Math.round(60 / Math.max(1, count));
