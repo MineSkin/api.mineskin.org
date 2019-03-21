@@ -17,6 +17,7 @@ module.exports.getSkinData = function (account, cb) {
         }
         if(!body) {
             cb(null, null);
+            return;
         }
         var json = JSON.parse(body);
         cb(null, {
