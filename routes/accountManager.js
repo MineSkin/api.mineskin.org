@@ -55,12 +55,17 @@ module.exports = function (app) {
             res.status(400).json({error: "Missing login data"});
             return;
         }
+        var remoteIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
+        console.log(("[Auth] POST "+urls.authenticate).debug);
         request({
             method: "POST",
             url: urls.authenticate,
             headers: {
-                "Content-Type": "application/json"
+                "User-Agent": "MineSkin.org",
+                "Content-Type": "application/json",
+                "X-Forwarded-For": remoteIp,
+                "REMOTE_ADDR": remoteIp
             },
             json: true,
             body: {
@@ -99,23 +104,31 @@ module.exports = function (app) {
             res.status(400).json({error: "Missing security answer"})
             return;
         }
+        var remoteIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
+        console.log(("[Auth] GET "+urls.security.location ).debug);
         request({
             url: urls.security.location,
             headers: {
+                "User-Agent": "MineSkin.org",
                 "Content-Type": "application/json",
-                "Authorization": "Bearer " + req.body.token
+                "Authorization": "Bearer " + req.body.token,
+                "X-Forwarded-For": remoteIp,
+                "REMOTE_ADDR": remoteIp
             }
         }, function (err, response, body) {
             if (err) return console.log(err);
 
             if (!response || response.statusCode <200||response.statusCode>230) {// Not yet answered
                 // Get the questions
+                console.log(("[Auth] GET "+urls.security.challenges ).debug);
                 request({
                     url: urls.security.challenges,
                     headers: {
                         "Content-Type": "application/json",
-                        "Authorization": "Bearer " + req.body.token
+                        "Authorization": "Bearer " + req.body.token,
+                        "X-Forwarded-For": remoteIp,
+                        "REMOTE_ADDR": remoteIp
                     }
                 }, function (err, response, body) {
                     if (err) return console.log(err);
@@ -130,12 +143,16 @@ module.exports = function (app) {
                     }
 
                     // Post answers
+                    console.log(("[Auth] POST "+urls.security.location ).debug);
                     request({
                         method: "POST",
                         url: urls.security.location,
                         headers: {
+                            "User-Agent": "MineSkin.org",
                             "Content-Type": "application/json",
-                            "Authorization": "Bearer " + req.body.token
+                            "Authorization": "Bearer " + req.body.token,
+                            "X-Forwarded-For": remoteIp,
+                            "REMOTE_ADDR": remoteIp
                         },
                         json: answers
                     }, function (err, response, body) {
@@ -245,6 +262,8 @@ module.exports = function (app) {
             return;
         }
 
+        var remoteIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+
         Account.findOne({username: req.body.username}, function (err, acc) {
             if (err) return console.log(err);
             if (acc) {
@@ -302,7 +321,7 @@ module.exports = function (app) {
                                     lastUsed: 0,
                                     errorCounter: 0,
                                     successCounter:0,
-                                    requestIp: ""
+                                    requestIp: remoteIp
                                 });
                                 account.save(function (err, account) {
                                     if (err) {
@@ -435,10 +454,12 @@ module.exports = function (app) {
     })
 
     function getUser(token, cb) {
+        console.log(("[Auth] GET https://api.mojang.com/user" ).debug);
         request({
             method: "GET",
             url: "https://api.mojang.com/user",
             headers: {
+                "User-Agent": "MineSkin.org",
                 "Content-Type": "application/json",
                 "Authorization": "Bearer " + token
             },
@@ -452,10 +473,12 @@ module.exports = function (app) {
     }
 
     function getProfile(token, cb) {
+        console.log(("[Auth] GET https://api.mojang.com/user/profiles/agent/minecraft" ).debug);
         request({
             method: "GET",
             url: "https://api.mojang.com/user/profiles/agent/minecraft",
             headers: {
+                "User-Agent": "MineSkin.org",
                 "Content-Type": "application/json",
                 "Authorization": "Bearer " + token
             },

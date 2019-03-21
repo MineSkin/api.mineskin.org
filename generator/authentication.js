@@ -103,10 +103,10 @@ module.exports.authenticate = function (account, cb) {
                         console.log(("[Auth] Couldn't refresh accessToken").debug);
 
                         // Login
-                        module.exports.signout(account, function (err) {
-                            if (err) console.log((err).warn);
+                        // module.exports.signout(account, function (err) {
+                        //     if (err) console.log((err).warn);
                             loginCallback(account);
-                        })
+                        // })
                     })
                 } else {
                     console.log("[Auth] (#" + account.id + ") got a new accessToken");

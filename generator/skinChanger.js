@@ -51,7 +51,9 @@ module.exports.generateUrl = function (account, url, model, cb) {
     console.log(("[SkinChanger] Generating Skin from URL").info);
     console.log(("" + url).debug);
 
-    account.requestIp = randomip('0.0.0.0', 0);
+
+    if (!account.requestIp)
+        account.requestIp = randomip('0.0.0.0', 0);
     console.log(("Using ip " + account.requestIp).debug);
 
     authentication.authenticate(account, function (authErr, authResult) {
@@ -104,7 +106,8 @@ module.exports.generateUrl = function (account, url, model, cb) {
 module.exports.generateUpload = function (account, fileBuf, model, cb) {
     console.log(("[SkinChanger] Generating Skin from Upload").info);
 
-    account.requestIp = randomip('0.0.0.0', 0);
+    if (!account.requestIp)
+        account.requestIp = randomip('0.0.0.0', 0);
     console.log(("Using ip " + account.requestIp).debug);
 
     authentication.authenticate(account, function (authErr, authResult) {
