@@ -11,6 +11,7 @@ var request = require("request").defaults({
     }
 });
 var Util = require("../util");
+var config = require("../config");
 
 // Schemas
 var Account = require("../db/schemas/account").Account;
@@ -61,6 +62,8 @@ module.exports.authenticate = function (account, cb) {
             // account.clientToken = body.clientToken;
             console.log(("[Auth] (#"+account.id+") AccessToken: " + body.accessToken).debug);
             account.accessToken = body.accessToken;
+            account.requestServer = config.server;
+            console.log(("[Auth] (#" + account.id + ") RequestServer set to " + config.server));
             account.save(function (err, account) {
                 cb(null, account);
             })
@@ -112,6 +115,7 @@ module.exports.authenticate = function (account, cb) {
                 if (err || response.statusCode < 200 || response.statusCode > 230 || (body && body.error)) {
                     console.log(err)
                     account.accessToken = null;
+                    account.requestServer = null;
                     account.save(function (err, account) {
                         console.log(("[Auth] Couldn't refresh accessToken").debug);
 
@@ -127,6 +131,8 @@ module.exports.authenticate = function (account, cb) {
                     console.log("[Auth] (#" + account.id + ") got a new accessToken");
                     console.log(("[Auth] AccessToken: " + body.accessToken).debug);
                     account.accessToken = body.accessToken;
+                    account.requestServer = config.server;
+                    console.log(("[Auth] (#" + account.id + ") RequestServer set to " + config.server));
                     account.save(function (err, account) {
                         console.log(("[Auth] (#" + account.id + ") Logging in with AccessToken").info);
                         cb(null, account);
@@ -273,6 +279,7 @@ module.exports.completeChallenges = function (account, cb) {
 module.exports.signout = function (account, cb) {
     // ygg.signout(account.username, Util.crypto.decrypt(account.passwordNew), account.requestIp, cb);
     account.accessToken = null;
+    account.requestServer = null;
     // account.clientToken = null;
     console.log(("[Auth] POST " + urls.signout).debug);
     request({
