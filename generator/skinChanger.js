@@ -5,6 +5,8 @@ var fs = require("fs");
 var authentication = require("./authentication");
 var randomip = require("random-ip");
 
+var config = require("../config");
+
 // Schemas
 var Account = require("../db/schemas/account").Account;
 var Skin = require("../db/schemas/skin").Skin;
@@ -29,7 +31,7 @@ module.exports.findExistingSkin = function (hash, name, model, visibility, cb) {
 
 module.exports.getAvailableAccount = function (req, res, cb) {
     var time = Date.now() / 1000;
-    Account.findOne({enabled: true, lastUsed: {'$lt': (time - 30)}}).sort({lastUsed: 1, errorCounter: 1}).exec(function (err, account) {
+    Account.findOne({enabled: true, requestServer: {$in: [null, config.server]}, lastUsed: {'$lt': (time - 30)}}).sort({lastUsed: 1, errorCounter: 1}).exec(function (err, account) {
         if (err) return console.log(err);
         if (!account) {
             console.log(("[SkinChanger] There are no accounts available!").error);
