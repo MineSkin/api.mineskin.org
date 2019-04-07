@@ -27,7 +27,10 @@ var accountSchema = new Schema({
     accessToken: String,
     clientToken: String,
     requestIp: String,
-    requestServer: String,
+    requestServer: {
+        type: String,
+        index: true
+    },
     type: {
         type: String,
         enum: ["internal", "external"],
