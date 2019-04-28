@@ -14,7 +14,7 @@ module.exports = function (app) {
     app.get("/render/:type(head|skin)", function (req, res) {
         var url = req.query.url;
         if (!url) {
-            req.status(400).json({error: "Missing URL"});
+            res.status(400).json({error: "Missing URL"});
             return;
         }
         var options = req.query.options || "&aa=true";
