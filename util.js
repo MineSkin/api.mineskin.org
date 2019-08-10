@@ -19,7 +19,7 @@ module.exports.checkTraffic = function (req, res) {
         console.log(("IP: " + ip).debug);
 
         module.exports.getGeneratorDelay().then(function (delay) {
-            Traffic.findOne({ip: ip}).lean().exec( function (err, traffic) {
+            Traffic.findOne({ip: ip}).lean().exec(function (err, traffic) {
                 if (err) return console.log(err);
                 if (!traffic) {// First request
                     fullfill(true, delay);
@@ -107,6 +107,15 @@ module.exports.skinToJson = function (skin, delay) {
         views: skin.views,
         nextRequest: delay || 0
     }
+};
+
+// https://coderwall.com/p/_g3x9q/how-to-check-if-javascript-object-is-empty
+module.exports.isEmpty = function (obj) {
+    for (var key in obj) {
+        if (obj.hasOwnProperty(key))
+            return false;
+    }
+    return true;
 };
 
 module.exports.crypto = require("./encryption");

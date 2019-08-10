@@ -239,9 +239,15 @@ module.exports.completeChallenges = function (account, cb) {
 
                 var questions = JSON.parse(body);
                 var answers = [];
-                questions.forEach(function (question) {
-                    answers.push({id: question.answer.id, answer: account.security});
-                });
+                if (questions && !Util.isEmpty(questions)) {
+                    questions.forEach(function (question) {
+                        answers.push({id: question.answer.id, answer: account.security});
+                    });
+                } else {
+                    console.log(("[Auth] Got empty security questions object").warn)
+                    // I'm guessing this means that there are no questions defined in the account,
+                    //  though I'm not sure what kind of response the API expects here (since the access was denied in order to even get here)
+                }
                 // console.log(JSON.stringify(answers).debug);
 
 
