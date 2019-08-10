@@ -3,6 +3,8 @@ var config = {};
 config.port = 3017;
 config.server = "default";
 
+config.generateDelay = 60;
+
 config.optimus = {
     prime: 0,
     inverse: 0,

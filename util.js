@@ -76,7 +76,7 @@ module.exports.getGeneratorDelay = function () {
         Account.count({enabled: true}, function (err, count) {
             if (err) return console.log(err);
 
-            var delay = Math.round(60 / Math.max(1, count));
+            var delay = Math.round(config.generateDelay / Math.max(1, count));
             fullfill(delay);
         })
     })
