@@ -74,7 +74,7 @@ module.exports = function (app) {
         //          res.status(response.statusCode).end();
         //      }
         //  })
-        request("http://tools.inventivetalent.org/skinrender/3d.php?headOnly=" + (type === "head") + "&user=" + url + options).pipe(res);
+        request("https://tools.inventivetalent.org/skinrender/3d.php?headOnly=" + (type === "head") + "&user=" + url + options).pipe(res);
     }
 
 };
