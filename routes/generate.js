@@ -74,7 +74,7 @@ module.exports = function (app, config, optimus) {
                             fs.close(fd);
                             return console.log(err);
                         }
-                        if (response.statusCode < 200 ||response.statusCode>230) {
+                        if (response.statusCode < 200 || response.statusCode > 230) {
                             res.status(500).json({"error": "Failed to download image", code: response.statusCode});
                             fileCleanup();
                             fs.close(fd);
@@ -134,12 +134,12 @@ module.exports = function (app, config, optimus) {
                                                                         console.log(("Failed to download skin data").warn)
 
                                                                         console.log(("=> FAIL #" + account.errorCounter + "\n").red);
-                                                                        increaseStat("generate.fail");
+                                                                        logFail(account, "url", "skin_data_fetch_failed");
                                                                     } else {
                                                                         res.json(Util.skinToJson(skin, generatorDelay));
 
                                                                         console.log("=> SUCCESS\n".green);
-                                                                        increaseStat("generate.success");
+                                                                        logSuccess(account, "url");
                                                                     }
                                                                 })
                                                             })
@@ -148,7 +148,7 @@ module.exports = function (app, config, optimus) {
                                                             console.log(("Failed to generate skin data").warn)
 
                                                             console.log(("=> FAIL #" + account.errorCounter + "\n").red);
-                                                            increaseStat("generate.fail");
+                                                            logFail(account, "url", "skin_data_generation_failed");
                                                         }
                                                     })
                                                 })
@@ -248,12 +248,12 @@ module.exports = function (app, config, optimus) {
                                                                 console.log(("Failed to download skin data").warn)
 
                                                                 console.log(("=> FAIL #" + account.errorCounter + "\n").red);
-                                                                increaseStat("generate.fail");
+                                                                logFail(account, "upload", "skin_data_fetch_failed");
                                                             } else {
                                                                 res.json(Util.skinToJson(skin, generatorDelay));
 
                                                                 console.log("=> SUCCESS\n".green);
-                                                                increaseStat("generate.success");
+                                                                logSuccess(account, "upload");
                                                             }
                                                         });
                                                     })
@@ -262,7 +262,7 @@ module.exports = function (app, config, optimus) {
                                                     console.log(("Failed to upload skin data").warn)
 
                                                     console.log(("=> FAIL #" + account.errorCounter + "\n").red);
-                                                    increaseStat("generate.fail");
+                                                    logFail(account, "upload", "skin_data_generation_failed");
                                                 }
                                             })
                                         })
@@ -363,12 +363,12 @@ module.exports = function (app, config, optimus) {
                         console.log(("Failed to download skin data").warn)
 
                         console.log(("=> FAIL\n").red);
-                        increaseStat("generate.fail");
+                        logFail(null, "user", "skin_data_fetch_failed");
                     } else {
                         res.json(Util.skinToJson(skin, generatorDelay));
 
                         console.log("=> SUCCESS\n".green);
-                        increaseStat("generate.success");
+                        logSuccess(null, "user");
                     }
                 })
             })
@@ -413,7 +413,7 @@ module.exports = function (app, config, optimus) {
                     });
                 } else {
                     var fileHashCallback = function (fileHash) {
-                        var rand = Math.ceil((Date.now() - 1500000000000)+Math.random());
+                        var rand = Math.ceil((Date.now() - 1500000000000) + Math.random());
                         var newId = optimus.encode(rand);
                         var skin = new Skin({
                             // '_id': mongoose.Types.ObjectId(md5(fileHash + options.name + Date.now())),
@@ -455,8 +455,25 @@ module.exports = function (app, config, optimus) {
         })
     }
 
+
+    function logFail(account, generateType, errorCause) {
+        increaseStat("generate.fail");
+
+
+        fs.appendFileSync("generateStatus.log", "[" + new Date().toUTCString() + "] FAIL [A" + (account ? account.id : "-1") + "/" + generateType + "] (" + errorCause + ")\n", "utf8");
+    }
+
+    function logSuccess(account, generateType) {
+        increaseStat("generate.success");
+
+
+        fs.appendFileSync("generateStatus.log", "[" + new Date().toUTCString() + "] SUCCESS [A" + (account ? account.id : "-1") + "/" + generateType + "]\n", "utf8");
+    }
+
     function increaseStat(key, amount, cb) {
         if (!amount) amount = 1;
+
+
         Stat.findOne({key: key}, function (err, stat) {
             if (err) return console.log(err);
             if (!stat) {
@@ -464,7 +481,8 @@ module.exports = function (app, config, optimus) {
             }
             stat.value += amount;
             stat.save(cb);
-        })
+        });
+
     };
 
 }
