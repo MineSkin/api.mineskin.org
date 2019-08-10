@@ -2,7 +2,7 @@ var uuid = require('uuid/v4');
 var md5 = require("md5");
 var urls = require("./urls");
 var request = require("request").defaults({
-    headers:{
+    headers: {
         "Accept": "application/json, text/plain, */*",
         "Accept-Encoding": "gzip, deflate",
         "Origin": "mojang://launcher",
@@ -28,7 +28,7 @@ module.exports.authenticate = function (account, cb) {
         if (!account.clientToken)
             account.clientToken = md5(uuid());
         console.log(("[Auth] POST " + urls.authenticate).debug);
-        var body={
+        var body = {
             agent: {
                 name: "Minecraft",
                 version: 1
@@ -50,7 +50,7 @@ module.exports.authenticate = function (account, cb) {
             json: true,
             body: body
         }, function (err, response, body) {
-            console.log(("[Auth] (#"+account.id+") Auth Body:").debug);
+            console.log(("[Auth] (#" + account.id + ") Auth Body:").debug);
             console.log(("" + body).debug);
             console.log(("" + JSON.stringify(body)).debug);
             if (err || response.statusCode < 200 || response.statusCode > 230 || (body && body.error)) {
@@ -60,7 +60,7 @@ module.exports.authenticate = function (account, cb) {
 
             // Get new token
             // account.clientToken = body.clientToken;
-            console.log(("[Auth] (#"+account.id+") AccessToken: " + body.accessToken).debug);
+            console.log(("[Auth] (#" + account.id + ") AccessToken: " + body.accessToken).debug);
             account.accessToken = body.accessToken;
             account.requestServer = config.server;
             console.log(("[Auth] (#" + account.id + ") RequestServer set to " + config.server));
@@ -93,7 +93,7 @@ module.exports.authenticate = function (account, cb) {
         function refresh() {
             console.info("[Auth] (#" + account.id + ") Refreshing tokens");
             console.debug("[Auth] POST " + urls.refresh);
-            var body={
+            var body = {
                 accessToken: account.accessToken,
                 clientToken: account.clientToken,
                 requestUser: true
@@ -110,7 +110,7 @@ module.exports.authenticate = function (account, cb) {
                 json: true,
                 body: body
             }, function (err, response, body) {
-                console.log(("[Auth] (#"+account.id+") Refresh Body:").debug)
+                console.log(("[Auth] (#" + account.id + ") Refresh Body:").debug)
                 console.log(("[Auth] " + JSON.stringify(body)).debug);
                 if (err || response.statusCode < 200 || response.statusCode > 230 || (body && body.error)) {
                     console.log(err)
@@ -143,7 +143,7 @@ module.exports.authenticate = function (account, cb) {
 
         console.log("[Auth] (#" + account.id + ") validating tokens");
         console.log(("[Auth] POST " + urls.validate).debug);
-        var body={
+        var body = {
             accessToken: account.accessToken,
             clientToken: account.clientToken,
             requestUser: true
@@ -235,11 +235,13 @@ module.exports.completeChallenges = function (account, cb) {
                 }
             }, function (err, response, body) {
                 if (err) return console.log(err);
-                console.debug(body);
+                console.log("[Auth] Challenges:");
+                console.log(body);
 
                 var questions = JSON.parse(body);
                 var answers = [];
-                if (questions && !Util.isEmpty(questions)) {
+                if (questions && questions.length > 0) {
+                    console.log(typeof questions);
                     questions.forEach(function (question) {
                         answers.push({id: question.answer.id, answer: account.security});
                     });
@@ -272,6 +274,7 @@ module.exports.completeChallenges = function (account, cb) {
                         cb(account);
                     } else {
                         console.log(("[Auth] (#" + account.id + ") Failed to complete security challenges").warn);
+                        console.log(("" + JSON.stringify(body)).warn);
                         cb();
                     }
                 })
