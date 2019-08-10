@@ -42,7 +42,7 @@ module.exports.getAvailableAccount = function (req, res, cb) {
             //     // account.clientToken = null;
             // }
             account.lastUsed = account.lastSelected = time;
-            account.save(function (err,account) {
+            account.save(function (err, account) {
                 cb(account);
             });
         }
@@ -83,7 +83,7 @@ module.exports.generateUrl = function (account, url, model, cb) {
                         if (response.statusCode >= 200 && response.statusCode < 300) {
                             cb(true);
                         } else {
-                            cb(response.statusCode);
+                            cb(response.statusCode, "generate_rescode_" + response.statusCode);
                             console.log(("Got response " + response.statusCode + " for generateUrl").warn);
                         }
                     })
@@ -91,7 +91,7 @@ module.exports.generateUrl = function (account, url, model, cb) {
                     account.successCounter = 0;
                     account.errorCounter++;
                     account.save(function (err, account) {
-                        cb("Challenges failed");
+                        cb("Challenges failed", "challenges_failed");
                     });
                 }
             })
@@ -99,7 +99,7 @@ module.exports.generateUrl = function (account, url, model, cb) {
             account.successCounter = 0;
             account.errorCounter++;
             account.save(function (err, account) {
-                cb("Authentication failed - " + authErr.errorMessage);
+                cb("Authentication failed - " + authErr.errorMessage, "auth_failed");
             });
         }
     })
@@ -145,7 +145,7 @@ module.exports.generateUpload = function (account, fileBuf, model, cb) {
                         if (response.statusCode >= 200 && response.statusCode < 300) {
                             cb(true);
                         } else {
-                            cb(response.statusCode);
+                            cb(response.statusCode, "generate_rescode_" + response.statusCode);
                             console.log(("Got response " + response.statusCode + " for generateUpload").warn);
                         }
                     });
@@ -154,7 +154,7 @@ module.exports.generateUpload = function (account, fileBuf, model, cb) {
                     account.errorCounter++;
                     account.save(function (err, account) {
                         console.log(("Challenges failed").warn);
-                        cb("Challenges failed");
+                        cb("Challenges failed", "challenges_failed");
                     });
                 }
             })
@@ -162,7 +162,7 @@ module.exports.generateUpload = function (account, fileBuf, model, cb) {
             account.successCounter = 0;
             account.errorCounter++;
             account.save(function (err, account) {
-                cb("Authentication failed - " + authErr.errorMessage);
+                cb("Authentication failed - " + authErr.errorMessage, "auth_failed");
             });
         }
     })

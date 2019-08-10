@@ -112,7 +112,7 @@ module.exports = function (app, config, optimus) {
                                                         fs.close(fd);
                                                         return console.log(err);
                                                     }
-                                                    skinChanger.generateUrl(account, url, model, function (result) {
+                                                    skinChanger.generateUrl(account, url, model, function (result, errorCause) {
                                                         fs.close(fd);
                                                         fileCleanup();
                                                         if (result === true) {
@@ -148,7 +148,7 @@ module.exports = function (app, config, optimus) {
                                                             console.log(("Failed to generate skin data").warn)
 
                                                             console.log(("=> FAIL #" + account.errorCounter + "\n").red);
-                                                            logFail(account, "url", "skin_data_generation_failed");
+                                                            logFail(account, "url", errorCause || "skin_data_generation_failed");
                                                         }
                                                     })
                                                 })
@@ -226,7 +226,7 @@ module.exports = function (app, config, optimus) {
                                                 fs.close(fd);
                                                 return console.log(err);
                                             }
-                                            skinChanger.generateUpload(account, buf, model, function (result) {
+                                            skinChanger.generateUpload(account, buf, model, function (result, errorCause) {
                                                 fs.close(fd);
                                                 fileCleanup();
                                                 if (result === true) {
@@ -262,7 +262,7 @@ module.exports = function (app, config, optimus) {
                                                     console.log(("Failed to upload skin data").warn)
 
                                                     console.log(("=> FAIL #" + account.errorCounter + "\n").red);
-                                                    logFail(account, "upload", "skin_data_generation_failed");
+                                                    logFail(account, "upload", errorCause || "skin_data_generation_failed");
                                                 }
                                             })
                                         })
