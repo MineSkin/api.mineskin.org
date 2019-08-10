@@ -249,6 +249,8 @@ module.exports.completeChallenges = function (account, cb) {
                     console.log(("[Auth] Got empty security questions object").warn)
                     // I'm guessing this means that there are no questions defined in the account,
                     //  though I'm not sure what kind of response the API expects here (since the access was denied in order to even get here)
+                    cb();
+                    return;
                 }
                 // console.log(JSON.stringify(answers).debug);
 
