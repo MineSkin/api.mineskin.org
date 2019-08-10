@@ -99,11 +99,12 @@ module.exports.generateUrl = function (account, url, model, cb) {
             account.successCounter = 0;
             account.errorCounter++;
             account.save(function (err, account) {
-                cb("Authentication failed - " + authErr.errorMessage, "auth_failed");
+                cb("Authentication failed - " + authErr.errorMessage, authErrorCauseFromMessage(authErr.errorMessage));
             });
         }
     })
-}
+};
+
 
 // 'fileBuf' must be a buffer
 module.exports.generateUpload = function (account, fileBuf, model, cb) {
@@ -162,10 +163,24 @@ module.exports.generateUpload = function (account, fileBuf, model, cb) {
             account.successCounter = 0;
             account.errorCounter++;
             account.save(function (err, account) {
-                cb("Authentication failed - " + authErr.errorMessage, "auth_failed");
+                cb("Authentication failed - " + authErr.errorMessage, authErrorCauseFromMessage(authErr.errorMessage));
             });
         }
     })
+};
+
+
+function authErrorCauseFromMessage(msg) {
+    if (msg && msg.length > 0) {
+        if (msg.indexOf("Invalid credentials") !== -1) {
+            return "invalid_credentials";
+        }
+        if (msg.indexOf("answer was incorrect") !== -1) {
+            return "wrong_security_answers";
+        }
+    }
+
+    return "auth_failed";
 }
 
 
