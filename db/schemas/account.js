@@ -14,6 +14,7 @@ var accountSchema = new Schema({
     passwordNew: String,
     security: String,
     uuid: String,
+    lastSelected: Number,
     lastUsed: {
         type: Number,
         index: true

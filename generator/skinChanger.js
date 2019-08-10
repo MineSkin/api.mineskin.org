@@ -41,7 +41,7 @@ module.exports.getAvailableAccount = function (req, res, cb) {
             //     account.accessToken = null;
             //     // account.clientToken = null;
             // }
-            account.lastUsed = time;
+            account.lastSelected = time;
             account.save(function (err,account) {
                 cb(account);
             });
@@ -53,7 +53,6 @@ module.exports.generateUrl = function (account, url, model, cb) {
     console.log(("[SkinChanger] Generating Skin from URL").info);
     console.log(("" + url).debug);
 
-
     if (!account.requestIp)
         account.requestIp = randomip('0.0.0.0', 0);
     console.log(("Using ip " + account.requestIp).debug);
@@ -62,6 +61,8 @@ module.exports.generateUrl = function (account, url, model, cb) {
         if (!authErr && authResult) {
             authentication.completeChallenges(account, function (result) {
                 if (result) {
+                    account.lastUsed = account.lastSelected;// account *should* be saved in the following code, so there shouldn't be any need to make another call here
+
                     request({
                         method: "POST",
                         url: urls.skin.replace(":uuid", account.uuid),
@@ -116,6 +117,8 @@ module.exports.generateUpload = function (account, fileBuf, model, cb) {
         if (!authErr && authResult) {
             authentication.completeChallenges(account, function (result) {
                 if (result) {
+                    account.lastUsed = account.lastSelected;// account *should* be saved in the following code, so there shouldn't be any need to make another call here
+
                     request({
                         method: "PUT",
                         url: urls.skin.replace(":uuid", account.uuid),
