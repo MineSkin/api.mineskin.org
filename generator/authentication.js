@@ -124,7 +124,7 @@ module.exports.authenticate = function (account, cb) {
                         //     if (err) console.log((err).warn);
                         setTimeout(function () {
                             loginCallback(account);
-                        }, 1000);
+                        }, body.error === "TooManyRequestsException" ? 10000 : 1000);
                         // })
                     })
                 } else {
@@ -164,8 +164,10 @@ module.exports.authenticate = function (account, cb) {
             console.log(("" + JSON.stringify(body)).debug);
             if (err || response.statusCode < 200 || response.statusCode > 230 || (body && body.error)) {
                 console.info("[Auth] Couldn't validate tokens");
-                console.log(err)
-                refresh();
+                console.log(err);
+                setTimeout(function () {
+                    refresh();
+                }, body.error === "TooManyRequestsException" ? 10000 : 1000);
             } else {
                 console.info("[Auth] Tokens are still valid!");
                 cb(null, account);
