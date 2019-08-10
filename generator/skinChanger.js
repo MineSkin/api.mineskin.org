@@ -59,7 +59,7 @@ module.exports.generateUrl = function (account, url, model, cb) {
 
     authentication.authenticate(account, function (authErr, authResult) {
         if (!authErr && authResult) {
-            authentication.completeChallenges(account, function (result) {
+            authentication.completeChallenges(account, function (result, errorBody) {
                 if (result) {
                     account.lastUsed = account.lastSelected;// account *should* be saved in the following code, so there shouldn't be any need to make another call here
 
@@ -91,7 +91,7 @@ module.exports.generateUrl = function (account, url, model, cb) {
                     account.successCounter = 0;
                     account.errorCounter++;
                     account.save(function (err, account) {
-                        cb("Challenges failed", "challenges_failed");
+                        cb("Challenges failed", authErrorCauseFromMessage(errorBody.errorMessage)||"challenges_failed");
                     });
                 }
             })
@@ -116,7 +116,7 @@ module.exports.generateUpload = function (account, fileBuf, model, cb) {
 
     authentication.authenticate(account, function (authErr, authResult) {
         if (!authErr && authResult) {
-            authentication.completeChallenges(account, function (result) {
+            authentication.completeChallenges(account, function (result, errorBody) {
                 if (result) {
                     account.lastUsed = account.lastSelected;// account *should* be saved in the following code, so there shouldn't be any need to make another call here
 
@@ -155,7 +155,7 @@ module.exports.generateUpload = function (account, fileBuf, model, cb) {
                     account.errorCounter++;
                     account.save(function (err, account) {
                         console.log(("Challenges failed").warn);
-                        cb("Challenges failed", "challenges_failed");
+                        cb("Challenges failed", authErrorCauseFromMessage(errorBody.errorMessage)||"challenges_failed");
                     });
                 }
             })
@@ -179,8 +179,6 @@ function authErrorCauseFromMessage(msg) {
             return "wrong_security_answers";
         }
     }
-
-    return "auth_failed";
 }
 
 
