@@ -57,7 +57,7 @@ module.exports = function (app) {
             Account.count({enabled: true}, function (err, count) {
                 if (err) return console.log(err);
                 stats.accounts = count;
-                Account.count({enabled: true, errorCounter: {$lt: 100}}, function (err, healthyCount) {
+                Account.count({enabled: true, errorCounter: {$lt: 100}, successRate: {$gt: 0}}, function (err, healthyCount) {
                     if (err) return console.log(err);
                     stats.healthyAccounts = healthyCount;
                     Stat.find({$or: [{key: "generate.success"}, {key: "generate.fail"}]}).lean().exec(function (err, s) {
