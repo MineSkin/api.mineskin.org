@@ -21,6 +21,7 @@
     "extend": "^3.0.2",
     "file-type": "^10.8.0",
     "hoek": ">=4.2.1",
+    "image-hash": "git://github.com/InventivetalentDev/image-hash.git",
     "image-size": "^0.7.2",
     "ip": "^1.1.5",
     "md5": "^2.2.1",
