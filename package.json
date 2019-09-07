@@ -48,7 +48,7 @@
     "socket.io-stream": "^0.9.1",
     "tmp": "0.0.33",
     "tunnel-ssh": "^4.1.4",
-    "unirest": "^0.5.1",
+    "unirest": "^0.6.0",
     "uuid": "^3.1.0",
     "yggdrasil": "^1.1.0"
   }
