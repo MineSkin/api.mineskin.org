@@ -70,10 +70,6 @@ module.exports.validateImage = function (req, res, file) {
     return true;
 };
 
-module.exports.imageHash = function (buffer) {
-
-};
-
 
 module.exports.getGeneratorDelay = function () {
     return new Promise(function (fullfill, reject) {
