@@ -342,33 +342,28 @@ module.exports = function (app, config, optimus) {
                     tmp.file(function (err, path, fd, fileCleanup) {
                         if (err) throw err;
 
-                        // var file = fs.createWriteStream(path);
-                        request(skinTexture.url, {"encoding": "binary"}, function (err, response, body) {
-                            if (err) {
-                                fileCleanup();
-                                fs.close(fd);
-                                return console.log(err);
-                            }
-
-                            fs.write(fd, response.body, "binary", function (err) {
+                        var file = fs.createWriteStream(path);
+                        console.log("Downloading user texture from " + skinTexture.url + " to " + path);
+                        request(skinTexture.url).pipe(file)
+                            .on("error", function (err) {
                                 if (err) {
                                     fileCleanup();
                                     fs.close(fd);
                                     return console.log(err);
                                 }
-                                imageHash(path, IMAGE_HASH_BITS, IMAGE_HASH_PRECISE, function (err, fileHash) {
+                            })
+                            .on("close", function () {
+                                imageHash(path, IMAGE_HASH_BITS, IMAGE_HASH_PRECISE, function (err,fileHash) {
                                     if (err) {
                                         fileCleanup();
                                         fs.close(fd);
                                         return console.log(err);
                                     }
-
                                     cb(fileHash);
                                     fs.close(fd);
                                     fileCleanup();
                                 });
                             });
-                        })
                     })
                 }, longUuid, genStart, function (err, skin) {
                     if (err) {
