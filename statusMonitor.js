@@ -6,7 +6,8 @@ module.exports = function (app, config) {
     });
 
     var statusMonitor = require("express-status-monitor")({
-        path: ''
+        path: '',
+        title: 'Mineskin Status'
     });
     app.use(statusMonitor.middleware);
     app.get("/status-monitor", auth.connect(basic), statusMonitor.pageRoute);
