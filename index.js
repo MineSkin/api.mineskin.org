@@ -26,6 +26,8 @@ var port = process.env.PORT || config.port || 3014;
 require("rootpath")();
 require('console-stamp')(console, 'HH:MM:ss.l');
 
+require("./statusMonitor");
+
 app.use(function (req, res, next) {
     res.header('Access-Control-Allow-Origin', '*');
     if (req.method === 'OPTIONS') {
