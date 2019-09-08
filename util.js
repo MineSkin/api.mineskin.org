@@ -68,7 +68,7 @@ module.exports.validateImage = function (req, res, file) {
     }
 
     return true;
-}
+};
 
 
 module.exports.getGeneratorDelay = function () {

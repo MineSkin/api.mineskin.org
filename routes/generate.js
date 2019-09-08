@@ -3,6 +3,9 @@ module.exports = function (app, config, optimus) {
 
     var SKIN_COUNTER = 1000000;
 
+    var IMAGE_HASH_BITS = 16;
+    var IMAGE_HASH_PRECISE = false;
+
     var remoteFileSize = require("remote-file-size");
     var Util = require("../util");
     var http = require('http');
@@ -10,6 +13,7 @@ module.exports = function (app, config, optimus) {
     var fs = require('fs');
     var fileType = require("file-type");
     var imageSize = require("image-size");
+    var imageHash = require("image-hash").imageHash;
     var tmp = require("tmp");
     tmp.setGracefulCleanup();
     var md5 = require("md5");
@@ -87,13 +91,12 @@ module.exports = function (app, config, optimus) {
                                 return console.log(err);
                             }
 
-                            fs.readFile(path, function (err, buf) {
+                            imageHash(path, IMAGE_HASH_BITS, IMAGE_HASH_PRECISE, function (err, fileHash) {
                                 if (err) {
                                     fileCleanup();
                                     fs.close(fd);
                                     return console.log(err);
                                 }
-                                var fileHash = md5(buf);
                                 console.log("Hash: " + fileHash)
 
                                 skinChanger.findExistingSkin(fileHash, name, model, visibility, function (existingSkin) {
@@ -201,14 +204,12 @@ module.exports = function (app, config, optimus) {
                         fs.close(fd);
                         return console.log(err);
                     }
-
-                    fs.readFile(path, function (err, buf) {
+                    imageHash(path, IMAGE_HASH_BITS, IMAGE_HASH_PRECISE, function (err, fileHash) {
                         if (err) {
                             fileCleanup();
                             fs.close(fd);
                             return console.log(err);
                         }
-                        var fileHash = md5(buf);
 
                         skinChanger.findExistingSkin(fileHash, name, model, visibility, function (existingSkin) {
                             if (existingSkin) {
@@ -216,61 +217,70 @@ module.exports = function (app, config, optimus) {
                                 fs.close(fd);
                                 fileCleanup();
                             } else {
-                                var validImage = Util.validateImage(req, res, path);
-                                // cleanup();
-                                if (validImage) {
-                                    skinChanger.getAvailableAccount(req, res, function (account) {
-                                        Traffic.update({ip: req.realAddress}, {lastRequest: new Date()}, {upsert: true}, function (err, traffic) {
-                                            if (err) {
-                                                fileCleanup();
-                                                fs.close(fd);
-                                                return console.log(err);
-                                            }
-                                            skinChanger.generateUpload(account, buf, model, function (result, errorCause) {
-                                                fs.close(fd);
-                                                fileCleanup();
-                                                if (result === true) {
-                                                    account.errorCounter = 0;
-                                                    if (!account.successCounter) account.successCounter = 0;
-                                                    account.successCounter++;
-                                                    account.save(function (err, account) {
-                                                        if (err) return console.log(err);
-                                                        getAndSaveSkinData(account, {
-                                                            type: "upload",
-                                                            model: model,
-                                                            visibility: visibility,
-                                                            name: name,
-                                                            via: (req.headers["referer"] && req.headers["referer"].indexOf("mineskin.org") > -1) ? "website" : "api",
-                                                            ua: req.headers["user-agent"]
-                                                        }, fileHash, uuid(), genStart, function (err, skin) {
-                                                            if (err) {
-                                                                res.status(500).json({error: "Failed to get skin data", err: err, accountId: account.id});
-                                                                console.log(("Failed to download skin data").warn)
+                                fs.readFile(path, function (err, buf) {
+                                    if (err) {
+                                        fileCleanup();
+                                        fs.close(fd);
+                                        return console.log(err);
+                                    }
 
-                                                                console.log(("=> FAIL #" + account.errorCounter + "\n").red);
-                                                                logFail(account, "upload", "skin_data_fetch_failed");
-                                                            } else {
-                                                                res.json(Util.skinToJson(skin, generatorDelay));
 
-                                                                console.log("=> SUCCESS\n".green);
-                                                                logSuccess(account, "upload");
-                                                            }
-                                                        });
-                                                    })
-                                                } else {
-                                                    res.status(500).json({error: "Failed to upload skin data (" + result + ")", err: result, accountId: account.id});
-                                                    console.log(("Failed to upload skin data").warn)
-
-                                                    console.log(("=> FAIL #" + account.errorCounter + "\n").red);
-                                                    logFail(account, "upload", errorCause || "skin_data_generation_failed");
+                                    var validImage = Util.validateImage(req, res, path);
+                                    // cleanup();
+                                    if (validImage) {
+                                        skinChanger.getAvailableAccount(req, res, function (account) {
+                                            Traffic.update({ip: req.realAddress}, {lastRequest: new Date()}, {upsert: true}, function (err, traffic) {
+                                                if (err) {
+                                                    fileCleanup();
+                                                    fs.close(fd);
+                                                    return console.log(err);
                                                 }
+                                                skinChanger.generateUpload(account, buf, model, function (result, errorCause) {
+                                                    fs.close(fd);
+                                                    fileCleanup();
+                                                    if (result === true) {
+                                                        account.errorCounter = 0;
+                                                        if (!account.successCounter) account.successCounter = 0;
+                                                        account.successCounter++;
+                                                        account.save(function (err, account) {
+                                                            if (err) return console.log(err);
+                                                            getAndSaveSkinData(account, {
+                                                                type: "upload",
+                                                                model: model,
+                                                                visibility: visibility,
+                                                                name: name,
+                                                                via: (req.headers["referer"] && req.headers["referer"].indexOf("mineskin.org") > -1) ? "website" : "api",
+                                                                ua: req.headers["user-agent"]
+                                                            }, fileHash, uuid(), genStart, function (err, skin) {
+                                                                if (err) {
+                                                                    res.status(500).json({error: "Failed to get skin data", err: err, accountId: account.id});
+                                                                    console.log(("Failed to download skin data").warn)
+
+                                                                    console.log(("=> FAIL #" + account.errorCounter + "\n").red);
+                                                                    logFail(account, "upload", "skin_data_fetch_failed");
+                                                                } else {
+                                                                    res.json(Util.skinToJson(skin, generatorDelay));
+
+                                                                    console.log("=> SUCCESS\n".green);
+                                                                    logSuccess(account, "upload");
+                                                                }
+                                                            });
+                                                        })
+                                                    } else {
+                                                        res.status(500).json({error: "Failed to upload skin data (" + result + ")", err: result, accountId: account.id});
+                                                        console.log(("Failed to upload skin data").warn)
+
+                                                        console.log(("=> FAIL #" + account.errorCounter + "\n").red);
+                                                        logFail(account, "upload", errorCause || "skin_data_generation_failed");
+                                                    }
+                                                })
                                             })
                                         })
-                                    })
-                                }
+                                    }
+                                });
                             }
                         })
-                    })
+                    });
                 })
             })
         })
@@ -346,14 +356,17 @@ module.exports = function (app, config, optimus) {
                                     fs.close(fd);
                                     return console.log(err);
                                 }
-                                fs.readFile(path, function (err, buf) {
-                                    if (err) return console.log(err);
-                                    var fileHash = md5(buf);
+                                imageHash(path, IMAGE_HASH_BITS, IMAGE_HASH_PRECISE, function (err, fileHash) {
+                                    if (err) {
+                                        fileCleanup();
+                                        fs.close(fd);
+                                        return console.log(err);
+                                    }
 
                                     cb(fileHash);
                                     fs.close(fd);
                                     fileCleanup();
-                                })
+                                });
                             });
                         })
                     })
