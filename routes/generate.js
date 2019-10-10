@@ -3,9 +3,6 @@ module.exports = function (app, config, optimus) {
 
     var SKIN_COUNTER = 1000000;
 
-    var IMAGE_HASH_BITS = 16;
-    var IMAGE_HASH_PRECISE = false;
-
     var remoteFileSize = require("remote-file-size");
     var Util = require("../util");
     var http = require('http');
@@ -13,13 +10,24 @@ module.exports = function (app, config, optimus) {
     var fs = require('fs');
     var fileType = require("file-type");
     var imageSize = require("image-size");
-    var imageHash = require("image-hash").imageHash;
     var tmp = require("tmp");
     tmp.setGracefulCleanup();
     var md5 = require("md5");
     var uuid = require("uuid/v4");
     var mongoose = require("mongoose");
     var request = require("request");
+
+    var hasha = require("hasha");
+
+    var imageHash = function (path, callback) {
+        hasha.fromFile(path, {
+            algorithm: "sha1"
+        }).then(function (value) {
+            callback(null, value);
+        }).catch(function (reason) {
+            callback(reason, null);
+        })
+    };
 
 
     var authentication = require("../generator/authentication");
@@ -91,13 +99,13 @@ module.exports = function (app, config, optimus) {
                                 return console.log(err);
                             }
 
-                            imageHash(path, IMAGE_HASH_BITS, IMAGE_HASH_PRECISE, function (err, fileHash) {
+                            imageHash(path, function (err, fileHash) {
                                 if (err) {
                                     fileCleanup();
                                     fs.close(fd);
                                     return console.log(err);
                                 }
-                                console.log("Hash: " + fileHash)
+                                console.log("Hash: " + fileHash);
 
                                 skinChanger.findExistingSkin(fileHash, name, model, visibility, function (existingSkin) {
                                     if (existingSkin) {
@@ -204,12 +212,13 @@ module.exports = function (app, config, optimus) {
                         fs.close(fd);
                         return console.log(err);
                     }
-                    imageHash(path, IMAGE_HASH_BITS, IMAGE_HASH_PRECISE, function (err, fileHash) {
+                    imageHash(path, function (err, fileHash) {
                         if (err) {
                             fileCleanup();
                             fs.close(fd);
                             return console.log(err);
                         }
+                        console.log("Hash: " + fileHash);
 
                         skinChanger.findExistingSkin(fileHash, name, model, visibility, function (existingSkin) {
                             if (existingSkin) {
@@ -353,12 +362,15 @@ module.exports = function (app, config, optimus) {
                                 }
                             })
                             .on("close", function () {
-                                imageHash(path, IMAGE_HASH_BITS, IMAGE_HASH_PRECISE, function (err,fileHash) {
+                                imageHash(path, function (err, fileHash) {
                                     if (err) {
                                         fileCleanup();
                                         fs.close(fd);
                                         return console.log(err);
                                     }
+                                    console.log("Hash: " + fileHash);
+
+
                                     cb(fileHash);
                                     fs.close(fd);
                                     fileCleanup();
