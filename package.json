@@ -43,7 +43,7 @@
     "randomstring": "^1.1.5",
     "read-chunk": "^3.2.0",
     "remote-file-size": "^3.0.5",
-    "repeat": "^0.0.6",
+    "repeat": "^1.2.0",
     "request": "^2.88.0",
     "rootpath": "^0.1.2",
     "rotating-file-stream": "^1.4.0",
