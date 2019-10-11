@@ -50,7 +50,7 @@
     "socket.io": "^2.0.1",
     "socket.io-stream": "^0.9.1",
     "swagger-stats": "^0.95.11",
-    "tmp": "0.0.33",
+    "tmp": "0.1.0",
     "tunnel-ssh": "^4.1.4",
     "unirest": "^0.6.0",
     "uuid": "^3.3.3",
