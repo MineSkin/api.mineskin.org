@@ -10,7 +10,7 @@
     "connect-mongo": "^3.0.0",
     "console-stamp": "^0.2.9",
     "cookie-parser": "^1.4.4",
-    "cookies": "^0.7.3",
+    "cookies": "^0.8.0",
     "cryptiles": ">=4.1.3",
     "debug": ">=2.6.9",
     "ejs": "^2.7.1",
