@@ -36,7 +36,7 @@
     "node-persist": "^3.0.5",
     "node-rest-client": "^3.1.0",
     "object.values": "^1.1.0",
-    "optimus-js": "^0.1.2",
+    "optimus-js": "^0.1.4",
     "parse-domain": "^2.3.2",
     "q": "^1.5.1",
     "random-ip": "0.0.1",
