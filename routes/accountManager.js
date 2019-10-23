@@ -564,7 +564,6 @@ module.exports = function (app, config) {
                 });
                 return;
             }
-            console.log(tokenResponse);
 
             console.log(tokenBody);
             if (!tokenBody.access_token) {
@@ -592,7 +591,6 @@ module.exports = function (app, config) {
                     });
                     return;
                 }
-                console.log(profileResponse);
 
                 if (!req.query.state) {
                     res.status(400).json({
