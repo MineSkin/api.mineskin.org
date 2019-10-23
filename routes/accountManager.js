@@ -13,6 +13,8 @@ module.exports = function (app) {
     });
     var md5 = require("md5");
 
+    var pendingDiscordLinks = {};
+
     // Schemas
     var Account = require("../db/schemas/account").Account;
 
@@ -481,6 +483,153 @@ module.exports = function (app) {
         })
     })
 
+    app.get("/accountManager/discord/oauth/start", function (req, res) {
+        if (!req.query.token) {
+            res.status(400).json({error: "Missing token"})
+            return;
+        }
+        if (!req.query.username) {
+            res.status(400).json({error: "Missing username"})
+            return;
+        }
+        if (!req.query.uuid) {
+            res.status(400).json({error: "Missing UUID"})
+            return;
+        }
+
+        getUser(req.body.token, function (response, body) {
+            if (body.error) {
+                res.status(response.statusCode).json({error: body.error, msg: body.errorMessage})
+            } else {
+                if (body.username.toLowerCase() !== req.body.username.toLowerCase()) {
+                    res.status(400).json({error: "username mismatch"})
+                    return;
+                }
+
+                Account.findOne({username: req.body.username, uuid: req.body.uuid}, function (err, account) {
+                    if (err) return console.log(err);
+                    if (!account) {
+                        res.status(404).json({error: "Account not found"})
+                        return;
+                    }
+
+                    var clientId = config.discord.oauth.id;
+                    var redirect = encodeURIComponent("https://api.mineskin.org/accountManager/discord/oauth/callback");
+
+                    var state = md5(account.uuid + "_" + account.username + "_magic_discord_string_" + Date.now() + "_" + account.id);
+
+                    pendingDiscordLinks[state]={
+                        account:account.id,
+                        uuid: account.uuid
+                    };
+
+                    res.redirect('https://discordapp.com/api/oauth2/authorize?client_id=' + clientId + '&scope=identify&response_type=code&state=' + state + '&redirect_uri=' + redirect);
+                })
+            }
+        })
+    });
+
+    app.get("/accountManager/discord/oauth/callback", function (req, res) {
+        if (!req.query.code) {
+            res.status(400).json({
+                error: "Missing code"
+            });
+            return;
+        }
+        var redirect = encodeURIComponent("https://api.mineskin.org/accountManager/discord/oauth/callback");
+        request({
+            url: "https://discordapp.com/api/oauth2/token",
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            form: {
+                client_id: config.discord.oauth.id,
+                client_secret: config.discord.oauth.secret,
+                grant_type: "authorization_code",
+                code: req.query.code,
+                redirect_uri: redirect,
+                scope: "identify"
+            }
+        }, function (err, response, body) {
+            if (err) {
+                console.warn(err);
+                res.status(500).json({
+                    error: "Discord API error"
+                });
+                return;
+            }
+
+            request({
+                url: "https://discordapp.com/api/users/@me",
+                method: "GET",
+                auth: {
+                    bearer: body.access_token
+                }
+            }, function (err, response, body) {
+                if (err) {
+                    console.warn(err);
+                    res.status(500).json({
+                        error: "Discord API error"
+                    });
+                    return;
+                }
+
+                if(!req.query.state){
+                    res.status(400).json({
+                        error: "Missing state"
+                    });
+                    return;
+                }
+                if (!pendingDiscordLinks.hasOwnProperty(req.query.state)) {
+                    console.warn("Got a discord OAuth callback but the API wasn't expecting that linking request");
+                    res.status(400).json({
+                        error: "API not waiting for this link"
+                    });
+                    return;
+                }
+                var linkInfo = pendingDiscordLinks[req.query.state];
+                delete pendingDiscordLinks[req.query.state];
+
+                Account.findOne({id:linkInfo.account, uuid:linkInfo.uuid}, function (err, account) {
+                    if (err) return console.log(err);
+                    if (!account) {
+                        res.status(404).json({error: "Account not found"})
+                        return;
+                    }
+
+                    if (account.discordUser) {
+                        console.warn("Account #" + account.id + " already has a linked discord user (#" + account.discordUser + "), changing to " + body.id);
+                    }
+
+                    account.discordUser = body.id;
+                    account.save(function (err, acc) {
+                        if (err) {
+                            console.warn(err);
+                            res.status(500).json({error: "Unexpected error"})
+                            return;
+                        }
+
+                        console.log("Linking Discord User " + body.username + "#" + body.discriminator + " to Mineskin account #" + linkInfo.account + "/" + linkInfo.uuid);
+                        addDiscordRole(body.id,function (b) {
+                            if (b) {
+                                res.json({
+                                    success:true,
+                                    msg: "Successfully linked Mineskin Account " + account.uuid + " to Discord User " + body.username + "#" + body.discriminator + ", yay! You can close this window now :)"
+                                })
+                            }else{
+                                res.json({
+                                    success:false,
+                                    msg: "Uh oh! Looks like there was an issue linking your discord account! Make sure you've joined inventivetalent's discord server and try again"
+                                })
+                            }
+                        });
+                    })
+                });
+            })
+        })
+    });
+
     function getUser(token, cb) {
         console.log(("[Auth] GET https://api.mojang.com/user").debug);
         request({
@@ -515,6 +664,44 @@ module.exports = function (app) {
             }
             cb(response, body.length >= 1 ? body[0] : body);
         })
+    }
+
+    function addDiscordRole(userId, cb) {
+        request({
+            url: "https://discordapp.com/api/guilds/" + config.discord.guild + "/members/" + userId + "/roles/" + config.discord.role,
+            method: "PUT",
+            headers: {
+                "Authorization": "Bot " + config.discord.token
+            }
+        }, function (err, response, body) {
+            if (err) {
+                console.warn(err);
+                cb(false);
+                return;
+            }
+            console.log(body);
+            console.log("Added Mineskin role to discord user #" + userId);
+            cb(true);
+        });
+    }
+
+    function removeDiscordRole(userId,cb) {
+        request({
+            url: "https://discordapp.com/api/guilds/" + config.discord.guild + "/members/" + userId + "/roles/" + config.discord.role,
+            method: "DELETE",
+            headers: {
+                "Authorization": "Bot " + config.discord.token
+            }
+        }, function (err, response, body) {
+            if (err) {
+                console.warn(err);
+                cb(false);
+                return;
+            }
+            console.log(body);
+            console.log("Removed Mineskin role from discord user #" + userId);
+            cb(true);
+        });
     }
 
 };
