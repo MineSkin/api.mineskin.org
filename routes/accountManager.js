@@ -1,4 +1,4 @@
-module.exports = function (app) {
+module.exports = function (app, config) {
 
     var util = require("../util");
     var urls = require("../generator/urls");
@@ -518,8 +518,8 @@ module.exports = function (app) {
 
                     var state = md5(account.uuid + "_" + account.username + "_magic_discord_string_" + Date.now() + "_" + account.id);
 
-                    pendingDiscordLinks[state]={
-                        account:account.id,
+                    pendingDiscordLinks[state] = {
+                        account: account.id,
                         uuid: account.uuid
                     };
 
@@ -575,7 +575,7 @@ module.exports = function (app) {
                     return;
                 }
 
-                if(!req.query.state){
+                if (!req.query.state) {
                     res.status(400).json({
                         error: "Missing state"
                     });
@@ -591,7 +591,7 @@ module.exports = function (app) {
                 var linkInfo = pendingDiscordLinks[req.query.state];
                 delete pendingDiscordLinks[req.query.state];
 
-                Account.findOne({id:linkInfo.account, uuid:linkInfo.uuid}, function (err, account) {
+                Account.findOne({id: linkInfo.account, uuid: linkInfo.uuid}, function (err, account) {
                     if (err) return console.log(err);
                     if (!account) {
                         res.status(404).json({error: "Account not found"})
@@ -611,15 +611,15 @@ module.exports = function (app) {
                         }
 
                         console.log("Linking Discord User " + body.username + "#" + body.discriminator + " to Mineskin account #" + linkInfo.account + "/" + linkInfo.uuid);
-                        addDiscordRole(body.id,function (b) {
+                        addDiscordRole(body.id, function (b) {
                             if (b) {
                                 res.json({
-                                    success:true,
+                                    success: true,
                                     msg: "Successfully linked Mineskin Account " + account.uuid + " to Discord User " + body.username + "#" + body.discriminator + ", yay! You can close this window now :)"
                                 })
-                            }else{
+                            } else {
                                 res.json({
-                                    success:false,
+                                    success: false,
                                     msg: "Uh oh! Looks like there was an issue linking your discord account! Make sure you've joined inventivetalent's discord server and try again"
                                 })
                             }
@@ -685,7 +685,7 @@ module.exports = function (app) {
         });
     }
 
-    function removeDiscordRole(userId,cb) {
+    function removeDiscordRole(userId, cb) {
         request({
             url: "https://discordapp.com/api/guilds/" + config.discord.guild + "/members/" + userId + "/roles/" + config.discord.role,
             method: "DELETE",
