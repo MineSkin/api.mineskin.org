@@ -247,7 +247,7 @@ module.exports = function (app, config) {
             return;
         }
 
-        Account.findOne({username: req.query.username, uuid: req.query.uuid, type: "external"}, "enabled password security").exec(function (err, acc) {
+        Account.findOne({username: req.query.username, uuid: req.query.uuid, type: "external"}, "enabled password security discordUser").exec(function (err, acc) {
             if (err) return console.log(err);
 
             if (acc && (req.query.password || req.query.security)) {
@@ -262,13 +262,15 @@ module.exports = function (app, config) {
                         exists: !!acc,
                         enabled: !!acc && acc.enabled,
                         passwordUpdated: !!req.query.password,
-                        securityUpdated: !!req.query.security
+                        securityUpdated: !!req.query.security,
+                        discordLinked: !!acc && acc.discordUser
                     });
                 })
             } else {
                 res.json({
                     exists: !!acc,
-                    enabled: !!acc && acc.enabled
+                    enabled: !!acc && acc.enabled,
+                    discordLinked: !!acc && acc.discordUser
                 });
             }
         })
@@ -548,8 +550,8 @@ module.exports = function (app, config) {
                 redirect_uri: redirect,
                 scope: "identify"
             },
-            headers:{
-                "Content-Type":"application/x-www-form-urlencoded"
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded"
             },
             gzip: true,
             json: true
