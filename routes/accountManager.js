@@ -550,7 +550,9 @@ module.exports = function (app, config) {
             },
             headers:{
                 "Content-Type":"application/x-www-form-urlencoded"
-            }
+            },
+            gzip: true,
+            json: true
         }, function (err, tokenResponse, tokenBody) {
             if (err) {
                 console.warn(err);
@@ -562,7 +564,6 @@ module.exports = function (app, config) {
             }
             console.log(tokenResponse);
 
-            tokenBody = JSON.parse(tokenBody);
             console.log(tokenBody);
             if (!tokenBody.access_token) {
                 res.status(500).json({
@@ -577,7 +578,9 @@ module.exports = function (app, config) {
                 method: "GET",
                 auth: {
                     bearer: tokenBody.access_token
-                }
+                },
+                gzip: true,
+                json: true
             }, function (err, profileResponse, profileBody) {
                 if (err) {
                     console.warn(err);
@@ -587,6 +590,7 @@ module.exports = function (app, config) {
                     });
                     return;
                 }
+                console.log(profileResponse);
 
                 if (!req.query.state) {
                     res.status(400).json({
@@ -603,6 +607,13 @@ module.exports = function (app, config) {
                 }
                 var linkInfo = pendingDiscordLinks[req.query.state];
                 delete pendingDiscordLinks[req.query.state];
+
+                console.log(profileBody);
+
+                if (!profileBody.id) {
+                    res.status(404).json({error: "Missing profile id in discord response"})
+                    return;
+                }
 
                 Account.findOne({id: linkInfo.account, uuid: linkInfo.uuid}, function (err, account) {
                     if (err) return console.log(err);
