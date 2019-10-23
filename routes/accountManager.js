@@ -497,16 +497,16 @@ module.exports = function (app) {
             return;
         }
 
-        getUser(req.body.token, function (response, body) {
+        getUser(req.query.token, function (response, body) {
             if (body.error) {
                 res.status(response.statusCode).json({error: body.error, msg: body.errorMessage})
             } else {
-                if (body.username.toLowerCase() !== req.body.username.toLowerCase()) {
+                if (body.username.toLowerCase() !== req.query.username.toLowerCase()) {
                     res.status(400).json({error: "username mismatch"})
                     return;
                 }
 
-                Account.findOne({username: req.body.username, uuid: req.body.uuid}, function (err, account) {
+                Account.findOne({username: req.query.username, uuid: req.query.uuid}, function (err, account) {
                     if (err) return console.log(err);
                     if (!account) {
                         res.status(404).json({error: "Account not found"})
