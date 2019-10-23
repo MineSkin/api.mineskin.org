@@ -497,11 +497,11 @@ module.exports = function (app, config) {
             return;
         }
 
-        getUser(req.query.token, function (response, body) {
-            if (body.error) {
-                res.status(response.statusCode).json({error: body.error, msg: body.errorMessage})
+        getUser(req.query.token, function (response, userBody) {
+            if (userBody.error) {
+                res.status(response.statusCode).json({error: userBody.error, msg: userBody.errorMessage})
             } else {
-                if (body.username.toLowerCase() !== req.query.username.toLowerCase()) {
+                if (userBody.username.toLowerCase() !== req.query.username.toLowerCase()) {
                     res.status(400).json({error: "username mismatch"})
                     return;
                 }
@@ -536,13 +536,10 @@ module.exports = function (app, config) {
             });
             return;
         }
-        var redirect = encodeURIComponent("https://api.mineskin.org/accountManager/discord/oauth/callback");
+        var redirect = "https://api.mineskin.org/accountManager/discord/oauth/callback";
         request({
             url: "https://discordapp.com/api/oauth2/token",
             method: "POST",
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
             form: {
                 client_id: config.discord.oauth.id,
                 client_secret: config.discord.oauth.secret,
@@ -550,12 +547,27 @@ module.exports = function (app, config) {
                 code: req.query.code,
                 redirect_uri: redirect,
                 scope: "identify"
+            },
+            headers:{
+                "Content-Type":"application/x-www-form-urlencoded"
             }
-        }, function (err, response, body) {
+        }, function (err, tokenResponse, tokenBody) {
             if (err) {
                 console.warn(err);
                 res.status(500).json({
-                    error: "Discord API error"
+                    error: "Discord API error",
+                    state: "oauth_token"
+                });
+                return;
+            }
+            console.log(tokenResponse);
+
+            tokenBody = JSON.parse(tokenBody);
+            console.log(tokenBody);
+            if (!tokenBody.access_token) {
+                res.status(500).json({
+                    error: "Discord API error",
+                    state: "oauth_access_token"
                 });
                 return;
             }
@@ -564,13 +576,14 @@ module.exports = function (app, config) {
                 url: "https://discordapp.com/api/users/@me",
                 method: "GET",
                 auth: {
-                    bearer: body.access_token
+                    bearer: tokenBody.access_token
                 }
-            }, function (err, response, body) {
+            }, function (err, profileResponse, profileBody) {
                 if (err) {
                     console.warn(err);
                     res.status(500).json({
-                        error: "Discord API error"
+                        error: "Discord API error",
+                        state: "profile"
                     });
                     return;
                 }
@@ -599,10 +612,10 @@ module.exports = function (app, config) {
                     }
 
                     if (account.discordUser) {
-                        console.warn("Account #" + account.id + " already has a linked discord user (#" + account.discordUser + "), changing to " + body.id);
+                        console.warn("Account #" + account.id + " already has a linked discord user (#" + account.discordUser + "), changing to " + profileBody.id);
                     }
 
-                    account.discordUser = body.id;
+                    account.discordUser = profileBody.id;
                     account.save(function (err, acc) {
                         if (err) {
                             console.warn(err);
@@ -610,12 +623,12 @@ module.exports = function (app, config) {
                             return;
                         }
 
-                        console.log("Linking Discord User " + body.username + "#" + body.discriminator + " to Mineskin account #" + linkInfo.account + "/" + linkInfo.uuid);
-                        addDiscordRole(body.id, function (b) {
+                        console.log("Linking Discord User " + profileBody.username + "#" + profileBody.discriminator + " to Mineskin account #" + linkInfo.account + "/" + linkInfo.uuid);
+                        addDiscordRole(profileBody.id, function (b) {
                             if (b) {
                                 res.json({
                                     success: true,
-                                    msg: "Successfully linked Mineskin Account " + account.uuid + " to Discord User " + body.username + "#" + body.discriminator + ", yay! You can close this window now :)"
+                                    msg: "Successfully linked Mineskin Account " + account.uuid + " to Discord User " + profileBody.username + "#" + profileBody.discriminator + ", yay! You can close this window now :)"
                                 })
                             } else {
                                 res.json({
