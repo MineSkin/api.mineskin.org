@@ -36,6 +36,7 @@ var accountSchema = new Schema({
         type: String,
         enum: ["internal", "external"],
         default: "internal"
-    }
+    },
+    discordUser: String
 }, {id: false});
 module.exports.Account = mongoose.model("Account", accountSchema);
