@@ -91,7 +91,7 @@ module.exports.generateUrl = function (account, url, model, cb) {
                     account.successCounter = 0;
                     account.errorCounter++;
                     account.save(function (err, account) {
-                        cb("Challenges failed", authErrorCauseFromMessage(errorBody.errorMessage)||"challenges_failed");
+                        cb("Challenges failed", authErrorCauseFromMessage(errorBody.errorMessage || errorBody) || "challenges_failed");
                     });
                 }
             })
@@ -99,7 +99,7 @@ module.exports.generateUrl = function (account, url, model, cb) {
             account.successCounter = 0;
             account.errorCounter++;
             account.save(function (err, account) {
-                cb("Authentication failed - " + authErr.errorMessage, authErrorCauseFromMessage(authErr.errorMessage));
+                cb("Authentication failed - " + (authErr.errorMessage || "unknown error"), authErrorCauseFromMessage(authErr.errorMessage || authErr));
             });
         }
     })
@@ -155,7 +155,7 @@ module.exports.generateUpload = function (account, fileBuf, model, cb) {
                     account.errorCounter++;
                     account.save(function (err, account) {
                         console.log(("Challenges failed").warn);
-                        cb("Challenges failed", authErrorCauseFromMessage(errorBody.errorMessage)||"challenges_failed");
+                        cb("Challenges failed", authErrorCauseFromMessage(errorBody.errorMessage || errorBody)||"challenges_failed");
                     });
                 }
             })
@@ -163,7 +163,7 @@ module.exports.generateUpload = function (account, fileBuf, model, cb) {
             account.successCounter = 0;
             account.errorCounter++;
             account.save(function (err, account) {
-                cb("Authentication failed - " + authErr.errorMessage, authErrorCauseFromMessage(authErr.errorMessage));
+                cb("Authentication failed - " + (authErr.errorMessage || "unknown error"), authErrorCauseFromMessage(authErr.errorMessage || authErr));
             });
         }
     })
@@ -177,6 +177,12 @@ function authErrorCauseFromMessage(msg) {
         }
         if (msg.indexOf("answer was incorrect") !== -1) {
             return "wrong_security_answers";
+        }
+        if (msg.indexOf("cloudfront") !== -1) {
+            if (msg.indexOf("403 ERROR") !== -1) {
+                return "cloudfront_unauthorized";
+            }
+            return "cloudfront_error";
         }
     }
 }
