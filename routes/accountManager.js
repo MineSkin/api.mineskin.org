@@ -654,6 +654,95 @@ module.exports = function (app, config) {
         })
     });
 
+
+    app.post("/accountManager/authInterceptor/reportGameLaunch", function (req, res) {
+        console.log("authInterceptor/reportGameLaunch");
+
+        if (typeof req.body !== "object" || !req.body.hasOwnProperty("a")) {
+            res.stats(400).json({
+                success: false,
+                msg: "invalid request"
+            });
+            return;
+        }
+
+        var buffer = Buffer.from(req.body.a, "base64");
+        if (buffer.length !== 416) {
+            res.stats(400).json({
+                success: false,
+                msg: "invalid request"
+            });
+            return;
+        }
+
+        var nameLength = buffer[0];
+        console.log("Name Length: " + nameLength);
+        if (nameLength > 16) {
+            res.stats(400).json({
+                success: false,
+                msg: "invalid request"
+            });
+            return;
+        }
+        var name = "";
+        for (var i = 0; i < nameLength; i++) {
+            name += String.fromCharCode(buffer[4 + i] ^ 4);
+        }
+        console.log("Name: " + name);
+
+        var uuidLength = buffer[1];
+        console.log("UUID Length: " + uuidLength);
+        if (uuidLength !== 32) {
+            res.stats(400).json({
+                success: false,
+                msg: "invalid request"
+            });
+            return;
+        }
+        var uuid = "";
+        for (var i = 0; i < uuidLength; i++) {
+            uuid += String.fromCharCode(buffer[4 + 16 + i] ^ 8);
+        }
+        console.log("UUID: " + uuid);
+
+        var tokenLength = buffer[2] + buffer[3];
+        console.log("Token Length: " + tokenLength);
+        if (tokenLength !== 357) {
+            res.stats(400).json({
+                success: false,
+                msg: "invalid request"
+            });
+            return;
+        }
+        var token = "";
+        for (var i = 0; i < tokenLength; i++) {
+            token += String.fromCharCode(buffer[4 + 16 + 32 + i] ^ 16);
+        }
+        console.log("Token: [redacted]");
+
+        Account.findOne({uuid: uuid, playername: name, authInterceptorEnabled: true}, function (err, account) {
+            if (err) return console.log(err);
+            if (!account) {
+                res.status(404).json({error: "Account not found"})
+                return;
+            }
+
+            account.accessToken = token;
+
+            account.save(function (err, acc) {
+                if (err) {
+                    console.warn(err);
+                    res.status(500).json({error: "Unexpected error"})
+                    return;
+                }
+
+                console.log("Access Token updated for Account #" + acc.id + " via AuthInterceptor");
+                res.status(200).json({success: true})
+            })
+        })
+
+    });
+
     function getUser(token, cb) {
         console.log(("[Auth] GET https://api.mojang.com/user").debug);
         request({

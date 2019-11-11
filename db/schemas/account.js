@@ -10,6 +10,7 @@ var accountSchema = new Schema({
         index: true
     },
     playername: String,
+    authInterceptorEnabled: Boolean,
     password: String,
     passwordOld: String,
     passwordNew: String,
