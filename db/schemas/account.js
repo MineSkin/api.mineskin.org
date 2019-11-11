@@ -9,6 +9,7 @@ var accountSchema = new Schema({
         type: String,
         index: true
     },
+    playername: String,
     password: String,
     passwordOld: String,
     passwordNew: String,

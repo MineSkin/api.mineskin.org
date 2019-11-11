@@ -58,6 +58,10 @@ module.exports.authenticate = function (account, cb) {
                 return console.log(err);
             }
 
+            if (body.hasOwnProperty("selectedProfile")) {
+                account.playername = body.selectedProfile.name;
+            }
+
             // Get new token
             // account.clientToken = body.clientToken;
             console.log(("[Auth] (#" + account.id + ") AccessToken: " + body.accessToken).debug);
@@ -129,6 +133,11 @@ module.exports.authenticate = function (account, cb) {
                     })
                 } else {
                     console.log("[Auth] (#" + account.id + ") got a new accessToken");
+
+                    if (body.hasOwnProperty("selectedProfile")) {
+                        account.playername = body.selectedProfile.name;
+                    }
+
                     console.log(("[Auth] AccessToken: " + body.accessToken).debug);
                     account.accessToken = body.accessToken;
                     account.requestServer = config.server;
