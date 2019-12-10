@@ -479,6 +479,9 @@ module.exports = function (app, config, optimus) {
     function logFail(account, generateType, errorCause) {
         increaseStat("generate.fail");
 
+        if(account.errorCounter>0&&account.errorCounter%10===0) {
+            Util.postDiscordMessage("Account #" + account.id + " has " + account.errorCounter + " errors!\nLatest Type: " + generateType + "\nLatest Cause: " + errorCause);
+        }
 
         fs.appendFileSync("generateStatus.log", "[" + new Date().toUTCString() + "] FAIL [A" + (account ? account.id : "-1") + "/" + generateType + "] (" + errorCause + ")\n", "utf8");
     }

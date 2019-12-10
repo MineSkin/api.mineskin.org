@@ -32,4 +32,9 @@ config.crypto = {
     key: "I'm a key!"
 };
 
+config.discord = {
+    token: "",
+    channel: ""
+};
+
 module.exports = config;

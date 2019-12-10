@@ -5,6 +5,7 @@ var fileType = require("file-type");
 var imageSize = require("image-size");
 var config = require("./config");
 var crypto = require("crypto");
+var request = require("request");
 
 // Schemas
 var Account = require("./db/schemas/account").Account;
@@ -116,6 +117,29 @@ module.exports.isEmpty = function (obj) {
             return false;
     }
     return true;
+};
+
+
+module.exports.postDiscordMessage = function(content){
+    if(!config.discord||!config.discord.token)return;
+    request({
+        method:"POST",
+        url: "https://discordapp.com/api/channels/"+config.discord.channel+"/messages",
+        headers:{
+            "Authorization":"Bot "+config.discord.token,
+            "User-Agent":"MineSkin"
+        },
+        json:true
+    },function (err,res,body) {
+        if (err) {
+            console.warn(err);
+            return;
+        }
+        if (res.statusCode !== 200) {
+            console.warn(res.statusCode);
+            console.warn(body);
+        }
+    })
 };
 
 module.exports.crypto = require("./encryption");
