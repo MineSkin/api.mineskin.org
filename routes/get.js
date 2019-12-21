@@ -220,7 +220,22 @@ module.exports = function (app) {
                 res.status(404).json({error: "Skin not found"});
             }
         })
-    })
+    });
+
+    app.get("/get/forTexture/:value/:signature?", function (req, res) {
+        var search = {value: req.params.value};
+        if (req.params.signature) {
+            search.signature = req.params.signature;
+        }
+        Skin.findOne(search, function (err, skin) {
+            if (err) return console.log(err);
+            if (skin) {
+                res.json(Util.skinToJson(skin, 0));
+            } else {
+                res.status(404).json({error: "Skin not found"});
+            }
+        });
+    });
 
     app.get("/get/list/:page?", function (req, res) {
         var page = Math.max(req.params.page || 1, 1);
