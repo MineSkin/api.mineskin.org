@@ -31,7 +31,7 @@ module.exports.findExistingSkin = function (hash, name, model, visibility, cb) {
 
 module.exports.getAvailableAccount = function (req, res, cb) {
     var time = Date.now() / 1000;
-    Account.findOne({enabled: true, requestServer: {$in: [null, "default", config.server]}, lastUsed: {'$lt': (time - 30)}, errorCounter: {'$lt': (config.errorThreshold||10)}}).sort({lastUsed: 1, lastSelected: 1, errorCounter: 1}).exec(function (err, account) {
+    Account.findOne({enabled: true, requestServer: {$in: [null, "default", config.server]}, lastUsed: {'$lt': (time - 30)}, forcedTimeoutAt: {'$lt': (time - 120)}, errorCounter: {'$lt': (config.errorThreshold||10)}}).sort({lastUsed: 1, lastSelected: 1, errorCounter: 1}).exec(function (err, account) {
         if (err) return console.log(err);
         if (!account) {
             console.log(("[SkinChanger] There are no accounts available!").error);
