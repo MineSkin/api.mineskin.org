@@ -129,7 +129,9 @@ module.exports.postDiscordMessage = function(content){
             "Authorization":"Bot "+config.discord.token,
             "User-Agent":"MineSkin"
         },
-        json:true
+        json:{
+            content:content
+        }
     },function (err,res,body) {
         if (err) {
             console.warn(err);
