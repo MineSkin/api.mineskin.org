@@ -98,6 +98,7 @@ module.exports.generateUrl = function (account, url, model, cb) {
         } else {
             account.successCounter = 0;
             account.errorCounter++;
+            account.forcedTimeoutAt = Date.now() / 1000;
             account.save(function (err, account) {
                 cb("Authentication failed - " + (authErr.errorMessage || "unknown error"), authErrorCauseFromMessage(authErr.errorMessage || authErr));
             });
@@ -162,6 +163,7 @@ module.exports.generateUpload = function (account, fileBuf, model, cb) {
         } else {
             account.successCounter = 0;
             account.errorCounter++;
+            account.forcedTimeoutAt = Date.now() / 1000;
             account.save(function (err, account) {
                 cb("Authentication failed - " + (authErr.errorMessage || "unknown error"), authErrorCauseFromMessage(authErr.errorMessage || authErr));
             });

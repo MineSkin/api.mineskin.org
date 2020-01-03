@@ -27,6 +27,7 @@ var accountSchema = new Schema({
     },
     errorCounter: Number,
     successCounter: Number,
+    forcedTimeoutAt: Number,
     accessToken: String,
     clientToken: String,
     requestIp: String,
