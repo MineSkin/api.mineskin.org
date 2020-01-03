@@ -4,6 +4,7 @@ config.port = 3017;
 config.server = "default";
 
 config.generateDelay = 60;
+config.errorThreshold = 10;
 
 config.optimus = {
     prime: 0,
