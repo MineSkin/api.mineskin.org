@@ -480,7 +480,11 @@ module.exports = function (app, config, optimus) {
         increaseStat("generate.fail");
 
         if(account && account.errorCounter>0&&account.errorCounter%10===0) {
-            Util.postDiscordMessage("Account #" + account.id + " has " + account.errorCounter + " errors!\nLatest Type: " + generateType + "\nLatest Cause: " + errorCause);
+            Util.postDiscordMessage("⚠️ Account #" + account.id + " has " + account.errorCounter + " errors!\nLatest Type: " + generateType + "\nLatest Cause: " + errorCause);
+        }
+
+        if (errorCause === "cloudfront_unauthorized") {
+            Util.postDiscordMessage("🛑 Account #" + account.id + " received a CloudFront Unauthorized Response! Panic!");
         }
 
         fs.appendFileSync("generateStatus.log", "[" + new Date().toUTCString() + "] FAIL [A" + (account ? account.id : "-1") + "/" + generateType + "] (" + errorCause + ")\n", "utf8");
