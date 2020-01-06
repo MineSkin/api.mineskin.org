@@ -35,7 +35,7 @@
     "mpath": ">=0.5.1",
     "node-persist": "^3.0.5",
     "node-rest-client": "^3.1.0",
-    "object.values": "^1.1.0",
+    "object.values": "^1.1.1",
     "optimus-js": "^0.1.2",
     "parse-domain": "^2.3.2",
     "q": "^1.5.1",
