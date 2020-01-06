@@ -640,7 +640,8 @@ module.exports = function (app, config) {
                                 res.json({
                                     success: true,
                                     msg: "Successfully linked Mineskin Account " + account.uuid + " to Discord User " + profileBody.username + "#" + profileBody.discriminator + ", yay! You can close this window now :)"
-                                })
+                                });
+                                util.sendDiscordDirectMessage("Thanks for linking your Discord account! :)", profileBody.id);
                             } else {
                                 res.json({
                                     success: false,
