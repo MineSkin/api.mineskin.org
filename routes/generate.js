@@ -489,6 +489,18 @@ module.exports = function (app, config, optimus) {
                 Util.postDiscordMessage("⚠️ Account #" + account.id + " has " + account.errorCounter + " errors!\n  Latest Type: " + generateType + "\n  Latest Cause: " + errorCause);
             }
 
+            if (account.discordUser && account.errorCounter > 0 && account.errorCounter >= config.errorThreshold) {
+                var emailSplit = account.username.split("\@");
+                Util.sendDiscordDirectMessage("Hi there!\n" +
+                    "This is an automated notification that a MineSkin account you linked to your Discord profile has been disabled since it failed to properly generate skin data recently.\n" +
+                    "  Affected Account: " + (account.playername || account.uuid) + " (" + emailSplit[0].substr(0, 3) + "***@" + emailSplit[1]+")\n" +
+                    "  Last Error Code:  "+account.lastErrorCode+"\n" +
+                    "\n" +
+                    "The account won't be used for skin generation until the issues are resolved.\n" +
+                    "Please make sure the configured credentials & security questions are correct at https://mineskin.org/account\n" +
+                    "For further assistance feel free to ask in <#482181024445497354> 🙂", account.discordUser);
+            }
+
             account.lastErrorCode = errorCause;
             account.save();
         }

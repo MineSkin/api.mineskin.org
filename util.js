@@ -120,11 +120,12 @@ module.exports.isEmpty = function (obj) {
 };
 
 
-module.exports.postDiscordMessage = function(content){
+module.exports.postDiscordMessage = function(content, channel){
     if(!config.discord||!config.discord.token)return;
+    if(!channel)channel = config.discord.channel;
     request({
         method:"POST",
-        url: "https://discordapp.com/api/channels/"+config.discord.channel+"/messages",
+        url: "https://discordapp.com/api/channels/"+channel+"/messages",
         headers:{
             "Authorization":"Bot "+config.discord.token,
             "User-Agent":"MineSkin"
@@ -140,6 +141,32 @@ module.exports.postDiscordMessage = function(content){
         if (res.statusCode !== 200) {
             console.warn(res.statusCode);
             console.warn(body);
+        }
+    })
+};
+
+module.exports.sendDiscordDirectMessage = function(content, receiver){
+    if(!config.discord||!config.discord.token)return;
+    request({
+        method:"POST",
+        url: "https://discordapp.com/api/users/@me/channels",
+        headers:{
+            "Authorization":"Bot "+config.discord.token,
+            "User-Agent":"MineSkin"
+        },
+        json:{
+            recipient_id:receiver
+        }
+    },function (err,res,body) {
+        if (err) {
+            console.warn(err);
+            return;
+        }
+        if (res.statusCode !== 200) {
+            console.warn(res.statusCode);
+            console.warn(body);
+        }else{
+            module.exports.postDiscordMessage(content, body.id);
         }
     })
 };
