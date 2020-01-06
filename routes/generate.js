@@ -479,8 +479,13 @@ module.exports = function (app, config, optimus) {
     function logFail(account, generateType, errorCause) {
         increaseStat("generate.fail");
 
-        if(account && account.errorCounter>0&&account.errorCounter%10===0) {
-            Util.postDiscordMessage("⚠️ Account #" + account.id + " has " + account.errorCounter + " errors!\n  Latest Type: " + generateType + "\n  Latest Cause: " + errorCause);
+        if (account) {
+            if (account.errorCounter > 0 && account.errorCounter % 10 === 0) {
+                Util.postDiscordMessage("⚠️ Account #" + account.id + " has " + account.errorCounter + " errors!\n  Latest Type: " + generateType + "\n  Latest Cause: " + errorCause);
+            }
+
+            account.lastErrorCode = errorCause;
+            account.save();
         }
 
         if (errorCause === "cloudfront_unauthorized") {
