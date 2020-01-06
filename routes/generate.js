@@ -85,9 +85,10 @@ module.exports = function (app, config, optimus) {
                     // var file = fs.createWriteStream(path);
                     request(url, {"encoding": "binary"}, function (err, response, body) {
                         if (err) {
+                            console.log(err)
                             fileCleanup();
                             fs.close(fd);
-                            return console.log(err);
+                            return ;
                         }
                         if (response.statusCode < 200 || response.statusCode > 230) {
                             res.status(500).json({"error": "Failed to download image", code: response.statusCode});
@@ -97,16 +98,18 @@ module.exports = function (app, config, optimus) {
                         }
                         fs.writeFile(fd, response.body, "binary", function (err) {
                             if (err) {
+                                console.log(err);
                                 fileCleanup();
                                 fs.close(fd);
-                                return console.log(err);
+                                return ;
                             }
 
                             imageHash(path, function (err, fileHash) {
                                 if (err) {
+                                    console.log(err)
                                     fileCleanup();
                                     fs.close(fd);
-                                    return console.log(err);
+                                    return ;
                                 }
                                 console.log("Hash: " + fileHash);
 
@@ -122,9 +125,10 @@ module.exports = function (app, config, optimus) {
                                             skinChanger.getAvailableAccount(req, res, function (account) {
                                                 Traffic.update({ip: req.realAddress}, {lastRequest: new Date()}, {upsert: true}, function (err, traffic) {
                                                     if (err) {
+                                                        console.log(err)
                                                         fileCleanup();
                                                         fs.close(fd);
-                                                        return console.log(err);
+                                                        return ;
                                                     }
                                                     skinChanger.generateUrl(account, url, model, function (result, errorCause) {
                                                         fs.close(fd);
@@ -216,15 +220,17 @@ module.exports = function (app, config, optimus) {
 
                 fileUpload.mv(path, function (err) {
                     if (err) {
+                        console.log(err)
                         fileCleanup();
                         fs.close(fd);
-                        return console.log(err);
+                        return;
                     }
                     imageHash(path, function (err, fileHash) {
                         if (err) {
+                            console.log(err)
                             fileCleanup();
                             fs.close(fd);
-                            return console.log(err);
+                            return;
                         }
                         console.log("Hash: " + fileHash);
 
@@ -236,9 +242,10 @@ module.exports = function (app, config, optimus) {
                             } else {
                                 fs.readFile(path, function (err, buf) {
                                     if (err) {
+                                        console.log(err)
                                         fileCleanup();
                                         fs.close(fd);
-                                        return console.log(err);
+                                        return;
                                     }
 
 
@@ -248,9 +255,10 @@ module.exports = function (app, config, optimus) {
                                         skinChanger.getAvailableAccount(req, res, function (account) {
                                             Traffic.update({ip: req.realAddress}, {lastRequest: new Date()}, {upsert: true}, function (err, traffic) {
                                                 if (err) {
+                                                    console.log(err)
                                                     fileCleanup();
                                                     fs.close(fd);
-                                                    return console.log(err);
+                                                    return;
                                                 }
                                                 skinChanger.generateUpload(account, buf, model, function (result, errorCause) {
                                                     fs.close(fd);
@@ -369,17 +377,19 @@ module.exports = function (app, config, optimus) {
                         request(skinTexture.url).pipe(file)
                             .on("error", function (err) {
                                 if (err) {
+                                    console.log(err)
                                     fileCleanup();
                                     fs.close(fd);
-                                    return console.log(err);
+                                    return ;
                                 }
                             })
                             .on("close", function () {
                                 imageHash(path, function (err, fileHash) {
                                     if (err) {
+                                        console.log(err)
                                         fileCleanup();
                                         fs.close(fd);
-                                        return console.log(err);
+                                        return ;
                                     }
                                     console.log("Hash: " + fileHash);
 
@@ -413,8 +423,9 @@ module.exports = function (app, config, optimus) {
     function getAndSaveSkinData(account, options, fileHash, uuid, genStart, cb) {
         dataFetcher.getSkinData(account, function (err, skinData) {
             if (err) {
+                console.log(err)
                 cb(err, null);
-                return console.log(err);
+                return ;
             }
             console.log(JSON.stringify(skinData).debug);
             if (!skinData) {
