@@ -141,11 +141,12 @@ module.exports = function (app, config, optimus) {
                                                                     ua: req.headers["user-agent"]
                                                                 }, fileHash, uuid(), genStart, function (err, skin) {
                                                                     if (err) {
-                                                                        res.status(500).json({error: "Failed to get skin data", err: err, accountId: account.id});
+                                                                        var reason = "skin_data_fetch_failed";
+                                                                        res.status(500).json({error: "Failed to get skin data", err: err, accountId: account.id, reason: reason});
                                                                         console.log(("Failed to download skin data").warn)
 
                                                                         console.log(("=> FAIL #" + account.errorCounter + "\n").red);
-                                                                        logFail(account, "url", "skin_data_fetch_failed");
+                                                                        logFail(account, "url", reason);
                                                                     } else {
                                                                         res.json(Util.skinToJson(skin, generatorDelay));
 
@@ -155,11 +156,12 @@ module.exports = function (app, config, optimus) {
                                                                 })
                                                             })
                                                         } else {
-                                                            res.status(500).json({error: "Failed to generate skin data", err: result, accountId: account.id});
+                                                            var reason = errorCause || "skin_data_generation_failed";
+                                                            res.status(500).json({error: "Failed to generate skin data", err: result, accountId: account.id, reason:reason});
                                                             console.log(("Failed to generate skin data").warn)
 
                                                             console.log(("=> FAIL #" + account.errorCounter + "\n").red);
-                                                            logFail(account, "url", errorCause || "skin_data_generation_failed");
+                                                            logFail(account, "url", reason);
                                                         }
                                                     })
                                                 })
@@ -262,11 +264,12 @@ module.exports = function (app, config, optimus) {
                                                                 ua: req.headers["user-agent"]
                                                             }, fileHash, uuid(), genStart, function (err, skin) {
                                                                 if (err) {
-                                                                    res.status(500).json({error: "Failed to get skin data", err: err, accountId: account.id});
+                                                                    var reason = "skin_data_fetch_failed";
+                                                                    res.status(500).json({error: "Failed to get skin data", err: err, accountId: account.id, reason: reason});
                                                                     console.log(("Failed to download skin data").warn)
 
                                                                     console.log(("=> FAIL #" + account.errorCounter + "\n").red);
-                                                                    logFail(account, "upload", "skin_data_fetch_failed");
+                                                                    logFail(account, "upload", reason);
                                                                 } else {
                                                                     res.json(Util.skinToJson(skin, generatorDelay));
 
@@ -276,11 +279,12 @@ module.exports = function (app, config, optimus) {
                                                             });
                                                         })
                                                     } else {
-                                                        res.status(500).json({error: "Failed to upload skin data (" + result + ")", err: result, accountId: account.id});
+                                                        var reason = errorCause || "skin_data_generation_failed";
+                                                        res.status(500).json({error: "Failed to upload skin data (" + result + ")", err: result, accountId: account.id, reason:reason});
                                                         console.log(("Failed to upload skin data").warn)
 
                                                         console.log(("=> FAIL #" + account.errorCounter + "\n").red);
-                                                        logFail(account, "upload", errorCause || "skin_data_generation_failed");
+                                                        logFail(account, "upload", reason);
                                                     }
                                                 })
                                             })
@@ -379,11 +383,12 @@ module.exports = function (app, config, optimus) {
                     })
                 }, longUuid, genStart, function (err, skin) {
                     if (err) {
-                        res.status(500).json({error: "Failed to get skin data", err: err});
+                        var reason = "skin_data_fetch_failed";
+                        res.status(500).json({error: "Failed to get skin data", err: err, reason: reason});
                         console.log(("Failed to download skin data").warn)
 
                         console.log(("=> FAIL\n").red);
-                        logFail(null, "user", "skin_data_fetch_failed");
+                        logFail(null, "user", reason);
                     } else {
                         res.json(Util.skinToJson(skin, generatorDelay));
 
