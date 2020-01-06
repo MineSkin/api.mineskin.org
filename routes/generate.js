@@ -70,7 +70,10 @@ module.exports = function (app, config, optimus) {
             if (!allowed) return;
 
             remoteFileSize(url, function (err, remoteSize) {
-                if (err) /*return*/ console.log(err);
+                if (err) {
+                    console.log(err);
+                    return;
+                }
                 if (remoteSize <= 0 || remoteSize > 102400) {
                     res.status(400).json({error: "Invalid file size"});
                     return;
@@ -88,7 +91,7 @@ module.exports = function (app, config, optimus) {
                             console.log(err)
                             fileCleanup();
                             fs.close(fd);
-                            return ;
+                            return;
                         }
                         if (response.statusCode < 200 || response.statusCode > 230) {
                             res.status(500).json({"error": "Failed to download image", code: response.statusCode});
@@ -101,7 +104,7 @@ module.exports = function (app, config, optimus) {
                                 console.log(err);
                                 fileCleanup();
                                 fs.close(fd);
-                                return ;
+                                return;
                             }
 
                             imageHash(path, function (err, fileHash) {
@@ -109,7 +112,7 @@ module.exports = function (app, config, optimus) {
                                     console.log(err)
                                     fileCleanup();
                                     fs.close(fd);
-                                    return ;
+                                    return;
                                 }
                                 console.log("Hash: " + fileHash);
 
@@ -128,7 +131,7 @@ module.exports = function (app, config, optimus) {
                                                         console.log(err)
                                                         fileCleanup();
                                                         fs.close(fd);
-                                                        return ;
+                                                        return;
                                                     }
                                                     skinChanger.generateUrl(account, url, model, function (result, errorCause) {
                                                         fs.close(fd);
@@ -164,7 +167,7 @@ module.exports = function (app, config, optimus) {
                                                             })
                                                         } else {
                                                             var reason = errorCause || "skin_data_generation_failed";
-                                                            res.status(500).json({error: "Failed to generate skin data", err: result, accountId: account.id, reason:reason});
+                                                            res.status(500).json({error: "Failed to generate skin data", err: result, accountId: account.id, reason: reason});
                                                             console.log(("Failed to generate skin data").warn)
 
                                                             console.log(("=> FAIL #" + account.errorCounter + "\n").red);
@@ -294,7 +297,7 @@ module.exports = function (app, config, optimus) {
                                                         })
                                                     } else {
                                                         var reason = errorCause || "skin_data_generation_failed";
-                                                        res.status(500).json({error: "Failed to upload skin data (" + result + ")", err: result, accountId: account.id, reason:reason});
+                                                        res.status(500).json({error: "Failed to upload skin data (" + result + ")", err: result, accountId: account.id, reason: reason});
                                                         console.log(("Failed to upload skin data").warn)
 
                                                         console.log(("=> FAIL #" + account.errorCounter + "\n").red);
@@ -380,7 +383,7 @@ module.exports = function (app, config, optimus) {
                                     console.log(err)
                                     fileCleanup();
                                     fs.close(fd);
-                                    return ;
+                                    return;
                                 }
                             })
                             .on("close", function () {
@@ -389,7 +392,7 @@ module.exports = function (app, config, optimus) {
                                         console.log(err)
                                         fileCleanup();
                                         fs.close(fd);
-                                        return ;
+                                        return;
                                     }
                                     console.log("Hash: " + fileHash);
 
@@ -425,7 +428,7 @@ module.exports = function (app, config, optimus) {
             if (err) {
                 console.log(err)
                 cb(err, null);
-                return ;
+                return;
             }
             console.log(JSON.stringify(skinData).debug);
             if (!skinData) {
@@ -513,8 +516,8 @@ module.exports = function (app, config, optimus) {
                 var emailSplit = account.username.split("\@");
                 Util.sendDiscordDirectMessage("Hi there!\n" +
                     "This is an automated notification that a MineSkin account you linked to your Discord profile has been disabled since it failed to properly generate skin data recently.\n" +
-                    "  Affected Account: " + (account.playername || account.uuid) + " (" + emailSplit[0].substr(0, 3) + "***@" + emailSplit[1]+")\n" +
-                    "  Last Error Code:  "+account.lastErrorCode+"\n" +
+                    "  Affected Account: " + (account.playername || account.uuid) + " (" + emailSplit[0].substr(0, 3) + "***@" + emailSplit[1] + ")\n" +
+                    "  Last Error Code:  " + account.lastErrorCode + "\n" +
                     "\n" +
                     "The account won't be used for skin generation until the issues are resolved.\n" +
                     "Please make sure the configured credentials & security questions are correct at https://mineskin.org/account\n" +
