@@ -1,5 +1,6 @@
 var mongoose = require('mongoose')
     , Schema = mongoose.Schema;
+var Int32 = require("mongoose-int32");
 var accountSchema = new Schema({
     id: {
         type: Number,
@@ -25,8 +26,8 @@ var accountSchema = new Schema({
         type: Boolean,
         index: true
     },
-    errorCounter: Number,
-    successCounter: Number,
+    errorCounter: Int32,
+    successCounter: Int32,
     forcedTimeoutAt: Number,
     accessToken: String,
     clientToken: String,
