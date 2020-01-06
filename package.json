@@ -15,7 +15,7 @@
     "debug": ">=2.6.9",
     "ejs": "^2.7.1",
     "express": "^4.17.1",
-    "express-fileupload": "^1.1.5",
+    "express-fileupload": "^1.1.6",
     "express-session": "^1.15.3",
     "express-status-monitor": "^1.2.6",
     "express-validator": "^5.3.1",
