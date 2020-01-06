@@ -443,7 +443,7 @@ module.exports = function (app, config, optimus) {
             console.log("Skin: " + JSON.stringify(skinTexture));
             console.log("Cape: " + JSON.stringify(capeTexture));
 
-            if (!skinTexture||skinTexture.url) {
+            if (!skinTexture || !skinTexture.url) {
                 cb("Skin texture is null", null);
                 return;
             }
