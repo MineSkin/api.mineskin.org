@@ -77,7 +77,10 @@ module.exports = function (app, config, optimus) {
                 }
 
                 tmp.file(function (err, path, fd, fileCleanup) {
-                    if (err) throw err;
+                    if (err) {
+                        console.log(err);
+                        return;
+                    }
 
                     // var file = fs.createWriteStream(path);
                     request(url, {"encoding": "binary"}, function (err, response, body) {
@@ -206,7 +209,10 @@ module.exports = function (app, config, optimus) {
             if (!allowed) return;
 
             tmp.file(function (err, path, fd, fileCleanup) {
-                if (err) throw err;
+                if (err) {
+                    console.log(err);
+                    return;
+                }
 
                 fileUpload.mv(path, function (err) {
                     if (err) {
@@ -353,7 +359,10 @@ module.exports = function (app, config, optimus) {
                 }, function (skinTexture, cb) {// Generate the file hash from the skin's texture url
                     if (!skinTexture) return;
                     tmp.file(function (err, path, fd, fileCleanup) {
-                        if (err) throw err;
+                        if (err) {
+                            console.log(err);
+                            return;
+                        }
 
                         var file = fs.createWriteStream(path);
                         console.log("Downloading user texture from " + skinTexture.url + " to " + path);
