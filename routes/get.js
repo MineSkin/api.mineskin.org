@@ -2,6 +2,7 @@ module.exports = function (app) {
 
     var Util = require("../util");
     var skinChanger = require("../generator/skinChanger");
+    var config = require("../config");
 
     // Schemas
     var Account = require("../db/schemas/account").Account;
@@ -57,7 +58,7 @@ module.exports = function (app) {
             Account.count({enabled: true}, function (err, count) {
                 if (err) return console.log(err);
                 stats.accounts = count;
-                Account.count({enabled: true, errorCounter: {$lt: 20}}, function (err, healthyCount) {
+                Account.count({enabled: true, errorCounter: {$lt: (config.errorThreshold||10)}}, function (err, healthyCount) {
                     if (err) return console.log(err);
                     stats.healthyAccounts = healthyCount;
                     Stat.find({$or: [{key: "generate.success"}, {key: "generate.fail"}]}).lean().exec(function (err, s) {
