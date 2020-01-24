@@ -90,20 +90,20 @@ module.exports = function (app, config, optimus) {
                         if (err) {
                             console.log(err)
                             fileCleanup();
-                            fs.close(fd);
+                            close(fd);
                             return;
                         }
                         if (response.statusCode < 200 || response.statusCode > 230) {
                             res.status(500).json({"error": "Failed to download image", code: response.statusCode});
                             fileCleanup();
-                            fs.close(fd);
+                            close(fd);
                             return;
                         }
                         fs.writeFile(fd, response.body, "binary", function (err) {
                             if (err) {
                                 console.log(err);
                                 fileCleanup();
-                                fs.close(fd);
+                                close(fd);
                                 return;
                             }
 
@@ -111,7 +111,7 @@ module.exports = function (app, config, optimus) {
                                 if (err) {
                                     console.log(err)
                                     fileCleanup();
-                                    fs.close(fd);
+                                    close(fd);
                                     return;
                                 }
                                 console.log("Hash: " + fileHash);
@@ -119,7 +119,7 @@ module.exports = function (app, config, optimus) {
                                 skinChanger.findExistingSkin(fileHash, name, model, visibility, function (existingSkin) {
                                     if (existingSkin) {
                                         res.json(Util.skinToJson(existingSkin, generatorDelay));
-                                        fs.close(fd);
+                                        close(fd);
                                         fileCleanup();
                                     } else {
                                         var validImage = Util.validateImage(req, res, path);
@@ -130,11 +130,11 @@ module.exports = function (app, config, optimus) {
                                                     if (err) {
                                                         console.log(err)
                                                         fileCleanup();
-                                                        fs.close(fd);
+                                                        close(fd);
                                                         return;
                                                     }
                                                     skinChanger.generateUrl(account, url, model, function (result, errorCause) {
-                                                        fs.close(fd);
+                                                        close(fd);
                                                         fileCleanup();
                                                         if (result === true) {
                                                             account.errorCounter = 0;
@@ -225,14 +225,14 @@ module.exports = function (app, config, optimus) {
                     if (err) {
                         console.log(err)
                         fileCleanup();
-                        fs.close(fd);
+                        close(fd);
                         return;
                     }
                     imageHash(path, function (err, fileHash) {
                         if (err) {
                             console.log(err)
                             fileCleanup();
-                            fs.close(fd);
+                            close(fd);
                             return;
                         }
                         console.log("Hash: " + fileHash);
@@ -240,14 +240,14 @@ module.exports = function (app, config, optimus) {
                         skinChanger.findExistingSkin(fileHash, name, model, visibility, function (existingSkin) {
                             if (existingSkin) {
                                 res.json(Util.skinToJson(existingSkin, generatorDelay));
-                                fs.close(fd);
+                                close(fd);
                                 fileCleanup();
                             } else {
                                 fs.readFile(path, function (err, buf) {
                                     if (err) {
                                         console.log(err)
                                         fileCleanup();
-                                        fs.close(fd);
+                                        close(fd);
                                         return;
                                     }
 
@@ -260,11 +260,11 @@ module.exports = function (app, config, optimus) {
                                                 if (err) {
                                                     console.log(err)
                                                     fileCleanup();
-                                                    fs.close(fd);
+                                                    close(fd);
                                                     return;
                                                 }
                                                 skinChanger.generateUpload(account, buf, model, function (result, errorCause) {
-                                                    fs.close(fd);
+                                                    close(fd);
                                                     fileCleanup();
                                                     if (result === true) {
                                                         account.errorCounter = 0;
@@ -382,7 +382,7 @@ module.exports = function (app, config, optimus) {
                                 if (err) {
                                     console.log(err)
                                     fileCleanup();
-                                    fs.close(fd);
+                                    close(fd);
                                     return;
                                 }
                             })
@@ -391,14 +391,14 @@ module.exports = function (app, config, optimus) {
                                     if (err) {
                                         console.log(err)
                                         fileCleanup();
-                                        fs.close(fd);
+                                        close(fd);
                                         return;
                                     }
                                     console.log("Hash: " + fileHash);
 
 
                                     cb(fileHash);
-                                    fs.close(fd);
+                                    close(fd);
                                     fileCleanup();
                                 });
                             });
@@ -555,6 +555,14 @@ module.exports = function (app, config, optimus) {
             stat.save(cb);
         });
 
-    };
+    }
 
-}
+    function close(fd){
+        try{
+            fs.closeSync(fd);
+        }catch (e) {
+            console.log(e);
+        }
+    }
+
+};

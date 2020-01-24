@@ -118,7 +118,6 @@ function exitHandler(err) {
 
 server.listen(port, function () {
     console.log('listening on *:' + port);
-    Util.sendDiscordDirectMessage("MineSkin running!", "154682100862287873");
 });
 
 process.on("exit", exitHandler);
