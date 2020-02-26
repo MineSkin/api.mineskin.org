@@ -17,6 +17,7 @@ module.exports = function (app, config) {
 
     // Schemas
     var Account = require("../db/schemas/account").Account;
+    var Skin = require("../db/schemas/skin").Skin;
 
 
     app.get("/accountManager/myAccount", function (req, res) {
@@ -272,6 +273,50 @@ module.exports = function (app, config) {
                     enabled: !!acc && acc.enabled,
                     discordLinked: !!acc && acc.discordUser
                 });
+            }
+        })
+    });
+
+    app.get("/accountManager/accountStats", function (req, res) {
+        if (!req.query.token) {
+            res.status(400).json({error: "Missing token"})
+            return;
+        }
+        if (!req.query.username) {
+            res.status(400).json({error: "Missing username"})
+            return;
+        }
+        if (!req.query.uuid) {
+            res.status(400).json({error: "Missing UUID"})
+            return;
+        }
+
+        getUser(req.query.token, function (response, userBody) {
+            if (userBody.error) {
+                res.status(response.statusCode).json({error: userBody.error, msg: userBody.errorMessage})
+            } else {
+                if (userBody.username.toLowerCase() !== req.query.username.toLowerCase()) {
+                    res.status(400).json({error: "username mismatch"})
+                    return;
+                }
+
+                Account.findOne({username: req.query.username, uuid: req.query.uuid}, "id", function (err, account) {
+                    if (err) return console.log(err);
+                    if (!account) {
+                        res.status(404).json({error: "Account not found"})
+                        return;
+                    }
+
+                    Skin.count({account: account.id},function (err,count) {
+                        if (err) {
+                            console.warn(err);
+                            return;
+                        }
+                       res.json({
+                           generateCount: count
+                       });
+                    });
+                })
             }
         })
     });
