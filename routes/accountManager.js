@@ -313,6 +313,7 @@ module.exports = function (app, config) {
                             return;
                         }
                        res.json({
+                           success: true,
                            generateCount: count
                        });
                     });
