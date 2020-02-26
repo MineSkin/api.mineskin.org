@@ -490,7 +490,7 @@ module.exports = function (app, config) {
                     return;
                 }
 
-                Account.findOne({username: req.body.username, uuid: req.body.uuid, enabled: false}, function (err, account) {
+                Account.findOne({username: req.body.username, uuid: req.body.uuid, enabled: false}, "id", function (err, account) {
                     if (err) return console.log(err);
                     if (!account) {
                         res.status(404).json({error: "Account not found"})
@@ -553,7 +553,7 @@ module.exports = function (app, config) {
                     return;
                 }
 
-                Account.findOne({username: req.query.username, uuid: req.query.uuid}, function (err, account) {
+                Account.findOne({username: req.query.username, uuid: req.query.uuid}, "id username uuid", function (err, account) {
                     if (err) return console.log(err);
                     if (!account) {
                         res.status(404).json({error: "Account not found"})
