@@ -33,7 +33,10 @@ var skinSchema = new Schema({
         type: String,
         index: true
     },
-    capeUrl: String,
+    capeUrl: {
+        type: String,
+        index: true
+    },
     time: Number,
     generateDuration: Number,
     account: Number,

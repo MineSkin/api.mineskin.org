@@ -58,7 +58,7 @@ module.exports = function (app) {
             Account.count({enabled: true}, function (err, count) {
                 if (err) return console.log(err);
                 stats.accounts = count;
-                Account.count({enabled: true, errorCounter: {$lt: (config.errorThreshold||10)}}, function (err, healthyCount) {
+                Account.count({enabled: true, errorCounter: {$lt: (config.errorThreshold || 10)}}, function (err, healthyCount) {
                     if (err) return console.log(err);
                     stats.healthyAccounts = healthyCount;
                     Stat.find({$or: [{key: "generate.success"}, {key: "generate.fail"}]}).lean().exec(function (err, s) {
@@ -248,6 +248,13 @@ module.exports = function (app) {
         if (req.query.filter) {
             query.name = {'$regex': ".*" + req.query.filter + ".*"};
         }
+        if (req.query.cape) {
+            if (req.query.cape === "true") {
+                query.capeUrl = {'$ne': null};
+            } else if (req.query.cape === "false") {
+                query.capeUrl = {'$eq': null};
+            }
+        }
         Skin.count(query, function (err, count) {
             if (err) return console.log(err);
             Skin
@@ -270,7 +277,7 @@ module.exports = function (app) {
                         filter: req.query.filter
                     })
                 })
-        })
+        });
 
     })
 
