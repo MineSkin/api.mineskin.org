@@ -86,6 +86,7 @@ module.exports.getGeneratorDelay = function () {
 module.exports.skinToJson = function (skin, delay) {
     return {
         id: skin.id,
+        idStr: "" + skin.id,
         name: skin.name,
         model: skin.model,
         data: {
@@ -133,20 +134,20 @@ module.exports.validateModel = function (model) {
     return model;
 };
 
-module.exports.postDiscordMessage = function(content, channel){
-    if(!config.discord||!config.discord.token)return;
-    if(!channel)channel = config.discord.channel;
+module.exports.postDiscordMessage = function (content, channel) {
+    if (!config.discord || !config.discord.token) return;
+    if (!channel) channel = config.discord.channel;
     request({
-        method:"POST",
-        url: "https://discordapp.com/api/channels/"+channel+"/messages",
-        headers:{
-            "Authorization":"Bot "+config.discord.token,
-            "User-Agent":"MineSkin"
+        method: "POST",
+        url: "https://discordapp.com/api/channels/" + channel + "/messages",
+        headers: {
+            "Authorization": "Bot " + config.discord.token,
+            "User-Agent": "MineSkin"
         },
-        json:{
-            content:content
+        json: {
+            content: content
         }
-    },function (err,res,body) {
+    }, function (err, res, body) {
         if (err) {
             console.warn(err);
             return;
@@ -158,19 +159,19 @@ module.exports.postDiscordMessage = function(content, channel){
     })
 };
 
-module.exports.sendDiscordDirectMessage = function(content, receiver){
-    if(!config.discord||!config.discord.token)return;
+module.exports.sendDiscordDirectMessage = function (content, receiver) {
+    if (!config.discord || !config.discord.token) return;
     request({
-        method:"POST",
+        method: "POST",
         url: "https://discordapp.com/api/users/@me/channels",
-        headers:{
-            "Authorization":"Bot "+config.discord.token,
-            "User-Agent":"MineSkin"
+        headers: {
+            "Authorization": "Bot " + config.discord.token,
+            "User-Agent": "MineSkin"
         },
-        json:{
-            recipient_id:receiver
+        json: {
+            recipient_id: receiver
         }
-    },function (err,res,body) {
+    }, function (err, res, body) {
         if (err) {
             console.warn(err);
             return;
@@ -178,7 +179,7 @@ module.exports.sendDiscordDirectMessage = function(content, receiver){
         if (res.statusCode !== 200) {
             console.warn(res.statusCode);
             console.warn(body);
-        }else{
+        } else {
             module.exports.postDiscordMessage(content, body.id);
         }
     })
