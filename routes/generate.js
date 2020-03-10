@@ -461,36 +461,52 @@ module.exports = function (app, config, optimus) {
                     });
                 } else {
                     var fileHashCallback = function (fileHash) {
-                        var rand = Math.ceil((Date.now() - 1500000000000) + Math.random());
-                        var newId = optimus.encode(rand);
-                        var skin = new Skin({
-                            // '_id': mongoose.Types.ObjectId(md5(fileHash + options.name + Date.now())),
-                            id: newId,
-                            hash: fileHash,
-                            name: options.name,
-                            model: options.model,
-                            visibility: options.visibility,
-                            uuid: uuid,
-                            value: skinData.value,
-                            signature: skinData.signature,
-                            url: skinTexture.url,
-                            capeUrl: capeTexture.url,
-                            time: Date.now() / 1000,
-                            generateDuration: Date.now() - genStart,
-                            account: account.id,
-                            type: options.type,
-                            duplicate: 0,
-                            views: 1,
-                            via: options.via || "api",//TODO,
-                            server: config.server || "default",
-                            ua: options.ua,
-                            apiVer: "node"
-                        });
-                        skin.save(function (err, skin) {
-                            if (err) return console.log(err);
-                            console.log(("[Generator] New Skin saved (#" + skin.id + "). Generated in " + (Date.now() - genStart) + "ms").info);
-                            cb(null, skin);
-                        })
+                        function makeIdAndSave(tryN) {
+                            if (tryN > 10) {
+                                console.error("Failed to create unique skin ID after 10 tries!");
+                                cb("Failed to create unique skin ID", null);
+                                return;
+                            }
+
+                            var rand = Math.ceil((Date.now() - 1500000000000) + Math.random());
+                            var newId = optimus.encode(rand);
+                            Skin.findOne({id: newId}, "id", function (err, existingId) {
+                                if (err) return console.log(err);
+                                if (existingId) {// Duplicate ID!
+                                    makeIdAndSave(tryN + 1);
+                                } else {
+                                    var skin = new Skin({
+                                        // '_id': mongoose.Types.ObjectId(md5(fileHash + options.name + Date.now())),
+                                        id: newId,
+                                        hash: fileHash,
+                                        name: options.name,
+                                        model: options.model,
+                                        visibility: options.visibility,
+                                        uuid: uuid,
+                                        value: skinData.value,
+                                        signature: skinData.signature,
+                                        url: skinTexture.url,
+                                        capeUrl: capeTexture.url,
+                                        time: Date.now() / 1000,
+                                        generateDuration: Date.now() - genStart,
+                                        account: account.id,
+                                        type: options.type,
+                                        duplicate: 0,
+                                        views: 1,
+                                        via: options.via || "api",//TODO,
+                                        server: config.server || "default",
+                                        ua: options.ua,
+                                        apiVer: "node"
+                                    });
+                                    skin.save(function (err, skin) {
+                                        if (err) return console.log(err);
+                                        console.log(("[Generator] New Skin saved (#" + skin.id + "). Generated in " + (Date.now() - genStart) + "ms").info);
+                                        cb(null, skin);
+                                    })
+                                }
+                            });
+                        }
+                        makeIdAndSave(0);
                     };
 
                     if (typeof fileHash === "function") {
@@ -557,10 +573,10 @@ module.exports = function (app, config, optimus) {
 
     }
 
-    function close(fd){
-        try{
+    function close(fd) {
+        try {
             fs.closeSync(fd);
-        }catch (e) {
+        } catch (e) {
             console.log(e);
         }
     }
