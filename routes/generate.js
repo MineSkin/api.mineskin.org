@@ -43,7 +43,7 @@ module.exports = function (app, config, optimus) {
 
     app.post("/generate/url", function (req, res) {
         var url = req.body.url || req.query.url;
-        var model = req.body.model || req.query.model || "steve";
+        var model = Util.validateModel(req.body.model || req.query.model || "steve");
         var visibility = parseInt(req.body.visibility || req.query.visibility) || 0;
         var name = req.body.name || req.query.name || "";
 
@@ -192,7 +192,7 @@ module.exports = function (app, config, optimus) {
             res.status(400).json({error: "Missing files"});
             return;
         }
-        var model = req.body.model || req.query.model || "steve";
+        var model = Util.validateModel(req.body.model || req.query.model || "steve");
         var visibility = parseInt(req.body.visibility || req.query.visibility) || 0;
         var name = req.body.name || req.query.name || "";
 

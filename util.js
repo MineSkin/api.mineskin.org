@@ -119,6 +119,19 @@ module.exports.isEmpty = function (obj) {
     return true;
 };
 
+module.exports.validateModel = function (model) {
+    if (!model) return model;
+    model = model.toLowerCase();
+
+    if (model === "default" || model === "steve") {
+        return "steve";
+    }
+    if (model === "slim" || model === "alex") {
+        return "slim";
+    }
+
+    return model;
+};
 
 module.exports.postDiscordMessage = function(content, channel){
     if(!config.discord||!config.discord.token)return;
