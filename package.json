@@ -45,7 +45,7 @@
     "read-chunk": "^3.2.0",
     "remote-file-size": "^3.0.5",
     "repeat": "^1.2.0",
-    "request": "^2.88.0",
+    "request": "^2.88.2",
     "rootpath": "^0.1.2",
     "rotating-file-stream": "^1.4.4",
     "socket.io": "^2.0.1",
