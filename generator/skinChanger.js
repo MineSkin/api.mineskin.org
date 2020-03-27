@@ -29,6 +29,22 @@ module.exports.findExistingSkin = function (hash, name, model, visibility, cb) {
     })
 };
 
+module.exports.findExistingSkinForTextureUrl = function (url, name, model, visibility, cb) {
+    Skin.findOne({url:url, name: name, model: model, visibility: visibility}).exec(function (err, skin) {
+        if (err) return console.log(err);
+        if (skin) {
+            skin.duplicate += 1;
+            skin.save(function (err, skin) {
+                if (err) return console.log(err);
+                cb(skin);
+            })
+        } else {
+            cb();
+        }
+    })
+};
+
+
 module.exports.getAvailableAccount = function (req, res, cb) {
     var time = Date.now() / 1000;
     Account.findOne({enabled: true, requestServer: {$in: [null, "default", config.server]}, lastUsed: {'$lt': (time - 30)}, forcedTimeoutAt: {'$lt': (time - 120)}, errorCounter: {'$lt': (config.errorThreshold||10)}}).sort({lastUsed: 1, lastSelected: 1}).exec(function (err, account) {
