@@ -64,6 +64,16 @@ module.exports = function (app, config, optimus) {
             return;
         }
 
+        if (url.indexOf("https://mineskin.org/") === 0 ||
+            url.indexOf("http://mineskin.org/") === 0) {
+            var split = url.split("/");
+            var idPart = split[split.length - 1];
+            if (idPart.length > 0) {
+                res.redirect("https://api.mineskin.org/get/id/" + idPart);
+                return;
+            }
+        }
+
         var genStart = Date.now();
 
         Util.checkTraffic(req, res).then(function (allowed, generatorDelay) {
