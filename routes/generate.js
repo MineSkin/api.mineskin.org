@@ -209,7 +209,7 @@ module.exports = function (app, config, optimus) {
             url.indexOf("http://mineskin.org/") === 0) {
             var split = url.split("/");
             var idPart = split[split.length - 1];
-            if (idPart.length > 0) {
+            if (idPart.length > 0 && /^\d+$/.test(idPart)) {
                 Skin.findOne({id: idPart}).exec(function (err, skin) {
                     if (err) return console.log(err);
                     if (skin) {
