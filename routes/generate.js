@@ -64,154 +64,172 @@ module.exports = function (app, config, optimus) {
             return;
         }
 
+        function internalUrlCheckCallback() {
+            var genStart = Date.now();
+
+            Util.checkTraffic(req, res).then(function (allowed, generatorDelay) {
+                if (!allowed) return;
+
+
+                function afterUrlCheckCallback() {
+                    remoteFileSize(url, function (err, remoteSize) {
+                        if (err) {
+                            console.log(err);
+                            return;
+                        }
+                        if (remoteSize <= 0 || remoteSize > 102400) {
+                            res.status(400).json({error: "Invalid file size"});
+                            return;
+                        }
+
+                        tmp.file(function (err, path, fd, fileCleanup) {
+                            if (err) {
+                                console.log(err);
+                                return;
+                            }
+
+                            // var file = fs.createWriteStream(path);
+                            request(url, {"encoding": "binary"}, function (err, response, body) {
+                                if (err) {
+                                    console.log(err)
+                                    fileCleanup();
+                                    close(fd);
+                                    return;
+                                }
+                                if (response.statusCode < 200 || response.statusCode > 230) {
+                                    res.status(500).json({"error": "Failed to download image", code: response.statusCode});
+                                    fileCleanup();
+                                    close(fd);
+                                    return;
+                                }
+                                fs.writeFile(fd, response.body, "binary", function (err) {
+                                    if (err) {
+                                        console.log(err);
+                                        fileCleanup();
+                                        close(fd);
+                                        return;
+                                    }
+
+                                    imageHash(path, function (err, fileHash) {
+                                        if (err) {
+                                            console.log(err)
+                                            fileCleanup();
+                                            close(fd);
+                                            return;
+                                        }
+                                        console.log("Hash: " + fileHash);
+
+                                        skinChanger.findExistingSkin(fileHash, name, model, visibility, function (existingSkin) {
+                                            if (existingSkin) {
+                                                res.json(Util.skinToJson(existingSkin, generatorDelay));
+                                                close(fd);
+                                                fileCleanup();
+                                            } else {
+                                                var validImage = Util.validateImage(req, res, path);
+                                                // cleanup();
+                                                if (validImage) {
+                                                    skinChanger.getAvailableAccount(req, res, function (account) {
+                                                        Traffic.update({ip: req.realAddress}, {lastRequest: new Date()}, {upsert: true}, function (err, traffic) {
+                                                            if (err) {
+                                                                console.log(err)
+                                                                fileCleanup();
+                                                                close(fd);
+                                                                return;
+                                                            }
+                                                            skinChanger.generateUrl(account, url, model, function (result, errorCause) {
+                                                                close(fd);
+                                                                fileCleanup();
+                                                                if (result === true) {
+                                                                    account.errorCounter = 0;
+                                                                    if (!account.successCounter) account.successCounter = 0;
+                                                                    account.successCounter++;
+                                                                    account.save(function (err, account) {
+                                                                        if (err) return console.log(err);
+                                                                        getAndSaveSkinData(account, {
+                                                                            type: "url",
+                                                                            model: model,
+                                                                            visibility: visibility,
+                                                                            name: name,
+                                                                            via: (req.headers["referer"] && req.headers["referer"].indexOf("mineskin.org") > -1) ? "website" : "api",
+                                                                            ua: req.headers["user-agent"]
+                                                                        }, fileHash, uuid(), genStart, function (err, skin) {
+                                                                            if (err) {
+                                                                                var reason = "skin_data_fetch_failed";
+                                                                                res.status(500).json({error: "Failed to get skin data", err: err, accountId: account.id, reason: reason});
+                                                                                console.log(("Failed to download skin data").warn)
+
+                                                                                console.log(("=> FAIL #" + account.errorCounter + "\n").red);
+                                                                                logFail(account, "url", reason);
+                                                                            } else {
+                                                                                res.json(Util.skinToJson(skin, generatorDelay));
+
+                                                                                console.log("=> SUCCESS\n".green);
+                                                                                logSuccess(account, "url");
+                                                                            }
+                                                                        })
+                                                                    })
+                                                                } else {
+                                                                    var reason = errorCause || "skin_data_generation_failed";
+                                                                    res.status(500).json({error: "Failed to generate skin data", err: result, accountId: account.id, reason: reason});
+                                                                    console.log(("Failed to generate skin data").warn)
+
+                                                                    console.log(("=> FAIL #" + account.errorCounter + "\n").red);
+                                                                    logFail(account, "url", reason);
+                                                                }
+                                                            })
+                                                        })
+                                                    })
+                                                }
+                                            }
+                                        })
+                                    })
+                                })
+                            });
+                        })
+                    });
+                }
+
+                if (url.indexOf("http://textures.minecraft.net/texture/") === 0 ||
+                    url.indexOf("https://textures.minecraft.net/texture/") === 0) {
+                    skinChanger.findExistingSkinForTextureUrl(url, name, model, visibility, function (existingUrlSkin) {
+                        if (existingUrlSkin) {
+                            res.json(Util.skinToJson(existingUrlSkin, generatorDelay));
+                        } else {
+                            afterUrlCheckCallback();
+                        }
+                    })
+                } else {
+                    afterUrlCheckCallback();
+                }
+
+            });
+        }
+
         if (url.indexOf("https://mineskin.org/") === 0 ||
             url.indexOf("http://mineskin.org/") === 0) {
             var split = url.split("/");
             var idPart = split[split.length - 1];
             if (idPart.length > 0) {
-                res.redirect("https://api.mineskin.org/get/id/" + idPart);
+                Skin.findOne({id: idPart}).exec(function (err, skin) {
+                    if (err) return console.log(err);
+                    if (skin) {
+                        skin.views += 1;
+                        skin.save(function (err, skin) {
+                            if (err) return console.log(err);
+                            res.json(Util.skinToJson(skin, 0));
+                        })
+                    } else {
+                        // Fallback to generation
+                       internalUrlCheckCallback();
+                    }
+                });
                 return;
             }
         }
-
-        var genStart = Date.now();
-
-        Util.checkTraffic(req, res).then(function (allowed, generatorDelay) {
-            if (!allowed) return;
+        // Regular URL / Missing ID -> Default generation
+        internalUrlCheckCallback();
 
 
-            function afterUrlCheckCallback() {
-                remoteFileSize(url, function (err, remoteSize) {
-                    if (err) {
-                        console.log(err);
-                        return;
-                    }
-                    if (remoteSize <= 0 || remoteSize > 102400) {
-                        res.status(400).json({error: "Invalid file size"});
-                        return;
-                    }
-
-                    tmp.file(function (err, path, fd, fileCleanup) {
-                        if (err) {
-                            console.log(err);
-                            return;
-                        }
-
-                        // var file = fs.createWriteStream(path);
-                        request(url, {"encoding": "binary"}, function (err, response, body) {
-                            if (err) {
-                                console.log(err)
-                                fileCleanup();
-                                close(fd);
-                                return;
-                            }
-                            if (response.statusCode < 200 || response.statusCode > 230) {
-                                res.status(500).json({"error": "Failed to download image", code: response.statusCode});
-                                fileCleanup();
-                                close(fd);
-                                return;
-                            }
-                            fs.writeFile(fd, response.body, "binary", function (err) {
-                                if (err) {
-                                    console.log(err);
-                                    fileCleanup();
-                                    close(fd);
-                                    return;
-                                }
-
-                                imageHash(path, function (err, fileHash) {
-                                    if (err) {
-                                        console.log(err)
-                                        fileCleanup();
-                                        close(fd);
-                                        return;
-                                    }
-                                    console.log("Hash: " + fileHash);
-
-                                    skinChanger.findExistingSkin(fileHash, name, model, visibility, function (existingSkin) {
-                                        if (existingSkin) {
-                                            res.json(Util.skinToJson(existingSkin, generatorDelay));
-                                            close(fd);
-                                            fileCleanup();
-                                        } else {
-                                            var validImage = Util.validateImage(req, res, path);
-                                            // cleanup();
-                                            if (validImage) {
-                                                skinChanger.getAvailableAccount(req, res, function (account) {
-                                                    Traffic.update({ip: req.realAddress}, {lastRequest: new Date()}, {upsert: true}, function (err, traffic) {
-                                                        if (err) {
-                                                            console.log(err)
-                                                            fileCleanup();
-                                                            close(fd);
-                                                            return;
-                                                        }
-                                                        skinChanger.generateUrl(account, url, model, function (result, errorCause) {
-                                                            close(fd);
-                                                            fileCleanup();
-                                                            if (result === true) {
-                                                                account.errorCounter = 0;
-                                                                if (!account.successCounter) account.successCounter = 0;
-                                                                account.successCounter++;
-                                                                account.save(function (err, account) {
-                                                                    if (err) return console.log(err);
-                                                                    getAndSaveSkinData(account, {
-                                                                        type: "url",
-                                                                        model: model,
-                                                                        visibility: visibility,
-                                                                        name: name,
-                                                                        via: (req.headers["referer"] && req.headers["referer"].indexOf("mineskin.org") > -1) ? "website" : "api",
-                                                                        ua: req.headers["user-agent"]
-                                                                    }, fileHash, uuid(), genStart, function (err, skin) {
-                                                                        if (err) {
-                                                                            var reason = "skin_data_fetch_failed";
-                                                                            res.status(500).json({error: "Failed to get skin data", err: err, accountId: account.id, reason: reason});
-                                                                            console.log(("Failed to download skin data").warn)
-
-                                                                            console.log(("=> FAIL #" + account.errorCounter + "\n").red);
-                                                                            logFail(account, "url", reason);
-                                                                        } else {
-                                                                            res.json(Util.skinToJson(skin, generatorDelay));
-
-                                                                            console.log("=> SUCCESS\n".green);
-                                                                            logSuccess(account, "url");
-                                                                        }
-                                                                    })
-                                                                })
-                                                            } else {
-                                                                var reason = errorCause || "skin_data_generation_failed";
-                                                                res.status(500).json({error: "Failed to generate skin data", err: result, accountId: account.id, reason: reason});
-                                                                console.log(("Failed to generate skin data").warn)
-
-                                                                console.log(("=> FAIL #" + account.errorCounter + "\n").red);
-                                                                logFail(account, "url", reason);
-                                                            }
-                                                        })
-                                                    })
-                                                })
-                                            }
-                                        }
-                                    })
-                                })
-                            })
-                        });
-                    })
-                });
-            }
-
-            if (url.indexOf("http://textures.minecraft.net/texture/") === 0 ||
-                url.indexOf("https://textures.minecraft.net/texture/") === 0) {
-                skinChanger.findExistingSkinForTextureUrl(url, name, model, visibility, function (existingUrlSkin) {
-                    if (existingUrlSkin) {
-                        res.json(Util.skinToJson(existingUrlSkin, generatorDelay));
-                    } else {
-                        afterUrlCheckCallback();
-                    }
-                })
-            } else {
-                afterUrlCheckCallback();
-            }
-
-        });
     });
 
     app.post("/generate/upload", function (req, res) {
