@@ -59,6 +59,7 @@ module.exports.getAvailableAccount = function (req, res, cb) {
             //     account.accessToken = null;
             //     // account.clientToken = null;
             // }
+            console.log("Account #"+account.id+" last used "+Math.round(time-account.lastUsed)+"s ago, last selected "+Math.round(time-account.lastSelected)+"s ago")
             account.lastUsed = account.lastSelected = time;
             account.save(function (err, account) {
                 cb(account);
