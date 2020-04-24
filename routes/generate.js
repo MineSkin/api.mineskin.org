@@ -508,19 +508,6 @@ module.exports = function (app, config, optimus) {
                 return;
             }
 
-            if (account.id) {
-                if (account.lastTextureUrl === skinTexture.url) {
-                    account.sameTextureCounter++;
-                    console.warn("Same Texture Counter of Account #" + account.id + " (" + account.uuid + ") is > 0: " + account.sameTextureCounter);
-                    console.warn("Texture: " + account.lastTextureUrl)
-                } else {
-                    account.sameTextureCounter = 0;
-                }
-                account.lastTextureUrl = skinTexture.url;
-
-                account.save();
-            }
-
             // check for duplicates again, this time using the skin's URL
             Skin.findOne({name: options.name, model: options.model, visibility: options.visibility, url: skinTexture.url}, function (err, skin) {
                 if (skin) {// skin with that url already exists
@@ -543,6 +530,19 @@ module.exports = function (app, config, optimus) {
                                 console.warn("Type:  " + options.type);
                                 console.warn("Model: " + options.model);
                                 console.warn("Visibility: " + options.visibility);
+
+                                if (account.id) {
+                                    if (account.lastTextureUrl === skinTexture.url) {
+                                        account.sameTextureCounter++;
+                                        console.warn("Same Texture Counter of Account #" + account.id + " (" + account.uuid + ") is > 0: " + account.sameTextureCounter);
+                                        console.warn("Texture: " + account.lastTextureUrl)
+                                    } else {
+                                        account.sameTextureCounter = 0;
+                                    }
+                                    account.lastTextureUrl = skinTexture.url;
+
+                                    account.save();
+                                }
                             }
 
                             function makeIdAndSave(tryN) {
