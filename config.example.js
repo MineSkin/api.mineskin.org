@@ -6,6 +6,8 @@ config.server = "default";
 config.generateDelay = 60;
 config.errorThreshold = 10;
 
+config.genSaveDelay = 5;
+
 config.optimus = {
     prime: 0,
     inverse: 0,
