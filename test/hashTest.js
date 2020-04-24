@@ -38,6 +38,13 @@ imageHash("./images/33f0306e3488b95a8e29307171b273567de87a651dd1ac6adeb4d6cc67bc
     console.log("1 33f0306e3488b95a8e29307171b273567de87a651dd1ac6adeb4d6cc67bcf216: " + hash);
 });
 
+imageHash("./images/x.png",function (err,hash) {
+    console.log("1 x: " + hash);
+});
+imageHash("./images/y.png",function (err,hash) {
+    console.log("1 y: " + hash);
+});
+
 imageHash("./images2/a.png",function (err,hash) {
     console.log("2 a: " + hash);
 });

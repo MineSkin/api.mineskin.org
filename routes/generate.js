@@ -155,7 +155,9 @@ module.exports = function (app, config, optimus) {
                                                                                 visibility: visibility,
                                                                                 name: name,
                                                                                 via: (req.headers["referer"] && req.headers["referer"].indexOf("mineskin.org") > -1) ? "website" : "api",
-                                                                                ua: req.headers["user-agent"]
+                                                                                ua: req.headers["user-agent"],
+                                                                                genUrl: url,
+                                                                                tmpPath: path
                                                                             }, fileHash, hashFromMojangTexture, uuid(), tmpName, genStart, function (err, skin) {
                                                                                 if (err) {
                                                                                     var reason = "skin_data_fetch_failed";
@@ -331,7 +333,8 @@ module.exports = function (app, config, optimus) {
                                                                     visibility: visibility,
                                                                     name: name,
                                                                     via: (req.headers["referer"] && req.headers["referer"].indexOf("mineskin.org") > -1) ? "website" : "api",
-                                                                    ua: req.headers["user-agent"]
+                                                                    ua: req.headers["user-agent"],
+                                                                    tmpPath: path
                                                                 }, fileHash, hashFromMojangTexture, uuid(), tmpName, genStart, function (err, skin) {
                                                                     if (err) {
                                                                         var reason = "skin_data_fetch_failed";
@@ -471,7 +474,7 @@ module.exports = function (app, config, optimus) {
                         console.log("Hash: " + fileHash);
 
 
-                        cb(fileHash);
+                        cb(fileHash, path);
                         close(fd);
                         fileCleanup();
                     });
@@ -531,12 +534,15 @@ module.exports = function (app, config, optimus) {
                     });
                 } else {
                     var fileHashCallback = function (fileHash) {
-                        var mojangHashCallback = function (mojangHash) {
+                        var mojangHashCallback = function (mojangHash,mojTmp) {
                             if (options.type !== "user" && fileHash !== mojangHash) {
                                 console.error("IMAGE HASH AND TEXTURE HASH DO NOT MATCH");
-                                console.warn("Image:   " + fileHash);
-                                console.warn("Texture: " + mojangHash);
+                                console.warn("Image:   " + fileHash +(options.tmpPath?" ["+options.tmpPath+"]":"")   + (options.genUrl?" ("+options.genUrl+")":""));
+                                console.warn("Texture: " + mojangHash + (mojTmp?" ["+mojTmp+"]":"")   + " ("+skinTexture.url+")");
                                 console.warn("Account: " + account.id);
+                                console.warn("Type:  " + options.type);
+                                console.warn("Model: " + options.model);
+                                console.warn("Visibility: " + options.visibility);
                             }
 
                             function makeIdAndSave(tryN) {
