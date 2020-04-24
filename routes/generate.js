@@ -502,6 +502,7 @@ module.exports = function (app, config, optimus) {
                 if (account.lastTextureUrl === skinTexture.url) {
                     account.sameTextureCounter++;
                     console.warn("Same Texture Counter of Account #" + account.id + " (" + account.uuid + ") is > 0: " + account.sameTextureCounter);
+                    console.warn("Texture: "+account.lastTextureUrl)
                 } else {
                     account.sameTextureCounter = 0;
                 }
