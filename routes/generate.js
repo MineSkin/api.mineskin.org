@@ -83,7 +83,9 @@ module.exports = function (app, config, optimus) {
                             return;
                         }
 
-                        tmp.file(function (err, path, fd, fileCleanup) {
+                        var tmpName = "t" + Date.now() + "url";
+                        tmp.file({name:tmpName,dir:"/tmp/url"},function (err, path, fd, fileCleanup) {
+                            console.log("url hash tmp name: "+ path)
                             if (err) {
                                 console.log(err);
                                 return;
@@ -154,11 +156,11 @@ module.exports = function (app, config, optimus) {
                                                                                 name: name,
                                                                                 via: (req.headers["referer"] && req.headers["referer"].indexOf("mineskin.org") > -1) ? "website" : "api",
                                                                                 ua: req.headers["user-agent"]
-                                                                            }, fileHash, uuid(), genStart, function (err, skin) {
+                                                                            }, fileHash, hashFromMojangTexture, uuid(), tmpName, genStart, function (err, skin) {
                                                                                 if (err) {
                                                                                     var reason = "skin_data_fetch_failed";
                                                                                     res.status(500).json({error: "Failed to get skin data", err: err, accountId: account.id, reason: reason});
-                                                                                    console.log(("Failed to download skin data (URL, Account "+account.id+")").warn)
+                                                                                    console.log(("Failed to download skin data (URL, Account " + account.id + ")").warn)
 
                                                                                     console.log(("=> FAIL #" + account.errorCounter + "\n").red);
                                                                                     logFail(account, "url", reason);
@@ -169,7 +171,7 @@ module.exports = function (app, config, optimus) {
                                                                                     logSuccess(account, "url");
                                                                                 }
                                                                             })
-                                                                        },config.genSaveDelay*1000)
+                                                                        }, config.genSaveDelay * 1000)
                                                                     })
                                                                 } else {
                                                                     var reason = errorCause || "skin_data_generation_failed";
@@ -223,7 +225,7 @@ module.exports = function (app, config, optimus) {
                         })
                     } else {
                         // Fallback to generation
-                       internalUrlCheckCallback();
+                        internalUrlCheckCallback();
                     }
                 });
                 return;
@@ -263,7 +265,9 @@ module.exports = function (app, config, optimus) {
         Util.checkTraffic(req, res).then(function (allowed, generatorDelay) {
             if (!allowed) return;
 
-            tmp.file(function (err, path, fd, fileCleanup) {
+            var tmpName = "t"+Date.now()+"upl";
+            tmp.file({name:tmpName,dir:"/tmp/upl"},function (err, path, fd, fileCleanup) {
+                console.log("upload hash tmp name: "+ path)
                 if (err) {
                     console.log(err);
                     return;
@@ -328,11 +332,11 @@ module.exports = function (app, config, optimus) {
                                                                     name: name,
                                                                     via: (req.headers["referer"] && req.headers["referer"].indexOf("mineskin.org") > -1) ? "website" : "api",
                                                                     ua: req.headers["user-agent"]
-                                                                }, fileHash, uuid(), genStart, function (err, skin) {
+                                                                }, fileHash, hashFromMojangTexture, uuid(), tmpName, genStart, function (err, skin) {
                                                                     if (err) {
                                                                         var reason = "skin_data_fetch_failed";
                                                                         res.status(500).json({error: "Failed to get skin data", err: err, accountId: account.id, reason: reason});
-                                                                        console.log(("Failed to download skin data (UPLOAD, Account "+account.id+")").warn)
+                                                                        console.log(("Failed to download skin data (UPLOAD, Account " + account.id + ")").warn)
 
                                                                         console.log(("=> FAIL #" + account.errorCounter + "\n").red);
                                                                         logFail(account, "upload", reason);
@@ -343,7 +347,7 @@ module.exports = function (app, config, optimus) {
                                                                         logSuccess(account, "upload");
                                                                     }
                                                                 });
-                                                            },config.genSaveDelay*1000)
+                                                            }, config.genSaveDelay * 1000)
                                                         })
                                                     } else {
                                                         var reason = errorCause || "skin_data_generation_failed";
@@ -417,43 +421,7 @@ module.exports = function (app, config, optimus) {
                     name: name,
                     via: (req.headers["referer"] && req.headers["referer"].indexOf("mineskin.org") > -1) ? "website" : "api",
                     ua: req.headers["user-agent"]
-                }, function (skinTexture, cb) {// Generate the file hash from the skin's texture url
-                    if (!skinTexture) return;
-                    tmp.file(function (err, path, fd, fileCleanup) {
-                        if (err) {
-                            console.log(err);
-                            return;
-                        }
-
-                        var file = fs.createWriteStream(path);
-                        console.log("Downloading user texture from " + skinTexture.url + " to " + path);
-                        request(skinTexture.url).pipe(file)
-                            .on("error", function (err) {
-                                if (err) {
-                                    console.log(err)
-                                    fileCleanup();
-                                    close(fd);
-                                    return;
-                                }
-                            })
-                            .on("close", function () {
-                                imageHash(path, function (err, fileHash) {
-                                    if (err) {
-                                        console.log(err)
-                                        fileCleanup();
-                                        close(fd);
-                                        return;
-                                    }
-                                    console.log("Hash: " + fileHash);
-
-
-                                    cb(fileHash);
-                                    close(fd);
-                                    fileCleanup();
-                                });
-                            });
-                    })
-                }, longUuid, genStart, function (err, skin) {
+                }, hashFromMojangTexture, null, longUuid, "t"+Date.now()+"usr", genStart, function (err, skin) {
                     if (err) {
                         var reason = "skin_data_fetch_failed";
                         res.status(500).json({error: "Failed to get skin data", err: err, reason: reason});
@@ -472,8 +440,47 @@ module.exports = function (app, config, optimus) {
         })
     });
 
+    function hashFromMojangTexture(skinTexture, tmpName, cb) {// Generate the file hash from the skin's texture url
+        if (!skinTexture) return;
+        tmp.file({name:tmpName,dir:"/tmp/moj"},function (err, path, fd, fileCleanup) {
+            console.log("mojang hash tmp name: "+ path)
+            if (err) {
+                console.log(err);
+                return;
+            }
+
+            var file = fs.createWriteStream(path);
+            console.log("Downloading user texture from " + skinTexture.url + " to " + path);
+            request(skinTexture.url).pipe(file)
+                .on("error", function (err) {
+                    if (err) {
+                        console.log(err)
+                        fileCleanup();
+                        close(fd);
+                        return;
+                    }
+                })
+                .on("close", function () {
+                    imageHash(path, function (err, fileHash) {
+                        if (err) {
+                            console.log(err)
+                            fileCleanup();
+                            close(fd);
+                            return;
+                        }
+                        console.log("Hash: " + fileHash);
+
+
+                        cb(fileHash);
+                        close(fd);
+                        fileCleanup();
+                    });
+                });
+        })
+    }
+
     // fileHash can either be the hash, or a callback to get the hash
-    function getAndSaveSkinData(account, options, fileHash, uuid, genStart, cb) {
+    function getAndSaveSkinData(account, options, fileHash, textureHash, uuid, tmpName, genStart, cb) {
         dataFetcher.getSkinData(account, function (err, skinData) {
             if (err) {
                 console.log(err)
@@ -502,7 +509,7 @@ module.exports = function (app, config, optimus) {
                 if (account.lastTextureUrl === skinTexture.url) {
                     account.sameTextureCounter++;
                     console.warn("Same Texture Counter of Account #" + account.id + " (" + account.uuid + ") is > 0: " + account.sameTextureCounter);
-                    console.warn("Texture: "+account.lastTextureUrl)
+                    console.warn("Texture: " + account.lastTextureUrl)
                 } else {
                     account.sameTextureCounter = 0;
                 }
@@ -524,59 +531,75 @@ module.exports = function (app, config, optimus) {
                     });
                 } else {
                     var fileHashCallback = function (fileHash) {
-                        function makeIdAndSave(tryN) {
-                            if (tryN > 10) {
-                                console.error("Failed to create unique skin ID after 10 tries!");
-                                cb("Failed to create unique skin ID", null);
-                                return;
+                        var mojangHashCallback = function (mojangHash) {
+                            if (options.type !== "user" && fileHash !== mojangHash) {
+                                console.error("IMAGE HASH AND TEXTURE HASH DO NOT MATCH");
+                                console.warn("Image:   " + fileHash);
+                                console.warn("Texture: " + mojangHash);
+                                console.warn("Account: " + account.id);
                             }
 
-                            var rand = Math.ceil((Date.now() - 1500000000000) + Math.random());
-                            var newId = optimus.encode(rand);
-                            Skin.findOne({id: newId}, "id", function (err, existingId) {
-                                if (err) return console.log(err);
-                                if (existingId) {// Duplicate ID!
-                                    makeIdAndSave(tryN + 1);
-                                } else {
-                                    var skin = new Skin({
-                                        // '_id': mongoose.Types.ObjectId(md5(fileHash + options.name + Date.now())),
-                                        id: newId,
-                                        hash: fileHash,
-                                        name: options.name,
-                                        model: options.model,
-                                        visibility: options.visibility,
-                                        uuid: uuid,
-                                        value: skinData.value,
-                                        signature: skinData.signature,
-                                        url: skinTexture.url,
-                                        skinTextureId: skinTexture.textureId,
-                                        skinId: skinTexture.id,
-                                        capeUrl: capeTexture.url,
-                                        time: Date.now() / 1000,
-                                        generateDuration: Date.now() - genStart,
-                                        account: account.id,
-                                        type: options.type,
-                                        duplicate: 0,
-                                        views: 1,
-                                        via: options.via || "api",//TODO,
-                                        server: config.server || "default",
-                                        ua: options.ua,
-                                        apiVer: "node"
-                                    });
-                                    skin.save(function (err, skin) {
-                                        if (err) return console.log(err);
-                                        console.log(("[Generator] New Skin saved (#" + skin.id + "). Generated in " + (Date.now() - genStart) + "ms").info);
-                                        cb(null, skin);
-                                    })
+                            function makeIdAndSave(tryN) {
+                                if (tryN > 10) {
+                                    console.error("Failed to create unique skin ID after 10 tries!");
+                                    cb("Failed to create unique skin ID", null);
+                                    return;
                                 }
-                            });
+
+                                var rand = Math.ceil((Date.now() - 1500000000000) + Math.random());
+                                var newId = optimus.encode(rand);
+                                Skin.findOne({id: newId}, "id", function (err, existingId) {
+                                    if (err) return console.log(err);
+                                    if (existingId) {// Duplicate ID!
+                                        makeIdAndSave(tryN + 1);
+                                    } else {
+                                        var skin = new Skin({
+                                            // '_id': mongoose.Types.ObjectId(md5(fileHash + options.name + Date.now())),
+                                            id: newId,
+                                            hash: fileHash,
+                                            name: options.name,
+                                            model: options.model,
+                                            visibility: options.visibility,
+                                            uuid: uuid,
+                                            value: skinData.value,
+                                            signature: skinData.signature,
+                                            url: skinTexture.url,
+                                            skinTextureId: skinTexture.textureId,
+                                            skinId: skinTexture.id,
+                                            textureHash: mojangHash,
+                                            capeUrl: capeTexture.url,
+                                            time: Date.now() / 1000,
+                                            generateDuration: Date.now() - genStart,
+                                            account: account.id,
+                                            type: options.type,
+                                            duplicate: 0,
+                                            views: 1,
+                                            via: options.via || "api",//TODO,
+                                            server: config.server || "default",
+                                            ua: options.ua,
+                                            apiVer: "node"
+                                        });
+                                        skin.save(function (err, skin) {
+                                            if (err) return console.log(err);
+                                            console.log(("[Generator] New Skin saved (#" + skin.id + "). Generated in " + (Date.now() - genStart) + "ms").info);
+                                            cb(null, skin);
+                                        })
+                                    }
+                                });
+                            }
+
+                            makeIdAndSave(0);
                         }
 
-                        makeIdAndSave(0);
+                        if (typeof textureHash === "function") {
+                            textureHash(skinTexture, tmpName, mojangHashCallback);
+                        } else {
+                            mojangHashCallback(textureHash);
+                        }
                     };
 
                     if (typeof fileHash === "function") {
-                        fileHash(skinTexture, fileHashCallback);
+                        fileHash(skinTexture, tmpName, fileHashCallback);
                     } else {
                         fileHashCallback(fileHash);
                     }

@@ -35,6 +35,7 @@ var skinSchema = new Schema({
     },
     skinId: String,
     skinTextureId: String,
+    textureHash: String,
     capeUrl: {
         type: String,
         index: true
