@@ -98,7 +98,7 @@ module.exports.generateUrl = function (account, url, model, cb) {
                         }
                     }, function (err, response, body) {
                         if (err) return console.log(err);
-                        console.log(("" + body).debug);
+                        console.log(("Url response (acc#"+account.id+"): "+response.statusCode+" " + body).debug);
                         if (response.statusCode >= 200 && response.statusCode < 300) {
                             cb(true);
                         } else {
@@ -162,7 +162,7 @@ module.exports.generateUpload = function (account, fileBuf, model, cb) {
                         }
                     }, function (err, response, body) {
                         if (err) return console.log(err);
-                        console.log(("" + body).debug);
+                        console.log(("Upload response (acc#"+account.id+"): "+response.statusCode+" " + body).debug);
                         if (response.statusCode >= 200 && response.statusCode < 300) {
                             cb(true);
                         } else {
