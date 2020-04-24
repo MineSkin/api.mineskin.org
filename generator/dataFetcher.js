@@ -10,7 +10,7 @@ setInterval(function () {
             delete cache[id];
         }
     }
-}, 60000);
+}, 30000);
 
 module.exports.getSkinData = function (account, cb) {
     console.log(("[DataFetcher] Loading Skin data for " + (account.id ? "account #" + account.id + " ("+account.uuid+")"  : account.uuid)).info);
