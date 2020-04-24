@@ -18,6 +18,7 @@ module.exports.findExistingSkin = function (hash, name, model, visibility, cb) {
     Skin.findOne({hash: hash, name: name, model: model, visibility: visibility}).exec(function (err, skin) {
         if (err) return console.log(err);
         if (skin) {
+            console.log("Found existing skin with same hash");
             skin.duplicate += 1;
             skin.save(function (err, skin) {
                 if (err) return console.log(err);
@@ -33,6 +34,7 @@ module.exports.findExistingSkinForTextureUrl = function (url, name, model, visib
     Skin.findOne({url:url, name: name, model: model, visibility: visibility}).exec(function (err, skin) {
         if (err) return console.log(err);
         if (skin) {
+            console.log("Found existing skin with same texture url");
             skin.duplicate += 1;
             skin.save(function (err, skin) {
                 if (err) return console.log(err);

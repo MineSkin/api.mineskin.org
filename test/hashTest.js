@@ -25,3 +25,6 @@ imageHash("./images/d.png",function (err,hash) {
 imageHash("./images/e.png",function (err,hash) {
     console.log("e: " + hash);
 });
+imageHash("./images/f.png",function (err,hash) {
+    console.log("f: " + hash);
+});

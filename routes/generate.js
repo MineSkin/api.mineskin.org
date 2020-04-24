@@ -157,7 +157,7 @@ module.exports = function (app, config, optimus) {
                                                                             if (err) {
                                                                                 var reason = "skin_data_fetch_failed";
                                                                                 res.status(500).json({error: "Failed to get skin data", err: err, accountId: account.id, reason: reason});
-                                                                                console.log(("Failed to download skin data").warn)
+                                                                                console.log(("Failed to download skin data (URL, Account "+account.id+")").warn)
 
                                                                                 console.log(("=> FAIL #" + account.errorCounter + "\n").red);
                                                                                 logFail(account, "url", reason);
@@ -329,7 +329,7 @@ module.exports = function (app, config, optimus) {
                                                                 if (err) {
                                                                     var reason = "skin_data_fetch_failed";
                                                                     res.status(500).json({error: "Failed to get skin data", err: err, accountId: account.id, reason: reason});
-                                                                    console.log(("Failed to download skin data").warn)
+                                                                    console.log(("Failed to download skin data (UPLOAD, Account "+account.id+")").warn)
 
                                                                     console.log(("=> FAIL #" + account.errorCounter + "\n").red);
                                                                     logFail(account, "upload", reason);
@@ -453,7 +453,7 @@ module.exports = function (app, config, optimus) {
                     if (err) {
                         var reason = "skin_data_fetch_failed";
                         res.status(500).json({error: "Failed to get skin data", err: err, reason: reason});
-                        console.log(("Failed to download skin data").warn)
+                        console.log(("Failed to download skin data (USER)").warn)
 
                         console.log(("=> FAIL\n").red);
                         logFail(null, "user", reason);
