@@ -30,6 +30,8 @@ var accountSchema = new Schema({
     successCounter: Int32,
     lastErrorCode: String,
     forcedTimeoutAt: Number,
+    lastTextureUrl: String,
+    sameTextureCounter: Number,
     accessToken: String,
     clientToken: String,
     requestIp: String,
