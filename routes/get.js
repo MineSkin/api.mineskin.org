@@ -213,10 +213,13 @@ module.exports = function (app) {
             if (err) return console.log(err);
             if (skin) {
                 skin.views += 1;
+                if (skin.model === "alex") {
+                    skin.model = "slim";
+                }
                 skin.save(function (err, skin) {
                     if (err) return console.log(err);
                     res.json(Util.skinToJson(skin, 0));
-                })
+                });
             } else {
                 res.status(404).json({error: "Skin not found"});
             }
