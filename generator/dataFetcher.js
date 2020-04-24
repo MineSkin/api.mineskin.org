@@ -13,13 +13,15 @@ setInterval(function () {
 }, 30000);
 
 module.exports.getSkinData = function (account, cb) {
-    console.log(("[DataFetcher] Loading Skin data for " + (account.id ? "account #" + account.id + " ("+account.uuid+")"  : account.uuid)).info);
+    console.log(("[DataFetcher] Loading Skin data for " + (account.id ? "account #" + account.id + " (" + account.uuid + ")" : account.uuid)).info);
     console.log(account.uuid.debug)
     setTimeout(function () {
         if (cache.hasOwnProperty(account.uuid)) {
             console.warn("DATA FETCHER CACHE HIT! Current Size: " + Object.keys(cache).length);
-            cb(null, cache[account.uuid]);
-        }else {
+            var ca = cache[account.uuid];
+            console.warn("Requested " + account.uuid + ", cached " + (Date.now() - ca.time) + "s ago")
+            cb(null, ca);
+        } else {
             request("https://sessionserver.mojang.com/session/minecraft/profile/" + account.uuid + "?unsigned=false", function (err, response, body) {
                 if (err) {
                     console.log(err);
@@ -42,7 +44,7 @@ module.exports.getSkinData = function (account, cb) {
                     time: Date.now() / 1000
                 };
                 // if (!account.id) {// should be a user request
-                    cache[account.uuid] = data;
+                cache[account.uuid] = data;
                 // }
                 cb(null, data);
             });
