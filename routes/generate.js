@@ -546,6 +546,7 @@ module.exports = function (app, config, optimus) {
                                         value: skinData.value,
                                         signature: skinData.signature,
                                         url: skinTexture.url,
+                                        skinTextureId: skinTexture.textureId,
                                         capeUrl: capeTexture.url,
                                         time: Date.now() / 1000,
                                         generateDuration: Date.now() - genStart,
