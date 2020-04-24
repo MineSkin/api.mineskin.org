@@ -506,6 +506,8 @@ module.exports = function (app, config, optimus) {
                     account.sameTextureCounter = 0;
                 }
                 account.lastTextureUrl = skinTexture.url;
+
+                account.save();
             }
 
             // check for duplicates again, this time using the skin's URL
