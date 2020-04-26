@@ -3,6 +3,7 @@ var request = require("request");
 module.exports = {};
 
 var cache = {};
+module.exports.cache = cache;
 
 setInterval(function () {
     for (var id in cache) {

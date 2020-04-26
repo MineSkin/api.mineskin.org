@@ -21,6 +21,7 @@ var Traffic = require("../db/schemas/traffic").Traffic;
 module.exports = {};
 
 var requestQueue = [];
+module.exports.requestQueue = requestQueue;
 
 setInterval(function () {
     var next = requestQueue.shift();
