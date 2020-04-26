@@ -397,6 +397,7 @@ module.exports = function (app, config) {
                                     type: "external",
                                     enabled: true,
                                     lastUsed: 0,
+                                    forcedTimeoutAt: 0,
                                     errorCounter: 0,
                                     successCounter: 0,
                                     requestIp: remoteIp
