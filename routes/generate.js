@@ -74,7 +74,6 @@ module.exports = function (app, config, optimus) {
                 function afterUrlCheckCallback() {
                     remoteFileSize(url, function (err, remoteSize) {
                         if (err) {
-                            console.log(err);
                             res.status(400).json({error: "Failed to determine file size"});
                             return;
                         }
