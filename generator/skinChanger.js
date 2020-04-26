@@ -14,6 +14,24 @@ var Traffic = require("../db/schemas/traffic").Traffic;
 
 module.exports = {};
 
+var requestQueue = [];
+setInterval(function () {
+    var next = requestQueue.shift();
+    if (next) {
+        try{
+            request(next.options, next.callback);
+        }catch (e) {
+            console.error(e);
+        }
+    }
+}, config.requestQueue.skinChanger);
+setInterval(function () {
+    console.log("[SkinCHanger] Request Queue Size: " + requestQueue.length);
+},30000)
+function queueRequest(options, callback) {
+    requestQueue.push({options:options, callback: callback})
+}
+
 module.exports.findExistingSkin = function (hash, name, model, visibility, cb) {
     Skin.findOne({hash: hash, name: name, model: model, visibility: visibility}).exec(function (err, skin) {
         if (err) return console.log(err);
@@ -83,7 +101,7 @@ module.exports.generateUrl = function (account, url, model, cb) {
                 if (result) {
                     account.lastUsed = account.lastSelected;// account *should* be saved in the following code, so there shouldn't be any need to make another call here
 
-                    request({
+                    queueRequest({
                         method: "POST",
                         url: urls.skin.replace(":uuid", account.uuid),
                         headers: {
@@ -141,7 +159,7 @@ module.exports.generateUpload = function (account, fileBuf, model, cb) {
                 if (result) {
                     account.lastUsed = account.lastSelected;// account *should* be saved in the following code, so there shouldn't be any need to make another call here
 
-                    request({
+                    queueRequest({
                         method: "PUT",
                         url: urls.skin.replace(":uuid", account.uuid),
                         headers: {

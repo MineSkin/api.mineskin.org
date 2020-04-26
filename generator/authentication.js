@@ -20,6 +20,25 @@ var Traffic = require("../db/schemas/traffic").Traffic;
 
 module.exports = {};
 
+var requestQueue = [];
+
+setInterval(function () {
+    var next = requestQueue.shift();
+    if (next) {
+       try{
+           request(next.options, next.callback);
+       }catch (e) {
+           console.error(e);
+       }
+    }
+}, config.requestQueue.auth);
+setInterval(function () {
+    console.log("[Auth] Request Queue Size: " + requestQueue.length);
+},30000)
+function queueRequest(options, callback) {
+    requestQueue.push({options:options, callback: callback})
+}
+
 module.exports.authenticate = function (account, cb) {
     console.log("[Auth] authenticate(" + account.username + ")");
     // Callback to login
@@ -39,7 +58,7 @@ module.exports.authenticate = function (account, cb) {
             requestUser: true
         };
         console.log(("[Auth] " + JSON.stringify(body)).debug);
-        request({
+        queueRequest({
             method: "POST",
             url: urls.authenticate,
             headers: {
@@ -103,7 +122,7 @@ module.exports.authenticate = function (account, cb) {
                 requestUser: true
             };
             console.log(("[Auth] " + JSON.stringify(body)).debug);
-            request({
+            queueRequest({
                 method: "POST",
                 url: urls.refresh,
                 headers: {
@@ -158,7 +177,7 @@ module.exports.authenticate = function (account, cb) {
             requestUser: true
         };
         console.log(("[Auth] " + JSON.stringify(body)).debug);
-        request({
+        queueRequest({
             method: "POST",
             url: urls.validate,
             headers: {
@@ -220,7 +239,7 @@ module.exports.completeChallenges = function (account, cb) {
 
     // Check if we can access
     console.log(("[Auth] GET " + urls.security.location).debug);
-    request({
+    queueRequest({
         url: urls.security.location,
         headers: {
             "Content-Type": "application/json",
@@ -306,7 +325,7 @@ module.exports.signout = function (account, cb) {
     account.requestServer = null;
     // account.clientToken = null;
     console.log(("[Auth] POST " + urls.signout).debug);
-    request({
+    queueRequest({
         method: "POST",
         url: urls.signout,
         headers: {
