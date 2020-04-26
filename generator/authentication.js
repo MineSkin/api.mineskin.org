@@ -128,7 +128,7 @@ module.exports.authenticate = function (account, cb) {
                         //     if (err) console.log((err).warn);
                         setTimeout(function () {
                             loginCallback(account);
-                        }, body.error === "TooManyRequestsException" ? 10000 : 1000);
+                        }, body.error === "TooManyRequestsException" ? 10000 : 2000);
                         // })
                     })
                 } else {
@@ -176,7 +176,7 @@ module.exports.authenticate = function (account, cb) {
                 console.log(err);
                 setTimeout(function () {
                     refresh();
-                }, body.error === "TooManyRequestsException" ? 10000 : 1000);
+                }, body.error === "TooManyRequestsException" ? 10000 : 2000);
             } else {
                 console.info("[Auth] Tokens are still valid!");
                 cb(null, account);
@@ -206,7 +206,7 @@ module.exports.authenticate = function (account, cb) {
         // Login
         setTimeout(function () {
             loginCallback(account);
-        }, 1000);
+        }, 2000);
     }
 };
 
@@ -266,31 +266,33 @@ module.exports.completeChallenges = function (account, cb) {
                 // console.log(JSON.stringify(answers).debug);
 
 
-                // Post answers
-                console.log(("[Auth] POST " + urls.security.location).debug);
-                request({
-                    method: "POST",
-                    url: urls.security.location,
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": "Bearer " + account.accessToken,
-                        "X-Forwarded-For": account.requestIp,
-                        "REMOTE_ADDR": account.requestIp
-                    },
-                    json: answers
-                }, function (err, response, body) {
-                    if (err) return console.log(err);
+                setTimeout(function () {
+                    // Post answers
+                    console.log(("[Auth] POST " + urls.security.location).debug);
+                    request({
+                        method: "POST",
+                        url: urls.security.location,
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": "Bearer " + account.accessToken,
+                            "X-Forwarded-For": account.requestIp,
+                            "REMOTE_ADDR": account.requestIp
+                        },
+                        json: answers
+                    }, function (err, response, body) {
+                        if (err) return console.log(err);
 
-                    if (response.statusCode >= 200 && response.statusCode < 300) {
-                        console.log("[Auth] (#" + account.id + ") challenges completed");
-                        // Challenges completed
-                        cb(account);
-                    } else {
-                        console.log(("[Auth] (#" + account.id + ") Failed to complete security challenges").warn);
-                        console.log(("" + JSON.stringify(body)).warn);
-                        cb(null, body);
-                    }
-                })
+                        if (response.statusCode >= 200 && response.statusCode < 300) {
+                            console.log("[Auth] (#" + account.id + ") challenges completed");
+                            // Challenges completed
+                            cb(account);
+                        } else {
+                            console.log(("[Auth] (#" + account.id + ") Failed to complete security challenges").warn);
+                            console.log(("" + JSON.stringify(body)).warn);
+                            cb(null, body);
+                        }
+                    })
+                }, 2000);
             })
         } else {
             cb(account);
