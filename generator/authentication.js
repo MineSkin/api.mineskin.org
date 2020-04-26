@@ -147,7 +147,7 @@ module.exports.authenticate = function (account, cb) {
                         //     if (err) console.log((err).warn);
                         setTimeout(function () {
                             loginCallback(account);
-                        }, body.error === "TooManyRequestsException" ? 10000 : 2000);
+                        }, body.error === "TooManyRequestsException" ? 10000 : 1000);
                         // })
                     })
                 } else {
@@ -195,7 +195,7 @@ module.exports.authenticate = function (account, cb) {
                 console.log(err);
                 setTimeout(function () {
                     refresh();
-                }, body.error === "TooManyRequestsException" ? 10000 : 2000);
+                }, body.error === "TooManyRequestsException" ? 10000 : 1000);
             } else {
                 console.info("[Auth] Tokens are still valid!");
                 cb(null, account);
@@ -255,7 +255,7 @@ module.exports.completeChallenges = function (account, cb) {
             console.log(account.security.debug);
 
             // Get the questions
-            request({
+            queueRequest({
                 url: urls.security.challenges,
                 headers: {
                     "Content-Type": "application/json",
@@ -288,7 +288,7 @@ module.exports.completeChallenges = function (account, cb) {
                 setTimeout(function () {
                     // Post answers
                     console.log(("[Auth] POST " + urls.security.location).debug);
-                    request({
+                    queueRequest({
                         method: "POST",
                         url: urls.security.location,
                         headers: {
@@ -311,7 +311,7 @@ module.exports.completeChallenges = function (account, cb) {
                             cb(null, body);
                         }
                     })
-                }, 2000);
+                }, 1000);
             })
         } else {
             cb(account);
