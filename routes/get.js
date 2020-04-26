@@ -2,6 +2,8 @@ module.exports = function (app) {
 
     var Util = require("../util");
     var skinChanger = require("../generator/skinChanger");
+    var auth = require("../generator/authentication");
+    var dataFetcher = require("../generator/dataFetcher")
     var config = require("../config");
 
     // Schemas
@@ -29,6 +31,20 @@ module.exports = function (app) {
 
         Util.getGeneratorDelay().then(function (delay) {
             stats.delay = delay;
+
+            stats.queues = {
+                auth:{
+                    delay: config.requestQueue.auth,
+                    size: auth.requestQueue.length
+                },
+                skinChanger: {
+                    delay: config.requestQueue.skinChanger,
+                    size: skinChanger.requestQueue.length
+                }
+            };
+            stats.cache = {
+               dataFetcher: Object.keys(dataFetcher.cache).length
+            };
 
             // Skin.find({}, "duplicate views visibility time name type via generateDuration", function (err, skins) {
             //     if (err) return console.log(err);
