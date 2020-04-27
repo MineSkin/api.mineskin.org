@@ -68,7 +68,7 @@ module.exports.findExistingSkinForTextureUrl = function (url, name, model, visib
 
 module.exports.getAvailableAccount = function (req, res, cb) {
     var time = Date.now() / 1000;
-    Account.findOne({enabled: true, requestServer: {$in: [null, "default", config.server]}, lastUsed: {'$lt': (time - 70)}, forcedTimeoutAt: {'$lt': (time - 120)}, errorCounter: {'$lt': (config.errorThreshold||10)}})
+    Account.findOne({enabled: true, requestServer: {$in: [null, "default", config.server]}, lastUsed: {'$lt': (time - 100)}, forcedTimeoutAt: {'$lt': (time - 500)}, errorCounter: {'$lt': (config.errorThreshold||10)}})
         .sort({lastUsed: 1, lastSelected: 1, sameTextureCounter: 1}).exec(function (err, account) {
         if (err) return console.log(err);
         if (!account) {
@@ -138,6 +138,7 @@ module.exports.generateUrl = function (account, url, model, cb) {
             account.successCounter = 0;
             account.errorCounter++;
             account.forcedTimeoutAt = Date.now() / 1000;
+            console.warn("Account #"+account.id+" force timeout")
             account.save(function (err, account) {
                 cb("Authentication failed - " + (authErr.errorMessage || "unknown error"), authErrorCauseFromMessage(authErr.errorMessage || authErr));
             });
@@ -203,6 +204,7 @@ module.exports.generateUpload = function (account, fileBuf, model, cb) {
             account.successCounter = 0;
             account.errorCounter++;
             account.forcedTimeoutAt = Date.now() / 1000;
+            console.warn("Account #"+account.id+" force timeout")
             account.save(function (err, account) {
                 cb("Authentication failed - " + (authErr.errorMessage || "unknown error"), authErrorCauseFromMessage(authErr.errorMessage || authErr));
             });
