@@ -29,6 +29,8 @@ module.exports = function (app) {
     app.get("/get/stats/:details?", function (req, res) {
         var stats = {};
 
+        stats.server = config.server;
+
         Util.getGeneratorDelay().then(function (delay) {
             stats.delay = delay;
 
