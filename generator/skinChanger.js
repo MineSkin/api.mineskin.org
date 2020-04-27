@@ -20,7 +20,11 @@ setInterval(function () {
     var next = requestQueue.shift();
     if (next) {
         try{
-            request(next.options, next.callback);
+            var d =new Date().toUTCString();
+            request(next.options, function (err,res,body) {
+                // fs.appendFileSync("requests.log", "[" + d  + "] SKIN "+ (next.options.method||"GET")+" " + (next.options.url||next.options.uri) + " => "+res.statusCode+"\n", "utf8");
+                next.callback(err, res, body);
+            });
         }catch (e) {
             console.error(e);
         }

@@ -1,6 +1,7 @@
 var uuid = require('uuid/v4');
 var md5 = require("md5");
 var urls = require("./urls");
+var fs = require("fs");
 var request = require("request").defaults({
     headers: {
         "Accept": "application/json, text/plain, */*",
@@ -26,11 +27,15 @@ module.exports.requestQueue = requestQueue;
 setInterval(function () {
     var next = requestQueue.shift();
     if (next) {
-       try{
-           request(next.options, next.callback);
-       }catch (e) {
-           console.error(e);
-       }
+        try{
+            var d =new Date().toUTCString();
+            request(next.options, function (err,res,body) {
+                fs.appendFileSync("requests.log", "[" + d  + "] AUTH "+ (next.options.method||"GET")+" " + (next.options.url||next.options.uri) + " => "+res.statusCode+"\n", "utf8");
+                next.callback(err, res, body);
+            });
+        }catch (e) {
+            console.error(e);
+        }
     }
 }, config.requestQueue.auth);
 setInterval(function () {
@@ -56,42 +61,46 @@ module.exports.authenticate = function (account, cb) {
             username: account.username,
             password: Util.crypto.decrypt(account.passwordNew),
             clientToken: account.clientToken,
-            requestUser: true
+            requestUser: true,
+            _timestamp: Date.now()
         };
         console.log(("[Auth] " + JSON.stringify(body)).debug);
-        queueRequest({
-            method: "POST",
-            url: urls.authenticate,
-            headers: {
-                "Content-Type": "application/json",
-                "X-Forwarded-For": account.requestIp,
-                "REMOTE_ADDR": account.requestIp
-            },
-            json: true,
-            body: body
-        }, function (err, response, body) {
-            console.log(("[Auth] (#" + account.id + ") Auth Body:").debug);
-            console.log(("" + body).debug);
-            console.log(("" + JSON.stringify(body)).debug);
-            if (err || response.statusCode < 200 || response.statusCode > 230 || (body && body.error)) {
-                cb(err || body, null);
-                return console.log(err);
-            }
+        setTimeout(function () {
+            queueRequest({
+                method: "POST",
+                url: urls.authenticate,
+                headers: {
+                    "User-Agent": "Mineskin Auth",
+                    "Content-Type": "application/json",
+                    "X-Forwarded-For": account.requestIp,
+                    "REMOTE_ADDR": account.requestIp
+                },
+                json: true,
+                body: body
+            }, function (err, response, body) {
+                console.log(("[Auth] (#" + account.id + ") Auth Body:").debug);
+                console.log(("" + body).debug);
+                console.log(("" + JSON.stringify(body)).debug);
+                if (err || response.statusCode < 200 || response.statusCode > 230 || (body && body.error)) {
+                    cb(err || body, null);
+                    return console.log(err);
+                }
 
-            if (body.hasOwnProperty("selectedProfile")) {
-                account.playername = body.selectedProfile.name;
-            }
+                if (body.hasOwnProperty("selectedProfile")) {
+                    account.playername = body.selectedProfile.name;
+                }
 
-            // Get new token
-            // account.clientToken = body.clientToken;
-            console.log(("[Auth] (#" + account.id + ") AccessToken: " + body.accessToken).debug);
-            account.accessToken = body.accessToken;
-            account.requestServer = config.server;
-            console.log(("[Auth] (#" + account.id + ") RequestServer set to " + config.server));
-            account.save(function (err, account) {
-                cb(null, account);
+                // Get new token
+                // account.clientToken = body.clientToken;
+                console.log(("[Auth] (#" + account.id + ") AccessToken: " + body.accessToken).debug);
+                account.accessToken = body.accessToken;
+                account.requestServer = config.server;
+                console.log(("[Auth] (#" + account.id + ") RequestServer set to " + config.server));
+                account.save(function (err, account) {
+                    cb(null, account);
+                })
             })
-        })
+        }, 8000);
         // ygg.auth({
         //     user: account.username,
         //     pass: Util.crypto.decrypt(account.passwordNew),
@@ -127,6 +136,7 @@ module.exports.authenticate = function (account, cb) {
                 method: "POST",
                 url: urls.refresh,
                 headers: {
+                    "User-Agent": "Mineskin Auth",
                     "Content-Type": "application/json",
                     "X-Forwarded-For": account.requestIp,
                     "REMOTE_ADDR": account.requestIp
@@ -182,6 +192,7 @@ module.exports.authenticate = function (account, cb) {
             method: "POST",
             url: urls.validate,
             headers: {
+                "User-Agent": "Mineskin Auth",
                 "Content-Type": "application/json",
                 "X-Forwarded-For": account.requestIp,
                 "REMOTE_ADDR": account.requestIp
@@ -243,6 +254,7 @@ module.exports.completeChallenges = function (account, cb) {
     queueRequest({
         url: urls.security.location,
         headers: {
+            "User-Agent": "Mineskin Auth",
             "Content-Type": "application/json",
             "Authorization": "Bearer " + account.accessToken,
             "X-Forwarded-For": account.requestIp,
@@ -293,6 +305,7 @@ module.exports.completeChallenges = function (account, cb) {
                         method: "POST",
                         url: urls.security.location,
                         headers: {
+                            "User-Agent": "Mineskin Auth",
                             "Content-Type": "application/json",
                             "Authorization": "Bearer " + account.accessToken,
                             "X-Forwarded-For": account.requestIp,
@@ -330,6 +343,7 @@ module.exports.signout = function (account, cb) {
         method: "POST",
         url: urls.signout,
         headers: {
+            "User-Agent": "Mineskin Auth",
             "Content-Type": "application/json",
             "X-Forwarded-For": account.requestIp,
             "REMOTE_ADDR": account.requestIp
