@@ -17,6 +17,7 @@ var crypto = require('crypto');
 var fs = require('fs')
 var morgan = require('morgan')
 var rfs = require("rotating-file-stream");
+var rateLimit = require("express-rate-limit");
 var Optimus = require("optimus-js");
 var path = require('path')
 var colors = require("colors");
@@ -98,8 +99,17 @@ app.get("/decrypt/:text", function (req, res) {
 var optimus = new Optimus(config.optimus.prime, config.optimus.inverse, config.optimus.random);
 console.log("Optimus Test:", optimus.encode(Math.floor(Date.now() / 10)));
 
+var limiter = rateLimit({
+    windowMs: 2*60*1000, // 2 minutes,
+    max:6,
+    message:JSON.stringify({error:"Too many requests"}),
+    keyGenerator:function (req) {
+        return  req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || req.realAddress || req.connection.remoteAddress
+    }
+})
+
 /// Routes
-require("./routes/generate")(app, config, optimus);
+require("./routes/generate")(app, config, optimus, limiter);
 require("./routes/get")(app);
 require("./routes/render")(app);
 require("./routes/util")(app);

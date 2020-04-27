@@ -1,4 +1,4 @@
-module.exports = function (app, config, optimus) {
+module.exports = function (app, config, optimus, limiter) {
 
 
     var SKIN_COUNTER = 1000000;
@@ -41,7 +41,7 @@ module.exports = function (app, config, optimus) {
     var Stat = require("../db/schemas/stat").Stat;
 
 
-    app.post("/generate/url", function (req, res) {
+    app.post("/generate/url", limiter, function (req, res) {
         var url = req.body.url || req.query.url;
         var model = Util.validateModel(req.body.model || req.query.model || "steve");
         var visibility = parseInt(req.body.visibility || req.query.visibility) || 0;
@@ -238,7 +238,7 @@ module.exports = function (app, config, optimus) {
 
     });
 
-    app.post("/generate/upload", function (req, res) {
+    app.post("/generate/upload", limiter, function (req, res) {
         if (!req.files) {
             res.status(400).json({error: "Missing files"});
             return;
@@ -372,7 +372,7 @@ module.exports = function (app, config, optimus) {
         })
     });
 
-    app.get("/generate/user/:uuid", function (req, res) {
+    app.get("/generate/user/:uuid", limiter, function (req, res) {
         var visibility = parseInt(req.body.visibility || req.query.visibility) || 0;
         var name = req.body.name || req.query.name || "";
         var uuid = req.params.uuid;
