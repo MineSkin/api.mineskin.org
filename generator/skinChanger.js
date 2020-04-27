@@ -27,7 +27,7 @@ setInterval(function () {
     }
 }, config.requestQueue.skinChanger);
 setInterval(function () {
-    console.log("[SkinCHanger] Request Queue Size: " + requestQueue.length);
+    console.log("[SkinChanger] Request Queue Size: " + requestQueue.length);
 },30000)
 function queueRequest(options, callback) {
     requestQueue.push({options:options, callback: callback})
