@@ -37,6 +37,12 @@ imageHash("./images/UbMwWCF.png",function (err,hash) {
 imageHash("./images/33f0306e3488b95a8e29307171b273567de87a651dd1ac6adeb4d6cc67bcf216.png",function (err,hash) {
     console.log("1 33f0306e3488b95a8e29307171b273567de87a651dd1ac6adeb4d6cc67bcf216: " + hash);
 });
+imageHash("./images/80381669-90487000-88a1-11ea-815a-226d0641a41f.png",function (err,hash) {
+    console.log("1 80381669-90487000-88a1-11ea-815a-226d0641a41f: " + hash);
+});
+imageHash("./images/1ecb26656ac2e9a025ad3813a3348bc947a451b9ca3622bd6397da7e9c07eb56.png",function (err,hash) {
+    console.log("1 1ecb26656ac2e9a025ad3813a3348bc947a451b9ca3622bd6397da7e9c07eb56: " + hash);
+});
 
 imageHash("./images/x.png",function (err,hash) {
     console.log("1 x: " + hash);
