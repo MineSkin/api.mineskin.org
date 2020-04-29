@@ -124,7 +124,7 @@ module.exports.validateModel = function (model) {
     if (!model) return model;
     model = model.toLowerCase();
 
-    if (model === "default" || model === "steve") {
+    if (model === "default" || model === "steve" || model === "classic") {
         return "steve";
     }
     if (model === "slim" || model === "alex") {
