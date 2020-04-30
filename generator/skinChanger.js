@@ -125,7 +125,13 @@ module.exports.generateUrl = function (account, url, model, cb) {
                         console.log(("Url response (acc#"+account.id+"): "+response.statusCode+" " + body).debug);
                         if (response.statusCode >= 200 && response.statusCode < 300) {
                             cb(true);
-                        } else {
+                        } else if(response.statusCode === 403 && body.toLowerCase().indexOf("not secured")!==-1) { // check for "Current IP not secured" error (probably means the account has no security questions configured, but actually needs them)
+                            account.successCounter = 0;
+                            account.errorCounter++;
+                            account.save(function (err, account) {
+                                cb("Challenges failed", "location_not_secured");
+                            });
+                        }else {
                             cb(response.statusCode, "generate_rescode_" + response.statusCode);
                             console.log(("Got response " + response.statusCode + " for generateUrl").warn);
                         }
@@ -192,7 +198,13 @@ module.exports.generateUpload = function (account, fileBuf, model, cb) {
                         console.log(("Upload response (acc#"+account.id+"): "+response.statusCode+" " + body).debug);
                         if (response.statusCode >= 200 && response.statusCode < 300) {
                             cb(true);
-                        } else {
+                        } else if(response.statusCode === 403 && body.toLowerCase().indexOf("not secured")!==-1) { // check for "Current IP not secured" error (probably means the account has no security questions configured, but actually needs them)
+                            account.successCounter = 0;
+                            account.errorCounter++;
+                            account.save(function (err, account) {
+                                cb("Challenges failed", "location_not_secured");
+                            });
+                        }else {
                             cb(response.statusCode, "generate_rescode_" + response.statusCode);
                             console.log(("Got response " + response.statusCode + " for generateUpload").warn);
                         }
