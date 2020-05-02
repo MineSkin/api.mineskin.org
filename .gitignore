@@ -7,3 +7,4 @@
 /access.log
 /ecosystem.config.js
 /id_rsa*
+*.log
