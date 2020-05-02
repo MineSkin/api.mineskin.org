@@ -40,4 +40,13 @@ config.discord = {
     channel: ""
 };
 
+config.puller = {
+    endpoint: "/_git_webhook",
+    secret: "",
+    vars: {
+        appName: "MineSkin"
+    },
+    logCommands: true
+};
+
 module.exports = config;

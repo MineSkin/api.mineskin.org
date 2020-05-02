@@ -19,6 +19,7 @@ var morgan = require('morgan')
 var rfs = require("rotating-file-stream");
 var rateLimit = require("express-rate-limit");
 var Optimus = require("optimus-js");
+var puller = require("express-git-puller");
 var path = require('path')
 var colors = require("colors");
 var config = require("./config");
@@ -48,7 +49,7 @@ app.use(function (req, res, next) {
     req.realAddress = req.header("x-real-ip") || req.realAddress;
     res.header("X-Mineskin-Server", config.server || "default");
     next();
-})
+});
 
 app.use("/.well-known",express.static(".well-known"));
 
@@ -67,6 +68,9 @@ app.use(morgan('combined', {stream: accessLogStream}))
 morgan.token('remote-addr', function (req) {
     return req.headers['x-real-ip'] || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 });
+
+// Git Puller
+app.use(config.puller.endpoint, new puller(config.puller));
 
 colors.setTheme({
     silly: 'rainbow',
