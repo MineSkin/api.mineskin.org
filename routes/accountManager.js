@@ -401,6 +401,7 @@ module.exports = function (app, config) {
                                     errorCounter: 0,
                                     successCounter: 0,
                                     requestServer: null,
+                                    timeAdded: Math.round(Date.now() / 1000),
                                     requestIp: remoteIp
                                 });
                                 account.save(function (err, account) {
