@@ -400,6 +400,7 @@ module.exports = function (app, config) {
                                     forcedTimeoutAt: 0,
                                     errorCounter: 0,
                                     successCounter: 0,
+                                    requestServer: null,
                                     requestIp: remoteIp
                                 });
                                 account.save(function (err, account) {
