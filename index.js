@@ -25,6 +25,10 @@ var colors = require("colors");
 var config = require("./config");
 var port = process.env.PORT || config.port || 3014;
 
+console.log("\n" +
+    "  ==== STARTING UP ==== " +
+    "\n");
+
 require("rootpath")();
 require('console-stamp')(console, 'HH:MM:ss.l');
 
@@ -145,7 +149,7 @@ function exitHandler(err) {
 
 
 server.listen(port, function () {
-    console.log('listening on *:' + port);
+    console.log(' ==> listening on *:' + port + "\n");
 });
 
 process.on("exit", exitHandler);
