@@ -69,6 +69,20 @@ morgan.token('remote-addr', function (req) {
     return req.headers['x-real-ip'] || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 });
 
+var updatingApp = false;
+config.puller.beforeRun = function(req, res){
+    updatingApp = true;
+};
+config.puller.afterRun = function(req, res){
+    updatingApp = false;
+};
+app.use(function (req, res, next) {
+    if (updatingApp) {
+        res.status(503).send({err: "app is updating"});
+        return;
+    }
+    next();
+});
 // Git Puller
 app.use(config.puller.endpoint, new puller(config.puller));
 
