@@ -212,7 +212,9 @@ module.exports = function (app, config, optimus, limiter) {
         }
 
         if (url.indexOf("https://mineskin.org/") === 0 ||
-            url.indexOf("http://mineskin.org/") === 0) {
+            url.indexOf("http://mineskin.org/") === 0 ||
+            url.indexOf("https://minesk.in/") === 0 ||
+            url.indexOf("http://minesk.in/") === 0) {
             var split = url.split("/");
             var idPart = split[split.length - 1];
             if (idPart.length > 0 && /^\d+$/.test(idPart)) {
