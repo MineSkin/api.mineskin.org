@@ -625,6 +625,7 @@ module.exports = function (app, config, optimus, limiter) {
                     "  Current Server: " + account.requestServer + "\n" +
                     "  Latest Type: " + generateType + "\n" +
                     "  Latest Cause: " + errorCause + "\n" +
+                    "  Total Success/Error: " + account.totalSuccessCounter + "/" + account.totalErrorCounter + "\n" +
                     "  Account Added: " + new Date((account.timeAdded || 0) * 1000).toUTCString());
             }
 
