@@ -143,8 +143,8 @@ module.exports = function (app, config, optimus, limiter) {
                                                                 fileCleanup();
                                                                 if (result === true) {
                                                                     account.errorCounter = 0;
-                                                                    if (!account.successCounter) account.successCounter = 0;
                                                                     account.successCounter++;
+                                                                    account.totalSuccessCounter++;
                                                                     account.save(function (err, account) {
                                                                         if (err) return console.log(err);
                                                                         setTimeout(function () {
@@ -323,8 +323,8 @@ module.exports = function (app, config, optimus, limiter) {
                                                     fileCleanup();
                                                     if (result === true) {
                                                         account.errorCounter = 0;
-                                                        if (!account.successCounter) account.successCounter = 0;
                                                         account.successCounter++;
+                                                        account.totalSuccessCounter++;
                                                         account.save(function (err, account) {
                                                             if (err) return console.log(err);
                                                             setTimeout(function () {

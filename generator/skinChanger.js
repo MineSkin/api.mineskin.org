@@ -85,6 +85,10 @@ module.exports.getAvailableAccount = function (req, res, cb) {
             // }
             console.log("Account #"+account.id+" last used "+Math.round(time-account.lastUsed)+"s ago, last selected "+Math.round(time-account.lastSelected)+"s ago")
             account.lastUsed = account.lastSelected = time;
+            if (!account.successCounter) account.successCounter = 0;
+            if (!account.errorCounter) account.errorCounter = 0;
+            if (!account.totalSuccessCounter) account.totalSuccessCounter = 0;
+            if (!account.totalErrorCounter) account.totalErrorCounter = 0;
             account.save(function (err, account) {
                 cb(account);
             });
@@ -128,6 +132,7 @@ module.exports.generateUrl = function (account, url, model, cb) {
                         } else if(response.statusCode === 403 && body.toString().toLowerCase().indexOf("not secured")!==-1) { // check for "Current IP not secured" error (probably means the account has no security questions configured, but actually needs them)
                             account.successCounter = 0;
                             account.errorCounter++;
+                            account.totalErrorCounter++;
                             account.save(function (err, account) {
                                 cb("Challenges failed", "location_not_secured");
                             });
@@ -139,6 +144,7 @@ module.exports.generateUrl = function (account, url, model, cb) {
                 } else {
                     account.successCounter = 0;
                     account.errorCounter++;
+                    account.totalErrorCounter++;
                     account.save(function (err, account) {
                         cb("Challenges failed", authErrorCauseFromMessage(errorBody.errorMessage || errorBody) || "challenges_failed");
                     });
@@ -147,6 +153,7 @@ module.exports.generateUrl = function (account, url, model, cb) {
         } else {
             account.successCounter = 0;
             account.errorCounter++;
+            account.totalErrorCounter++;
             account.forcedTimeoutAt = Date.now() / 1000;
             account.accessToken = null;
             account.requestServer = null;
@@ -201,6 +208,7 @@ module.exports.generateUpload = function (account, fileBuf, model, cb) {
                         } else if(response.statusCode === 403 && body.toString().toLowerCase().indexOf("not secured")!==-1) { // check for "Current IP not secured" error (probably means the account has no security questions configured, but actually needs them)
                             account.successCounter = 0;
                             account.errorCounter++;
+                            account.totalErrorCounter++;
                             account.save(function (err, account) {
                                 cb("Challenges failed", "location_not_secured");
                             });
@@ -212,6 +220,7 @@ module.exports.generateUpload = function (account, fileBuf, model, cb) {
                 } else {
                     account.successCounter = 0;
                     account.errorCounter++;
+                    account.totalErrorCounter++;
                     account.save(function (err, account) {
                         console.log(("Challenges failed").warn);
                         cb("Challenges failed", authErrorCauseFromMessage(errorBody.errorMessage || errorBody)||"challenges_failed");
@@ -221,6 +230,7 @@ module.exports.generateUpload = function (account, fileBuf, model, cb) {
         } else {
             account.successCounter = 0;
             account.errorCounter++;
+            account.totalErrorCounter++;
             account.forcedTimeoutAt = Date.now() / 1000;
             account.accessToken = null;
             account.requestServer = null;

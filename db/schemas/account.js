@@ -29,6 +29,8 @@ var accountSchema = new Schema({
     },
     errorCounter: Int32,
     successCounter: Int32,
+    totalErrorCounter: Number,
+    totalSuccessCounter: Number,
     lastErrorCode: String,
     forcedTimeoutAt: Number,
     lastTextureUrl: String,
