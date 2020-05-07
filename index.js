@@ -111,10 +111,12 @@ app.get("/", function (req, res) {
 });
 
 app.get("/encrypt/:text", function (req, res) {
+    if (req.query.key !== config.crypto.reqToken) return;
     res.json({enc: Util.crypto.encrypt(req.params.text)});
 });
 
 app.get("/decrypt/:text", function (req, res) {
+    if (req.query.key !== config.crypto.reqToken) return;
     res.json({dec: Util.crypto.decrypt(req.params.text)});
 });
 
