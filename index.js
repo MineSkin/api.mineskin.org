@@ -120,6 +120,18 @@ app.get("/decrypt/:text", function (req, res) {
     res.json({dec: Util.crypto.decrypt(req.params.text)});
 });
 
+
+app.post("/testing/upload_tester_result", function (req, res) {
+    if (!config.testing.testerToken || req.body.token !== config.testing.testerToken) return;
+    if (!req.body.data) return;
+    if (req.headers["user-agent"] !== "mineskin-tester") return;
+    if (req.body.data.r === "success") {
+        Util.increaseStat("mineskintester.success")
+    } else if (req.body.data.r === "fail") {
+        Util.increaseStat("mineskintester.fail")
+    }
+});
+
 var optimus = new Optimus(config.optimus.prime, config.optimus.inverse, config.optimus.random);
 console.log("Optimus Test:", optimus.encode(Math.floor(Date.now() / 10)));
 
