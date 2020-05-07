@@ -11,6 +11,7 @@ var request = require("request");
 var Account = require("./db/schemas/account").Account;
 var Skin = require("./db/schemas/skin").Skin;
 var Traffic = require("./db/schemas/traffic").Traffic;
+var Stat = require("./db/schemas/stat").Stat;
 
 module.exports = {}
 
@@ -183,6 +184,19 @@ module.exports.sendDiscordDirectMessage = function (content, receiver) {
             module.exports.postDiscordMessage(content, body.id);
         }
     })
+};
+
+module.exports.increaseStat = function (key, amount, cb) {
+    if (!amount) amount = 1;
+
+    Stat.findOne({key: key}, function (err, stat) {
+        if (err) return console.log(err);
+        if (!stat) {
+            return console.warn("Invalid Stat key: " + key);
+        }
+        stat.value += amount;
+        stat.save(cb);
+    });
 };
 
 module.exports.crypto = require("./encryption");

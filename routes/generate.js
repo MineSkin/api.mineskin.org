@@ -19,6 +19,7 @@ module.exports = function (app, config, optimus, limiter) {
 
     var hasha = require("hasha");
 
+
     var imageHash = function (path, callback) {
         hasha.fromFile(path, {
             algorithm: "sha1"
@@ -617,7 +618,7 @@ module.exports = function (app, config, optimus, limiter) {
 
 
     function logFail(account, generateType, errorCause) {
-        increaseStat("generate.fail");
+        Util.increaseStat("generate.fail");
 
         if (account) {
             if (account.errorCounter > 0 && account.errorCounter % 10 === 0) {
@@ -653,25 +654,10 @@ module.exports = function (app, config, optimus, limiter) {
     }
 
     function logSuccess(account, generateType) {
-        increaseStat("generate.success");
+        Util.increaseStat("generate.success");
 
 
         fs.appendFileSync("generateStatus.log", "[" + new Date().toUTCString() + "] SUCCESS [A" + (account ? account.id : "-1") + "/" + generateType + "]\n", "utf8");
-    }
-
-    function increaseStat(key, amount, cb) {
-        if (!amount) amount = 1;
-
-
-        Stat.findOne({key: key}, function (err, stat) {
-            if (err) return console.log(err);
-            if (!stat) {
-                return console.warn("Invalid Stat key: " + key);
-            }
-            stat.value += amount;
-            stat.save(cb);
-        });
-
     }
 
     function close(fd) {
