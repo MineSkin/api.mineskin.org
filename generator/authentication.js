@@ -242,7 +242,7 @@ module.exports.authenticate = function (account, cb) {
 };
 
 module.exports.completeChallenges = function (account, cb) {
-    if (!account.security || account.security.length === 0) {
+    if ((!account.security || account.security.length === 0) && (!account.multiSecurity || account.multiSecurity.length < 3)) {
         console.log("[Auth] (#" + account.id + ") Skipping security questions as there are no answers configured");
         // No security questions set
         cb(account);
@@ -285,9 +285,25 @@ module.exports.completeChallenges = function (account, cb) {
                 var answers = [];
                 if (questions && questions.length > 0) {
                     console.log(typeof questions);
-                    questions.forEach(function (question) {
-                        answers.push({id: question.answer.id, answer: account.security});
-                    });
+                    if (account.multiSecurity) {
+                        var answersById = {};
+                        account.multiSecurity.forEach(function (answer) {
+                            answersById[answer.id] = {
+                                id: answer.id,
+                                answer: answer.answer
+                            }
+                        });
+                        questions.forEach(function (question) {
+                            if (!answersById.hasOwnProperty(question.answer.id)) {
+                                console.warn("Missing security answer for question " + question.question.id + "(" + question.question.question + "), Answer #" + question.answer.id);
+                            }
+                            answers.push({id: question.answer.id, answer: answersById[question.answer.id] || account.security});
+                        });
+                    } else {
+                        questions.forEach(function (question) {
+                            answers.push({id: question.answer.id, answer: account.security});
+                        });
+                    }
                 } else {
                     console.log(("[Auth] Got empty security questions object").warn)
                     // I'm guessing this means that there are no questions defined in the account,

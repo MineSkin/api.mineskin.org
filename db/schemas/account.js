@@ -16,6 +16,10 @@ var accountSchema = new Schema({
     passwordOld: String,
     passwordNew: String,
     security: String,
+    multiSecurity: [{
+        id: Number,
+        answer: String
+    }],
     uuid: String,
     lastSelected: Number,
     timeAdded: Number,
