@@ -894,13 +894,15 @@ module.exports = function (app, config) {
 
 
     function validateMultiSecurityAnswers(answers, req, res) {
+        console.log(typeof answers);
+        console.log(answers);
         if (typeof answers !== "object" || answers.length < 3) {
-            res.status(400).json({error: "invalid security answers object"});
+            res.status(400).json({error: "invalid security answers object (not an object / empty)"});
             return false;
         }
         for (var i = 0; i < answers.length; i++) {
             if ((!answers[i].hasOwnProperty("id") || answers[i].hasOwnProperty("answer")) || (typeof answers[i].id !== "number" || typeof answers[i].answer !== "string")) {
-                res.status(400).json({error: "invalid security answers object"});
+                res.status(400).json({error: "invalid security answers object (missing id / answer)"});
                 return false;
             }
         }
