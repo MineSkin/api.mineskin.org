@@ -131,8 +131,12 @@ app.post("/testing/upload_tester_result", function (req, res) {
         Util.increaseStat("mineskintester.success")
         res.sendStatus(202);
 
+        if (req.body.data.m > 0) {
+            Util.postDiscordMessage("🛑 mineskin-tester generated data with " + req.body.data.m + " image mismatches! ID: " + req.body.data.i);
+        }
+
         if (req.body.data.i) {
-            Skin.updateOne({id: req.body.data.i, server: req.body.data.s}, {testerRequest: true, testerMismatchCounter: req.body.data.m || 0})
+            Skin.updateOne({id: req.body.data.i, server: req.body.data.s}, {testerRequest: true, testerMismatchCounter: req.body.data.m || 0});
         }
     } else if (req.body.data.r === "fail") {
         Util.increaseStat("mineskintester.fail")
