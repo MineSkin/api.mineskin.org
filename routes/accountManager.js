@@ -110,13 +110,9 @@ module.exports = function (app, config) {
         })
     });
 
-    app.post("/accountManager/auth/solveChallenges", function (req, res) {
+    app.post("/accountManager/auth/getChallenges", function (req, res) {
         if (!req.body.token) {
             res.status(400).json({error: "Missing token"})
-            return;
-        }
-        if (!req.body.securityAnswer) {
-            res.status(400).json({error: "Missing security answer"})
             return;
         }
         var remoteIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
@@ -148,50 +144,68 @@ module.exports = function (app, config) {
                     if (err) return console.log(err);
 
                     var questions = JSON.parse(body);
-                    var answers = [];
-                    if (questions) {
-                        console.log(questions);
-                        questions.forEach(function (question) {
-                            answers.push({id: question.answer.id, answer: req.body.securityAnswer});
-                        });
-                    }
-
-                    // Post answers
-                    console.log(("[Auth] POST " + urls.security.location).debug);
-                    request({
-                        method: "POST",
-                        url: urls.security.location,
-                        headers: {
-                            "Content-Type": "application/json",
-                            "Authorization": "Bearer " + req.body.token,
-                            "X-Forwarded-For": remoteIp,
-                            "REMOTE_ADDR": remoteIp
-                        },
-                        json: answers
-                    }, function (err, response, body) {
-                        if (err) return console.log(err);
-
-                        if (response.statusCode >= 200 && response.statusCode < 300) {
-                            res.json({
-                                success: true,
-                                status: "ok",
-                                msg: "Challenges solved"
-                            })
-                        } else {
-                            res.json({
-                                success: false,
-                                status: "err",
-                                error: body.error,
-                                msg: body.errorMessage
-                            })
-                        }
+                    res.json({
+                        success: true,
+                        needToSolveChallenges: questions && questions.length > 0,
+                        status: "ok",
+                        questions: questions,
+                        msg: "Got security questions"
                     })
                 })
             } else {
                 res.json({
                     success: true,
+                    needToSolveChallenges: false,
                     status: "ok",
                     msg: "Challenges already solved"
+                })
+            }
+        })
+    });
+
+    app.post("/accountManager/auth/solveChallenges", function (req, res) {
+        if (!req.body.token) {
+            res.status(400).json({error: "Missing token"})
+            return;
+        }
+        if (!req.body.securityAnswer && !req.body.securityAnswers) {
+            res.status(400).json({error: "Missing security answer(s)"})
+            return;
+        }
+        if (typeof req.body.securityAnswers !== "undefined") {
+            if (!validateMultiSecurityAnswers(req.body.securityAnswers, req, res)) return;
+        }
+        var remoteIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+
+        var answers = req.body.securityAnswers;
+
+        // Post answers
+        console.log(("[Auth] POST " + urls.security.location).debug);
+        request({
+            method: "POST",
+            url: urls.security.location,
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + req.body.token,
+                "X-Forwarded-For": remoteIp,
+                "REMOTE_ADDR": remoteIp
+            },
+            json: answers
+        }, function (err, response, body) {
+            if (err) return console.log(err);
+
+            if (response.statusCode >= 200 && response.statusCode < 300) {
+                res.json({
+                    success: true,
+                    status: "ok",
+                    msg: "Challenges solved"
+                })
+            } else {
+                res.json({
+                    success: false,
+                    status: "err",
+                    error: body.error,
+                    msg: body.errorMessage
                 })
             }
         })
@@ -248,7 +262,7 @@ module.exports = function (app, config) {
             return;
         }
 
-        Account.findOne({username: req.query.username, uuid: req.query.uuid, type: "external"}, "enabled password security discordUser").exec(function (err, acc) {
+        Account.findOne({username: req.query.username, uuid: req.query.uuid, type: "external"}, "enabled password security multiSecurity discordUser").exec(function (err, acc) {
             if (err) return console.log(err);
 
             if (acc && (req.query.password || req.query.security)) {
@@ -256,7 +270,13 @@ module.exports = function (app, config) {
                     acc.passwordNew = util.crypto.encrypt(new Buffer(req.query.password, "base64").toString("ascii"));
                 }
                 if (req.query.security) {
-                    acc.security = req.query.security;
+                    if (req.query.security.startsWith("[") && req.query.security.endsWith("]")) {
+                        var sec = JSON.parse(req.query.security);
+                        if (!validateMultiSecurityAnswers(sec, req, res)) return;
+                        acc.multiSecurity = sec;
+                    } else {
+                        acc.security = req.query.security;
+                    }
                 }
                 acc.save(function (err, acc) {
                     res.json({
@@ -266,7 +286,7 @@ module.exports = function (app, config) {
                         securityUpdated: !!req.query.security,
                         discordLinked: !!acc && acc.discordUser
                     });
-                })
+                });
             } else {
                 res.json({
                     exists: !!acc,
@@ -307,15 +327,15 @@ module.exports = function (app, config) {
                         return;
                     }
 
-                    Skin.count({account: account.id},function (err,count) {
+                    Skin.count({account: account.id}, function (err, count) {
                         if (err) {
                             console.warn(err);
                             return;
                         }
-                       res.json({
-                           success: true,
-                           generateCount: count
-                       });
+                        res.json({
+                            success: true,
+                            generateCount: count
+                        });
                     });
                 })
             }
@@ -335,9 +355,13 @@ module.exports = function (app, config) {
             res.status(400).json({error: "Missing UUID"})
             return;
         }
-        if (typeof req.body.securityAnswer === "undefined") {
-            res.status(400).json({error: "Missing security answer"})
+        if (typeof req.body.securityAnswer === "undefined" && typeof req.body.securityAnswers === "undefined") {
+            res.status(400).json({error: "Missing security answer(s)"})
             return;
+        }
+
+        if (typeof req.body.securityAnswers !== "undefined") {
+            if (!validateMultiSecurityAnswers(req.body.securityAnswers, req, res)) return;
         }
 
         var remoteIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
@@ -390,7 +414,8 @@ module.exports = function (app, config) {
                                     id: lastId + 1,
                                     username: req.body.username,
                                     passwordNew: util.crypto.encrypt(req.body.password),
-                                    security: req.body.securityAnswer,
+                                    security: req.body.securityAnswer || "",
+                                    multiSecurity: req.body.securityAnswers || [],
                                     uuid: req.body.uuid,
                                     accessToken: req.body.token,
                                     clientToken: md5(req.body.username + "_" + remoteIp),
@@ -865,6 +890,21 @@ module.exports = function (app, config) {
             console.log("Removed Mineskin role from discord user #" + userId);
             cb(true);
         });
+    }
+
+
+    function validateMultiSecurityAnswers(answers, req, res) {
+        if (typeof answers !== "object" || answers.length < 3) {
+            res.status(400).json({error: "invalid security answers object"});
+            return false;
+        }
+        for (var i = 0; i < answers.length; i++) {
+            if ((!answers[i].hasOwnProperty("id") || answers[i].hasOwnProperty("answer")) || (typeof answers[i].id !== "number" || typeof answers[i].answer !== "string")) {
+                res.status(400).json({error: "invalid security answers object"});
+                return false;
+            }
+        }
+        return true;
     }
 
 };
