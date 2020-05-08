@@ -894,8 +894,6 @@ module.exports = function (app, config) {
 
 
     function validateMultiSecurityAnswers(answers, req, res) {
-        console.log(typeof answers);
-        console.log(answers);
         if (typeof answers !== "object" || answers.length < 3) {
             res.status(400).json({error: "invalid security answers object (not an object / empty)"});
             return false;
