@@ -136,7 +136,7 @@ app.post("/testing/upload_tester_result", function (req, res) {
         }
 
         if (req.body.data.i) {
-            Skin.updateOne({id: req.body.data.i, server: req.body.data.s}, {testerRequest: true, testerMismatchCounter: req.body.data.m || 0});
+            Skin.findOneAndUpdate({id: req.body.data.i, server: req.body.data.s}, {testerRequest: true, testerMismatchCounter: req.body.data.m || 0});
         }
     } else if (req.body.data.r === "fail") {
         Util.increaseStat("mineskintester.fail")
