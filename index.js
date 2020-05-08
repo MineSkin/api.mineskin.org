@@ -127,9 +127,12 @@ app.post("/testing/upload_tester_result", function (req, res) {
     if (req.headers["user-agent"] !== "mineskin-tester") return;
     if (req.body.data.r === "success") {
         Util.increaseStat("mineskintester.success")
+        return res.sendStatus(202);
     } else if (req.body.data.r === "fail") {
         Util.increaseStat("mineskintester.fail")
+        return res.sendStatus(202);
     }
+    res.sendStatus(400);
 });
 
 var optimus = new Optimus(config.optimus.prime, config.optimus.inverse, config.optimus.random);
