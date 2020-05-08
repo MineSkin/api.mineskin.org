@@ -104,6 +104,7 @@ colors.setTheme({
 
 // Databse
 require("./db/db")(mongoose, config);
+var Skin = require("./db/schemas/skin").Skin;
 
 // API methods
 app.get("/", function (req, res) {
@@ -125,14 +126,20 @@ app.post("/testing/upload_tester_result", function (req, res) {
     if (!config.testing.testerToken || req.body.token !== config.testing.testerToken) return;
     if (!req.body.data) return;
     if (req.headers["user-agent"] !== "mineskin-tester") return;
+
     if (req.body.data.r === "success") {
         Util.increaseStat("mineskintester.success")
-        return res.sendStatus(202);
+        res.sendStatus(202);
+
+        if (req.body.data.i) {
+            Skin.updateOne({id: req.body.data.i, server: req.body.data.s}, {testerRequest: true, testerMismatchCounter: req.body.data.m || 0})
+        }
     } else if (req.body.data.r === "fail") {
         Util.increaseStat("mineskintester.fail")
-        return res.sendStatus(202);
+        res.sendStatus(202);
+    } else {
+        res.sendStatus(400)
     }
-    res.sendStatus(400);
 });
 
 var optimus = new Optimus(config.optimus.prime, config.optimus.inverse, config.optimus.random);

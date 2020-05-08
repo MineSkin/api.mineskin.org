@@ -49,6 +49,8 @@ var skinSchema = new Schema({
     via: String,
     server: String,
     ua: String,
-    apiVer: String
+    apiVer: String,
+    testerRequest: Boolean,
+    testerMismatchCounter: Number
 }, {id: false})
 module.exports.Skin = mongoose.model("Skin", skinSchema);
