@@ -83,16 +83,22 @@ module.exports = function (app) {
                     Account.count({enabled: true, requestServer: {$in: [null, "default", config.server]}, lastUsed: {'$lt': (time - 100)}, forcedTimeoutAt: {'$lt': (time - 500)}, errorCounter: {'$lt': (config.errorThreshold||10)}},function(err,useableCount){
                         if (err) return console.log(err);
                         stats.useableAccounts = useableCount;
-                        Stat.find({$or: [{key: "generate.success"}, {key: "generate.fail"}]}).lean().exec(function (err, s) {
+                        Stat.find({}).lean().exec(function (err, s) {
                             if (err) return console.log(err);
                             var generateSuccess = 0;
                             var generateFail = 0;
+                            var testerSuccess = 0;
+                            var testerFail = 0;
                             s.forEach(function (stat) {
                                 if (stat.key === "generate.success") generateSuccess = stat.value;
                                 if (stat.key === "generate.fail") generateFail = stat.value;
+                                if (stat.key === "mineskintester.success") testerSuccess = stat.value;
+                                if (stat.key === "mineskintester.fail") testerFail = stat.value;
                             });
                             var generateTotal = generateSuccess + generateFail;
                             stats.successRate = Number((generateSuccess / generateTotal).toFixed(3));
+                            var testerTotal = testerSuccess + testerFail;
+                            stats.mineskinTesterSuccessRate = Number((testerSuccess / testerTotal).toFixed(3));
 
                             Skin.aggregate([
                                 {"$sort": {time:-1}},
