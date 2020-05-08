@@ -901,7 +901,7 @@ module.exports = function (app, config) {
             return false;
         }
         for (var i = 0; i < answers.length; i++) {
-            if ((!answers[i].hasOwnProperty("id") || answers[i].hasOwnProperty("answer")) || (typeof answers[i].id !== "number" || typeof answers[i].answer !== "string")) {
+            if ((!answers[i].hasOwnProperty("id") || !answers[i].hasOwnProperty("answer")) || (typeof answers[i].id !== "number" || typeof answers[i].answer !== "string")) {
                 res.status(400).json({error: "invalid security answers object (missing id / answer)"});
                 return false;
             }
