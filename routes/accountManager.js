@@ -590,7 +590,7 @@ module.exports = function (app, config) {
                     }
 
                     var clientId = config.discord.oauth.id;
-                    var redirect = encodeURIComponent("https://api.mineskin.org/accountManager/discord/oauth/callback");
+                    var redirect = encodeURIComponent("https://"+(config.server?config.server+".":"")+"api.mineskin.org/accountManager/discord/oauth/callback");
 
                     var state = md5(account.uuid + "_" + account.username + "_magic_discord_string_" + Date.now() + "_" + account.id);
 
@@ -612,7 +612,7 @@ module.exports = function (app, config) {
             });
             return;
         }
-        var redirect = "https://api.mineskin.org/accountManager/discord/oauth/callback";
+        var redirect = "https://"+(config.server?config.server+".":"")+"api.mineskin.org/accountManager/discord/oauth/callback";
         request({
             url: "https://discordapp.com/api/oauth2/token",
             method: "POST",
