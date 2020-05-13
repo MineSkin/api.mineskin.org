@@ -40,7 +40,10 @@ var skinSchema = new Schema({
         type: String,
         index: true
     },
-    time: Number,
+    time: {
+        type: Number,
+        index: true
+    },
     generateDuration: Number,
     account: Number,
     type: String,
