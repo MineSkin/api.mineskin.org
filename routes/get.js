@@ -290,7 +290,7 @@ module.exports = function (app) {
         var sort = req.query.sort || -1;
 
         var query = {visibility: 0};
-        if (req.query.filter) {
+        if (req.query.filter && req.query.filter.length > 0) {
             query.name = {'$regex': ".*" + req.query.filter + ".*"};
         }
         if (req.query.cape) {
