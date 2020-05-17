@@ -311,8 +311,9 @@ module.exports.completeChallenges = function (account, cb) {
                     cb(null, body);
                     return;
                 }
-                // console.log(JSON.stringify(answers).debug);
 
+                console.log("[Auth] Sending Challenge Answers:");
+                console.log(JSON.stringify(answers).debug);
 
                 setTimeout(function () {
                     // Post answers
