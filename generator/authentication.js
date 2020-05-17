@@ -288,10 +288,7 @@ module.exports.completeChallenges = function (account, cb) {
                     if (account.multiSecurity) {
                         var answersById = {};
                         account.multiSecurity.forEach(function (answer) {
-                            answersById[answer.id] = {
-                                id: answer.id,
-                                answer: answer.answer
-                            }
+                            answersById[answer.id] = answer.answer;
                         });
                         questions.forEach(function (question) {
                             if (!answersById.hasOwnProperty(question.answer.id)) {
