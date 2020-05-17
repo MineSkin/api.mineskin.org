@@ -253,8 +253,12 @@ module.exports = function (app, config) {
     })
 
     app.get("/accountManager/accountStatus", function (req, res) {
+        if (!req.query.token) {
+            res.status(400).json({error: "Missing token"})
+            return;
+        }
         if (!req.query.username) {
-            res.status(400).json({error: "Missing username"})
+            res.status(400).json({error: "Missing username"});
             return;
         }
         if (!req.query.uuid) {
