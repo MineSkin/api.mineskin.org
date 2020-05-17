@@ -7,7 +7,7 @@ module.exports.cache = cache;
 
 setInterval(function () {
     for (var id in cache) {
-        if ((Date.now() / 1000) - cache[id].time > 90) {
+        if ((Date.now() / 1000) - cache[id].time > (cache[id].notFound ? 240 : 90)) {
             delete cache[id];
         }
     }
