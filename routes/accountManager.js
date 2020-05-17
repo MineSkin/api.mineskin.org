@@ -297,7 +297,7 @@ module.exports = function (app, config) {
                                 enabled: !!acc && acc.enabled,
                                 passwordUpdated: !!req.query.password,
                                 securityUpdated: !!req.query.security,
-                                discordLinked: !!acc && acc.discordUser
+                                discordLinked: !!acc && !!acc.discordUser
                             });
                         });
                     }
