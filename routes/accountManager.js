@@ -266,26 +266,36 @@ module.exports = function (app, config) {
             if (err) return console.log(err);
 
             if (acc && (req.query.password || req.query.security)) {
-                if (req.query.password) {
-                    acc.passwordNew = util.crypto.encrypt(new Buffer(req.query.password, "base64").toString("ascii"));
-                }
-                if (req.query.security) {
-                    if (req.query.security.startsWith("[") && req.query.security.endsWith("]")) {
-                        var sec = JSON.parse(req.query.security);
-                        if (!validateMultiSecurityAnswers(sec, req, res)) return;
-                        acc.multiSecurity = sec;
+                getUser(req.query.token, function (response, userBody) {
+                    if (userBody.error) {
+                        res.status(response.statusCode).json({error: userBody.error, msg: userBody.errorMessage})
                     } else {
-                        acc.security = req.query.security;
+                        if (userBody.username.toLowerCase() !== req.query.username.toLowerCase()) {
+                            res.status(400).json({error: "username mismatch"})
+                            return;
+                        }
+                        if (req.query.password) {
+                            acc.passwordNew = util.crypto.encrypt(new Buffer(req.query.password, "base64").toString("ascii"));
+                        }
+                        if (req.query.security) {
+                            if (req.query.security.startsWith("[") && req.query.security.endsWith("]")) {
+                                var sec = JSON.parse(req.query.security);
+                                if (!validateMultiSecurityAnswers(sec, req, res)) return;
+                                acc.multiSecurity = sec;
+                            } else {
+                                acc.security = req.query.security;
+                            }
+                        }
+                        acc.save(function (err, acc) {
+                            res.json({
+                                exists: !!acc,
+                                enabled: !!acc && acc.enabled,
+                                passwordUpdated: !!req.query.password,
+                                securityUpdated: !!req.query.security,
+                                discordLinked: !!acc && acc.discordUser
+                            });
+                        });
                     }
-                }
-                acc.save(function (err, acc) {
-                    res.json({
-                        exists: !!acc,
-                        enabled: !!acc && acc.enabled,
-                        passwordUpdated: !!req.query.password,
-                        securityUpdated: !!req.query.security,
-                        discordLinked: !!acc && acc.discordUser
-                    });
                 });
             } else {
                 res.json({
