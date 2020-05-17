@@ -20,8 +20,13 @@ module.exports.getSkinData = function (account, cb) {
         if (cache.hasOwnProperty(account.uuid)) {
             console.warn("DATA FETCHER CACHE HIT! Current Size: " + Object.keys(cache).length);
             var ca = cache[account.uuid];
-            console.warn("Requested " + account.uuid + ", cached " + ((Date.now()/1000) - ca.time) + "s ago")
-            cb(null, ca);
+            if(ca.notFound){
+                console.warn("Requested " + account.uuid + ", cached as NotFound " + ((Date.now() / 1000) - ca.time) + "s ago")
+                cb(null, null);
+            }else {
+                console.warn("Requested " + account.uuid + ", cached " + ((Date.now() / 1000) - ca.time) + "s ago")
+                cb(null, ca);
+            }
         } else {
             request("https://sessionserver.mojang.com/session/minecraft/profile/" + account.uuid + "?unsigned=false", function (err, response, body) {
                 if (err) {
@@ -35,6 +40,10 @@ module.exports.getSkinData = function (account, cb) {
                 }
                 if (!body) {
                     cb(null, null);
+                    cache[account.uuid] = {
+                        notFound: true,
+                        time: Date.now() / 1000
+                    };
                     return;
                 }
                 var json = JSON.parse(body);
