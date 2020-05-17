@@ -84,8 +84,8 @@ module.exports.getGeneratorDelay = function () {
     })
 };
 
-module.exports.skinToJson = function (skin, delay) {
-    return {
+module.exports.skinToJson = function (skin, delay, req) {
+    var d =  {
         id: skin.id,
         idStr: "" + skin.id,
         name: skin.name,
@@ -109,7 +109,13 @@ module.exports.skinToJson = function (skin, delay) {
         private: (skin.visibility !== 0),
         views: skin.views,
         nextRequest: delay || 0
+    };
+    if (req) {
+        if (!req.headers["user-agent"] || req.headers["user-agent"].startsWith("Java/") || req.headers["user-agent"].startsWith("unirest")) {
+            d._comment = "Please use a custom User-Agent header.";
+        }
     }
+    return d;
 };
 
 // https://coderwall.com/p/_g3x9q/how-to-check-if-javascript-object-is-empty

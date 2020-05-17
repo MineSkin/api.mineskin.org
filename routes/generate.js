@@ -124,7 +124,7 @@ module.exports = function (app, config, optimus, limiter) {
 
                                         skinChanger.findExistingSkin(fileHash, name, model, visibility, function (existingSkin) {
                                             if (existingSkin) {
-                                                res.json(Util.skinToJson(existingSkin, generatorDelay));
+                                                res.json(Util.skinToJson(existingSkin, generatorDelay, req));
                                                 close(fd);
                                                 fileCleanup();
                                             } else {
@@ -167,7 +167,7 @@ module.exports = function (app, config, optimus, limiter) {
                                                                                     console.log(("=> FAIL #" + account.errorCounter + "\n").red);
                                                                                     logFail(account, "url", reason);
                                                                                 } else {
-                                                                                    res.json(Util.skinToJson(skin, generatorDelay));
+                                                                                    res.json(Util.skinToJson(skin, generatorDelay, req));
 
                                                                                     console.log("=> SUCCESS\n".green);
                                                                                     logSuccess(account, "url");
@@ -200,7 +200,7 @@ module.exports = function (app, config, optimus, limiter) {
                     url.indexOf("https://textures.minecraft.net/texture/") === 0) {
                     skinChanger.findExistingSkinForTextureUrl(url, name, model, visibility, function (existingUrlSkin) {
                         if (existingUrlSkin) {
-                            res.json(Util.skinToJson(existingUrlSkin, generatorDelay));
+                            res.json(Util.skinToJson(existingUrlSkin, generatorDelay, req));
                         } else {
                             afterUrlCheckCallback();
                         }
@@ -225,7 +225,7 @@ module.exports = function (app, config, optimus, limiter) {
                         skin.views += 1;
                         skin.save(function (err, skin) {
                             if (err) return console.log(err);
-                            res.json(Util.skinToJson(skin, 0));
+                            res.json(Util.skinToJson(skin, 0, req));
                         })
                     } else {
                         // Fallback to generation
@@ -295,7 +295,7 @@ module.exports = function (app, config, optimus, limiter) {
 
                         skinChanger.findExistingSkin(fileHash, name, model, visibility, function (existingSkin) {
                             if (existingSkin) {
-                                res.json(Util.skinToJson(existingSkin, generatorDelay));
+                                res.json(Util.skinToJson(existingSkin, generatorDelay, req));
                                 close(fd);
                                 fileCleanup();
                             } else {
@@ -346,7 +346,7 @@ module.exports = function (app, config, optimus, limiter) {
                                                                         console.log(("=> FAIL #" + account.errorCounter + "\n").red);
                                                                         logFail(account, "upload", reason);
                                                                     } else {
-                                                                        res.json(Util.skinToJson(skin, generatorDelay));
+                                                                        res.json(Util.skinToJson(skin, generatorDelay, req));
 
                                                                         console.log("=> SUCCESS\n".green);
                                                                         logSuccess(account, "upload");
@@ -411,7 +411,7 @@ module.exports = function (app, config, optimus, limiter) {
                         skin.save(function (err, skin) {
                             if (err) return console.log(err);
 
-                            res.json(Util.skinToJson(skin, generatorDelay));
+                            res.json(Util.skinToJson(skin, generatorDelay, req));
                         })
                         return;
                     }
@@ -435,7 +435,7 @@ module.exports = function (app, config, optimus, limiter) {
                         console.log(("=> FAIL\n").red);
                         logFail(null, "user", reason);
                     } else {
-                        res.json(Util.skinToJson(skin, generatorDelay));
+                        res.json(Util.skinToJson(skin, generatorDelay, req));
 
                         console.log("=> SUCCESS\n".green);
                         logSuccess(null, "user");

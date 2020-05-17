@@ -260,7 +260,7 @@ module.exports = function (app) {
                 }
                 skin.save(function (err, skin) {
                     if (err) return console.log(err);
-                    res.json(Util.skinToJson(skin, 0));
+                    res.json(Util.skinToJson(skin, 0, req));
                 });
             } else {
                 res.status(404).json({error: "Skin not found"});
@@ -276,7 +276,7 @@ module.exports = function (app) {
         Skin.findOne(search, function (err, skin) {
             if (err) return console.log(err);
             if (skin) {
-                res.json(Util.skinToJson(skin, 0));
+                res.json(Util.skinToJson(skin, 0, req));
             } else {
                 res.status(404).json({error: "Skin not found"});
             }
