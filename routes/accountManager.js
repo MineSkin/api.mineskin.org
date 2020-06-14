@@ -833,6 +833,24 @@ module.exports = function (app, config) {
 
     });
 
+    app.get("/accountStats/:account", function (req, res) {
+        let id = req.params.account;
+        Account.findOne({id: id, enabled: true}, "id enabled lastUsed errorCounter successCounter totalErrorCounter totalSuccessCounter", function (err, account) {
+            if (err) return console.log(err);
+            if (!account) {
+                res.status(404).json({error: "Account not found"})
+                return;
+            }
+
+            res.json({
+                id: id,
+                lastUsed: Math.floor(account.lastUsed),
+                successRate: Math.round(account.totalSuccessCounter / (account.totalSuccessCounter + account.totalErrorCounter) * 100) / 100,
+                successStreak: Math.round(account.successCounter / 10) * 10
+            })
+        })
+    })
+
     function getUser(token, cb) {
         console.log(("[Auth] GET https://api.mojang.com/user").debug);
         request({
