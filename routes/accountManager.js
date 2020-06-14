@@ -370,7 +370,7 @@ module.exports = function (app, config) {
             res.status(400).json({error: "Missing UUID"})
             return;
         }
-        if (typeof req.body.securityAnswer === "undefined" && typeof req.body.securityAnswers === "undefined") {
+        if (typeof req.body.securityAnswer === "undefined" && typeof req.body.securityAnswers === "undefined" && req.body.skipSecurityChallenges !== "true") {
             res.status(400).json({error: "Missing security answer(s)"})
             return;
         }
