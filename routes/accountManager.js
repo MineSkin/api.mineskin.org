@@ -843,7 +843,7 @@ module.exports = function (app, config) {
             }
 
             res.json({
-                id: id,
+                id: account.id,
                 lastUsed: Math.floor(account.lastUsed),
                 successRate: Math.round(account.totalSuccessCounter / (account.totalSuccessCounter + account.totalErrorCounter) * 100) / 100,
                 successStreak: Math.round(account.successCounter / 10) * 10
