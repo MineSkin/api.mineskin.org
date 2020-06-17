@@ -109,6 +109,7 @@ module.exports.generateUrl = function (account, url, model, cb) {
             authentication.completeChallenges(account, function (result, errorBody) {
                 if (result) {
                     account.lastUsed = account.lastSelected;// account *should* be saved in the following code, so there shouldn't be any need to make another call here
+                    account.requestServer = config.server;
 
                     queueRequest({
                         method: "POST",
@@ -179,6 +180,7 @@ module.exports.generateUpload = function (account, fileBuf, model, cb) {
             authentication.completeChallenges(account, function (result, errorBody) {
                 if (result) {
                     account.lastUsed = account.lastSelected;// account *should* be saved in the following code, so there shouldn't be any need to make another call here
+                    account.requestServer = config.server;
 
                     queueRequest({
                         method: "PUT",
