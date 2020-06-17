@@ -54,7 +54,12 @@ module.exports = function (app) {
                 console.log(err);
             } else {
                 if (body) {
-                    body = JSON.parse(body);
+                    try {
+                        body = JSON.parse(body);
+                    } catch (e) {
+                        res.json({error:"failed to parse body"});
+                        return;
+                    }
                     result.valid = true;
                     result.uuid = body.id;
                     result.name = body.name;
@@ -89,7 +94,12 @@ module.exports = function (app) {
                 console.log(err);
             } else {
                 if (body) {
-                    body = JSON.parse(body);
+                    try {
+                        body = JSON.parse(body);
+                    } catch (e) {
+                        res.json({error:"failed to parse body"});
+                        return;
+                    }
                     result.name = body[body.length - 1]["name"];
 
                     result.time = Date.now() / 1000;
