@@ -17,6 +17,9 @@ module.exports = function (app) {
     };
 
     setInterval(function () {
+        console.log("[Util] ByName cache size: " + Object.keys(userByNameCache).length);
+        console.log("[Util] ById cache size: " + Object.keys(nameByIdCache).length);
+
         for (var name in userByNameCache) {
             if ((Date.now() / 1000) - userByNameCache[name].time > 240) {
                 delete userByNameCache[name];
