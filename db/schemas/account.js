@@ -22,7 +22,10 @@ var accountSchema = new Schema({
     }],
     uuid: String,
     lastSelected: Number,
-    timeAdded: Number,
+    timeAdded: {
+        type: Number,
+        index: true
+    },
     lastUsed: {
         type: Number,
         index: true
