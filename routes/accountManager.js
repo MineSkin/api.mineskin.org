@@ -419,45 +419,56 @@ module.exports = function (app, config) {
                                 return;
                             }
 
+                            Account.aggregate([
+                                { $match: { enabled: true, errorCounter: {$lt: 10} } },
+                                { $group : { _id : '$requestServer', count : {$sum : 1}}},
+                                { $sort : { count : 1 } }
+                            ], function (err, accountsPerServer) {
+                                if (err) {
+                                    console.warn("Failed to get accounts per server");
+                                    console.log(err);
+                                }
+                                var requestServer = accountsPerServer ? accountsPerServer["_id"] : null;
 
-                            // Save the new account!
-                            Account.findOne({}).sort({id: -1}).exec(function (err, last) {
-                                if (err) return console.log(err);
-                                var lastId = last.id;
+                                // Save the new account!
+                                Account.findOne({}).sort({id: -1}).exec(function (err, last) {
+                                    if (err) return console.log(err);
+                                    var lastId = last.id;
 
-                                var account = new Account({
-                                    id: lastId + 1,
-                                    username: req.body.username,
-                                    passwordNew: util.crypto.encrypt(req.body.password),
-                                    security: req.body.securityAnswer || "",
-                                    multiSecurity: req.body.securityAnswers || [],
-                                    uuid: req.body.uuid,
-                                    accessToken: req.body.token,
-                                    clientToken: md5(req.body.username + "_" + remoteIp),
-                                    type: "external",
-                                    enabled: true,
-                                    lastUsed: 0,
-                                    forcedTimeoutAt: 0,
-                                    errorCounter: 0,
-                                    successCounter: 0,
-                                    requestServer: null,
-                                    timeAdded: Math.round(Date.now() / 1000),
-                                    requestIp: remoteIp
-                                });
-                                account.save(function (err, account) {
-                                    if (err) {
-                                        res.status(500).json({
-                                            error: err,
-                                            msg: "Failed to save account"
-                                        });
-                                        return console.log(err);
-                                    }
-                                    res.json({
-                                        success: true,
-                                        msg: "Account saved. Thanks for your contribution!"
+                                    var account = new Account({
+                                        id: lastId + 1,
+                                        username: req.body.username,
+                                        passwordNew: util.crypto.encrypt(req.body.password),
+                                        security: req.body.securityAnswer || "",
+                                        multiSecurity: req.body.securityAnswers || [],
+                                        uuid: req.body.uuid,
+                                        accessToken: req.body.token,
+                                        clientToken: md5(req.body.username + "_" + remoteIp),
+                                        type: "external",
+                                        enabled: true,
+                                        lastUsed: 0,
+                                        forcedTimeoutAt: 0,
+                                        errorCounter: 0,
+                                        successCounter: 0,
+                                        requestServer: requestServer || null,
+                                        timeAdded: Math.round(Date.now() / 1000),
+                                        requestIp: remoteIp
+                                    });
+                                    account.save(function (err, account) {
+                                        if (err) {
+                                            res.status(500).json({
+                                                error: err,
+                                                msg: "Failed to save account"
+                                            });
+                                            return console.log(err);
+                                        }
+                                        res.json({
+                                            success: true,
+                                            msg: "Account saved. Thanks for your contribution!"
+                                        })
                                     })
-                                })
-                            });
+                                });
+                            })
                         }
                     })
                 }
