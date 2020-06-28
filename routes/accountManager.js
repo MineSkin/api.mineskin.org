@@ -428,7 +428,7 @@ module.exports = function (app, config) {
                                     console.warn("Failed to get accounts per server");
                                     console.log(err);
                                 }
-                                var requestServer = accountsPerServer ? accountsPerServer["_id"] : null;
+                                var requestServer = accountsPerServer ? accountsPerServer[0]["_id"] : null;
 
                                 // Save the new account!
                                 Account.findOne({}).sort({id: -1}).exec(function (err, last) {
