@@ -623,7 +623,7 @@ module.exports = function (app, config, optimus, limiter) {
         if (account) {
             if (account.errorCounter > 0 && account.errorCounter % 10 === 0) {
                 Util.postDiscordMessage("⚠️ Account #" + account.id + " has " + account.errorCounter + " errors!\n" +
-                    "  Current Server: " + account.requestServer + "\n" +
+                    "  Current Server: " + account.lastRequestServer + "/" + account.requestServer + "\n" +
                     "  Latest Type: " + generateType + "\n" +
                     "  Latest Cause: " + errorCause + "\n" +
                     "  Total Success/Error: " + account.totalSuccessCounter + "/" + account.totalErrorCounter + "\n" +
