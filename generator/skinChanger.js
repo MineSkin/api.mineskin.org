@@ -109,6 +109,7 @@ module.exports.generateUrl = function (account, url, model, cb) {
             authentication.completeChallenges(account, function (result, errorBody) {
                 if (result) {
                     account.lastUsed = account.lastSelected;// account *should* be saved in the following code, so there shouldn't be any need to make another call here
+                    account.lastRequestServer = account.requestServer;
                     account.requestServer = config.server;
 
                     queueRequest({
@@ -157,6 +158,7 @@ module.exports.generateUrl = function (account, url, model, cb) {
             account.totalErrorCounter++;
             account.forcedTimeoutAt = Date.now() / 1000;
             account.accessToken = null;
+            account.lastRequestServer = account.requestServer;
             account.requestServer = null;
             console.warn("Account #"+account.id+" force timeout")
             account.save(function (err, account) {
@@ -180,6 +182,7 @@ module.exports.generateUpload = function (account, fileBuf, model, cb) {
             authentication.completeChallenges(account, function (result, errorBody) {
                 if (result) {
                     account.lastUsed = account.lastSelected;// account *should* be saved in the following code, so there shouldn't be any need to make another call here
+                    account.lastRequestServer = account.requestServer;
                     account.requestServer = config.server;
 
                     queueRequest({
@@ -235,6 +238,7 @@ module.exports.generateUpload = function (account, fileBuf, model, cb) {
             account.totalErrorCounter++;
             account.forcedTimeoutAt = Date.now() / 1000;
             account.accessToken = null;
+            account.lastRequestServer = account.requestServer;
             account.requestServer = null;
             console.warn("Account #"+account.id+" force timeout")
             account.save(function (err, account) {

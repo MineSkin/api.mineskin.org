@@ -49,6 +49,9 @@ var accountSchema = new Schema({
         type: String,
         index: true
     },
+    lastRequestServer: {
+        type: String
+    },
     type: {
         type: String,
         enum: ["internal", "external"],

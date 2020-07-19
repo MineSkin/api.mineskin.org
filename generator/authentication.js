@@ -149,6 +149,7 @@ module.exports.authenticate = function (account, cb) {
                 if (err || response.statusCode < 200 || response.statusCode > 230 || (body && body.error)) {
                     console.log(err)
                     account.accessToken = null;
+                    account.lastRequestServer = account.requestServer;
                     account.requestServer = null;
                     account.save(function (err, account) {
                         console.log(("[Auth] Couldn't refresh accessToken").debug);
@@ -170,6 +171,7 @@ module.exports.authenticate = function (account, cb) {
 
                     console.log(("[Auth] AccessToken: " + body.accessToken).debug);
                     account.accessToken = body.accessToken;
+                    account.lastRequestServer = account.requestServer;
                     account.requestServer = config.server;
                     console.log(("[Auth] (#" + account.id + ") RequestServer set to " + config.server));
                     account.save(function (err, account) {
@@ -350,6 +352,7 @@ module.exports.completeChallenges = function (account, cb) {
 module.exports.signout = function (account, cb) {
     // ygg.signout(account.username, Util.crypto.decrypt(account.passwordNew), account.requestIp, cb);
     account.accessToken = null;
+    account.lastRequestServer = account.requestServer;
     account.requestServer = null;
     // account.clientToken = null;
     console.log(("[Auth] POST " + urls.signout).debug);
