@@ -34,6 +34,10 @@ require('console-stamp')(console, 'HH:MM:ss.l');
 
 // require("./statusMonitor")(app, config);
 
+fs.mkdir("/tpm/url");
+fs.mkdir("/tpm/upl");
+fs.mkdir("/tpm/moj");
+
 app.use(function (req, res, next) {
     res.header('Access-Control-Allow-Origin', '*');
     if (req.method === 'OPTIONS') {
@@ -164,7 +168,7 @@ require("./routes/get")(app);
 require("./routes/render")(app);
 require("./routes/util")(app);
 require("./routes/admin")(app);
-require("./routes/accountManager")(app, config);
+require("./routes/accountManager")(app, config);bin
 
 function exitHandler(err) {
     if (err) {
