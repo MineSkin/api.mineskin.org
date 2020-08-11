@@ -34,9 +34,9 @@ require('console-stamp')(console, 'HH:MM:ss.l');
 
 // require("./statusMonitor")(app, config);
 
-fs.mkdir("/tpm/url");
-fs.mkdir("/tpm/upl");
-fs.mkdir("/tpm/moj");
+fs.mkdirSync("/tpm/url");
+fs.mkdirSync("/tpm/upl");
+fs.mkdirSync("/tpm/moj");
 
 app.use(function (req, res, next) {
     res.header('Access-Control-Allow-Origin', '*');
