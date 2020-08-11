@@ -168,7 +168,7 @@ require("./routes/get")(app);
 require("./routes/render")(app);
 require("./routes/util")(app);
 require("./routes/admin")(app);
-require("./routes/accountManager")(app, config);bin
+require("./routes/accountManager")(app, config);
 
 function exitHandler(err) {
     if (err) {
