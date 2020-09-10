@@ -154,7 +154,7 @@ module.exports = function (app, config, optimus, limiter) {
                                                                                 model: model,
                                                                                 visibility: visibility,
                                                                                 name: name,
-                                                                                via: (req.headers["referer"] && req.headers["referer"].indexOf("mineskin.org") > -1) ? "website" : "api",
+                                                                                via: Util.getVia(req),
                                                                                 ua: req.headers["user-agent"],
                                                                                 genUrl: url,
                                                                                 tmpPath: path
@@ -334,7 +334,7 @@ module.exports = function (app, config, optimus, limiter) {
                                                                     model: model,
                                                                     visibility: visibility,
                                                                     name: name,
-                                                                    via: (req.headers["referer"] && req.headers["referer"].indexOf("mineskin.org") > -1) ? "website" : "api",
+                                                                    via: Util.getVia(req),
                                                                     ua: req.headers["user-agent"],
                                                                     tmpPath: path
                                                                 }, fileHash, hashFromMojangTexture, uuid(), tmpName, genStart, function (err, skin) {
@@ -424,7 +424,7 @@ module.exports = function (app, config, optimus, limiter) {
                     model: "unknown",
                     visibility: visibility,
                     name: name,
-                    via: (req.headers["referer"] && req.headers["referer"].indexOf("mineskin.org") > -1) ? "website" : "api",
+                    via: Util.getVia(req),
                     ua: req.headers["user-agent"]
                 }, hashFromMojangTexture, null, longUuid, "t"+Date.now()+"usr", genStart, function (err, skin) {
                     if (err) {
