@@ -205,4 +205,17 @@ module.exports.increaseStat = function (key, amount, cb) {
     });
 };
 
+module.exports.getVia = function (req) {
+    var via = "api";
+    if (req.headers["referer"]) {
+        if (req.headers["referer"].indexOf("mineskin.org") > -1) {
+            via = "website";
+            if (req.headers["referer"].indexOf("bulk") > -1) {
+                via = "website-bulk";
+            }
+        }
+    }
+    return via;
+};
+
 module.exports.crypto = require("./encryption");
