@@ -78,3 +78,10 @@ imageHash("./images2/UbMwWCF.png",function (err,hash) {
 imageHash("./images2/33f0306e3488b95a8e29307171b273567de87a651dd1ac6adeb4d6cc67bcf216.png",function (err,hash) {
     console.log("2 33f0306e3488b95a8e29307171b273567de87a651dd1ac6adeb4d6cc67bcf216: " + hash);
 });
+imageHash("./images2/dafqweqghtue.png",function (err,hash) {
+    console.log("2 dafqweqghtue: " + hash);
+});
+imageHash("./images2/6f81077323a41b569adf22b1b3405f58e46790b4248b762876d7abea6b41d7fb.png",function (err,hash) {
+    console.log("2 6f81077323a41b569adf22b1b3405f58e46790b4248b762876d7abea6b41d7fb: " + hash);
+});
+
