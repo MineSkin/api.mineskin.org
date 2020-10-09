@@ -102,7 +102,7 @@ module.exports.skinToJson = function (skin, delay, req) {
                 }
             }
         },
-        timestamp: skin.time,
+        timestamp: Math.round(skin.time),
         duration: skin.generateDuration,
         accountId: skin.account,
         server: skin.server,
