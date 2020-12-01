@@ -27,25 +27,30 @@ module.exports.requestQueue = requestQueue;
 setInterval(function () {
     var next = requestQueue.shift();
     if (next) {
-        try{
-            var d =new Date().toUTCString();
-            request(next.options, function (err,res,body) {
-                fs.appendFileSync("requests.log", "[" + d  + "] AUTH "+ (next.options.method||"GET")+" " + (next.options.url||next.options.uri) + " => "+res.statusCode+"\n", "utf8");
+        try {
+            var d = new Date().toUTCString();
+            request(next.options, function (err, res, body) {
+                fs.appendFileSync("requests.log", "[" + d + "] AUTH " + (next.options.method || "GET") + " " + (next.options.url || next.options.uri) + " => " + res.statusCode + "\n", "utf8");
                 next.callback(err, res, body);
             });
-        }catch (e) {
+        } catch (e) {
             console.error(e);
         }
     }
 }, config.requestQueue.auth);
 setInterval(function () {
     console.log("[Auth] Request Queue Size: " + requestQueue.length);
-},30000)
+}, 30000)
+
 function queueRequest(options, callback) {
-    requestQueue.push({options:options, callback: callback})
+    requestQueue.push({options: options, callback: callback})
 }
 
 module.exports.authenticate = function (account, cb) {
+    return module.exports.authenticateMojang(account, cb);
+}
+
+module.exports.authenticateMojang = function (account, cb) {
     console.log("[Auth] authenticate(" + account.username + ")");
     // Callback to login
     var loginCallback = function (account) {
@@ -246,6 +251,10 @@ module.exports.authenticate = function (account, cb) {
 };
 
 module.exports.completeChallenges = function (account, cb) {
+    return module.exports.completeChallengesMojang(account, cb);
+}
+
+module.exports.completeChallengesMojang = function (account, cb) {
     if ((!account.security || account.security.length === 0) && (!account.multiSecurity || account.multiSecurity.length < 3)) {
         console.log("[Auth] (#" + account.id + ") Skipping security questions as there are no answers configured");
         // No security questions set
@@ -352,6 +361,10 @@ module.exports.completeChallenges = function (account, cb) {
 }
 
 module.exports.signout = function (account, cb) {
+    return module.exports.signoutMojang(account, cb);
+}
+
+module.exports.signoutMojang = function (account, cb) {
     // ygg.signout(account.username, Util.crypto.decrypt(account.passwordNew), account.requestIp, cb);
     account.accessToken = null;
     if (account.requestServer)
