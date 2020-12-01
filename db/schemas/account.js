@@ -20,6 +20,7 @@ var accountSchema = new Schema({
         id: Number,
         answer: String
     }],
+    microsoftAccount: Boolean,
     uuid: String,
     lastSelected: Number,
     timeAdded: {

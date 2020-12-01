@@ -755,6 +755,13 @@ module.exports = function (app, config) {
         })
     });
 
+    app.get("/accountManager/microsoft/oauth/start", function (req, res) {
+        //TODO
+    });
+
+    app.get("/accountManager/microsoft/oauth/callback", function (req, res) {
+        //TODO
+    });
 
     app.post("/accountManager/authInterceptor/reportGameLaunch", function (req, res) {
         console.log("authInterceptor/reportGameLaunch");
