@@ -588,7 +588,7 @@ module.exports = function (app, config) {
 
     // https://wiki.vg/Microsoft_Authentication_Scheme
     // Huge thanks to @MiniDigger for figuring this out
-    app.post("/accountManager/microsoft/login", function (req, res) {
+    app.post("/accountManager/auth/microsoft/login", function (req, res) {
         if (!req.body.url) {
             res.status(400).json({error: "Missing url"})
             return;
