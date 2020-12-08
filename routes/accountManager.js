@@ -751,14 +751,44 @@ module.exports = function (app, config) {
                         console.log("got MC access token!!!");
                         console.log(minecraftAccessToken);
 
-
                         request({
                             url: urls.microsoft.entitlements,
                             method: "GET",
                             headers: {
-
+                                "Content-Type": "application/json"
+                            },
+                            json: true
+                        }, function (err, entitlementsResponse, entitlementsBody) {
+                            console.log("entitlements:");
+                            console.log(entitlementsBody);
+                            if (err) {
+                                console.warn("Failed to get entitlements");
+                                console.warn(err);
+                                res.status(500).json({error: "failed to get entitlements"})
+                                return;
                             }
-                        })
+                            if (!entitlementsBody || entitlementsBody.error) {
+                                console.warn("Got error from entitlements");
+                                console.warn(loginBody);
+                                res.status(500).json({error: "failed to get entitlements", details: entitlementsBody})
+                                return;
+                            }
+
+                            let ownsMinecraft = false;
+                            if (entitlementsBody.items) {
+                                for (let ent of entitlementsBody.items) {
+                                    if ("product_minecraft" === ent.name) {
+                                        ownsMinecraft = true;
+                                    }
+                                }
+                            }
+
+                            res.json({
+                                success: true,
+                                token: minecraftAccessToken,
+                                ownsMinecraft: ownsMinecraft
+                            });
+                        });
                     });
                 });
             });
