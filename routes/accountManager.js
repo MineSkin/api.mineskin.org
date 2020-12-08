@@ -599,6 +599,7 @@ module.exports = function (app, config) {
             return;
         }
         let parsedUrl = new URL(url);
+        console.log(parsedUrl)
         let code = parsedUrl.searchParams.get("code");
         if (!code || code.length <= 1) {
             res.status(400).json({error: "missing code"})
@@ -610,7 +611,8 @@ module.exports = function (app, config) {
             url: urls.microsoft.oauth20token,
             method: "POST",
             headers: {
-                "Content-Type": "application/x-www-form-urlencoded"
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Accept": "application/json"
             },
             form: {
                 "client_id": "00000000402b5328",
@@ -618,7 +620,8 @@ module.exports = function (app, config) {
                 "grant_type": "authorization_code",
                 "redirect_uri": "https://login.live.com/oauth20_desktop.srf",
                 "scope": "service::user.auth.xboxlive.com::MBI_SSL"
-            }
+            },
+            json: true
         }, function (err, tokenResponse, tokenBody) {
             console.log("oauth20:")
             console.log(tokenBody);
@@ -628,9 +631,17 @@ module.exports = function (app, config) {
                 res.status(500).json({error: "failed to get auth token"})
                 return;
             }
+            if (!tokenBody || tokenBody.error) {
+                console.warn("Got error from oauth20token");
+                console.warn(tokenBody);
+                res.status(500).json({error: "failed to get auth token", details: tokenBody})
+                return;
+            }
 
             let oauthAccessToken = tokenBody.access_token;
+            console.log("got oauthAccessToken " + oauthAccessToken)
 
+            console.log("[MSA] Authenticating with XBL")
             request({
                 url: urls.microsoft.xblAuth,
                 method: "POST",
@@ -656,10 +667,20 @@ module.exports = function (app, config) {
                     res.status(500).json({error: "xbl auth failed"})
                     return;
                 }
+                if (!xblBody || xblBody.error) {
+                    console.warn("Got error from xbl");
+                    console.warn(xblBody);
+                    res.status(500).json({error: "xbl auth failed", details: xblBody})
+                    return;
+                }
 
                 let xblToken = xblBody.Token;
                 let xblUhs = xblBody.DisplayClaims.xui[0].uhs;
 
+                console.log("got xblToken " + xblToken)
+                console.log("got xblUhs " + xblUhs)
+
+                console.log("[MSA] Authenticating with XSTS")
                 request({
                     url: urls.microsoft.xstsAuth,
                     method: "POST",
@@ -686,27 +707,42 @@ module.exports = function (app, config) {
                         res.status(500).json({error: "xsts auth failed"})
                         return;
                     }
+                    if (!xstsBody || xstsBody.error) {
+                        console.warn("Got error from xsts");
+                        console.warn(xstsBody);
+                        res.status(500).json({error: "xsts auth failed", details: xstsBody})
+                        return;
+                    }
 
                     let xstsToken = xstsBody.Token;
                     let xstsUhs = xblBody.DisplayClaims.xui[0].uhs;
 
+                    console.log("got xstsToken " + xstsToken)
+                    console.log("got xstsUhs " + xstsUhs)
+
                     request({
                         url: urls.microsoft.loginWithXbox,
+                        method: "POST",
                         headers: {
                             "Content-Type": "application/json",
                             "Accept": "application/json"
                         },
                         json: {
-                            "identityToken": "XBL3.0 x=" + xblUhs + ";" + xstsToken
+                            "identityToken": "XBL3.0 x=" + xstsUhs + ";" + xstsToken
                         }
                     }, function (err, loginResponse, loginBody) {
                         console.log("login:");
                         console.log(loginBody);
-
                         if (err) {
                             console.warn("Failed to login_with_xbox");
                             console.warn(err);
                             res.status(500).json({error: "minecraft xbox login failed"})
+                            return;
+                        }
+                        if (!loginBody || loginBody.error) {
+                            console.warn("Got error from login_with_xbox");
+                            console.warn(loginBody);
+                            res.status(500).json({error: "minecraft xbox login failed", details: loginBody})
                             return;
                         }
 
@@ -714,6 +750,15 @@ module.exports = function (app, config) {
 
                         console.log("got MC access token!!!");
                         console.log(minecraftAccessToken);
+
+
+                        request({
+                            url: urls.microsoft.entitlements,
+                            method: "GET",
+                            headers: {
+
+                            }
+                        })
                     });
                 });
             });
