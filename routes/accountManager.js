@@ -588,7 +588,7 @@ module.exports = function (app, config) {
 
     // https://wiki.vg/Microsoft_Authentication_Scheme
     // Huge thanks to @MiniDigger for figuring this out
-    app.post("/accountManager/microsoft/oauthurl", function (req, res) {
+    app.post("/accountManager/microsoft/login", function (req, res) {
         if (!req.body.url) {
             res.status(400).json({error: "Missing url"})
             return;
@@ -599,7 +599,6 @@ module.exports = function (app, config) {
             return;
         }
         let parsedUrl = new URL(url);
-        console.log(parsedUrl)
         let code = parsedUrl.searchParams.get("code");
         if (!code || code.length <= 1) {
             res.status(400).json({error: "missing code"})
@@ -624,7 +623,7 @@ module.exports = function (app, config) {
             json: true
         }, function (err, tokenResponse, tokenBody) {
             console.log("oauth20:")
-            console.log(tokenBody);
+            console.log(JSON.stringify(tokenBody));
             if (err) {
                 console.warn("Failed to get oauth20token");
                 console.warn(err);
@@ -639,7 +638,9 @@ module.exports = function (app, config) {
             }
 
             let oauthAccessToken = tokenBody.access_token;
+            let microsoftUserId = tokenBody.user_id;
             console.log("got oauthAccessToken " + oauthAccessToken)
+            console.log("got microsoftUserId" + microsoftUserId)
 
             console.log("[MSA] Authenticating with XBL")
             request({
@@ -660,7 +661,7 @@ module.exports = function (app, config) {
                 }
             }, function (err, xblResponse, xblBody) {
                 console.log("xbl:")
-                console.log(xblBody);
+                console.log(JSON.stringify(xblBody));
                 if (err) {
                     console.warn("Failed to auth with xbl");
                     console.warn(err);
@@ -700,7 +701,7 @@ module.exports = function (app, config) {
                     }
                 }, function (err, xstsResponse, xstsBody) {
                     console.log("xsts:")
-                    console.log(xstsBody);
+                    console.log(JSON.stringify(xstsBody));
                     if (err) {
                         console.warn("Failed to auth with xsts");
                         console.warn(err);
@@ -732,7 +733,7 @@ module.exports = function (app, config) {
                         }
                     }, function (err, loginResponse, loginBody) {
                         console.log("login:");
-                        console.log(loginBody);
+                        console.log(JSON.stringify(loginBody));
                         if (err) {
                             console.warn("Failed to login_with_xbox");
                             console.warn(err);
@@ -747,47 +748,54 @@ module.exports = function (app, config) {
                         }
 
                         let minecraftAccessToken = loginBody.access_token; // FINALLY
+                        let minecraftXboxUsername = loginBody.username;
 
                         console.log("got MC access token!!!");
                         console.log(minecraftAccessToken);
 
-                        request({
-                            url: urls.microsoft.entitlements,
-                            method: "GET",
-                            headers: {
-                                "Content-Type": "application/json"
-                            },
-                            json: true
-                        }, function (err, entitlementsResponse, entitlementsBody) {
-                            console.log("entitlements:");
-                            console.log(entitlementsBody);
-                            if (err) {
-                                console.warn("Failed to get entitlements");
-                                console.warn(err);
-                                res.status(500).json({error: "failed to get entitlements"})
-                                return;
-                            }
-                            if (!entitlementsBody || entitlementsBody.error) {
-                                console.warn("Got error from entitlements");
-                                console.warn(loginBody);
-                                res.status(500).json({error: "failed to get entitlements", details: entitlementsBody})
-                                return;
-                            }
+                        // Has some weird encoding issues
+                        // request({
+                        //     url: urls.microsoft.entitlements,
+                        //     method: "GET",
+                        //     headers: {
+                        //         "Content-Type": "application/json",
+                        //         "Accept": "application/json",
+                        //         "Authorization": "Bearer " + minecraftAccessToken
+                        //     },
+                        //     json: true
+                        // }, function (err, entitlementsResponse, entitlementsBody) {
+                        //     console.log("entitlements:");
+                        //     console.log(Buffer.from(JSON.stringify(entitlementsBody)).toString("base64"));
+                        //     if (err) {
+                        //         console.warn("Failed to get entitlements");
+                        //         console.warn(err);
+                        //         res.status(500).json({error: "failed to get entitlements"})
+                        //         return;
+                        //     }
+                        //     if (!entitlementsBody || entitlementsBody.error) {
+                        //         console.warn("Got error from entitlements");
+                        //         // console.warn(entitlementsBody);
+                        //         res.status(500).json({error: "failed to get entitlements", details: entitlementsBody})
+                        //         return;
+                        //     }
+                        //
+                        //     let ownsMinecraft = false;
+                        //     if (entitlementsBody.items) {
+                        //         for (let ent of entitlementsBody.items) {
+                        //             if ("product_minecraft" === ent.name) {
+                        //                 ownsMinecraft = true;
+                        //             }
+                        //         }
+                        //     }
+                        //
+                        //
+                        // });
 
-                            let ownsMinecraft = false;
-                            if (entitlementsBody.items) {
-                                for (let ent of entitlementsBody.items) {
-                                    if ("product_minecraft" === ent.name) {
-                                        ownsMinecraft = true;
-                                    }
-                                }
-                            }
-
-                            res.json({
-                                success: true,
-                                token: minecraftAccessToken,
-                                ownsMinecraft: ownsMinecraft
-                            });
+                        res.json({
+                            success: true,
+                            token: minecraftAccessToken,
+                            userId: microsoftUserId,
+                            username: minecraftXboxUsername
                         });
                     });
                 });

@@ -21,7 +21,19 @@ var accountSchema = new Schema({
         answer: String
     }],
     microsoftAccount: Boolean,
-    uuid: String,
+    microsoftUserId: {
+        type: String,
+        index: true
+    },
+    microsoftRefreshToken: String,
+    minecraftXboxUsername: {
+        type: String,
+        index: true
+    },
+    uuid: {
+        type: String,
+        index: true
+    },
     lastSelected: Number,
     timeAdded: {
         type: Number,
