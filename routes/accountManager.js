@@ -12,6 +12,7 @@ module.exports = function (app, config) {
         }
     });
     var md5 = require("md5");
+    const URL = require("url");
 
     var pendingDiscordLinks = {};
 
@@ -597,7 +598,7 @@ module.exports = function (app, config) {
             res.status(400).json({error: "invalid url"})
             return;
         }
-        let parsedUrl = new URL(url);
+        let parsedUrl = URL.parse(url);
         let code = parsedUrl.searchParams.get("code");
         if (!code || code.length <= 1) {
             res.status(400).json({error: "missing code"})
