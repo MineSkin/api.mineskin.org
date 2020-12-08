@@ -420,9 +420,9 @@ module.exports = function (app, config) {
                             }
 
                             Account.aggregate([
-                                { $match: { enabled: true, errorCounter: {$lt: 10} } },
-                                { $group : { _id : '$requestServer', count : {$sum : 1}}},
-                                { $sort : { count : 1 } }
+                                {$match: {enabled: true, errorCounter: {$lt: 10}}},
+                                {$group: {_id: '$requestServer', count: {$sum: 1}}},
+                                {$sort: {count: 1}}
                             ], function (err, accountsPerServer) {
                                 if (err) {
                                     console.warn("Failed to get accounts per server");
@@ -583,7 +583,141 @@ module.exports = function (app, config) {
             });
             res.json(accs)
         })
-    })
+    });
+
+    // https://wiki.vg/Microsoft_Authentication_Scheme
+    // Huge thanks to @MiniDigger for figuring this out
+    app.post("/accountManager/microsoft/oauthurl", function (req, res) {
+        if (!req.body.url) {
+            res.status(400).json({error: "Missing url"})
+            return;
+        }
+        let url = req.body.url;
+        if (!url.startsWith(urls.microsoft.oauth20prefix)) {
+            res.status(400).json({error: "invalid url"})
+            return;
+        }
+        let parsedUrl = new URL(url);
+        let code = parsedUrl.searchParams.get("code");
+        if (!code || code.length <= 1) {
+            res.status(400).json({error: "missing code"})
+            return;
+        }
+
+        console.log("[MSA] Attempting to get auth token from code " + code);
+        request({
+            url: urls.microsoft.oauth20token,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded"
+            },
+            form: {
+                "client_id": "00000000402b5328",
+                "code": code,
+                "grant_type": "authorization_code",
+                "redirect_uri": "https://login.live.com/oauth20_desktop.srf",
+                "scope": "service::user.auth.xboxlive.com::MBI_SSL"
+            }
+        },function (err, tokenResponse, tokenBody) {
+            console.log("oauth20:")
+            console.log(tokenBody);
+            if (err) {
+                console.warn("Failed to get oauth20token");
+                console.warn(err);
+                res.status(500).json({error: "failed to get auth token"})
+                return;
+            }
+
+            let oauthAccessToken =  tokenBody.access_token;
+
+            request({
+                url: urls.microsoft.xblAuth,
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json"
+                },
+                json: {
+                    "Properties": {
+                        "AuthMethod": "RPS",
+                        "SiteName": "user.auth.xboxlive.com",
+                        "RpsTicket": oauthAccessToken
+                    },
+                    "RelyingParty": "http://auth.xboxlive.com",
+                    "TokenType": "JWT"
+                }
+            }, function (err, xblResponse, xblBody) {
+                console.log("xbl:")
+                console.log(xblBody);
+                if (err) {
+                    console.warn("Failed to auth with xbl");
+                    console.warn(err);
+                    res.status(500).json({error: "xbl auth failed"})
+                    return;
+                }
+
+                let xblToken = xblBody.Token;
+                let xblUhs = xblBody.DisplayClaims.xui[0].uhs;
+
+                request({
+                    url: urls.microsoft.xstsAuth,
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    json:  {
+                        "Properties": {
+                            "SandboxId": "RETAIL",
+                            "UserTokens": [
+                                xblToken
+                            ]
+                        },
+                        "RelyingParty": "rp://api.minecraftservices.com/",
+                        "TokenType": "JWT"
+                    }
+                }, function (err, xstsResponse, xstsBody) {
+                    console.log("xsts:")
+                    console.log(xstsBody);
+                    if (err) {
+                        console.warn("Failed to auth with xsts");
+                        console.warn(err);
+                        res.status(500).json({error: "xsts auth failed"})
+                        return;
+                    }
+
+                    let xstsToken = xstsBody.Token;
+                    let xstsUhs = xblBody.DisplayClaims.xui[0].uhs;
+
+                    request({
+                        url: urls.microsoft.loginWithXbox,
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Accept": "application/json"
+                        },
+                        json: {
+                            "identityToken": "XBL3.0 x=" + xblUhs + ";" + xstsToken
+                        }
+                    }, function (err, loginResponse, loginBody) {
+                        console.log("login:");
+                        console.log(loginBody);
+
+                        if (err) {
+                            console.warn("Failed to login_with_xbox");
+                            console.warn(err);
+                            res.status(500).json({error: "minecraft xbox login failed"})
+                            return;
+                        }
+
+                        let minecraftAccessToken = loginBody.access_token; // FINALLY
+
+                        console.log("got MC access token!!!");
+                        console.log(minecraftAccessToken);
+                    });
+                });
+            });
+        });
+    });
 
     app.get("/accountManager/discord/oauth/start", function (req, res) {
         if (!req.query.token) {
@@ -616,7 +750,7 @@ module.exports = function (app, config) {
                     }
 
                     var clientId = config.discord.oauth.id;
-                    var redirect = encodeURIComponent("https://"+(config.server?config.server+".":"")+"api.mineskin.org/accountManager/discord/oauth/callback");
+                    var redirect = encodeURIComponent("https://" + (config.server ? config.server + "." : "") + "api.mineskin.org/accountManager/discord/oauth/callback");
 
                     var state = md5(account.uuid + "_" + account.username + "_magic_discord_string_" + Date.now() + "_" + account.id);
 
@@ -638,7 +772,7 @@ module.exports = function (app, config) {
             });
             return;
         }
-        var redirect = "https://"+(config.server?config.server+".":"")+"api.mineskin.org/accountManager/discord/oauth/callback";
+        var redirect = "https://" + (config.server ? config.server + "." : "") + "api.mineskin.org/accountManager/discord/oauth/callback";
         request({
             url: "https://discordapp.com/api/oauth2/token",
             method: "POST",
@@ -753,14 +887,6 @@ module.exports = function (app, config) {
                 });
             })
         })
-    });
-
-    app.get("/accountManager/microsoft/oauth/start", function (req, res) {
-        //TODO
-    });
-
-    app.get("/accountManager/microsoft/oauth/callback", function (req, res) {
-        //TODO
     });
 
     app.post("/accountManager/authInterceptor/reportGameLaunch", function (req, res) {
