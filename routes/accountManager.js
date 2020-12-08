@@ -12,7 +12,7 @@ module.exports = function (app, config) {
         }
     });
     var md5 = require("md5");
-    const URL = require("url");
+    const {URL} = require("url");
 
     var pendingDiscordLinks = {};
 
@@ -598,7 +598,7 @@ module.exports = function (app, config) {
             res.status(400).json({error: "invalid url"})
             return;
         }
-        let parsedUrl = URL.parse(url);
+        let parsedUrl = new URL(url);
         let code = parsedUrl.searchParams.get("code");
         if (!code || code.length <= 1) {
             res.status(400).json({error: "missing code"})
@@ -619,7 +619,7 @@ module.exports = function (app, config) {
                 "redirect_uri": "https://login.live.com/oauth20_desktop.srf",
                 "scope": "service::user.auth.xboxlive.com::MBI_SSL"
             }
-        },function (err, tokenResponse, tokenBody) {
+        }, function (err, tokenResponse, tokenBody) {
             console.log("oauth20:")
             console.log(tokenBody);
             if (err) {
@@ -629,7 +629,7 @@ module.exports = function (app, config) {
                 return;
             }
 
-            let oauthAccessToken =  tokenBody.access_token;
+            let oauthAccessToken = tokenBody.access_token;
 
             request({
                 url: urls.microsoft.xblAuth,
@@ -667,7 +667,7 @@ module.exports = function (app, config) {
                         "Content-Type": "application/json",
                         "Accept": "application/json"
                     },
-                    json:  {
+                    json: {
                         "Properties": {
                             "SandboxId": "RETAIL",
                             "UserTokens": [
