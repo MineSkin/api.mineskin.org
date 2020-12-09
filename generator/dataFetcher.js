@@ -13,7 +13,6 @@ setInterval(function () {
     }
 }, 30000);
 
-// TODO: could update this to use https://api.minecraftservices.com/minecraft/profile
 module.exports.getSkinData = function (account, cb) {
     console.log(("[DataFetcher] Loading Skin data for " + (account.id ? "account #" + account.id + " (" + account.uuid + ")" : account.uuid)).info);
     console.log(account.uuid.debug)
