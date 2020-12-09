@@ -295,6 +295,7 @@ module.exports = function (app, config) {
                         }
                         if (acc.microsoftAccount) {
                             acc.accessToken = req.query.token;
+                            acc.accessTokenExpiration = Math.round(Date.now() / 1000) + 86360
                         }
                         acc.save(function (err, acc) {
                             res.json({
@@ -435,6 +436,7 @@ module.exports = function (app, config) {
                                 playername: profileBody.name,
                                 uuid: req.body.uuid,
                                 accessToken: req.body.token,
+                                accessTokenExpiration: Math.round(Date.now() / 1000) + 86360,
                                 clientToken: md5(req.body.username + "_" + remoteIp),
                                 type: "external",
                                 microsoftAccount: !!req.body.microsoftAccount,

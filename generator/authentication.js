@@ -99,6 +99,7 @@ module.exports.authenticateMojang = function (account, cb) {
                 // account.clientToken = body.clientToken;
                 console.log(("[Auth] (#" + account.id + ") AccessToken: " + body.accessToken).debug);
                 account.accessToken = body.accessToken;
+                account.accessTokenExpiration = Math.round(Date.now() / 1000) + 86360;
                 account.requestServer = config.server;
                 console.log(("[Auth] (#" + account.id + ") RequestServer set to " + config.server));
                 account.save(function (err, account) {
@@ -177,6 +178,7 @@ module.exports.authenticateMojang = function (account, cb) {
 
                     console.log(("[Auth] AccessToken: " + body.accessToken).debug);
                     account.accessToken = body.accessToken;
+                    account.accessTokenExpiration = Math.round(Date.now() / 1000) + 86360;
                     if (account.requestServer)
                         account.lastRequestServer = account.requestServer;
                     account.requestServer = config.server;
@@ -189,58 +191,65 @@ module.exports.authenticateMojang = function (account, cb) {
             })
         }
 
-        console.log("[Auth] (#" + account.id + ") validating tokens");
-        console.log(("[Auth] POST " + urls.validate).debug);
-        var body = {
-            accessToken: account.accessToken,
-            clientToken: account.clientToken,
-            requestUser: true
-        };
-        console.log(("[Auth] " + JSON.stringify(body)).debug);
-        queueRequest({
-            method: "POST",
-            url: urls.validate,
-            headers: {
-                "User-Agent": "Mineskin Auth",
-                "Content-Type": "application/json",
-                "X-Forwarded-For": account.requestIp,
-                "REMOTE_ADDR": account.requestIp
-            },
-            json: true,
-            body: body
-        }, function (err, response, body) {
-            console.log("[Auth] Validate Body:".debug)
-            console.log(("" + JSON.stringify(body)).debug);
-            if (err || response.statusCode < 200 || response.statusCode > 230 || (body && body.error)) {
-                console.info("[Auth] Couldn't validate tokens");
-                console.log(err);
-                setTimeout(function () {
-                    refresh();
-                }, body.error === "TooManyRequestsException" ? 10000 : 1000);
-            } else {
-                console.info("[Auth] Tokens are still valid!");
-                cb(null, account);
-            }
-        })
+        if (account.accessTokenExpiration && Math.abs(account.accessTokenExpiration - Math.round(Date.now() / 1000)) < 240) {
+            console.log("[Auth] (#" + account.id + ") force-refreshing accessToken, since it will expire in less than 4 minutes");
+            setTimeout(function () {
+                refresh();
+            }, 1000);
+        } else {
+            console.log("[Auth] (#" + account.id + ") validating tokens");
+            console.log(("[Auth] POST " + urls.validate).debug);
+            var body = {
+                accessToken: account.accessToken,
+                clientToken: account.clientToken,
+                requestUser: true
+            };
+            console.log(("[Auth] " + JSON.stringify(body)).debug);
+            queueRequest({
+                method: "POST",
+                url: urls.validate,
+                headers: {
+                    "User-Agent": "Mineskin Auth",
+                    "Content-Type": "application/json",
+                    "X-Forwarded-For": account.requestIp,
+                    "REMOTE_ADDR": account.requestIp
+                },
+                json: true,
+                body: body
+            }, function (err, response, body) {
+                console.log("[Auth] Validate Body:".debug)
+                console.log(("" + JSON.stringify(body)).debug);
+                if (err || response.statusCode < 200 || response.statusCode > 230 || (body && body.error)) {
+                    console.info("[Auth] Couldn't validate tokens");
+                    console.log(err);
+                    setTimeout(function () {
+                        refresh();
+                    }, body.error === "TooManyRequestsException" ? 10000 : 1000);
+                } else {
+                    console.info("[Auth] Tokens are still valid!");
+                    cb(null, account);
+                }
+            })
 
-        // ygg.refresh(account.accessToken, account.clientToken, account.requestIp, function (err, token, body) {
-        //     console.log(err)
-        //     if (!err) {
-        //         // Old token is still valid
-        //         account.accessToken = token;
-        //         account.save(function (err, account) {
-        //             console.log(("[Auth] (#" + account.id + ") Logging in with AccessToken").info);
-        //             cb(account);
-        //         })
-        //     } else {
-        //         console.log(("Couldn't refresh accessToken").debug);
-        //         // Login
-        //         module.exports.signout(account, function (err) {
-        //             if (err) console.log((err).warn);
-        //             loginCallback();
-        //         })
-        //     }
-        // })
+            // ygg.refresh(account.accessToken, account.clientToken, account.requestIp, function (err, token, body) {
+            //     console.log(err)
+            //     if (!err) {
+            //         // Old token is still valid
+            //         account.accessToken = token;
+            //         account.save(function (err, account) {
+            //             console.log(("[Auth] (#" + account.id + ") Logging in with AccessToken").info);
+            //             cb(account);
+            //         })
+            //     } else {
+            //         console.log(("Couldn't refresh accessToken").debug);
+            //         // Login
+            //         module.exports.signout(account, function (err) {
+            //             if (err) console.log((err).warn);
+            //             loginCallback();
+            //         })
+            //     }
+            // })
+        }
     } else {
         console.log(("[Auth] Account (#" + account.id + ") doesn't have accessToken").debug);
         // Login
