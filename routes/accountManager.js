@@ -281,7 +281,7 @@ module.exports = function (app, config) {
                             res.status(400).json({error: "uuid mismatch"})
                             return;
                         }
-                        if (req.query.password) {
+                        if (req.query.password && req.query.password.length>3) {
                             acc.passwordNew = util.crypto.encrypt(new Buffer(req.query.password, "base64").toString("ascii"));
                         }
                         if (req.query.security) {
@@ -370,7 +370,7 @@ module.exports = function (app, config) {
             res.status(400).json({error: "Missing token"})
             return;
         }
-        if (!req.body.username || !req.body.password) {
+        if (!req.body.username || (!req.body.password && !req.body.microsoftAccount)) {
             res.status(400).json({error: "Missing login data"});
             return;
         }
@@ -387,7 +387,7 @@ module.exports = function (app, config) {
             if (!validateMultiSecurityAnswers(req.body.securityAnswers, req, res)) return;
         }
 
-        var remoteIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+        let remoteIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
         Account.findOne({'$or': [{username: req.body.username}, {uuid: req.body.uuid}]}, function (err, acc) {
             if (err) return console.log(err);
@@ -641,6 +641,7 @@ module.exports = function (app, config) {
             }
 
             let oauthAccessToken = tokenBody.access_token;
+            let oauthRefreshToken = tokenBody.refresh_token;
             let microsoftUserId = tokenBody.user_id;
             console.log("got oauthAccessToken " + oauthAccessToken)
             console.log("got microsoftUserId" + microsoftUserId)
@@ -798,7 +799,8 @@ module.exports = function (app, config) {
                             success: true,
                             token: minecraftAccessToken,
                             userId: microsoftUserId,
-                            username: minecraftXboxUsername
+                            username: minecraftXboxUsername,
+                            refreshToken: oauthRefreshToken
                         });
                     });
                 });
@@ -1144,7 +1146,6 @@ module.exports = function (app, config) {
             method: "GET",
             url: "https://api.minecraftservices.com/minecraft/profile",
             headers: {
-                "Content-Type": "application/json",
                 "Authorization": "Bearer " + token
             },
             json: true
