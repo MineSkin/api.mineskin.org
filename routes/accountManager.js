@@ -268,7 +268,7 @@ module.exports = function (app, config) {
             return;
         }
 
-        Account.findOne({username: req.query.username, uuid: req.query.uuid, type: "external"}, "enabled password security multiSecurity discordUser microsoftAccount microsoftUserId minecraftXboxUsername sendEmails", function (err, acc) {
+        Account.findOne({username: req.query.username, uuid: req.query.uuid, type: "external"}, "enabled password security multiSecurity uuid discordUser microsoftAccount microsoftUserId minecraftXboxUsername sendEmails", function (err, acc) {
             if (err) return console.log(err);
             console.log(acc);
 
