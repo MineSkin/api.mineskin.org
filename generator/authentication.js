@@ -178,6 +178,8 @@ module.exports.authenticateMojang = function (account, cb) {
             setTimeout(function () {
                 refresh();
             }, 1000);
+        } else if (account.microsoftAccount) {
+            cb(null, account);
         } else {
             console.log("[Auth] (#" + account.id + ") validating tokens");
             console.log(("[Auth] POST " + urls.validate).debug);
