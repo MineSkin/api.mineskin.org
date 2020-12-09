@@ -116,7 +116,7 @@ module.exports.generateUrl = function (account, url, model, cb) {
 
         queueRequest({
             method: "POST",
-            url: urls.skin.replace(":uuid", account.uuid),
+            url: urls.skin,
             headers: {
                 "User-Agent": "MineSkin.org",
                 "Content-Type": "application/json",
@@ -204,7 +204,7 @@ module.exports.generateUpload = function (account, fileBuf, model, cb) {
 
         queueRequest({
             method: "POST",
-            url: urls.skin.replace(":uuid", account.uuid),
+            url: urls.skin,
             headers: {
                 "User-Agent": "MineSkin.org",
                 "Content-Type": "multipart/form-data",
