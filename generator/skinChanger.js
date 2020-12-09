@@ -130,7 +130,7 @@ module.exports.generateUrl = function (account, url, model, cb) {
             }
         }, function (err, response, body) {
             if (err) return console.log(err);
-            console.log(("Url response (acc#"+account.id+"): "+response.statusCode+" " + body).debug);
+            console.log(("Url response (acc#"+account.id+"): "+response.statusCode+" " + JSON.stringify(body)).debug);
             if (response.statusCode >= 200 && response.statusCode < 300) {
                 cb(true);
             } else if(response.statusCode === 403 && body.toString().toLowerCase().indexOf("not secured")!==-1) { // check for "Current IP not secured" error (probably means the account has no security questions configured, but actually needs them)
@@ -224,7 +224,7 @@ module.exports.generateUpload = function (account, fileBuf, model, cb) {
             }
         }, function (err, response, body) {
             if (err) return console.log(err);
-            console.log(("Upload response (acc#"+account.id+"): "+response.statusCode+" " + body).debug);
+            console.log(("Upload response (acc#"+account.id+"): "+response.statusCode+" " + JSON.stringify(body)).debug);
             if (response.statusCode >= 200 && response.statusCode < 300) {
                 cb(true);
             } else if(response.statusCode === 403 && body.toString().toLowerCase().indexOf("not secured")!==-1) { // check for "Current IP not secured" error (probably means the account has no security questions configured, but actually needs them)
