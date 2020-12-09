@@ -268,7 +268,7 @@ module.exports = function (app, config) {
             return;
         }
 
-        Account.findOne({username: req.query.username, uuid: req.query.uuid, type: "external"}, "enabled password security multiSecurity uuid discordUser microsoftAccount microsoftUserId minecraftXboxUsername sendEmails", function (err, acc) {
+        Account.findOne({username: req.query.username, uuid: req.query.uuid, type: "external"}, "enabled password security multiSecurity uuid discordUser microsoftAccount microsoftUserId minecraftXboxUsername sendEmails requestServer", function (err, acc) {
             if (err) return console.log(err);
             console.log(acc);
 
@@ -294,6 +294,7 @@ module.exports = function (app, config) {
                             }
                         }
                         if (acc.microsoftAccount) {
+                            acc.requestServer = config.server || acc.requestServer;
                             acc.accessToken = req.query.token;
                             acc.accessTokenExpiration = Math.round(Date.now() / 1000) + 86360
                         }
