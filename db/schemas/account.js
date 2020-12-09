@@ -57,6 +57,7 @@ var accountSchema = new Schema({
     sameTextureCounter: Number,
     accessToken: String,
     accessTokenExpiration: Number,
+    accessTokenSource: String,
     clientToken: String,
     requestIp: String,
     requestServer: {

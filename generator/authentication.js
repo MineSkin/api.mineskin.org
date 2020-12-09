@@ -100,6 +100,7 @@ module.exports.authenticateMojang = function (account, cb) {
                 console.log(("[Auth] (#" + account.id + ") AccessToken: " + body.accessToken).debug);
                 account.accessToken = body.accessToken;
                 account.accessTokenExpiration = Math.round(Date.now() / 1000) + 86360;
+                account.accessTokenSource = "login_mojang";
                 account.requestServer = config.server;
                 console.log(("[Auth] (#" + account.id + ") RequestServer set to " + config.server));
                 account.save(function (err, account) {
@@ -161,6 +162,7 @@ module.exports.authenticateMojang = function (account, cb) {
                     console.log(("[Auth] AccessToken: " + body.accessToken).debug);
                     account.accessToken = body.accessToken;
                     account.accessTokenExpiration = Math.round(Date.now() / 1000) + 86360;
+                    account.accessTokenSource = "refresh_mojang";
                     if (account.requestServer)
                         account.lastRequestServer = account.requestServer;
                     account.requestServer = config.server;
