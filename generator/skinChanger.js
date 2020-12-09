@@ -143,6 +143,7 @@ module.exports.generateUrl = function (account, url, model, cb) {
             }else {
                 cb(response.statusCode, "generate_rescode_" + response.statusCode);
                 console.log(("Got response " + response.statusCode + " for generateUrl").warn);
+                console.warn(url);
             }
         })
     }
