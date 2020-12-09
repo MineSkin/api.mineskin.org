@@ -84,8 +84,8 @@ module.exports = function (app, config, optimus, limiter) {
                         }
 
                         var tmpName = "t" + Date.now() + "url";
-                        tmp.file({name:tmpName,dir:"/tmp/url"},function (err, path, fd, fileCleanup) {
-                            console.log("url hash tmp name: "+ path)
+                        tmp.file({name: tmpName, dir: "/tmp/url"}, function (err, path, fd, fileCleanup) {
+                            console.log("url hash tmp name: " + path)
                             if (err) {
                                 console.log(err);
                                 return;
@@ -269,9 +269,9 @@ module.exports = function (app, config, optimus, limiter) {
         Util.checkTraffic(req, res).then(function (allowed, generatorDelay) {
             if (!allowed) return;
 
-            var tmpName = "t"+Date.now()+"upl";
-            tmp.file({name:tmpName,dir:"/tmp/upl"},function (err, path, fd, fileCleanup) {
-                console.log("upload hash tmp name: "+ path)
+            var tmpName = "t" + Date.now() + "upl";
+            tmp.file({name: tmpName, dir: "/tmp/upl"}, function (err, path, fd, fileCleanup) {
+                console.log("upload hash tmp name: " + path)
                 if (err) {
                     console.log(err);
                     return;
@@ -426,7 +426,7 @@ module.exports = function (app, config, optimus, limiter) {
                     name: name,
                     via: Util.getVia(req),
                     ua: req.headers["user-agent"]
-                }, hashFromMojangTexture, null, longUuid, "t"+Date.now()+"usr", genStart, function (err, skin) {
+                }, hashFromMojangTexture, null, longUuid, "t" + Date.now() + "usr", genStart, function (err, skin) {
                     if (err) {
                         var reason = "skin_data_fetch_failed";
                         res.status(500).json({error: "Failed to get skin data", err: err, reason: reason});
@@ -447,8 +447,8 @@ module.exports = function (app, config, optimus, limiter) {
 
     function hashFromMojangTexture(skinTexture, tmpName, cb) {// Generate the file hash from the skin's texture url
         if (!skinTexture) return;
-        tmp.file({name:tmpName,dir:"/tmp/moj"},function (err, path, fd, fileCleanup) {
-            console.log("mojang hash tmp name: "+ path)
+        tmp.file({name: tmpName, dir: "/tmp/moj"}, function (err, path, fd, fileCleanup) {
+            console.log("mojang hash tmp name: " + path)
             if (err) {
                 console.log(err);
                 return;
@@ -523,11 +523,11 @@ module.exports = function (app, config, optimus, limiter) {
                     });
                 } else {
                     var fileHashCallback = function (fileHash) {
-                        var mojangHashCallback = function (mojangHash,mojTmp) {
+                        var mojangHashCallback = function (mojangHash, mojTmp) {
                             if (options.type !== "user" && fileHash !== mojangHash) {
                                 console.error("IMAGE HASH AND TEXTURE HASH DO NOT MATCH");
-                                console.warn("Image:   " + fileHash +(options.tmpPath?" ["+options.tmpPath+"]":"")   + (options.genUrl?" ("+options.genUrl+")":""));
-                                console.warn("Texture: " + mojangHash + (mojTmp?" ["+mojTmp+"]":"")   + " ("+skinTexture.url+")");
+                                console.warn("Image:   " + fileHash + (options.tmpPath ? " [" + options.tmpPath + "]" : "") + (options.genUrl ? " (" + options.genUrl + ")" : ""));
+                                console.warn("Texture: " + mojangHash + (mojTmp ? " [" + mojTmp + "]" : "") + " (" + skinTexture.url + ")");
                                 console.warn("Account: " + account.id);
                                 console.warn("Type:  " + options.type);
                                 console.warn("Model: " + options.model);
@@ -624,6 +624,7 @@ module.exports = function (app, config, optimus, limiter) {
             if (account.errorCounter > 0 && account.errorCounter % 10 === 0) {
                 Util.postDiscordMessage("⚠️ Account #" + account.id + " has " + account.errorCounter + " errors!\n" +
                     "  Current Server: " + account.lastRequestServer + "/" + account.requestServer + "\n" +
+                    "  Account Type: " + (account.microsoftAccount ? "microsoft" : "mojang") + "\n" +
                     "  Latest Type: " + generateType + "\n" +
                     "  Latest Cause: " + errorCause + "\n" +
                     "  Total Success/Error: " + account.totalSuccessCounter + "/" + account.totalErrorCounter + "\n" +
@@ -631,10 +632,10 @@ module.exports = function (app, config, optimus, limiter) {
             }
 
             if (account.discordUser && account.errorCounter > 0 && account.errorCounter >= config.errorThreshold) {
-                var emailSplit = account.username.split("\@");
                 Util.sendDiscordDirectMessage("Hi there!\n" +
                     "This is an automated notification that a MineSkin account you linked to your Discord profile has been disabled since it failed to properly generate skin data recently.\n" +
-                    "  Affected Account: " + (account.playername || account.uuid) + " (" + emailSplit[0].substr(0, 3) + "***@" + emailSplit[1] + ")\n" +
+                    "  Affected Account: " + (account.playername || account.uuid) + " (" + account.username.substr(0, 4) + "****)\n" +
+                    "  Account Type: " + (account.microsoftAccount ? "microsoft" : "mojang") + "\n" +
                     "  Last Error Code:  " + account.lastErrorCode + "\n" +
                     "\n" +
                     "The account won't be used for skin generation until the issues are resolved.\n" +
