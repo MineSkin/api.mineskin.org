@@ -100,6 +100,10 @@ module.exports.generateUrl = function (account, url, model, cb) {
     console.log(("[SkinChanger] Generating Skin from URL").info);
     console.log(("" + url).debug);
 
+    if (model === "steve") {
+        model = "classic";
+    }
+
     if (!account.requestIp)
         account.requestIp = randomip('0.0.0.0', 0);
     console.log(("Using ip " + account.requestIp).debug);
@@ -115,13 +119,13 @@ module.exports.generateUrl = function (account, url, model, cb) {
             url: urls.skin.replace(":uuid", account.uuid),
             headers: {
                 "User-Agent": "MineSkin.org",
-                "Content-Type": "application/x-www-form-urlencoded",
+                "Content-Type": "application/json",
                 "Authorization": "Bearer " + account.accessToken,
                 "X-Forwarded-For": account.requestIp,
                 "REMOTE_ADDR": account.requestIp
             },
-            form: {
-                model: model,
+            json: {
+                variant: model,
                 url: url
             }
         }, function (err, response, body) {
@@ -182,8 +186,11 @@ module.exports.generateUrl = function (account, url, model, cb) {
 // 'fileBuf' must be a buffer
 module.exports.generateUpload = function (account, fileBuf, model, cb) {
     console.log(("[SkinChanger] Generating Skin from Upload").info);
+    if (model === "steve") {
+        model = "classic";
+    }
 
-    if (!account.requestIp)
+    if (!account.requestIp){}
         account.requestIp = randomip('0.0.0.0', 0);
     console.log(("Using ip " + account.requestIp).debug);
 
@@ -193,8 +200,10 @@ module.exports.generateUpload = function (account, fileBuf, model, cb) {
             account.lastRequestServer = account.requestServer;
         account.requestServer = config.server;
 
+
+
         queueRequest({
-            method: "PUT",
+            method: "POST",
             url: urls.skin.replace(":uuid", account.uuid),
             headers: {
                 "User-Agent": "MineSkin.org",
@@ -204,7 +213,7 @@ module.exports.generateUpload = function (account, fileBuf, model, cb) {
                 "REMOTE_ADDR": account.requestIp
             },
             formData: {
-                model: model,
+                variant: model,
                 file: {
                     value: fileBuf,
                     options: {
