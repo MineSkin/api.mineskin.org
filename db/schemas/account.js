@@ -10,6 +10,10 @@ var accountSchema = new Schema({
         type: String,
         index: true
     },
+    uuid: {
+        type: String,
+        index: true
+    },
     playername: String,
     authInterceptorEnabled: Boolean,
     password: String,
@@ -27,10 +31,6 @@ var accountSchema = new Schema({
     },
     microsoftRefreshToken: String,
     minecraftXboxUsername: {
-        type: String,
-        index: true
-    },
-    uuid: {
         type: String,
         index: true
     },

@@ -38,12 +38,12 @@ module.exports = function (app, config) {
                 return;
             }
 
-            getUser(req.query.token, function (response, body) {
+            getProfile(req.query.token, function (response, body) {
                 if (body.error) {
                     res.status(response.statusCode).json({error: body.error, msg: body.errorMessage})
                 } else {
-                    if (body.username !== req.query.username) {
-                        res.status(400).json({error: "username mismatch"})
+                    if (body.id !== account.uuid) {
+                        res.status(400).json({error: "uuid mismatch"})
                         return;
                     }
 
@@ -226,7 +226,8 @@ module.exports = function (app, config) {
                 res.json({
                     id: body.id,
                     username: body.username,
-                    legacyUser: body.legacyUser
+                    legacyUser: body.legacyUser,
+                    _comment: "deprecated, use /auth/userProfile"
                 })
             }
         })
@@ -246,8 +247,8 @@ module.exports = function (app, config) {
                 res.json({
                     uuid: body.id,
                     name: body.name,
-                    legacyProfile: body.legacyProfile,
-                    suspended: body.suspended
+                    legacyProfile: !!body.legacyProfile,
+                    suspended: !!body.suspended
                 })
             }
         })
@@ -267,17 +268,17 @@ module.exports = function (app, config) {
             return;
         }
 
-        Account.findOne({username: req.query.username, uuid: req.query.uuid, type: "external"}, "enabled password security multiSecurity discordUser", function (err, acc) {
+        Account.findOne({username: req.query.username, uuid: req.query.uuid, type: "external"}, "enabled password security multiSecurity discordUser microsoftAccount microsoftUserId minecraftXboxUsername sendEmails", function (err, acc) {
             if (err) return console.log(err);
             console.log(acc);
 
             if (acc) {
-                getUser(req.query.token, function (response, userBody) {
-                    if (userBody.error) {
-                        res.status(response.statusCode).json({error: userBody.error, msg: userBody.errorMessage})
+                getProfile(req.query.token, function (response, profileBody) {
+                    if (profileBody.error) {
+                        res.status(response.statusCode).json({error: profileBody.error, msg: profileBody.errorMessage})
                     } else {
-                        if (userBody.username.toLowerCase() !== req.query.username.toLowerCase()) {
-                            res.status(400).json({error: "username mismatch"})
+                        if (profileBody.id !== account.uuid) {
+                            res.status(400).json({error: "uuid mismatch"})
                             return;
                         }
                         if (req.query.password) {
@@ -292,13 +293,18 @@ module.exports = function (app, config) {
                                 acc.security = req.query.security;
                             }
                         }
+                        if (acc.microsoftAccount) {
+                            acc.accessToken = req.query.token;
+                        }
                         acc.save(function (err, acc) {
                             res.json({
                                 exists: !!acc,
                                 enabled: !!acc && acc.enabled,
                                 passwordUpdated: !!req.query.password,
                                 securityUpdated: !!req.query.security,
-                                discordLinked: !!acc && !!acc.discordUser
+                                discordLinked: !!acc && !!acc.discordUser,
+                                sendEmails: !!acc && !!acc.sendEmails,
+                                microsoftAccount: !!acc && !!acc.microsoftAccount
                             });
                         });
                     }
@@ -327,12 +333,12 @@ module.exports = function (app, config) {
             return;
         }
 
-        getUser(req.query.token, function (response, userBody) {
-            if (userBody.error) {
-                res.status(response.statusCode).json({error: userBody.error, msg: userBody.errorMessage})
+        getProfile(req.query.token, function (response, profileBody) {
+            if (profileBody.error) {
+                res.status(response.statusCode).json({error: profileBody.error, msg: profileBody.errorMessage})
             } else {
-                if (userBody.username.toLowerCase() !== req.query.username.toLowerCase()) {
-                    res.status(400).json({error: "username mismatch"})
+                if (profileBody.id !== req.query.uuid) {
+                    res.status(400).json({error: "uuid mismatch"})
                     return;
                 }
 
@@ -371,7 +377,7 @@ module.exports = function (app, config) {
             res.status(400).json({error: "Missing UUID"})
             return;
         }
-        if (typeof req.body.securityAnswer === "undefined" && typeof req.body.securityAnswers === "undefined" && !req.body.skipSecurityChallenges) {
+        if (typeof req.body.securityAnswer === "undefined" && typeof req.body.securityAnswers === "undefined" && !req.body.skipSecurityChallenges && !req.body.microsoftAccount) {
             res.status(400).json({error: "Missing security answer(s)"})
             return;
         }
@@ -382,7 +388,7 @@ module.exports = function (app, config) {
 
         var remoteIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
-        Account.findOne({username: req.body.username}, function (err, acc) {
+        Account.findOne({'$or': [{username: req.body.username}, {uuid: req.body.uuid}]}, function (err, acc) {
             if (err) return console.log(err);
             if (acc) {
                 res.status(400).json({error: "Account already exists"})
@@ -390,87 +396,81 @@ module.exports = function (app, config) {
             }
 
             // Just some server-side validation
-            getUser(req.body.token, function (response, body) {
-                if (body.error) {
-                    res.status(response.statusCode).json({error: body.error, msg: body.errorMessage})
+            getProfile(req.body.token, function (response, profileBody) {
+                if (profileBody.error) {
+                    res.status(response.statusCode).json({error: profileBody.error, msg: profileBody.errorMessage})
                 } else {
-                    if (body.username.toLowerCase() !== req.body.username.toLowerCase()) {
-                        res.status(400).json({error: "username mismatch"})
+                    if (profileBody.id !== req.body.uuid) {
+                        res.status(400).json({error: "uuid mismatch"})
                         return;
                     }
-                    if (body.legacyUser) {
-                        res.status(400).json({error: "cannot add legacy user"})
+                    if (profileBody.legacyUser) {
+                        res.status(400).json({error: "cannot add legacy profile"})
+                        return;
+                    }
+                    if (profileBody.suspended) {
+                        res.status(400).json({error: "cannot add suspended profile"})
                         return;
                     }
 
-                    getProfile(req.body.token, function (response, body) {
-                        if (body.error) {
-                            res.status(response.statusCode).json({error: body.error, msg: body.errorMessage})
-                        } else {
-                            if (body.id !== req.body.uuid) {
-                                res.status(400).json({error: "uuid mismatch"})
-                                return;
-                            }
-                            if (body.legacyUser) {
-                                res.status(400).json({error: "cannot add legacy profile"})
-                                return;
-                            }
-                            if (body.suspended) {
-                                res.status(400).json({error: "cannot add suspended profile"})
-                                return;
-                            }
-
-                            Account.aggregate([
-                                {$match: {enabled: true, errorCounter: {$lt: 10}}},
-                                {$group: {_id: '$requestServer', count: {$sum: 1}}},
-                                {$sort: {count: 1}}
-                            ], function (err, accountsPerServer) {
-                                if (err) {
-                                    console.warn("Failed to get accounts per server");
-                                    console.log(err);
-                                }
-                                var requestServer = accountsPerServer ? accountsPerServer[0]["_id"] : null;
-
-                                // Save the new account!
-                                Account.findOne({}).sort({id: -1}).exec(function (err, last) {
-                                    if (err) return console.log(err);
-                                    var lastId = last.id;
-
-                                    var account = new Account({
-                                        id: lastId + 1,
-                                        username: req.body.username,
-                                        passwordNew: util.crypto.encrypt(req.body.password),
-                                        security: req.body.securityAnswer || "",
-                                        multiSecurity: req.body.securityAnswers || [],
-                                        uuid: req.body.uuid,
-                                        accessToken: req.body.token,
-                                        clientToken: md5(req.body.username + "_" + remoteIp),
-                                        type: "external",
-                                        enabled: true,
-                                        lastUsed: 0,
-                                        forcedTimeoutAt: 0,
-                                        errorCounter: 0,
-                                        successCounter: 0,
-                                        requestServer: requestServer || null,
-                                        timeAdded: Math.round(Date.now() / 1000),
-                                        requestIp: remoteIp
-                                    });
-                                    account.save(function (err, account) {
-                                        if (err) {
-                                            res.status(500).json({
-                                                error: err,
-                                                msg: "Failed to save account"
-                                            });
-                                            return console.log(err);
-                                        }
-                                        res.json({
-                                            success: true,
-                                            msg: "Account saved. Thanks for your contribution!"
-                                        })
-                                    })
-                                });
-                            })
+                    Account.aggregate([
+                        {$match: {enabled: true, errorCounter: {$lt: 10}}},
+                        {$group: {_id: '$requestServer', count: {$sum: 1}}},
+                        {$sort: {count: 1}}
+                    ], function (err, accountsPerServer) {
+                        if (err) {
+                            console.warn("Failed to get accounts per server");
+                            console.log(err);
                         }
+                        let requestServer = accountsPerServer ? accountsPerServer[0]["_id"] : null;
+
+                        // Save the new account!
+                        Account.findOne({}).sort({id: -1}).exec(function (err, last) {
+                            if (err) return console.log(err);
+                            let lastId = last.id;
+
+                            let account = new Account({
+                                id: lastId + 1,
+                                username: req.body.username,
+                                playername: profileBody.name,
+                                uuid: req.body.uuid,
+                                accessToken: req.body.token,
+                                clientToken: md5(req.body.username + "_" + remoteIp),
+                                type: "external",
+                                microsoftAccount: !!req.body.microsoftAccount,
+                                enabled: true,
+                                lastUsed: 0,
+                                forcedTimeoutAt: 0,
+                                errorCounter: 0,
+                                successCounter: 0,
+                                requestServer: requestServer || null,
+                                timeAdded: Math.round(Date.now() / 1000),
+                                requestIp: remoteIp,
+                                sendEmails: !!req.body.sendEmails
+                            });
+                            if (req.body.microsoftAccount) {
+                                account.microsoftUserId = req.body.microsoftUserId || "";
+                                account.microsoftRefreshToken = req.body.microsoftRefreshToken || "";
+                                account.minecraftXboxUsername = req.body.xboxUsername || "";
+                            } else {
+                                account.passwordNew = util.crypto.encrypt(req.body.password);
+                                account.security = req.body.securityAnswer || "";
+                                account.multiSecurity = req.body.securityAnswers || [];
+                            }
+                            account.save(function (err, account) {
+                                if (err) {
+                                    res.status(500).json({
+                                        error: err,
+                                        msg: "Failed to save account"
+                                    });
+                                    return console.log(err);
+                                }
+                                res.json({
+                                    success: true,
+                                    msg: "Account saved. Thanks for your contribution!"
+                                })
+                            });
+                        });
                     })
                 }
             })
@@ -493,16 +493,16 @@ module.exports = function (app, config) {
             return;
         }
 
-        getUser(req.body.token, function (response, body) {
-            if (body.error) {
-                res.status(response.statusCode).json({error: body.error, msg: body.errorMessage})
+        getProfile(req.body.token, function (response, profileBody) {
+            if (profileBody.error) {
+                res.status(response.statusCode).json({error: profileBody.error, msg: profileBody.errorMessage})
             } else {
-                if (body.username.toLowerCase() !== req.body.username.toLowerCase()) {
-                    res.status(400).json({error: "username mismatch"})
+                if (profileBody.id !== req.body.uuid) {
+                    res.status(400).json({error: "uuid mismatch"})
                     return;
                 }
 
-                Account.findOne({username: req.body.username}, function (err, account) {
+                Account.findOne({username: req.body.username, uuid: profileBody.id}, function (err, account) {
                     if (err) return console.log(err);
                     if (!account) {
                         res.status(404).json({error: "Account not found"})
@@ -537,12 +537,12 @@ module.exports = function (app, config) {
             return;
         }
 
-        getUser(req.body.token, function (response, body) {
-            if (body.error) {
-                res.status(response.statusCode).json({error: body.error, msg: body.errorMessage})
+        getProfile(req.body.token, function (response, profileBody) {
+            if (profileBody.error) {
+                res.status(response.statusCode).json({error: profileBody.error, msg: profileBody.errorMessage})
             } else {
-                if (body.username.toLowerCase() !== req.body.username.toLowerCase()) {
-                    res.status(400).json({error: "username mismatch"})
+                if (profileBody.id !== req.body.uuid) {
+                    res.status(400).json({error: "uuid mismatch"})
                     return;
                 }
 
@@ -817,12 +817,12 @@ module.exports = function (app, config) {
             return;
         }
 
-        getUser(req.query.token, function (response, userBody) {
-            if (userBody.error) {
-                res.status(response.statusCode).json({error: userBody.error, msg: userBody.errorMessage})
+        getProfile(req.query.token, function (response, profileBody) {
+            if (profileBody.error) {
+                res.status(response.statusCode).json({error: profileBody.error, msg: profileBody.errorMessage})
             } else {
-                if (userBody.username.toLowerCase() !== req.query.username.toLowerCase()) {
-                    res.status(400).json({error: "username mismatch"})
+                if (profileBody.id !== req.query.uuid) {
+                    res.status(400).json({error: "uuid mismatch"})
                     return;
                 }
 
@@ -833,10 +833,10 @@ module.exports = function (app, config) {
                         return;
                     }
 
-                    var clientId = config.discord.oauth.id;
-                    var redirect = encodeURIComponent("https://" + (config.server ? config.server + "." : "") + "api.mineskin.org/accountManager/discord/oauth/callback");
+                    let clientId = config.discord.oauth.id;
+                    let redirect = encodeURIComponent("https://" + (config.server ? config.server + "." : "") + "api.mineskin.org/accountManager/discord/oauth/callback");
 
-                    var state = md5(account.uuid + "_" + account.username + "_magic_discord_string_" + Date.now() + "_" + account.id);
+                    let state = md5(account.uuid + "_" + account.username + "_magic_discord_string_" + Date.now() + "_" + account.id);
 
                     pendingDiscordLinks[state] = {
                         account: account.id,
@@ -1081,6 +1081,9 @@ module.exports = function (app, config) {
         })
     })
 
+    /**
+     * @deprecated
+     */
     function getUser(token, cb) {
         console.log(("[Auth] GET https://api.mojang.com/user").debug);
         request({
@@ -1099,11 +1102,26 @@ module.exports = function (app, config) {
         })
     }
 
+    /**
+     * @callback getProfileCallback
+     * @param {object} response
+     * @param {number} response.statusCode
+     * @param {object} profile
+     * @param {string} [profile.error]
+     * @param {string} profile.id
+     * @param {string} profile.name
+     */
+
+    /**
+     *
+     * @param {string} token
+     * @param {getProfileCallback} cb
+     */
     function getProfile(token, cb) {
-        console.log(("[Auth] GET https://api.mojang.com/user/profiles/agent/minecraft").debug);
+        console.log(("[Auth] GET https://api.minecraftservices.com/minecraft/profile").debug);
         request({
             method: "GET",
-            url: "https://api.mojang.com/user/profiles/agent/minecraft",
+            url: "https://api.minecraftservices.com/minecraft/profile",
             headers: {
                 "Content-Type": "application/json",
                 "Authorization": "Bearer " + token
