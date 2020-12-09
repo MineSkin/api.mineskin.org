@@ -445,7 +445,6 @@ module.exports = function (app, config) {
                                 forcedTimeoutAt: 0,
                                 errorCounter: 0,
                                 successCounter: 0,
-                                requestServer: requestServer || null,
                                 timeAdded: Math.round(Date.now() / 1000),
                                 requestIp: remoteIp,
                                 sendEmails: !!req.body.sendEmails
@@ -454,10 +453,12 @@ module.exports = function (app, config) {
                                 account.microsoftUserId = req.body.microsoftUserId || "";
                                 account.microsoftRefreshToken = req.body.microsoftRefreshToken || "";
                                 account.minecraftXboxUsername = req.body.xboxUsername || "";
+                                account.requestServer = config.server || requestServer;
                             } else {
                                 account.passwordNew = util.crypto.encrypt(req.body.password);
                                 account.security = req.body.securityAnswer || "";
                                 account.multiSecurity = req.body.securityAnswers || [];
+                                account.requestServer = requestServer;
                             }
                             account.save(function (err, account) {
                                 if (err) {
@@ -1082,6 +1083,24 @@ module.exports = function (app, config) {
             })
         })
     })
+
+    app.get("/preferredAccountServer", function (req, res) {
+        Account.aggregate([
+            {$match: {enabled: true, errorCounter: {$lt: 10}}},
+            {$group: {_id: '$requestServer', count: {$sum: 1}}},
+            {$sort: {count: 1}}
+        ], function (err, accountsPerServer) {
+            if (err) {
+                console.warn("Failed to get accounts per server");
+                console.log(err);
+            }
+            let requestServer = accountsPerServer ? accountsPerServer[0]["_id"] : null;
+
+            res.json({
+                preferredServer: requestServer
+            })
+        })
+    });
 
     /**
      * @deprecated

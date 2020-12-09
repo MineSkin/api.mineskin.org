@@ -107,24 +107,6 @@ module.exports.authenticateMojang = function (account, cb) {
                 })
             })
         }, 8000);
-        // ygg.auth({
-        //     user: account.username,
-        //     pass: Util.crypto.decrypt(account.passwordNew),
-        //     token: account.clientToken,
-        //     ip: account.requestIp,
-        //     agent: "MineSkin"
-        // }, function (err, data) {
-        //     if (err) {
-        //         cb(err, null);
-        //         return console.log(err);
-        //     }
-        //     console.log(JSON.stringify(data).debug);
-        //
-        //     // Get new token
-        //     account.clientToken = data.clientToken;
-        //     account.accessToken = data.accessToken;
-        //     cb(null, account);
-        // })
     };
 
     console.log(("[Auth] (#" + account.id + ") Authenticating account #" + account.id).info);
@@ -230,25 +212,6 @@ module.exports.authenticateMojang = function (account, cb) {
                     cb(null, account);
                 }
             })
-
-            // ygg.refresh(account.accessToken, account.clientToken, account.requestIp, function (err, token, body) {
-            //     console.log(err)
-            //     if (!err) {
-            //         // Old token is still valid
-            //         account.accessToken = token;
-            //         account.save(function (err, account) {
-            //             console.log(("[Auth] (#" + account.id + ") Logging in with AccessToken").info);
-            //             cb(account);
-            //         })
-            //     } else {
-            //         console.log(("Couldn't refresh accessToken").debug);
-            //         // Login
-            //         module.exports.signout(account, function (err) {
-            //             if (err) console.log((err).warn);
-            //             loginCallback();
-            //         })
-            //     }
-            // })
         }
     } else {
         console.log(("[Auth] Account (#" + account.id + ") doesn't have accessToken").debug);

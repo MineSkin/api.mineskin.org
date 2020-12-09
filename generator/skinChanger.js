@@ -104,55 +104,63 @@ module.exports.generateUrl = function (account, url, model, cb) {
         account.requestIp = randomip('0.0.0.0', 0);
     console.log(("Using ip " + account.requestIp).debug);
 
+    function authenticated() {
+        account.lastUsed = account.lastSelected;// account *should* be saved in the following code, so there shouldn't be any need to make another call here
+        if (account.requestServer)
+            account.lastRequestServer = account.requestServer;
+        account.requestServer = config.server;
+
+        queueRequest({
+            method: "POST",
+            url: urls.skin.replace(":uuid", account.uuid),
+            headers: {
+                "User-Agent": "MineSkin.org",
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Authorization": "Bearer " + account.accessToken,
+                "X-Forwarded-For": account.requestIp,
+                "REMOTE_ADDR": account.requestIp
+            },
+            form: {
+                model: model,
+                url: url
+            }
+        }, function (err, response, body) {
+            if (err) return console.log(err);
+            console.log(("Url response (acc#"+account.id+"): "+response.statusCode+" " + body).debug);
+            if (response.statusCode >= 200 && response.statusCode < 300) {
+                cb(true);
+            } else if(response.statusCode === 403 && body.toString().toLowerCase().indexOf("not secured")!==-1) { // check for "Current IP not secured" error (probably means the account has no security questions configured, but actually needs them)
+                account.successCounter = 0;
+                account.errorCounter++;
+                account.totalErrorCounter++;
+                account.save(function (err, account) {
+                    cb("Challenges failed", "location_not_secured");
+                });
+            }else {
+                cb(response.statusCode, "generate_rescode_" + response.statusCode);
+                console.log(("Got response " + response.statusCode + " for generateUrl").warn);
+            }
+        })
+    }
+
     authentication.authenticate(account, function (authErr, authResult) {
         if (!authErr && authResult) {
-            authentication.completeChallenges(account, function (result, errorBody) {
-                if (result) {
-                    account.lastUsed = account.lastSelected;// account *should* be saved in the following code, so there shouldn't be any need to make another call here
-                    if (account.requestServer)
-                        account.lastRequestServer = account.requestServer;
-                    account.requestServer = config.server;
-
-                    queueRequest({
-                        method: "POST",
-                        url: urls.skin.replace(":uuid", account.uuid),
-                        headers: {
-                            "User-Agent": "MineSkin.org",
-                            "Content-Type": "application/x-www-form-urlencoded",
-                            "Authorization": "Bearer " + account.accessToken,
-                            "X-Forwarded-For": account.requestIp,
-                            "REMOTE_ADDR": account.requestIp
-                        },
-                        form: {
-                            model: model,
-                            url: url
-                        }
-                    }, function (err, response, body) {
-                        if (err) return console.log(err);
-                        console.log(("Url response (acc#"+account.id+"): "+response.statusCode+" " + body).debug);
-                        if (response.statusCode >= 200 && response.statusCode < 300) {
-                            cb(true);
-                        } else if(response.statusCode === 403 && body.toString().toLowerCase().indexOf("not secured")!==-1) { // check for "Current IP not secured" error (probably means the account has no security questions configured, but actually needs them)
-                            account.successCounter = 0;
-                            account.errorCounter++;
-                            account.totalErrorCounter++;
-                            account.save(function (err, account) {
-                                cb("Challenges failed", "location_not_secured");
-                            });
-                        }else {
-                            cb(response.statusCode, "generate_rescode_" + response.statusCode);
-                            console.log(("Got response " + response.statusCode + " for generateUrl").warn);
-                        }
-                    })
-                } else {
-                    account.successCounter = 0;
-                    account.errorCounter++;
-                    account.totalErrorCounter++;
-                    account.save(function (err, account) {
-                        cb("Challenges failed", authErrorCauseFromMessage(errorBody.errorMessage || errorBody) || "challenges_failed");
-                    });
-                }
-            })
+            if (account.microsoftAccount) {
+                authenticated();
+            }else {
+                authentication.completeChallenges(account, function (result, errorBody) {
+                    if (result) {
+                        authenticated();
+                    } else {
+                        account.successCounter = 0;
+                        account.errorCounter++;
+                        account.totalErrorCounter++;
+                        account.save(function (err, account) {
+                            cb("Challenges failed", authErrorCauseFromMessage(errorBody.errorMessage || errorBody) || "challenges_failed");
+                        });
+                    }
+                });
+            }
         } else {
             account.successCounter = 0;
             account.errorCounter++;
@@ -179,62 +187,70 @@ module.exports.generateUpload = function (account, fileBuf, model, cb) {
         account.requestIp = randomip('0.0.0.0', 0);
     console.log(("Using ip " + account.requestIp).debug);
 
+    function authenticated() {
+        account.lastUsed = account.lastSelected;// account *should* be saved in the following code, so there shouldn't be any need to make another call here
+        if (account.requestServer)
+            account.lastRequestServer = account.requestServer;
+        account.requestServer = config.server;
+
+        queueRequest({
+            method: "PUT",
+            url: urls.skin.replace(":uuid", account.uuid),
+            headers: {
+                "User-Agent": "MineSkin.org",
+                "Content-Type": "multipart/form-data",
+                "Authorization": "Bearer " + account.accessToken,
+                "X-Forwarded-For": account.requestIp,
+                "REMOTE_ADDR": account.requestIp
+            },
+            formData: {
+                model: model,
+                file: {
+                    value: fileBuf,
+                    options: {
+                        filename: "skin.png",
+                        contentType: "image/png"
+                    }
+                }
+            }
+        }, function (err, response, body) {
+            if (err) return console.log(err);
+            console.log(("Upload response (acc#"+account.id+"): "+response.statusCode+" " + body).debug);
+            if (response.statusCode >= 200 && response.statusCode < 300) {
+                cb(true);
+            } else if(response.statusCode === 403 && body.toString().toLowerCase().indexOf("not secured")!==-1) { // check for "Current IP not secured" error (probably means the account has no security questions configured, but actually needs them)
+                account.successCounter = 0;
+                account.errorCounter++;
+                account.totalErrorCounter++;
+                account.save(function (err, account) {
+                    cb("Challenges failed", "location_not_secured");
+                });
+            }else {
+                cb(response.statusCode, "generate_rescode_" + response.statusCode);
+                console.log(("Got response " + response.statusCode + " for generateUpload").warn);
+            }
+        });
+    }
+
     authentication.authenticate(account, function (authErr, authResult) {
         if (!authErr && authResult) {
-            authentication.completeChallenges(account, function (result, errorBody) {
-                if (result) {
-                    account.lastUsed = account.lastSelected;// account *should* be saved in the following code, so there shouldn't be any need to make another call here
-                    if (account.requestServer)
-                        account.lastRequestServer = account.requestServer;
-                    account.requestServer = config.server;
-
-                    queueRequest({
-                        method: "PUT",
-                        url: urls.skin.replace(":uuid", account.uuid),
-                        headers: {
-                            "User-Agent": "MineSkin.org",
-                            "Content-Type": "multipart/form-data",
-                            "Authorization": "Bearer " + account.accessToken,
-                            "X-Forwarded-For": account.requestIp,
-                            "REMOTE_ADDR": account.requestIp
-                        },
-                        formData: {
-                            model: model,
-                            file: {
-                                value: fileBuf,
-                                options: {
-                                    filename: "skin.png",
-                                    contentType: "image/png"
-                                }
-                            }
-                        }
-                    }, function (err, response, body) {
-                        if (err) return console.log(err);
-                        console.log(("Upload response (acc#"+account.id+"): "+response.statusCode+" " + body).debug);
-                        if (response.statusCode >= 200 && response.statusCode < 300) {
-                            cb(true);
-                        } else if(response.statusCode === 403 && body.toString().toLowerCase().indexOf("not secured")!==-1) { // check for "Current IP not secured" error (probably means the account has no security questions configured, but actually needs them)
-                            account.successCounter = 0;
-                            account.errorCounter++;
-                            account.totalErrorCounter++;
-                            account.save(function (err, account) {
-                                cb("Challenges failed", "location_not_secured");
-                            });
-                        }else {
-                            cb(response.statusCode, "generate_rescode_" + response.statusCode);
-                            console.log(("Got response " + response.statusCode + " for generateUpload").warn);
-                        }
-                    });
-                } else {
-                    account.successCounter = 0;
-                    account.errorCounter++;
-                    account.totalErrorCounter++;
-                    account.save(function (err, account) {
-                        console.log(("Challenges failed").warn);
-                        cb("Challenges failed", authErrorCauseFromMessage(errorBody.errorMessage || errorBody)||"challenges_failed");
-                    });
-                }
-            })
+            if (account.microsoftAccount) {
+                authenticated();
+            }else {
+                authentication.completeChallenges(account, function (result, errorBody) {
+                    if (result) {
+                        authenticated();
+                    } else {
+                        account.successCounter = 0;
+                        account.errorCounter++;
+                        account.totalErrorCounter++;
+                        account.save(function (err, account) {
+                            console.log(("Challenges failed").warn);
+                            cb("Challenges failed", authErrorCauseFromMessage(errorBody.errorMessage || errorBody) || "challenges_failed");
+                        });
+                    }
+                });
+            }
         } else {
             account.successCounter = 0;
             account.errorCounter++;
