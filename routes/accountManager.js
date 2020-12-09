@@ -277,7 +277,7 @@ module.exports = function (app, config) {
                     if (profileBody.error) {
                         res.status(response.statusCode).json({error: profileBody.error, msg: profileBody.errorMessage})
                     } else {
-                        if (profileBody.id !== account.uuid) {
+                        if (profileBody.id !== acc.uuid) {
                             res.status(400).json({error: "uuid mismatch"})
                             return;
                         }
