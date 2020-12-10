@@ -1,3 +1,6 @@
+const MS_CLIENT_ID = "6e8d323a-5420-4d19-bf69-66c7704e361e";
+const MS_REDIRECT_URL = "https://api.mineskin.org/accountManager/auth/microsoft/oauthcallback";
+
 module.exports = {
     authenticate: "https://authserver.mojang.com/authenticate",
     refresh: "https://authserver.mojang.com/refresh",
@@ -9,13 +12,13 @@ module.exports = {
         location: "https://api.mojang.com/user/security/location"
     },
     microsoft: {
-        clientId: "6e8d323a-5420-4d19-bf69-66c7704e361e",
-        redirectUrl: "https://api.mineskin.org/accountManager/auth/microsoft/oauthcallback",
+        clientId: MS_CLIENT_ID,
+        redirectUrl: MS_REDIRECT_URL,
         oauth20auth: "https://login.live.com/oauth20_authorize.srf" +
-            "?client_id=" + module.exports.microsoft.clientId +
+            "?client_id=" + MS_CLIENT_ID +
             "&response_type=code" +
             "&scope=XboxLive.signin" +
-            "&redirect_uri=" + encodeURIComponent(module.exports.microsoft.redirectUrl),
+            "&redirect_uri=" + encodeURIComponent(MS_REDIRECT_URL),
         oauth20prefix: "https://login.live.com/oauth20_desktop.srf?code=",
         oauth20token: "https://login.live.com/oauth20_token.srf",
         xblAuth: "https://user.auth.xboxlive.com/user/authenticate",
