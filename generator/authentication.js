@@ -121,55 +121,19 @@ module.exports.authenticateMojang = function (account, cb) {
     if (account.clientToken && account.accessToken) {
         function refresh() {
             console.info("[Auth] (#" + account.id + ") Refreshing tokens");
-            console.debug("[Auth] POST " + urls.refresh);
-            var body = {
-                accessToken: account.accessToken,
-                clientToken: account.clientToken,
-                requestUser: true
-            };
-            console.log(("[Auth] " + JSON.stringify(body)).debug);
-            queueRequest({
-                method: "POST",
-                url: urls.refresh,
-                headers: {
-                    "User-Agent": "Mineskin Auth",
-                    "Content-Type": "application/json",
-                    "X-Forwarded-For": account.requestIp,
-                    "REMOTE_ADDR": account.requestIp
-                },
-                json: true,
-                body: body
-            }, function (err, response, body) {
-                console.log(("[Auth] (#" + account.id + ") Refresh Body:").debug)
-                console.log(("[Auth] " + JSON.stringify(body)).debug);
-                if (err || response.statusCode < 200 || response.statusCode > 230 || (body && body.error)) {
-                    console.log(err)
-                    account.accessToken = null;
-                    if (account.requestServer)
-                        account.lastRequestServer = account.requestServer;
-                    account.requestServer = null;
-                    account.save(function (err, account) {
-                        console.log(("[Auth] Couldn't refresh accessToken").debug);
-
-                        // Login
-                        // module.exports.signout(account, function (err) {
-                        //     if (err) console.log((err).warn);
-                        setTimeout(function () {
-                            loginCallback(account);
-                        }, body.error === "TooManyRequestsException" ? 10000 : 1000);
-                        // })
-                    })
-                } else {
-                    console.log("[Auth] (#" + account.id + ") got a new accessToken");
-
-                    if (body.hasOwnProperty("selectedProfile")) {
-                        account.playername = body.selectedProfile.name;
+            if (account.microsoftAccount) {
+                module.exports.authenticateXboxWithRefreshToken(account.microsoftRefreshToken, function (err, result) {
+                    if (err) {
+                        console.warn("[Auth] (#" + account.id + ") Failed to refresh microsoft token");
+                        cb("Failed to refresh microsoft token", null);
+                        return;
                     }
+                    console.log(("[Auth] (#" + account.id + ") Microsoft access token refreshed").info);
 
-                    console.log(("[Auth] AccessToken: " + body.accessToken).debug);
-                    account.accessToken = body.accessToken;
+                    account.accessToken = result.token;
                     account.accessTokenExpiration = Math.round(Date.now() / 1000) + 86360;
-                    account.accessTokenSource = "refresh_mojang";
+                    account.accessTokenSource = "refresh_microsoft";
+                    account.microsoftRefreshToken = result.refreshToken;
                     if (account.requestServer)
                         account.lastRequestServer = account.requestServer;
                     account.requestServer = config.server;
@@ -178,8 +142,68 @@ module.exports.authenticateMojang = function (account, cb) {
                         console.log(("[Auth] (#" + account.id + ") Logging in with AccessToken").info);
                         cb(null, account);
                     })
-                }
-            })
+                });
+            } else {
+                console.debug("[Auth] POST " + urls.refresh);
+                var body = {
+                    accessToken: account.accessToken,
+                    clientToken: account.clientToken,
+                    requestUser: true
+                };
+                console.log(("[Auth] " + JSON.stringify(body)).debug);
+                queueRequest({
+                    method: "POST",
+                    url: urls.refresh,
+                    headers: {
+                        "User-Agent": "Mineskin Auth",
+                        "Content-Type": "application/json",
+                        "X-Forwarded-For": account.requestIp,
+                        "REMOTE_ADDR": account.requestIp
+                    },
+                    json: true,
+                    body: body
+                }, function (err, response, body) {
+                    console.log(("[Auth] (#" + account.id + ") Refresh Body:").debug)
+                    console.log(("[Auth] " + JSON.stringify(body)).debug);
+                    if (err || response.statusCode < 200 || response.statusCode > 230 || (body && body.error)) {
+                        console.log(err)
+                        account.accessToken = null;
+                        if (account.requestServer)
+                            account.lastRequestServer = account.requestServer;
+                        account.requestServer = null;
+                        account.save(function (err, account) {
+                            console.log(("[Auth] Couldn't refresh accessToken").debug);
+
+                            // Login
+                            // module.exports.signout(account, function (err) {
+                            //     if (err) console.log((err).warn);
+                            setTimeout(function () {
+                                loginCallback(account);
+                            }, body.error === "TooManyRequestsException" ? 10000 : 1000);
+                            // })
+                        })
+                    } else {
+                        console.log("[Auth] (#" + account.id + ") got a new accessToken");
+
+                        if (body.hasOwnProperty("selectedProfile")) {
+                            account.playername = body.selectedProfile.name;
+                        }
+
+                        console.log(("[Auth] AccessToken: " + body.accessToken).debug);
+                        account.accessToken = body.accessToken;
+                        account.accessTokenExpiration = Math.round(Date.now() / 1000) + 86360;
+                        account.accessTokenSource = "refresh_mojang";
+                        if (account.requestServer)
+                            account.lastRequestServer = account.requestServer;
+                        account.requestServer = config.server;
+                        console.log(("[Auth] (#" + account.id + ") RequestServer set to " + config.server));
+                        account.save(function (err, account) {
+                            console.log(("[Auth] (#" + account.id + ") Logging in with AccessToken").info);
+                            cb(null, account);
+                        })
+                    }
+                })
+            }
         }
 
         if (account.accessTokenExpiration && account.accessTokenExpiration - Math.round(Date.now() / 1000) < 240) {
@@ -462,7 +486,7 @@ module.exports.authenticateXboxWithOauthToken = function (tokenData, cb) {
                 //
                 // });
 
-                cb(null,{
+                cb(null, {
                     token: minecraftAccessToken,
                     userId: microsoftUserId,
                     username: minecraftXboxUsername,
