@@ -175,7 +175,7 @@ module.exports.authenticateMojang = function (account, cb) {
             })
         }
 
-        if (account.accessTokenExpiration && Math.abs(account.accessTokenExpiration - Math.round(Date.now() / 1000)) < 240) {
+        if (account.accessTokenExpiration && account.accessTokenExpiration - Math.round(Date.now() / 1000) < 240) {
             console.log("[Auth] (#" + account.id + ") force-refreshing accessToken, since it will expire in less than 4 minutes");
             setTimeout(function () {
                 refresh();
