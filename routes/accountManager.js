@@ -299,7 +299,7 @@ module.exports = function (app, config) {
                             acc.accessTokenExpiration = Math.round(Date.now() / 1000) + 86360
                             acc.accessTokenSource = "account_manager_login_microsoft";
                         }
-                        acc.discordMessageSent = true;
+                        acc.discordMessageSent = false;
                         acc.errorCounter = 0;
                         acc.save(function (err, acc) {
                             res.json({
