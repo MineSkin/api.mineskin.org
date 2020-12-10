@@ -240,7 +240,7 @@ function notifyMissingAccessToken(account) {
         "  Account Type: " + (account.microsoftAccount ? "microsoft" : "mojang") + "\n" +
         "  Total Success/Error: " + account.totalSuccessCounter + "/" + account.totalErrorCounter + "\n" +
         "  Account Added: " + new Date((account.timeAdded || 0) * 1000).toUTCString() + "\n" +
-        "  Linked to " + account.discordUser);
+        "  Linked to <@" + account.discordUser + ">");
 
     if (account.discordUser) {
         Util.sendDiscordDirectMessage("Hi there!\n" +
