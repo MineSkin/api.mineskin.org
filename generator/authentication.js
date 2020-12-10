@@ -54,7 +54,7 @@ module.exports.authenticateMojang = function (account, cb) {
     console.log("[Auth] authenticate(" + account.username + ")");
     // Callback to login
     var loginCallback = function (account) {
-        if (account.microsoftAccount) {
+        if (account.microsoftAccount || !account.passwordNew) {
             console.warn("[Auth] (#" + account.id + ") Microsoft account doesn't have an access token!")
             notifyMissingAccessToken(account);
             cb("Missing Access Token", null);
