@@ -73,6 +73,7 @@ var accountSchema = new Schema({
         default: "internal"
     },
     discordUser: String,
+    discordMessageSent: Boolean,
     sendEmails: Boolean
 }, {id: false});
 module.exports.Account = mongoose.model("Account", accountSchema);

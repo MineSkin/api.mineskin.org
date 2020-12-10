@@ -234,11 +234,12 @@ module.exports.authenticateMojang = function (account, cb) {
 };
 
 function notifyMissingAccessToken(account) {
+    if (account.discordMessageSent) return;
     Util.postDiscordMessage("⚠️ Account #" + account.id + " just lost its access token\n" +
         "  Current Server: " + account.lastRequestServer + "/" + account.requestServer + "\n" +
         "  Account Type: " + (account.microsoftAccount ? "microsoft" : "mojang") + "\n" +
         "  Total Success/Error: " + account.totalSuccessCounter + "/" + account.totalErrorCounter + "\n" +
-        "  Account Added: " + new Date((account.timeAdded || 0) * 1000).toUTCString()+"\n" +
+        "  Account Added: " + new Date((account.timeAdded || 0) * 1000).toUTCString() + "\n" +
         "  Linked to " + account.discordUser);
 
     if (account.discordUser) {
@@ -252,6 +253,7 @@ function notifyMissingAccessToken(account) {
             "Please log back in to your account at https://mineskin.org/account\n" +
             "For further assistance feel free to ask in <#482181024445497354> 🙂", account.discordUser);
     }
+    account.discordMessageSent = true;
 }
 
 module.exports.completeChallenges = function (account, cb) {
