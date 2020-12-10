@@ -628,10 +628,11 @@ module.exports = function (app, config, optimus, limiter) {
                     "  Latest Type: " + generateType + "\n" +
                     "  Latest Cause: " + errorCause + "\n" +
                     "  Total Success/Error: " + account.totalSuccessCounter + "/" + account.totalErrorCounter + "\n" +
-                    "  Account Added: " + new Date((account.timeAdded || 0) * 1000).toUTCString());
+                    "  Account Added: " + new Date((account.timeAdded || 0) * 1000).toUTCString() + "\n" +
+                    "  Linked to " + account.discordUser);
             }
 
-            if (account.discordUser && account.errorCounter > 0 && account.errorCounter >= config.errorThreshold) {
+            if (account.discordUser && account.errorCounter > 0 && account.errorCounter === config.errorThreshold) {
                 Util.sendDiscordDirectMessage("Hi there!\n" +
                     "This is an automated notification that a MineSkin account you linked to your Discord profile has been disabled since it failed to properly generate skin data recently.\n" +
                     "  Affected Account: " + (account.playername || account.uuid) + " (" + account.username.substr(0, 4) + "****)\n" +

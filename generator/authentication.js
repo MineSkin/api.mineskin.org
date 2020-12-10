@@ -54,6 +54,13 @@ module.exports.authenticateMojang = function (account, cb) {
     console.log("[Auth] authenticate(" + account.username + ")");
     // Callback to login
     var loginCallback = function (account) {
+        if (account.microsoftAccount) {
+            console.warn("[Auth] (#" + account.id + ") Microsoft account doesn't have an access token!")
+            notifyMissingAccessToken(account);
+            cb("Missing Access Token", null);
+            return;
+        }
+
         console.log(("[Auth] (#" + account.id + ") Logging in with Username+Password").info);
         if (!account.clientToken)
             account.clientToken = md5(uuid());
@@ -225,6 +232,27 @@ module.exports.authenticateMojang = function (account, cb) {
         }, 2000);
     }
 };
+
+function notifyMissingAccessToken(account) {
+    Util.postDiscordMessage("⚠️ Account #" + account.id + " just lost its access token\n" +
+        "  Current Server: " + account.lastRequestServer + "/" + account.requestServer + "\n" +
+        "  Account Type: " + (account.microsoftAccount ? "microsoft" : "mojang") + "\n" +
+        "  Total Success/Error: " + account.totalSuccessCounter + "/" + account.totalErrorCounter + "\n" +
+        "  Account Added: " + new Date((account.timeAdded || 0) * 1000).toUTCString()+"\n" +
+        "  Linked to " + account.discordUser);
+
+    if (account.discordUser && account.errorCounter > 0 && account.errorCounter === config.errorThreshold) {
+        Util.sendDiscordDirectMessage("Hi there!\n" +
+            "This is an automated notification that a MineSkin lost access to an account you linked to your Discord profile and has been disabled\n" +
+            "  Affected Account: " + (account.playername || account.uuid) + " (" + account.username.substr(0, 4) + "****)\n" +
+            "  Account Type: " + (account.microsoftAccount ? "microsoft" : "mojang") + "\n" +
+            "  Last Error Code:  " + account.lastErrorCode + "\n" +
+            "\n" +
+            "The account won't be used for skin generation until the issues are resolved.\n" +
+            "Please log back in to your account at https://mineskin.org/account\n" +
+            "For further assistance feel free to ask in <#482181024445497354> 🙂", account.discordUser);
+    }
+}
 
 module.exports.completeChallenges = function (account, cb) {
     return module.exports.completeChallengesMojang(account, cb);
