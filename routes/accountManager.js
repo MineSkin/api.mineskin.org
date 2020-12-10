@@ -591,25 +591,26 @@ module.exports = function (app, config) {
         })
     });
 
-    app.get("/accountManager/auth/microsoft/oauth/start", function (req, res) {
-        res.redirect("https://login.live.com/oauth20_authorize.srf" +
-            "?client_id=" + config.microsoft.clientId +
-            "&response_type=code" +
-            "&scope=XboxLive.signin" +
-            "&redirect_uri=" + encodeURIComponent(urls.microsoft.redirectUrl));
-    });
-
     // https://wiki.vg/Microsoft_Authentication_Scheme
-    // Huge thanks to @MiniDigger for figuring most of this out
-    app.get("/accountManager/auth/microsoft/oauth/callback", function (req, res) {
-        console.log(req.query);
-
-        if (!req.query.code) {
+    // Huge thanks to @MiniDigger for figuring this out
+    app.post("/accountManager/auth/microsoft/login", function (req, res) {
+        if (!req.body.url) {
+            res.status(400).json({error: "Missing url"})
+            return;
+        }
+        let url = req.body.url;
+        if (!url.startsWith(urls.microsoft.oauth20prefix)) {
+            res.status(400).json({error: "invalid url"})
+            return;
+        }
+        let parsedUrl = new URL(url);
+        let code = parsedUrl.searchParams.get("code");
+        if (!code || code.length <= 1) {
             res.status(400).json({error: "missing code"})
             return;
         }
 
-        console.log("[MSA] Attempting to get auth token from code " + req.query.code);
+        console.log("[MSA] Attempting to get auth token from code " + code);
         request({
             url: urls.microsoft.oauth20token,
             method: "POST",
@@ -618,12 +619,11 @@ module.exports = function (app, config) {
                 "Accept": "application/json"
             },
             form: {
-                "client_id": config.microsoft.clientId,
-                "client_secret": config.microsoft.clientSecret,
-                "code": req.query.code,
+                "client_id": "00000000402b5328",
+                "code": code,
                 "grant_type": "authorization_code",
-                "redirect_uri": urls.microsoft.redirectUrl,
-                "scope": "XboxLive.signin"
+                "redirect_uri": "https://login.live.com/oauth20_desktop.srf",
+                "scope": "service::user.auth.xboxlive.com::MBI_SSL"
             },
             json: true
         }, function (err, tokenResponse, tokenBody) {
@@ -642,22 +642,11 @@ module.exports = function (app, config) {
                 return;
             }
 
-
-
             let oauthAccessToken = tokenBody.access_token;
             let oauthRefreshToken = tokenBody.refresh_token;
             let microsoftUserId = tokenBody.user_id;
             console.log("got oauthAccessToken " + oauthAccessToken)
             console.log("got microsoftUserId" + microsoftUserId)
-
-            res.cookie("msa_oauth", util.base64encode(JSON.stringify({
-                accessToken: oauthAccessToken,
-                refreshToken: oauthRefreshToken,
-                userId: microsoftUserId
-            })), {
-                domain: ".mineskin.org",
-                path: "/"
-            });
 
             console.log("[MSA] Authenticating with XBL")
             request({
@@ -697,14 +686,6 @@ module.exports = function (app, config) {
 
                 console.log("got xblToken " + xblToken)
                 console.log("got xblUhs " + xblUhs)
-
-                res.cookie("msa_xbl", util.base64encode(JSON.stringify({
-                    token: xblToken,
-                    uhs: xblUhs
-                })), {
-                    domain: ".mineskin.org",
-                    path: "/"
-                });
 
                 console.log("[MSA] Authenticating with XSTS")
                 request({
@@ -746,14 +727,6 @@ module.exports = function (app, config) {
                     console.log("got xstsToken " + xstsToken)
                     console.log("got xstsUhs " + xstsUhs)
 
-                    res.cookie("msa_xsts", util.base64encode(JSON.stringify({
-                        token: xstsToken,
-                        uhs: xstsUhs
-                    })), {
-                        domain: ".mineskin.org",
-                        path: "/"
-                    });
-
                     request({
                         url: urls.microsoft.loginWithXbox,
                         method: "POST",
@@ -781,18 +754,10 @@ module.exports = function (app, config) {
                         }
 
                         let minecraftAccessToken = loginBody.access_token; // FINALLY
-                        let minecraftXboxUuid = loginBody.username;
+                        let minecraftXboxUsername = loginBody.username;
 
                         console.log("got MC access token!!!");
                         console.log(minecraftAccessToken);
-
-                        res.cookie("msa_mc_xbox", util.base64encode(JSON.stringify({
-                            accessToken: minecraftAccessToken,
-                            uuid: minecraftXboxUuid
-                        })), {
-                            domain: ".mineskin.org",
-                            path: "/"
-                        });
 
                         // Has some weird encoding issues
                         // request({
@@ -832,17 +797,18 @@ module.exports = function (app, config) {
                         //
                         // });
 
-                        res.redirect("https://mineskin.org/account#msacallback");
+                        res.json({
+                            success: true,
+                            token: minecraftAccessToken,
+                            userId: microsoftUserId,
+                            username: minecraftXboxUsername,
+                            refreshToken: oauthRefreshToken
+                        });
                     });
                 });
             });
         });
     });
-
-    app.get("/accountManager/auth/microsoft/signout", function (req, res) {
-        //TODO
-    });
-
 
     app.get("/accountManager/discord/oauth/start", function (req, res) {
         if (!req.query.token) {

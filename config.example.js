@@ -40,11 +40,6 @@ config.discord = {
     channel: ""
 };
 
-config.microsoft = {
-    clientId: "",
-    clientSecret: ""
-};
-
 config.puller = {
     endpoint: "/_git_webhook",
     secret: "",
