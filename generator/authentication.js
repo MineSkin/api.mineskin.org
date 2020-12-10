@@ -233,6 +233,246 @@ module.exports.authenticateMojang = function (account, cb) {
     }
 };
 
+module.exports.authenticateXboxWithCode = function (code, cb) {
+    console.log("[MSA] Attempting to get auth token from code " + code);
+    request({
+        url: urls.microsoft.oauth20token,
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Accept": "application/json"
+        },
+        form: {
+            "client_id": "00000000402b5328",
+            "code": code,
+            "grant_type": "authorization_code",
+            "redirect_uri": "https://login.live.com/oauth20_desktop.srf",
+            "scope": "service::user.auth.xboxlive.com::MBI_SSL"
+        },
+        json: true
+    }, function (err, tokenResponse, tokenBody) {
+        console.log("oauth20:")
+        console.log(JSON.stringify(tokenBody));
+        if (err) {
+            console.warn("Failed to get oauth20token");
+            console.warn(err);
+            cb({error: "failed to get auth token"}, null);
+            return;
+        }
+        if (!tokenBody || tokenBody.error) {
+            console.warn("Got error from oauth20token");
+            console.warn(tokenBody);
+            cb({error: "failed to get auth token", details: tokenBody}, null);
+            return;
+        }
+
+        module.exports.authenticateXboxWithOauthToken(tokenBody, cb);
+    });
+};
+
+module.exports.authenticateXboxWithRefreshToken = function (refreshToken, cb) {
+    console.log("[MSA] Attempting to refresh token ");
+    request({
+        url: urls.microsoft.oauth20token,
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Accept": "application/json"
+        },
+        form: {
+            "client_id": "00000000402b5328",
+            "refresh_token": refreshToken,
+            "grant_type": "refresh_token",
+            "redirect_uri": "https://login.live.com/oauth20_desktop.srf",
+            "scope": "service::user.auth.xboxlive.com::MBI_SSL"
+        },
+        json: true
+    }, function (err, tokenResponse, tokenBody) {
+        console.log("oauth20:")
+        console.log(JSON.stringify(tokenBody));
+        if (err) {
+            console.warn("Failed to get oauth20token");
+            console.warn(err);
+            cb({error: "failed to get auth token"}, null);
+            return;
+        }
+        if (!tokenBody || tokenBody.error) {
+            console.warn("Got error from oauth20token");
+            console.warn(tokenBody);
+            cb({error: "failed to get auth token", details: tokenBody}, null);
+            return;
+        }
+
+        module.exports.authenticateXboxWithOauthToken(tokenBody, cb);
+    });
+};
+
+
+module.exports.authenticateXboxWithOauthToken = function (tokenData, cb) {
+    let oauthAccessToken = tokenData.access_token;
+    let oauthRefreshToken = tokenData.refresh_token;
+    let microsoftUserId = tokenData.user_id;
+
+    console.log("[MSA] Authenticating with XBL")
+    request({
+        url: urls.microsoft.xblAuth,
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+        },
+        json: {
+            "Properties": {
+                "AuthMethod": "RPS",
+                "SiteName": "user.auth.xboxlive.com",
+                "RpsTicket": oauthAccessToken
+            },
+            "RelyingParty": "http://auth.xboxlive.com",
+            "TokenType": "JWT"
+        }
+    }, function (err, xblResponse, xblBody) {
+        console.log("xbl:")
+        console.log(JSON.stringify(xblBody));
+        if (err) {
+            console.warn("Failed to auth with xbl");
+            console.warn(err);
+            cb({error: "xbl auth failed"}, null);
+            return;
+        }
+        if (!xblBody || xblBody.error) {
+            console.warn("Got error from xbl");
+            console.warn(xblBody);
+            cb({error: "xbl auth failed", details: xblBody}, null);
+            return;
+        }
+
+        let xblToken = xblBody.Token;
+        let xblUhs = xblBody.DisplayClaims.xui[0].uhs;
+
+        console.log("got xblToken " + xblToken)
+        console.log("got xblUhs " + xblUhs)
+
+        console.log("[MSA] Authenticating with XSTS")
+        request({
+            url: urls.microsoft.xstsAuth,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            json: {
+                "Properties": {
+                    "SandboxId": "RETAIL",
+                    "UserTokens": [
+                        xblToken
+                    ]
+                },
+                "RelyingParty": "rp://api.minecraftservices.com/",
+                "TokenType": "JWT"
+            }
+        }, function (err, xstsResponse, xstsBody) {
+            console.log("xsts:")
+            console.log(JSON.stringify(xstsBody));
+            if (err) {
+                console.warn("Failed to auth with xsts");
+                console.warn(err);
+                cb({error: "xsts auth failed"}, null);
+                return;
+            }
+            if (!xstsBody || xstsBody.error) {
+                console.warn("Got error from xsts");
+                console.warn(xstsBody);
+                cb({error: "xsts auth failed", details: xstsBody}, null);
+                return;
+            }
+
+            let xstsToken = xstsBody.Token;
+            let xstsUhs = xblBody.DisplayClaims.xui[0].uhs;
+
+            console.log("got xstsToken " + xstsToken)
+            console.log("got xstsUhs " + xstsUhs)
+
+            request({
+                url: urls.microsoft.loginWithXbox,
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json"
+                },
+                json: {
+                    "identityToken": "XBL3.0 x=" + xstsUhs + ";" + xstsToken
+                }
+            }, function (err, loginResponse, loginBody) {
+                console.log("login:");
+                console.log(JSON.stringify(loginBody));
+                if (err) {
+                    console.warn("Failed to login_with_xbox");
+                    console.warn(err);
+                    cb({error: "minecraft xbox login failed"}, null);
+                    return;
+                }
+                if (!loginBody || loginBody.error) {
+                    console.warn("Got error from login_with_xbox");
+                    console.warn(loginBody);
+                    cb({error: "minecraft xbox login failed", details: loginBody}, null);
+                    return;
+                }
+
+                let minecraftAccessToken = loginBody.access_token; // FINALLY
+                let minecraftXboxUsername = loginBody.username;
+
+                console.log("got MC access token!!!");
+                console.log(minecraftAccessToken);
+
+                // Has some weird encoding issues
+                // request({
+                //     url: urls.microsoft.entitlements,
+                //     method: "GET",
+                //     headers: {
+                //         "Content-Type": "application/json",
+                //         "Accept": "application/json",
+                //         "Authorization": "Bearer " + minecraftAccessToken
+                //     },
+                //     json: true
+                // }, function (err, entitlementsResponse, entitlementsBody) {
+                //     console.log("entitlements:");
+                //     console.log(Buffer.from(JSON.stringify(entitlementsBody)).toString("base64"));
+                //     if (err) {
+                //         console.warn("Failed to get entitlements");
+                //         console.warn(err);
+                //         res.status(500).json({error: "failed to get entitlements"})
+                //         return;
+                //     }
+                //     if (!entitlementsBody || entitlementsBody.error) {
+                //         console.warn("Got error from entitlements");
+                //         // console.warn(entitlementsBody);
+                //         res.status(500).json({error: "failed to get entitlements", details: entitlementsBody})
+                //         return;
+                //     }
+                //
+                //     let ownsMinecraft = false;
+                //     if (entitlementsBody.items) {
+                //         for (let ent of entitlementsBody.items) {
+                //             if ("product_minecraft" === ent.name) {
+                //                 ownsMinecraft = true;
+                //             }
+                //         }
+                //     }
+                //
+                //
+                // });
+
+                cb(null,{
+                    token: minecraftAccessToken,
+                    userId: microsoftUserId,
+                    username: minecraftXboxUsername,
+                    refreshToken: oauthRefreshToken
+                })
+            });
+        });
+    });
+};
+
 function notifyMissingAccessToken(account) {
     if (account.discordMessageSent) return;
     Util.postDiscordMessage("⚠️ Account #" + account.id + " just lost its access token\n" +
