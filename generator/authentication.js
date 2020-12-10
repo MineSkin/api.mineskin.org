@@ -251,7 +251,13 @@ function notifyMissingAccessToken(account) {
             "\n" +
             "The account won't be used for skin generation until the issues are resolved.\n" +
             "Please log back in to your account at https://mineskin.org/account\n" +
-            "For further assistance feel free to ask in <#482181024445497354> 🙂", account.discordUser);
+            "For further assistance feel free to ask in <#482181024445497354> 🙂", account.discordUser,
+            function () {
+                Util.postDiscordMessage("Hey <@" + account.discordUser + ">! I tried to send a private message but couldn't reach you :(\n" +
+                    "MineSkin just lost access to one of your accounts (" + (account.microsoftAccount ? "microsoft" : "mojang") + ")\n" +
+                    "  Account UUID (trimmed): " + (account.uuid || account.playername).substr(0, 5) + "****\n" +
+                    "  Please log back in at https://mineskin.org/account\n", "636632020985839619");
+            });
     }
     account.discordMessageSent = true;
 }

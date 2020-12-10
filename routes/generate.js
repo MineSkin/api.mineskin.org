@@ -629,7 +629,7 @@ module.exports = function (app, config, optimus, limiter) {
                     "  Latest Cause: " + errorCause + "\n" +
                     "  Total Success/Error: " + account.totalSuccessCounter + "/" + account.totalErrorCounter + "\n" +
                     "  Account Added: " + new Date((account.timeAdded || 0) * 1000).toUTCString() + "\n" +
-                    "  Linked to " + account.discordUser);
+                    "  Linked to <@" + account.discordUser + ">");
             }
 
             if (account.discordUser && !account.discordMessageSent && account.errorCounter > 0 && account.errorCounter === config.errorThreshold) {
@@ -641,7 +641,13 @@ module.exports = function (app, config, optimus, limiter) {
                     "\n" +
                     "The account won't be used for skin generation until the issues are resolved.\n" +
                     "Please make sure the configured credentials & security questions are correct at https://mineskin.org/account\n" +
-                    "For further assistance feel free to ask in <#482181024445497354> 🙂", account.discordUser);
+                    "For further assistance feel free to ask in <#482181024445497354> 🙂", account.discordUser,
+                    function () {
+                        Util.postDiscordMessage("Hey <@" + account.discordUser + ">! I tried to send a private message but couldn't reach you :(\n" +
+                            "One of your accounts (" + (account.microsoftAccount ? "microsoft" : "mojang") + ") was just disabled since it failed to properly generate skin data recently.\n" +
+                            "  Account UUID (trimmed): " + (account.uuid || account.playername).substr(0, 5) + "****\n" +
+                            "  Please log back in at https://mineskin.org/account\n", "636632020985839619");
+                    });
                 account.discordMessageSent = true;
             }
 

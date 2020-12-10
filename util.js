@@ -85,7 +85,7 @@ module.exports.getGeneratorDelay = function () {
 };
 
 module.exports.skinToJson = function (skin, delay, req) {
-    var d =  {
+    var d = {
         id: skin.id,
         idStr: "" + skin.id,
         name: skin.name,
@@ -141,7 +141,7 @@ module.exports.validateModel = function (model) {
     return model;
 };
 
-module.exports.postDiscordMessage = function (content, channel) {
+module.exports.postDiscordMessage = function (content, channel, fallback) {
     if (!config.discord || !config.discord.token) return;
     if (!channel) channel = config.discord.channel;
     request({
@@ -160,13 +160,17 @@ module.exports.postDiscordMessage = function (content, channel) {
             return;
         }
         if (res.statusCode !== 200) {
+            console.warn("postDiscordMessage");
             console.warn(res.statusCode);
             console.warn(body);
+            if (fallback) {
+                fallback();
+            }
         }
     })
 };
 
-module.exports.sendDiscordDirectMessage = function (content, receiver) {
+module.exports.sendDiscordDirectMessage = function (content, receiver, fallback) {
     if (!config.discord || !config.discord.token) return;
     request({
         method: "POST",
@@ -184,10 +188,14 @@ module.exports.sendDiscordDirectMessage = function (content, receiver) {
             return;
         }
         if (res.statusCode !== 200) {
+            console.warn("sendDiscordDirectMessage")
             console.warn(res.statusCode);
             console.warn(body);
+            if (fallback) {
+                fallback();
+            }
         } else {
-            module.exports.postDiscordMessage(content, body.id);
+            module.exports.postDiscordMessage(content, body.id, fallback);
         }
     })
 };
