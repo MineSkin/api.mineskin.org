@@ -218,4 +218,12 @@ module.exports.getVia = function (req) {
     return via;
 };
 
+module.exports.base64encode = function (v) {
+    return Buffer.from(v, 'ascii').toString('base64');
+};
+
+module.exports.base64decode = function (v) {
+    return Buffer.from(v, 'base64').toString('ascii');
+};
+
 module.exports.crypto = require("./encryption");

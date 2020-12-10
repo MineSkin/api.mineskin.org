@@ -15,6 +15,7 @@ var accountSchema = new Schema({
         index: true
     },
     playername: String,
+    email: String,
     authInterceptorEnabled: Boolean,
     password: String,
     passwordOld: String,

@@ -9,11 +9,13 @@ module.exports = {
         location: "https://api.mojang.com/user/security/location"
     },
     microsoft: {
+        clientId: "6e8d323a-5420-4d19-bf69-66c7704e361e",
+        redirectUrl: "https://api.mineskin.org/accountManager/auth/microsoft/oauthcallback",
         oauth20auth: "https://login.live.com/oauth20_authorize.srf" +
-            "?client_id=00000000402b5328" +
+            "?client_id=" + module.exports.microsoft.clientId +
             "&response_type=code" +
-            "&scope=service%3A%3Auser.auth.xboxlive.com%3A%3AMBI_SSL" +
-            "&redirect_uri=https%3A%2F%2Flogin.live.com%2Foauth20_desktop.srf",
+            "&scope=XboxLive.signin" +
+            "&redirect_uri=" + encodeURIComponent(module.exports.microsoft.redirectUrl),
         oauth20prefix: "https://login.live.com/oauth20_desktop.srf?code=",
         oauth20token: "https://login.live.com/oauth20_token.srf",
         xblAuth: "https://user.auth.xboxlive.com/user/authenticate",
