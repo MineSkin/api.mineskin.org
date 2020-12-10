@@ -591,9 +591,17 @@ module.exports = function (app, config) {
         })
     });
 
+    app.get("/accountManager/auth/microsoft/oauth/start", function (req, res) {
+        res.redirect("https://login.live.com/oauth20_authorize.srf" +
+            "?client_id=" + config.microsoft.clientId +
+            "&response_type=code" +
+            "&scope=XboxLive.signin" +
+            "&redirect_uri=" + encodeURIComponent(urls.microsoft.redirectUrl));
+    });
+
     // https://wiki.vg/Microsoft_Authentication_Scheme
     // Huge thanks to @MiniDigger for figuring most of this out
-    app.get("/accountManager/auth/microsoft/oauthcallback", function (req, res) {
+    app.get("/accountManager/auth/microsoft/oauth/callback", function (req, res) {
         console.log(req.query);
 
         if (!req.query.code) {

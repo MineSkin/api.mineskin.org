@@ -1,5 +1,5 @@
 const MS_CLIENT_ID = "6e8d323a-5420-4d19-bf69-66c7704e361e";
-const MS_REDIRECT_URL = "https://api.mineskin.org/accountManager/auth/microsoft/oauthcallback";
+const MS_REDIRECT_URL = "https://api.mineskin.org/accountManager/auth/microsoft/oauth/callback";
 
 module.exports = {
     authenticate: "https://authserver.mojang.com/authenticate",
