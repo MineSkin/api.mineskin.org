@@ -12,8 +12,8 @@ module.exports = {
         oauth20auth: "https://login.live.com/oauth20_authorize.srf" +
             "?client_id=00000000402b5328" +
             "&response_type=code" +
-            "&scope=service%3A%3Auser.auth.xboxlive.com%3A%3AMBI_SSL" +
-            "&redirect_uri=https%3A%2F%2Flogin.live.com%2Foauth20_desktop.srf",
+            "&scope=" + encodeURIComponent("service::user.auth.xboxlive.com::MBI_SSL") +
+            "&redirect_uri=" + encodeURIComponent("https://login.live.com/oauth20_desktop.srf"),
         oauth20prefix: "https://login.live.com/oauth20_desktop.srf?code=",
         oauth20token: "https://login.live.com/oauth20_token.srf",
         xblAuth: "https://user.auth.xboxlive.com/user/authenticate",
