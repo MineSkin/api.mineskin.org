@@ -241,7 +241,7 @@ function notifyMissingAccessToken(account) {
         "  Account Added: " + new Date((account.timeAdded || 0) * 1000).toUTCString()+"\n" +
         "  Linked to " + account.discordUser);
 
-    if (account.discordUser && account.errorCounter > 0 && account.errorCounter === config.errorThreshold) {
+    if (account.discordUser) {
         Util.sendDiscordDirectMessage("Hi there!\n" +
             "This is an automated notification that a MineSkin lost access to an account you linked to your Discord profile and has been disabled\n" +
             "  Affected Account: " + (account.playername || account.uuid) + " (" + account.username.substr(0, 4) + "****)\n" +
