@@ -30,7 +30,7 @@
     "image-hash": "git://github.com/InventivetalentDev/image-hash.git",
     "image-size": "^0.7.2",
     "ip": "^1.1.5",
-    "md5": "^2.2.1",
+    "md5": "^2.3.0",
     "mime": ">=1.4.1",
     "mongoose": "^5.0.17",
     "mongoose-int32": "^0.3.1",
