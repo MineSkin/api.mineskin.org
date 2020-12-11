@@ -4,13 +4,14 @@ var urls = require("./urls");
 var fs = require("fs");
 var authentication = require("./authentication");
 var randomip = require("random-ip");
+const metrics = require("../metrics");
 
-var config = require("../config");
+const config = require("../config");
 
 // Schemas
-var Account = require("../db/schemas/account").Account;
-var Skin = require("../db/schemas/skin").Skin;
-var Traffic = require("../db/schemas/traffic").Traffic;
+const Account = require("../db/schemas/account").Account;
+const Skin = require("../db/schemas/skin").Skin;
+const Traffic = require("../db/schemas/traffic").Traffic;
 
 module.exports = {};
 

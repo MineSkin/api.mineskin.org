@@ -16,8 +16,10 @@ module.exports = function (app, config, optimus, limiter) {
     var uuid = require("uuid/v4");
     var mongoose = require("mongoose");
     var request = require("request");
-
     var hasha = require("hasha");
+    const metrics = require("../metrics");
+
+    const GENERATE_METRIC = metrics.metric('metrics', 'mineskin.generate');
 
 
     var imageHash = function (path, callback) {
@@ -660,13 +662,37 @@ module.exports = function (app, config, optimus, limiter) {
         }
 
         fs.appendFileSync("generateStatus.log", "[" + new Date().toUTCString() + "] FAIL [A" + (account ? account.id : "-1") + "/" + generateType + "] (" + errorCause + ")\n", "utf8");
+
+        try {
+            GENERATE_METRIC
+                .tag('state', 'fail')
+                .tag('server', config.server)
+                .tag('type', generateType)
+                .tag('error', errorCause)
+                .tag('account', account ? account.id: -1)
+                .tag('accountType', account ? (account.microsoftAccount ? 'microsoft' : 'mojang') : 'none')
+                .inc();
+        } catch (e) {
+            console.warn(e);
+        }
     }
 
     function logSuccess(account, generateType) {
         Util.increaseStat("generate.success");
 
-
         fs.appendFileSync("generateStatus.log", "[" + new Date().toUTCString() + "] SUCCESS [A" + (account ? account.id : "-1") + "/" + generateType + "]\n", "utf8");
+
+        try {
+            GENERATE_METRIC
+                .tag('state', 'success')
+                .tag('server', config.server)
+                .tag('type', generateType)
+                .tag('account', account ? account.id: -1)
+                .tag('accountType', account ? (account.microsoftAccount ? 'microsoft' : 'mojang') : 'none')
+                .inc();
+        } catch (e) {
+            console.warn(e);
+        }
     }
 
     function close(fd) {

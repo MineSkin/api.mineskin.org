@@ -49,4 +49,6 @@ config.puller = {
     logCommands: true
 };
 
+config.metrics = {};
+
 module.exports = config;
