@@ -35,6 +35,9 @@ setInterval(function () {
     try {
         metrics.influx.writePoints([{
             measurement: "queue.skinChanger",
+            tags: {
+                server: config.server
+            },
             fields: {
                 size: requestQueue.length
             }

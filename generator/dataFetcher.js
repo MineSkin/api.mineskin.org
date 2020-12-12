@@ -1,4 +1,5 @@
 var request = require("request");
+const config = require("../config");
 const metrics = require("../metrics");
 
 module.exports = {};
@@ -17,6 +18,9 @@ setInterval(function () {
     try {
         metrics.influx.writePoints([{
             measurement: "cache.dataFetcher",
+            tags: {
+                server: config.server
+            },
             fields: {
                 size: Object.keys(cache).length
             }
