@@ -153,7 +153,7 @@ module.exports = function (app) {
 
                                     //DONE
 
-                                    console.log("Stats update took " + (Date.now() - start / 1000) + "s");
+                                    console.log("Stats update took " + ((Date.now() - start) / 1000) + "s");
 
                                     try {
                                         metrics.influx.writePoints([
