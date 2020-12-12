@@ -52,7 +52,7 @@ module.exports = function (app) {
         Account.count({enabled: true}, function (err, count) {
             if (err) return console.log(err);
             stats.accounts = count;
-            Account.count({enabled: true, requestServer: config.server}}, function (err, serverCount) {
+            Account.count({enabled: true, requestServer: config.server}, function (err, serverCount) {
                 if (err) return console.log(err);
                 stats.serverAccounts = serverCount;
                 Account.count({enabled: true, errorCounter: {$lt: (config.errorThreshold || 10)}}, function (err, healthyCount) {
