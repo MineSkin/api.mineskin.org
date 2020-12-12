@@ -167,7 +167,7 @@ module.exports = function (app) {
                                                     },
                                                     fields: {
                                                         total: stats.accounts,
-                                                        server: stats.serverAccounts,
+                                                        totalServer: stats.serverAccounts,
                                                         healthy: stats.healthyAccounts,
                                                         useable: stats.useableAccounts
                                                     }
