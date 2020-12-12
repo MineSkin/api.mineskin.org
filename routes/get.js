@@ -24,172 +24,146 @@ module.exports = function (app) {
                 }
             })
         })
-    })
+    });
 
-    app.get("/get/stats/:details?", function (req, res) {
-        var stats = {};
+    let stats = {
+        server: config.server
+    };
 
-        stats.server = config.server;
+    function updateStats() {
+        stats.queues = {
+            auth:{
+                delay: config.requestQueue.auth,
+                size: auth.requestQueue.length
+            },
+            skinChanger: {
+                delay: config.requestQueue.skinChanger,
+                size: skinChanger.requestQueue.length
+            }
+        };
+        stats.cache = {
+            dataFetcher: Object.keys(dataFetcher.cache).length
+        };
 
-        Util.getGeneratorDelay().then(function (delay) {
-            stats.delay = delay;
-
-            stats.queues = {
-                auth:{
-                    delay: config.requestQueue.auth,
-                    size: auth.requestQueue.length
-                },
-                skinChanger: {
-                    delay: config.requestQueue.skinChanger,
-                    size: skinChanger.requestQueue.length
-                }
-            };
-            stats.cache = {
-               dataFetcher: Object.keys(dataFetcher.cache).length
-            };
-
-            // Skin.find({}, "duplicate views visibility time name type via generateDuration", function (err, skins) {
-            //     if (err) return console.log(err);
-            //     var skinStats = buildSkinStats(skins);
-            //     Object.assign(stats, skinStats);
-            //
-            //     Account.count({enabled: true}, function (err, count) {
-            //         if (err) return console.log(err);
-            //         stats.accounts = count;
-            //
-            //         Stat.find({}, function (err, s) {
-            //             var generateSuccess = 0;
-            //             var generateFail = 0;
-            //             s.forEach(function (stat) {
-            //                 if (stat.key === "generate.success") generateSuccess = stat.value;
-            //                 if (stat.key === "generate.fail") generateFail = stat.value;
-            //             })
-            //
-            //             var generateTotal = generateSuccess + generateFail;
-            //             stats.successRate = Number((generateSuccess / generateTotal).toFixed(3));
-            //
-            //             res.json(stats);
-            //         })
-            //     })
-            // })
-
-            Account.count({enabled: true}, function (err, count) {
+        Account.count({enabled: true}, function (err, count) {
+            if (err) return console.log(err);
+            stats.accounts = count;
+            Account.count({enabled: true, errorCounter: {$lt: (config.errorThreshold || 10)}}, function (err, healthyCount) {
                 if (err) return console.log(err);
-                stats.accounts = count;
-                Account.count({enabled: true, errorCounter: {$lt: (config.errorThreshold || 10)}}, function (err, healthyCount) {
+                stats.healthyAccounts = healthyCount;
+                var time = Date.now()/1000;
+                Account.count({enabled: true, requestServer: {$in: [null, "default", config.server]}, lastUsed: {'$lt': (time - 100)}, forcedTimeoutAt: {'$lt': (time - 500)}, errorCounter: {'$lt': (config.errorThreshold||10)}},function(err,useableCount){
                     if (err) return console.log(err);
-                    stats.healthyAccounts = healthyCount;
-                    var time = Date.now()/1000;
-                    Account.count({enabled: true, requestServer: {$in: [null, "default", config.server]}, lastUsed: {'$lt': (time - 100)}, forcedTimeoutAt: {'$lt': (time - 500)}, errorCounter: {'$lt': (config.errorThreshold||10)}},function(err,useableCount){
+                    stats.useableAccounts = useableCount;
+                    Stat.find({}).lean().exec(function (err, s) {
                         if (err) return console.log(err);
-                        stats.useableAccounts = useableCount;
-                        Stat.find({}).lean().exec(function (err, s) {
+                        var generateSuccess = 0;
+                        var generateFail = 0;
+                        var testerSuccess = 0;
+                        var testerFail = 0;
+                        s.forEach(function (stat) {
+                            if (stat.key === "generate.success") generateSuccess = stat.value;
+                            if (stat.key === "generate.fail") generateFail = stat.value;
+                            if (stat.key === "mineskintester.success") testerSuccess = stat.value;
+                            if (stat.key === "mineskintester.fail") testerFail = stat.value;
+                        });
+                        var generateTotal = generateSuccess + generateFail;
+                        stats.successRate = Number((generateSuccess / generateTotal).toFixed(3));
+                        var testerTotal = testerSuccess + testerFail;
+                        stats.mineskinTesterSuccessRate = Number((testerSuccess / testerTotal).toFixed(3));
+
+                        Skin.aggregate([
+                            {"$sort": {time:-1}},
+                            {"$limit":1000},
+                            {"$group": {
+                                    "_id": null,
+                                    "avgGenTime": { "$avg": "$generateDuration" }
+                                }
+                            }
+                        ], function (err, agg0) {
                             if (err) return console.log(err);
-                            var generateSuccess = 0;
-                            var generateFail = 0;
-                            var testerSuccess = 0;
-                            var testerFail = 0;
-                            s.forEach(function (stat) {
-                                if (stat.key === "generate.success") generateSuccess = stat.value;
-                                if (stat.key === "generate.fail") generateFail = stat.value;
-                                if (stat.key === "mineskintester.success") testerSuccess = stat.value;
-                                if (stat.key === "mineskintester.fail") testerFail = stat.value;
-                            });
-                            var generateTotal = generateSuccess + generateFail;
-                            stats.successRate = Number((generateSuccess / generateTotal).toFixed(3));
-                            var testerTotal = testerSuccess + testerFail;
-                            stats.mineskinTesterSuccessRate = Number((testerSuccess / testerTotal).toFixed(3));
+
+                            stats.avgGenerateDuration = agg0[0].avgGenTime;
 
                             Skin.aggregate([
-                                {"$sort": {time:-1}},
-                                {"$limit":1000},
-                                {"$group": {
-                                        "_id": null,
-                                        "avgGenTime": { "$avg": "$generateDuration" }
-                                    }
+                                {
+                                    "$group":
+                                        {
+                                            _id: "$type",
+                                            duplicate: {$sum: "$duplicate"},
+                                            views: {$sum: "$views"},
+                                            count: {$sum: 1}
+                                        }
                                 }
-                            ], function (err, agg0) {
+                            ], function (err, agg) {
                                 if (err) return console.log(err);
+                                var user = agg[0];
+                                var url = agg[1];
+                                var upload = agg[2];
 
-                                stats.avgGenerateDuration = agg0[0].avgGenTime;
+                                stats.genUpload = upload.count;
+                                stats.genUrl = url.count;
+                                stats.genUser = user.count;
 
-                                Skin.aggregate([
-                                    {
-                                        "$group":
-                                            {
-                                                _id: "$type",
-                                                duplicate: {$sum: "$duplicate"},
-                                                views: {$sum: "$views"},
-                                                count: {$sum: 1}
+                                stats.unique = user.count + url.count + upload.count;
+
+                                stats.duplicate = user.duplicate + url.duplicate + upload.duplicate;
+                                stats.views = user.views + url.views + upload.views;
+                                stats.private = 0;
+                                stats.withNames = 0;
+
+                                stats.lastHour = 0;
+                                stats.lastDay = 0;
+                                stats.lastMonth = 0;
+                                stats.lastYear = 0;
+
+
+                                stats.viaApi = 0;
+                                stats.viaWebsite = 0;
+
+                                stats.total = stats.unique + stats.duplicate;
+
+                                    var lastHour = new Date(new Date() - 3.6e+6) / 1000;
+                                    var lastDay = new Date(new Date() - 8.64e+7) / 1000;
+                                    var lastMonth = new Date(new Date() - 2.628e+9) / 1000;
+                                    var lastYear = new Date(new Date() - 3.154e+10) / 1000;
+
+                                    Skin.aggregate([
+                                        {
+                                            $group: {
+                                                _id: null,
+                                                lastYear: {$sum: {$cond: [{$gte: ["$time", lastYear]}, 1, 0]}},
+                                                lastMonth: {$sum: {$cond: [{$gte: ["$time", lastMonth]}, 1, 0]}},
+                                                lastDay: {$sum: {$cond: [{$gte: ["$time", lastDay]}, 1, 0]}},
+                                                lastHour: {$sum: {$cond: [{$gte: ["$time", lastHour]}, 1, 0]}}
                                             }
-                                    }
-                                ], function (err, agg) {
-                                    if (err) return console.log(err);
-                                    var user = agg[0];
-                                    var url = agg[1];
-                                    var upload = agg[2];
+                                        }
+                                    ], function (err, agg1) {
+                                        if (err) return console.log(err);
 
-                                    stats.genUpload = upload.count;
-                                    stats.genUrl = url.count;
-                                    stats.genUser = user.count;
+                                        stats.lastYear = agg1[0].lastYear;
+                                        stats.lastMonth = agg1[0].lastMonth;
+                                        stats.lastDay = agg1[0].lastDay;
+                                        stats.lastHour = agg1[0].lastHour;
 
-                                    stats.unique = user.count + url.count + upload.count;
-
-                                    stats.duplicate = user.duplicate + url.duplicate + upload.duplicate;
-                                    stats.views = user.views + url.views + upload.views;
-                                    stats.private = 0;
-                                    stats.withNames = 0;
-
-                                    stats.lastHour = 0;
-                                    stats.lastDay = 0;
-                                    stats.lastMonth = 0;
-                                    stats.lastYear = 0;
+                                    })
 
 
-                                    stats.viaApi = 0;
-                                    stats.viaWebsite = 0;
-
-                                    stats.total = stats.unique + stats.duplicate;
-
-                                    if (req.params.details) {
-                                        var lastHour = new Date(new Date() - 3.6e+6) / 1000;
-                                        var lastDay = new Date(new Date() - 8.64e+7) / 1000;
-                                        var lastMonth = new Date(new Date() - 2.628e+9) / 1000;
-                                        var lastYear = new Date(new Date() - 3.154e+10) / 1000;
-
-                                        Skin.aggregate([
-                                            {
-                                                $group: {
-                                                    _id: null,
-                                                    lastYear: {$sum: {$cond: [{$gte: ["$time", lastYear]}, 1, 0]}},
-                                                    lastMonth: {$sum: {$cond: [{$gte: ["$time", lastMonth]}, 1, 0]}},
-                                                    lastDay: {$sum: {$cond: [{$gte: ["$time", lastDay]}, 1, 0]}},
-                                                    lastHour: {$sum: {$cond: [{$gte: ["$time", lastHour]}, 1, 0]}}
-                                                }
-                                            }
-                                        ], function (err, agg1) {
-                                            if (err) return console.log(err);
-
-                                            stats.lastYear = agg1[0].lastYear;
-                                            stats.lastMonth = agg1[0].lastMonth;
-                                            stats.lastDay = agg1[0].lastDay;
-                                            stats.lastHour = agg1[0].lastHour;
-
-                                            res.json(stats);
-                                        })
-
-
-                                    } else {
-                                        res.json(stats);
-                                    }
-                                })
                             })
                         })
                     })
                 })
             })
+        })
+    }
 
+    setInterval(() => updateStats(), 60000);
 
+    app.get("/get/stats/:details?", function (req, res) {
+        Util.getGeneratorDelay().then(function (delay) {
+            stats.delay = delay;
+
+            res.json(stats);
         })
     });
 
