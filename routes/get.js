@@ -52,137 +52,142 @@ module.exports = function (app) {
         Account.count({enabled: true}, function (err, count) {
             if (err) return console.log(err);
             stats.accounts = count;
-            Account.count({enabled: true, errorCounter: {$lt: (config.errorThreshold || 10)}}, function (err, healthyCount) {
+            Account.count({enabled: true, requestServer: {$in: [null, "default", config.server]}}, function (err, serverCount) {
                 if (err) return console.log(err);
-                stats.healthyAccounts = healthyCount;
-                var time = Date.now() / 1000;
-                Account.count({enabled: true, requestServer: {$in: [null, "default", config.server]}, lastUsed: {'$lt': (time - 100)}, forcedTimeoutAt: {'$lt': (time - 500)}, errorCounter: {'$lt': (config.errorThreshold || 10)}}, function (err, useableCount) {
+                stats.serverAccounts = serverCount;
+                Account.count({enabled: true, errorCounter: {$lt: (config.errorThreshold || 10)}}, function (err, healthyCount) {
                     if (err) return console.log(err);
-                    stats.useableAccounts = useableCount;
-                    Stat.find({}).lean().exec(function (err, s) {
+                    stats.healthyAccounts = healthyCount;
+                    var time = Date.now() / 1000;
+                    Account.count({enabled: true, requestServer: {$in: [null, "default", config.server]}, lastUsed: {'$lt': (time - 100)}, forcedTimeoutAt: {'$lt': (time - 500)}, errorCounter: {'$lt': (config.errorThreshold || 10)}}, function (err, useableCount) {
                         if (err) return console.log(err);
-                        var generateSuccess = 0;
-                        var generateFail = 0;
-                        var testerSuccess = 0;
-                        var testerFail = 0;
-                        s.forEach(function (stat) {
-                            if (stat.key === "generate.success") generateSuccess = stat.value;
-                            if (stat.key === "generate.fail") generateFail = stat.value;
-                            if (stat.key === "mineskintester.success") testerSuccess = stat.value;
-                            if (stat.key === "mineskintester.fail") testerFail = stat.value;
-                        });
-                        var generateTotal = generateSuccess + generateFail;
-                        stats.successRate = Number((generateSuccess / generateTotal).toFixed(3));
-                        var testerTotal = testerSuccess + testerFail;
-                        stats.mineskinTesterSuccessRate = Number((testerSuccess / testerTotal).toFixed(3));
-
-                        Skin.aggregate([
-                            {"$sort": {time: -1}},
-                            {"$limit": 1000},
-                            {
-                                "$group": {
-                                    "_id": null,
-                                    "avgGenTime": {"$avg": "$generateDuration"}
-                                }
-                            }
-                        ], function (err, agg0) {
+                        stats.useableAccounts = useableCount;
+                        Stat.find({}).lean().exec(function (err, s) {
                             if (err) return console.log(err);
-
-                            stats.avgGenerateDuration = agg0[0].avgGenTime;
+                            var generateSuccess = 0;
+                            var generateFail = 0;
+                            var testerSuccess = 0;
+                            var testerFail = 0;
+                            s.forEach(function (stat) {
+                                if (stat.key === "generate.success") generateSuccess = stat.value;
+                                if (stat.key === "generate.fail") generateFail = stat.value;
+                                if (stat.key === "mineskintester.success") testerSuccess = stat.value;
+                                if (stat.key === "mineskintester.fail") testerFail = stat.value;
+                            });
+                            var generateTotal = generateSuccess + generateFail;
+                            stats.successRate = Number((generateSuccess / generateTotal).toFixed(3));
+                            var testerTotal = testerSuccess + testerFail;
+                            stats.mineskinTesterSuccessRate = Number((testerSuccess / testerTotal).toFixed(3));
 
                             Skin.aggregate([
+                                {"$sort": {time: -1}},
+                                {"$limit": 1000},
                                 {
-                                    "$group":
-                                        {
-                                            _id: "$type",
-                                            duplicate: {$sum: "$duplicate"},
-                                            views: {$sum: "$views"},
-                                            count: {$sum: 1}
-                                        }
+                                    "$group": {
+                                        "_id": null,
+                                        "avgGenTime": {"$avg": "$generateDuration"}
+                                    }
                                 }
-                            ], function (err, agg) {
+                            ], function (err, agg0) {
                                 if (err) return console.log(err);
-                                var user = agg[0];
-                                var url = agg[1];
-                                var upload = agg[2];
 
-                                stats.genUpload = upload.count;
-                                stats.genUrl = url.count;
-                                stats.genUser = user.count;
-
-                                stats.unique = user.count + url.count + upload.count;
-
-                                stats.duplicate = user.duplicate + url.duplicate + upload.duplicate;
-                                stats.views = user.views + url.views + upload.views;
-                                stats.private = 0;
-                                stats.withNames = 0;
-
-                                stats.lastHour = 0;
-                                stats.lastDay = 0;
-                                stats.lastMonth = 0;
-                                stats.lastYear = 0;
-
-
-                                stats.viaApi = 0;
-                                stats.viaWebsite = 0;
-
-                                stats.total = stats.unique + stats.duplicate;
-
-                                var lastHour = new Date(new Date() - 3.6e+6) / 1000;
-                                var lastDay = new Date(new Date() - 8.64e+7) / 1000;
-                                var lastMonth = new Date(new Date() - 2.628e+9) / 1000;
-                                var lastYear = new Date(new Date() - 3.154e+10) / 1000;
+                                stats.avgGenerateDuration = agg0[0].avgGenTime;
 
                                 Skin.aggregate([
                                     {
-                                        $group: {
-                                            _id: null,
-                                            lastYear: {$sum: {$cond: [{$gte: ["$time", lastYear]}, 1, 0]}},
-                                            lastMonth: {$sum: {$cond: [{$gte: ["$time", lastMonth]}, 1, 0]}},
-                                            lastDay: {$sum: {$cond: [{$gte: ["$time", lastDay]}, 1, 0]}},
-                                            lastHour: {$sum: {$cond: [{$gte: ["$time", lastHour]}, 1, 0]}}
-                                        }
-                                    }
-                                ], function (err, agg1) {
-                                    if (err) return console.log(err);
-
-                                    stats.lastYear = agg1[0].lastYear;
-                                    stats.lastMonth = agg1[0].lastMonth;
-                                    stats.lastDay = agg1[0].lastDay;
-                                    stats.lastHour = agg1[0].lastHour;
-
-                                    //DONE
-
-                                    console.log("Stats update took " + ((Date.now() - start) / 1000) + "s");
-
-                                    try {
-                                        metrics.influx.writePoints([
+                                        "$group":
                                             {
-                                                measurement: 'mineskin.accounts',
-                                                tags: {
-                                                    server: config.server
-                                                },
-                                                fields: {
-                                                    total: stats.accounts,
-                                                    healthy: stats.healthyAccounts,
-                                                    useable: stats.useableAccounts
-                                                }
-                                            },
-                                            {
-                                                measurement: 'mineskin.skins',
-                                                fields: {
-                                                    total: stats.total,
-                                                    unique: stats.unique,
-                                                    duplicate: stats.duplicate
-                                                }
+                                                _id: "$type",
+                                                duplicate: {$sum: "$duplicate"},
+                                                views: {$sum: "$views"},
+                                                count: {$sum: 1}
                                             }
-                                        ], {
-                                            database: 'metrics'
-                                        })
-                                    } catch (e) {
-                                        console.warn(e);
                                     }
-                                });
+                                ], function (err, agg) {
+                                    if (err) return console.log(err);
+                                    var user = agg[0];
+                                    var url = agg[1];
+                                    var upload = agg[2];
+
+                                    stats.genUpload = upload.count;
+                                    stats.genUrl = url.count;
+                                    stats.genUser = user.count;
+
+                                    stats.unique = user.count + url.count + upload.count;
+
+                                    stats.duplicate = user.duplicate + url.duplicate + upload.duplicate;
+                                    stats.views = user.views + url.views + upload.views;
+                                    stats.private = 0;
+                                    stats.withNames = 0;
+
+                                    stats.lastHour = 0;
+                                    stats.lastDay = 0;
+                                    stats.lastMonth = 0;
+                                    stats.lastYear = 0;
+
+
+                                    stats.viaApi = 0;
+                                    stats.viaWebsite = 0;
+
+                                    stats.total = stats.unique + stats.duplicate;
+
+                                    var lastHour = new Date(new Date() - 3.6e+6) / 1000;
+                                    var lastDay = new Date(new Date() - 8.64e+7) / 1000;
+                                    var lastMonth = new Date(new Date() - 2.628e+9) / 1000;
+                                    var lastYear = new Date(new Date() - 3.154e+10) / 1000;
+
+                                    Skin.aggregate([
+                                        {
+                                            $group: {
+                                                _id: null,
+                                                lastYear: {$sum: {$cond: [{$gte: ["$time", lastYear]}, 1, 0]}},
+                                                lastMonth: {$sum: {$cond: [{$gte: ["$time", lastMonth]}, 1, 0]}},
+                                                lastDay: {$sum: {$cond: [{$gte: ["$time", lastDay]}, 1, 0]}},
+                                                lastHour: {$sum: {$cond: [{$gte: ["$time", lastHour]}, 1, 0]}}
+                                            }
+                                        }
+                                    ], function (err, agg1) {
+                                        if (err) return console.log(err);
+
+                                        stats.lastYear = agg1[0].lastYear;
+                                        stats.lastMonth = agg1[0].lastMonth;
+                                        stats.lastDay = agg1[0].lastDay;
+                                        stats.lastHour = agg1[0].lastHour;
+
+                                        //DONE
+
+                                        console.log("Stats update took " + ((Date.now() - start) / 1000) + "s");
+
+                                        try {
+                                            metrics.influx.writePoints([
+                                                {
+                                                    measurement: 'mineskin.accounts',
+                                                    tags: {
+                                                        server: config.server
+                                                    },
+                                                    fields: {
+                                                        total: stats.accounts,
+                                                        server: stats.serverAccounts,
+                                                        healthy: stats.healthyAccounts,
+                                                        useable: stats.useableAccounts
+                                                    }
+                                                },
+                                                {
+                                                    measurement: 'mineskin.skins',
+                                                    fields: {
+                                                        total: stats.total,
+                                                        unique: stats.unique,
+                                                        duplicate: stats.duplicate
+                                                    }
+                                                }
+                                            ], {
+                                                database: 'metrics'
+                                            })
+                                        } catch (e) {
+                                            console.warn(e);
+                                        }
+                                    });
+                                })
                             })
                         })
                     })
