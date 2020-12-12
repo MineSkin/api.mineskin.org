@@ -151,7 +151,7 @@ module.exports = function (app, config, optimus, limiter) {
                                                                     account.save(function (err, account) {
                                                                         if (err) return console.log(err);
                                                                         setTimeout(function () {
-                                                                            getAndSaveSkinData(account, {
+                                                                            let skinOptions = {
                                                                                 type: "url",
                                                                                 model: model,
                                                                                 visibility: visibility,
@@ -160,19 +160,20 @@ module.exports = function (app, config, optimus, limiter) {
                                                                                 ua: req.headers["user-agent"],
                                                                                 genUrl: url,
                                                                                 tmpPath: path
-                                                                            }, fileHash, hashFromMojangTexture, uuid(), tmpName, genStart, function (err, skin) {
+                                                                            };
+                                                                            getAndSaveSkinData(account, skinOptions, fileHash, hashFromMojangTexture, uuid(), tmpName, genStart, function (err, skin) {
                                                                                 if (err) {
                                                                                     var reason = "skin_data_fetch_failed";
                                                                                     res.status(500).json({error: "Failed to get skin data", err: err, accountId: account.id, reason: reason});
                                                                                     console.log(("Failed to download skin data (URL, Account " + account.id + ")").warn)
 
                                                                                     console.log(("=> FAIL #" + account.errorCounter + "\n").red);
-                                                                                    logFail(account, "url", reason);
+                                                                                    logFail(account, "url", reason, skinOptions);
                                                                                 } else {
                                                                                     res.json(Util.skinToJson(skin, generatorDelay, req));
 
                                                                                     console.log("=> SUCCESS\n".green);
-                                                                                    logSuccess(account, "url");
+                                                                                    logSuccess(account, "url", skinOptions);
                                                                                 }
                                                                             })
                                                                         }, config.genSaveDelay * 1000)
@@ -331,7 +332,7 @@ module.exports = function (app, config, optimus, limiter) {
                                                         account.save(function (err, account) {
                                                             if (err) return console.log(err);
                                                             setTimeout(function () {
-                                                                getAndSaveSkinData(account, {
+                                                                let skinOptions = {
                                                                     type: "upload",
                                                                     model: model,
                                                                     visibility: visibility,
@@ -339,19 +340,20 @@ module.exports = function (app, config, optimus, limiter) {
                                                                     via: Util.getVia(req),
                                                                     ua: req.headers["user-agent"],
                                                                     tmpPath: path
-                                                                }, fileHash, hashFromMojangTexture, uuid(), tmpName, genStart, function (err, skin) {
+                                                                };
+                                                                getAndSaveSkinData(account, skinOptions, fileHash, hashFromMojangTexture, uuid(), tmpName, genStart, function (err, skin) {
                                                                     if (err) {
                                                                         var reason = "skin_data_fetch_failed";
                                                                         res.status(500).json({error: "Failed to get skin data", err: err, accountId: account.id, reason: reason});
                                                                         console.log(("Failed to download skin data (UPLOAD, Account " + account.id + ")").warn)
 
                                                                         console.log(("=> FAIL #" + account.errorCounter + "\n").red);
-                                                                        logFail(account, "upload", reason);
+                                                                        logFail(account, "upload", reason, skinOptions);
                                                                     } else {
                                                                         res.json(Util.skinToJson(skin, generatorDelay, req));
 
                                                                         console.log("=> SUCCESS\n".green);
-                                                                        logSuccess(account, "upload");
+                                                                        logSuccess(account, "upload", skinOptions);
                                                                     }
                                                                 });
                                                             }, config.genSaveDelay * 1000)
@@ -421,26 +423,27 @@ module.exports = function (app, config, optimus, limiter) {
 
                 // Don't generate anything, just need to get the user's live skin data
 
-                getAndSaveSkinData({uuid: shortUuid}, {
+                let skinOptions = {
                     type: "user",
                     model: "unknown",
                     visibility: visibility,
                     name: name,
                     via: Util.getVia(req),
                     ua: req.headers["user-agent"]
-                }, hashFromMojangTexture, null, longUuid, "t" + Date.now() + "usr", genStart, function (err, skin) {
+                };
+                getAndSaveSkinData({uuid: shortUuid}, skinOptions, hashFromMojangTexture, null, longUuid, "t" + Date.now() + "usr", genStart, function (err, skin) {
                     if (err) {
                         var reason = "skin_data_fetch_failed";
                         res.status(500).json({error: "Failed to get skin data", err: err, reason: reason});
                         console.log(("Failed to download skin data (USER)").warn)
 
                         console.log(("=> FAIL\n").red);
-                        logFail(null, "user", reason);
+                        logFail(null, "user", reason, skinOptions);
                     } else {
                         res.json(Util.skinToJson(skin, generatorDelay, req));
 
                         console.log("=> SUCCESS\n".green);
-                        logSuccess(null, "user");
+                        logSuccess(null, "user", skinOptions);
                     }
                 })
             })
@@ -619,7 +622,7 @@ module.exports = function (app, config, optimus, limiter) {
     }
 
 
-    function logFail(account, generateType, errorCause) {
+    function logFail(account, generateType, errorCause, skinOptions) {
         Util.increaseStat("generate.fail");
 
         if (account) {
@@ -664,35 +667,46 @@ module.exports = function (app, config, optimus, limiter) {
         fs.appendFileSync("generateStatus.log", "[" + new Date().toUTCString() + "] FAIL [A" + (account ? account.id : "-1") + "/" + generateType + "] (" + errorCause + ")\n", "utf8");
 
         try {
-            GENERATE_METRIC
+            generateMetricBase(account, generateType, skinOptions)
                 .tag('state', 'fail')
-                .tag('server', config.server)
-                .tag('type', generateType)
                 .tag('error', errorCause)
-                .tag('account', account ? account.id: -1)
-                .tag('accountType', account ? (account.microsoftAccount ? 'microsoft' : 'mojang') : 'none')
                 .inc();
         } catch (e) {
             console.warn(e);
         }
     }
 
-    function logSuccess(account, generateType) {
+    function logSuccess(account, generateType, skinOptions) {
         Util.increaseStat("generate.success");
 
         fs.appendFileSync("generateStatus.log", "[" + new Date().toUTCString() + "] SUCCESS [A" + (account ? account.id : "-1") + "/" + generateType + "]\n", "utf8");
 
         try {
-            GENERATE_METRIC
+            generateMetricBase(account, generateType, skinOptions)
                 .tag('state', 'success')
-                .tag('server', config.server)
-                .tag('type', generateType)
-                .tag('account', account ? account.id: -1)
-                .tag('accountType', account ? (account.microsoftAccount ? 'microsoft' : 'mojang') : 'none')
                 .inc();
         } catch (e) {
             console.warn(e);
         }
+    }
+
+    function generateMetricBase(account, generateType, skinOptions) {
+        let metric = GENERATE_METRIC
+            .tag('server', config.server)
+            .tag('type', generateType)
+        if (account) {
+            metric = metric
+                .tag('account', account.id)
+                .tag('accountType', account.microsoftAccount ? 'microsoft' : 'mojang')
+        }
+        if (skinOptions) {
+            metric = metric
+                .tag('via', skinOptions.via)
+                .tag('ua', skinOptions.ua)
+                .tag('visibility', skinOptions.visibility)
+                .tag('model', skinOptions.model)
+        }
+        return metric;
     }
 
     function close(fd) {
