@@ -13,6 +13,7 @@ var request = require("request").defaults({
 });
 var Util = require("../util");
 var config = require("../config");
+const metrics = require("../metrics");
 
 // Schemas
 var Account = require("../db/schemas/account").Account;
@@ -38,6 +39,18 @@ setInterval(function () {
         }
     }
 }, config.requestQueue.auth);
+setInterval(function () {
+    try {
+        metrics.influx.writePoints([{
+            measurement: "mineskin.queue.authentication",
+            fields: {
+                size: requestQueue.length
+            }
+        }]);
+    } catch (e) {
+        console.warn(e);
+    }
+}, 10000);
 setInterval(function () {
     console.log("[Auth] Request Queue Size: " + requestQueue.length);
 }, 30000)

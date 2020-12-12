@@ -20,22 +20,35 @@ module.exports.requestQueue = requestQueue;
 setInterval(function () {
     var next = requestQueue.shift();
     if (next) {
-        try{
-            var d =new Date().toUTCString();
-            request(next.options, function (err,res,body) {
+        try {
+            var d = new Date().toUTCString();
+            request(next.options, function (err, res, body) {
                 // fs.appendFileSync("requests.log", "[" + d  + "] SKIN "+ (next.options.method||"GET")+" " + (next.options.url||next.options.uri) + " => "+res.statusCode+"\n", "utf8");
                 next.callback(err, res, body);
             });
-        }catch (e) {
+        } catch (e) {
             console.error(e);
         }
     }
 }, config.requestQueue.skinChanger);
 setInterval(function () {
+    try {
+        metrics.influx.writePoints([{
+            measurement: "mineskin.queue.skinChanger",
+            fields: {
+                size: requestQueue.length
+            }
+        }]);
+    } catch (e) {
+        console.warn(e);
+    }
+}, 10000);
+setInterval(function () {
     console.log("[SkinChanger] Request Queue Size: " + requestQueue.length);
-},30000)
+}, 30000)
+
 function queueRequest(options, callback) {
-    requestQueue.push({options:options, callback: callback})
+    requestQueue.push({options: options, callback: callback})
 }
 
 module.exports.findExistingSkin = function (hash, name, model, visibility, cb) {
@@ -55,7 +68,7 @@ module.exports.findExistingSkin = function (hash, name, model, visibility, cb) {
 };
 
 module.exports.findExistingSkinForTextureUrl = function (url, name, model, visibility, cb) {
-    Skin.findOne({url:url, name: name, model: model, visibility: visibility}).exec(function (err, skin) {
+    Skin.findOne({url: url, name: name, model: model, visibility: visibility}).exec(function (err, skin) {
         if (err) return console.log(err);
         if (skin) {
             console.log("Found existing skin with same texture url");
@@ -73,7 +86,7 @@ module.exports.findExistingSkinForTextureUrl = function (url, name, model, visib
 
 module.exports.getAvailableAccount = function (req, res, cb) {
     var time = Date.now() / 1000;
-    Account.findOne({enabled: true, requestServer: {$in: [null, "default", config.server]}, lastUsed: {'$lt': (time - 100)}, forcedTimeoutAt: {'$lt': (time - 500)}, errorCounter: {'$lt': (config.errorThreshold||10)}, timeAdded: {'$lt': time - 60}})
+    Account.findOne({enabled: true, requestServer: {$in: [null, "default", config.server]}, lastUsed: {'$lt': (time - 100)}, forcedTimeoutAt: {'$lt': (time - 500)}, errorCounter: {'$lt': (config.errorThreshold || 10)}, timeAdded: {'$lt': time - 60}})
         .sort({lastUsed: 1, lastSelected: 1, sameTextureCounter: 1}).exec(function (err, account) {
         if (err) return console.log(err);
         if (!account) {
@@ -84,7 +97,7 @@ module.exports.getAvailableAccount = function (req, res, cb) {
             //     account.accessToken = null;
             //     // account.clientToken = null;
             // }
-            console.log("Account #"+account.id+" last used "+Math.round(time-account.lastUsed)+"s ago, last selected "+Math.round(time-account.lastSelected)+"s ago")
+            console.log("Account #" + account.id + " last used " + Math.round(time - account.lastUsed) + "s ago, last selected " + Math.round(time - account.lastSelected) + "s ago")
             account.lastUsed = account.lastSelected = time;
             if (!account.successCounter) account.successCounter = 0;
             if (!account.errorCounter) account.errorCounter = 0;
@@ -131,17 +144,17 @@ module.exports.generateUrl = function (account, url, model, cb) {
             }
         }, function (err, response, body) {
             if (err) return console.log(err);
-            console.log(("Url response (acc#"+account.id+"): "+response.statusCode+" " + JSON.stringify(body)).debug);
+            console.log(("Url response (acc#" + account.id + "): " + response.statusCode + " " + JSON.stringify(body)).debug);
             if (response.statusCode >= 200 && response.statusCode < 300) {
                 cb(true);
-            } else if(response.statusCode === 403 && body.toString().toLowerCase().indexOf("not secured")!==-1) { // check for "Current IP not secured" error (probably means the account has no security questions configured, but actually needs them)
+            } else if (response.statusCode === 403 && body.toString().toLowerCase().indexOf("not secured") !== -1) { // check for "Current IP not secured" error (probably means the account has no security questions configured, but actually needs them)
                 account.successCounter = 0;
                 account.errorCounter++;
                 account.totalErrorCounter++;
                 account.save(function (err, account) {
                     cb("Challenges failed", "location_not_secured");
                 });
-            }else {
+            } else {
                 cb(response.statusCode, "generate_rescode_" + response.statusCode);
                 console.log(("Got response " + response.statusCode + " for generateUrl").warn);
                 console.warn(url);
@@ -153,7 +166,7 @@ module.exports.generateUrl = function (account, url, model, cb) {
         if (!authErr && authResult) {
             if (account.microsoftAccount) {
                 authenticated();
-            }else {
+            } else {
                 authentication.completeChallenges(account, function (result, errorBody) {
                     if (result) {
                         authenticated();
@@ -176,7 +189,7 @@ module.exports.generateUrl = function (account, url, model, cb) {
             if (account.requestServer)
                 account.lastRequestServer = account.requestServer;
             account.requestServer = null;
-            console.warn("Account #"+account.id+" force timeout")
+            console.warn("Account #" + account.id + " force timeout")
             account.save(function (err, account) {
                 cb("Authentication failed - " + (authErr.errorMessage || "unknown error"), authErrorCauseFromMessage(authErr.errorMessage || authErr));
             });
@@ -192,8 +205,9 @@ module.exports.generateUpload = function (account, fileBuf, model, cb) {
         model = "classic";
     }
 
-    if (!account.requestIp){}
-        account.requestIp = randomip('0.0.0.0', 0);
+    if (!account.requestIp) {
+    }
+    account.requestIp = randomip('0.0.0.0', 0);
     console.log(("Using ip " + account.requestIp).debug);
 
     function authenticated() {
@@ -201,7 +215,6 @@ module.exports.generateUpload = function (account, fileBuf, model, cb) {
         if (account.requestServer)
             account.lastRequestServer = account.requestServer;
         account.requestServer = config.server;
-
 
 
         queueRequest({
@@ -226,17 +239,17 @@ module.exports.generateUpload = function (account, fileBuf, model, cb) {
             }
         }, function (err, response, body) {
             if (err) return console.log(err);
-            console.log(("Upload response (acc#"+account.id+"): "+response.statusCode+" " + JSON.stringify(body)).debug);
+            console.log(("Upload response (acc#" + account.id + "): " + response.statusCode + " " + JSON.stringify(body)).debug);
             if (response.statusCode >= 200 && response.statusCode < 300) {
                 cb(true);
-            } else if(response.statusCode === 403 && body.toString().toLowerCase().indexOf("not secured")!==-1) { // check for "Current IP not secured" error (probably means the account has no security questions configured, but actually needs them)
+            } else if (response.statusCode === 403 && body.toString().toLowerCase().indexOf("not secured") !== -1) { // check for "Current IP not secured" error (probably means the account has no security questions configured, but actually needs them)
                 account.successCounter = 0;
                 account.errorCounter++;
                 account.totalErrorCounter++;
                 account.save(function (err, account) {
                     cb("Challenges failed", "location_not_secured");
                 });
-            }else {
+            } else {
                 cb(response.statusCode, "generate_rescode_" + response.statusCode);
                 console.log(("Got response " + response.statusCode + " for generateUpload").warn);
             }
@@ -247,7 +260,7 @@ module.exports.generateUpload = function (account, fileBuf, model, cb) {
         if (!authErr && authResult) {
             if (account.microsoftAccount) {
                 authenticated();
-            }else {
+            } else {
                 authentication.completeChallenges(account, function (result, errorBody) {
                     if (result) {
                         authenticated();
@@ -271,7 +284,7 @@ module.exports.generateUpload = function (account, fileBuf, model, cb) {
             if (account.requestServer)
                 account.lastRequestServer = account.requestServer;
             account.requestServer = null;
-            console.warn("Account #"+account.id+" force timeout")
+            console.warn("Account #" + account.id + " force timeout")
             account.save(function (err, account) {
                 cb("Authentication failed - " + (authErr.errorMessage || "unknown error"), authErrorCauseFromMessage(authErr.errorMessage || authErr));
             });

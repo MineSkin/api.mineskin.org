@@ -1,4 +1,5 @@
 var request = require("request");
+const metrics = require("../metrics");
 
 module.exports = {};
 
@@ -12,6 +13,18 @@ setInterval(function () {
         }
     }
 }, 30000);
+setInterval(function () {
+    try {
+        metrics.influx.writePoints([{
+            measurement: "mineskin.cache.dataFetcher",
+            fields: {
+                size: Object.keys(cache).length
+            }
+        }]);
+    } catch (e) {
+        console.warn(e);
+    }
+}, 10000);
 
 module.exports.getSkinData = function (account, cb) {
     console.log(("[DataFetcher] Loading Skin data for " + (account.id ? "account #" + account.id + " (" + account.uuid + ")" : account.uuid)).info);
