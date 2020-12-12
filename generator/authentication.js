@@ -42,12 +42,12 @@ setInterval(function () {
 setInterval(function () {
     try {
         metrics.influx.writePoints([{
-            measurement: "mineskin.queue.authentication",
+            measurement: "queue.authentication",
             fields: {
                 size: requestQueue.length
             }
         }],{
-            database: 'metrics'
+            database: 'mineskin'
         });
     } catch (e) {
         console.warn(e);

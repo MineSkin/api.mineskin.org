@@ -20,7 +20,7 @@ module.exports = function (app, config, optimus, limiter) {
     const {URL} = require("url");
     const metrics = require("../metrics");
 
-    const GENERATE_METRIC = metrics.metric('metrics', 'mineskin.generate');
+    const GENERATE_METRIC = metrics.metric('mineskin', 'generate');
 
     const urlFollowWhitelist = [
         "novask.in",

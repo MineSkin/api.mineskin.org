@@ -16,12 +16,12 @@ setInterval(function () {
 setInterval(function () {
     try {
         metrics.influx.writePoints([{
-            measurement: "mineskin.cache.dataFetcher",
+            measurement: "cache.dataFetcher",
             fields: {
                 size: Object.keys(cache).length
             }
         }],{
-            database: 'metrics'
+            database: 'mineskin'
         });
     } catch (e) {
         console.warn(e);

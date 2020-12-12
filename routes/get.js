@@ -161,7 +161,7 @@ module.exports = function (app) {
                                         try {
                                             metrics.influx.writePoints([
                                                 {
-                                                    measurement: 'mineskin.accounts',
+                                                    measurement: 'accounts',
                                                     tags: {
                                                         server: config.server
                                                     },
@@ -173,7 +173,7 @@ module.exports = function (app) {
                                                     }
                                                 },
                                                 {
-                                                    measurement: 'mineskin.skins',
+                                                    measurement: 'skins',
                                                     fields: {
                                                         total: stats.total,
                                                         unique: stats.unique,
@@ -181,7 +181,7 @@ module.exports = function (app) {
                                                     }
                                                 }
                                             ], {
-                                                database: 'metrics'
+                                                database: 'mineskin'
                                             })
                                         } catch (e) {
                                             console.warn(e);
