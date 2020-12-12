@@ -17,10 +17,14 @@ module.exports = function (app, config, optimus, limiter) {
     var mongoose = require("mongoose");
     var request = require("request");
     var hasha = require("hasha");
+    const {URL} = require("url");
     const metrics = require("../metrics");
 
     const GENERATE_METRIC = metrics.metric('metrics', 'mineskin.generate');
 
+    const urlFollowWhitelist = [
+        "novask.in"
+    ]
 
     var imageHash = function (path, callback) {
         hasha.fromFile(path, {
@@ -75,127 +79,129 @@ module.exports = function (app, config, optimus, limiter) {
 
 
                 function afterUrlCheckCallback() {
-                    remoteFileSize(url, function (err, remoteSize) {
-                        if (err) {
-                            res.status(400).json({error: "Failed to determine file size"});
-                            return;
-                        }
-                        if (remoteSize <= 0 || remoteSize > 102400) {
-                            res.status(400).json({error: "Invalid file size"});
-                            return;
-                        }
-
-                        var tmpName = "t" + Date.now() + "url";
-                        tmp.file({name: tmpName, dir: "/tmp/url"}, function (err, path, fd, fileCleanup) {
-                            console.log("url hash tmp name: " + path)
+                    followUrlToImage(url, function (url) {
+                        remoteFileSize(url, function (err, remoteSize) {
                             if (err) {
-                                console.log(err);
+                                res.status(400).json({error: "Failed to determine file size"});
+                                return;
+                            }
+                            if (remoteSize <= 0 || remoteSize > 102400) {
+                                res.status(400).json({error: "Invalid file size"});
                                 return;
                             }
 
-                            // var file = fs.createWriteStream(path);
-                            request(url, {"encoding": "binary"}, function (err, response, body) {
+                            var tmpName = "t" + Date.now() + "url";
+                            tmp.file({name: tmpName, dir: "/tmp/url"}, function (err, path, fd, fileCleanup) {
+                                console.log("url hash tmp name: " + path)
                                 if (err) {
-                                    console.log(err)
-                                    fileCleanup();
-                                    close(fd);
+                                    console.log(err);
                                     return;
                                 }
-                                if (response.statusCode < 200 || response.statusCode > 230) {
-                                    res.status(500).json({"error": "Failed to download image", code: response.statusCode});
-                                    fileCleanup();
-                                    close(fd);
-                                    return;
-                                }
-                                fs.writeFile(fd, response.body, "binary", function (err) {
+
+                                // var file = fs.createWriteStream(path);
+                                request(url, {"encoding": "binary"}, function (err, response, body) {
                                     if (err) {
-                                        console.log(err);
+                                        console.log(err)
                                         fileCleanup();
                                         close(fd);
                                         return;
                                     }
-
-                                    imageHash(path, function (err, fileHash) {
+                                    if (response.statusCode < 200 || response.statusCode > 230) {
+                                        res.status(500).json({"error": "Failed to download image", code: response.statusCode});
+                                        fileCleanup();
+                                        close(fd);
+                                        return;
+                                    }
+                                    fs.writeFile(fd, response.body, "binary", function (err) {
                                         if (err) {
-                                            console.log(err)
+                                            console.log(err);
                                             fileCleanup();
                                             close(fd);
                                             return;
                                         }
-                                        console.log("Hash: " + fileHash);
 
-                                        skinChanger.findExistingSkin(fileHash, name, model, visibility, function (existingSkin) {
-                                            if (existingSkin) {
-                                                res.json(Util.skinToJson(existingSkin, generatorDelay, req));
-                                                close(fd);
+                                        imageHash(path, function (err, fileHash) {
+                                            if (err) {
+                                                console.log(err)
                                                 fileCleanup();
-                                            } else {
-                                                var validImage = Util.validateImage(req, res, path);
-                                                // cleanup();
-                                                if (validImage) {
-                                                    skinChanger.getAvailableAccount(req, res, function (account) {
-                                                        Traffic.update({ip: req.realAddress}, {lastRequest: new Date()}, {upsert: true}, function (err, traffic) {
-                                                            if (err) {
-                                                                console.log(err)
-                                                                fileCleanup();
-                                                                close(fd);
-                                                                return;
-                                                            }
-                                                            skinChanger.generateUrl(account, url, model, function (result, errorCause) {
-                                                                close(fd);
-                                                                fileCleanup();
-                                                                if (result === true) {
-                                                                    account.errorCounter = 0;
-                                                                    account.successCounter++;
-                                                                    account.totalSuccessCounter++;
-                                                                    account.save(function (err, account) {
-                                                                        if (err) return console.log(err);
-                                                                        setTimeout(function () {
-                                                                            let skinOptions = {
-                                                                                type: "url",
-                                                                                model: model,
-                                                                                visibility: visibility,
-                                                                                name: name,
-                                                                                via: Util.getVia(req),
-                                                                                ua: req.headers["user-agent"],
-                                                                                genUrl: url,
-                                                                                tmpPath: path
-                                                                            };
-                                                                            getAndSaveSkinData(account, skinOptions, fileHash, hashFromMojangTexture, uuid(), tmpName, genStart, function (err, skin) {
-                                                                                if (err) {
-                                                                                    var reason = "skin_data_fetch_failed";
-                                                                                    res.status(500).json({error: "Failed to get skin data", err: err, accountId: account.id, reason: reason});
-                                                                                    console.log(("Failed to download skin data (URL, Account " + account.id + ")").warn)
+                                                close(fd);
+                                                return;
+                                            }
+                                            console.log("Hash: " + fileHash);
 
-                                                                                    console.log(("=> FAIL #" + account.errorCounter + "\n").red);
-                                                                                    logFail(account, "url", reason, skinOptions);
-                                                                                } else {
-                                                                                    res.json(Util.skinToJson(skin, generatorDelay, req));
-
-                                                                                    console.log("=> SUCCESS\n".green);
-                                                                                    logSuccess(account, "url", skinOptions);
-                                                                                }
-                                                                            })
-                                                                        }, config.genSaveDelay * 1000)
-                                                                    })
-                                                                } else {
-                                                                    var reason = errorCause || "skin_data_generation_failed";
-                                                                    res.status(500).json({error: "Failed to generate skin data", err: result, accountId: account.id, reason: reason});
-                                                                    console.log(("Failed to generate skin data").warn)
-
-                                                                    console.log(("=> FAIL #" + account.errorCounter + "\n").red);
-                                                                    logFail(account, "url", reason);
+                                            skinChanger.findExistingSkin(fileHash, name, model, visibility, function (existingSkin) {
+                                                if (existingSkin) {
+                                                    res.json(Util.skinToJson(existingSkin, generatorDelay, req));
+                                                    close(fd);
+                                                    fileCleanup();
+                                                } else {
+                                                    var validImage = Util.validateImage(req, res, path);
+                                                    // cleanup();
+                                                    if (validImage) {
+                                                        skinChanger.getAvailableAccount(req, res, function (account) {
+                                                            Traffic.update({ip: req.realAddress}, {lastRequest: new Date()}, {upsert: true}, function (err, traffic) {
+                                                                if (err) {
+                                                                    console.log(err)
+                                                                    fileCleanup();
+                                                                    close(fd);
+                                                                    return;
                                                                 }
+                                                                skinChanger.generateUrl(account, url, model, function (result, errorCause) {
+                                                                    close(fd);
+                                                                    fileCleanup();
+                                                                    if (result === true) {
+                                                                        account.errorCounter = 0;
+                                                                        account.successCounter++;
+                                                                        account.totalSuccessCounter++;
+                                                                        account.save(function (err, account) {
+                                                                            if (err) return console.log(err);
+                                                                            setTimeout(function () {
+                                                                                let skinOptions = {
+                                                                                    type: "url",
+                                                                                    model: model,
+                                                                                    visibility: visibility,
+                                                                                    name: name,
+                                                                                    via: Util.getVia(req),
+                                                                                    ua: req.headers["user-agent"],
+                                                                                    genUrl: url,
+                                                                                    tmpPath: path
+                                                                                };
+                                                                                getAndSaveSkinData(account, skinOptions, fileHash, hashFromMojangTexture, uuid(), tmpName, genStart, function (err, skin) {
+                                                                                    if (err) {
+                                                                                        var reason = "skin_data_fetch_failed";
+                                                                                        res.status(500).json({error: "Failed to get skin data", err: err, accountId: account.id, reason: reason});
+                                                                                        console.log(("Failed to download skin data (URL, Account " + account.id + ")").warn)
+
+                                                                                        console.log(("=> FAIL #" + account.errorCounter + "\n").red);
+                                                                                        logFail(account, "url", reason, skinOptions);
+                                                                                    } else {
+                                                                                        res.json(Util.skinToJson(skin, generatorDelay, req));
+
+                                                                                        console.log("=> SUCCESS\n".green);
+                                                                                        logSuccess(account, "url", skinOptions);
+                                                                                    }
+                                                                                })
+                                                                            }, config.genSaveDelay * 1000)
+                                                                        })
+                                                                    } else {
+                                                                        var reason = errorCause || "skin_data_generation_failed";
+                                                                        res.status(500).json({error: "Failed to generate skin data", err: result, accountId: account.id, reason: reason});
+                                                                        console.log(("Failed to generate skin data").warn)
+
+                                                                        console.log(("=> FAIL #" + account.errorCounter + "\n").red);
+                                                                        logFail(account, "url", reason);
+                                                                    }
+                                                                })
                                                             })
                                                         })
-                                                    })
+                                                    }
                                                 }
-                                            }
+                                            })
                                         })
                                     })
-                                })
-                            });
-                        })
+                                });
+                            })
+                        });
                     });
                 }
 
@@ -243,6 +249,35 @@ module.exports = function (app, config, optimus, limiter) {
 
 
     });
+
+    function followUrlToImage(urlStr, cb) {
+        try {
+            let url = new URL(urlStr);
+            if (urlFollowWhitelist.includes(url.host)) {
+                request({
+                    url: url.toString(),
+                    method: "GET",
+                    followRedirect: true,
+                    maxRedirects: 5,
+                    headers: {
+                        "User-Agent": "MineSkin"
+                    }
+                }, function (err, response) {
+                    if (err) {
+                        console.warn(err);
+                        cb(urlStr);
+                    } else {
+                        cb(response.request.uri.href)
+                    }
+                });
+            }else{
+                cb(urlStr);
+            }
+        } catch (e) {
+            console.warn(e);
+            cb(urlStr);
+        }
+    }
 
     app.post("/generate/upload", limiter, function (req, res) {
         if (!req.files) {
