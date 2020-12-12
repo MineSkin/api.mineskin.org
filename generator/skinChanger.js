@@ -38,7 +38,9 @@ setInterval(function () {
             fields: {
                 size: requestQueue.length
             }
-        }]);
+        }],{
+            database: 'metrics'
+        });
     } catch (e) {
         console.warn(e);
     }

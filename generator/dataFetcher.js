@@ -20,7 +20,9 @@ setInterval(function () {
             fields: {
                 size: Object.keys(cache).length
             }
-        }]);
+        }],{
+            database: 'metrics'
+        });
     } catch (e) {
         console.warn(e);
     }

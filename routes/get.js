@@ -5,6 +5,7 @@ module.exports = function (app) {
     var auth = require("../generator/authentication");
     var dataFetcher = require("../generator/dataFetcher")
     var config = require("../config");
+    const metrics = require("../metrics");
 
     // Schemas
     var Account = require("../db/schemas/account").Account;
@@ -31,8 +32,11 @@ module.exports = function (app) {
     };
 
     function updateStats() {
+        let start = Date.now();
+
+
         stats.queues = {
-            auth:{
+            auth: {
                 delay: config.requestQueue.auth,
                 size: auth.requestQueue.length
             },
@@ -51,8 +55,8 @@ module.exports = function (app) {
             Account.count({enabled: true, errorCounter: {$lt: (config.errorThreshold || 10)}}, function (err, healthyCount) {
                 if (err) return console.log(err);
                 stats.healthyAccounts = healthyCount;
-                var time = Date.now()/1000;
-                Account.count({enabled: true, requestServer: {$in: [null, "default", config.server]}, lastUsed: {'$lt': (time - 100)}, forcedTimeoutAt: {'$lt': (time - 500)}, errorCounter: {'$lt': (config.errorThreshold||10)}},function(err,useableCount){
+                var time = Date.now() / 1000;
+                Account.count({enabled: true, requestServer: {$in: [null, "default", config.server]}, lastUsed: {'$lt': (time - 100)}, forcedTimeoutAt: {'$lt': (time - 500)}, errorCounter: {'$lt': (config.errorThreshold || 10)}}, function (err, useableCount) {
                     if (err) return console.log(err);
                     stats.useableAccounts = useableCount;
                     Stat.find({}).lean().exec(function (err, s) {
@@ -73,11 +77,12 @@ module.exports = function (app) {
                         stats.mineskinTesterSuccessRate = Number((testerSuccess / testerTotal).toFixed(3));
 
                         Skin.aggregate([
-                            {"$sort": {time:-1}},
-                            {"$limit":1000},
-                            {"$group": {
+                            {"$sort": {time: -1}},
+                            {"$limit": 1000},
+                            {
+                                "$group": {
                                     "_id": null,
-                                    "avgGenTime": { "$avg": "$generateDuration" }
+                                    "avgGenTime": {"$avg": "$generateDuration"}
                                 }
                             }
                         ], function (err, agg0) {
@@ -123,32 +128,61 @@ module.exports = function (app) {
 
                                 stats.total = stats.unique + stats.duplicate;
 
-                                    var lastHour = new Date(new Date() - 3.6e+6) / 1000;
-                                    var lastDay = new Date(new Date() - 8.64e+7) / 1000;
-                                    var lastMonth = new Date(new Date() - 2.628e+9) / 1000;
-                                    var lastYear = new Date(new Date() - 3.154e+10) / 1000;
+                                var lastHour = new Date(new Date() - 3.6e+6) / 1000;
+                                var lastDay = new Date(new Date() - 8.64e+7) / 1000;
+                                var lastMonth = new Date(new Date() - 2.628e+9) / 1000;
+                                var lastYear = new Date(new Date() - 3.154e+10) / 1000;
 
-                                    Skin.aggregate([
-                                        {
-                                            $group: {
-                                                _id: null,
-                                                lastYear: {$sum: {$cond: [{$gte: ["$time", lastYear]}, 1, 0]}},
-                                                lastMonth: {$sum: {$cond: [{$gte: ["$time", lastMonth]}, 1, 0]}},
-                                                lastDay: {$sum: {$cond: [{$gte: ["$time", lastDay]}, 1, 0]}},
-                                                lastHour: {$sum: {$cond: [{$gte: ["$time", lastHour]}, 1, 0]}}
-                                            }
+                                Skin.aggregate([
+                                    {
+                                        $group: {
+                                            _id: null,
+                                            lastYear: {$sum: {$cond: [{$gte: ["$time", lastYear]}, 1, 0]}},
+                                            lastMonth: {$sum: {$cond: [{$gte: ["$time", lastMonth]}, 1, 0]}},
+                                            lastDay: {$sum: {$cond: [{$gte: ["$time", lastDay]}, 1, 0]}},
+                                            lastHour: {$sum: {$cond: [{$gte: ["$time", lastHour]}, 1, 0]}}
                                         }
-                                    ], function (err, agg1) {
-                                        if (err) return console.log(err);
+                                    }
+                                ], function (err, agg1) {
+                                    if (err) return console.log(err);
 
-                                        stats.lastYear = agg1[0].lastYear;
-                                        stats.lastMonth = agg1[0].lastMonth;
-                                        stats.lastDay = agg1[0].lastDay;
-                                        stats.lastHour = agg1[0].lastHour;
+                                    stats.lastYear = agg1[0].lastYear;
+                                    stats.lastMonth = agg1[0].lastMonth;
+                                    stats.lastDay = agg1[0].lastDay;
+                                    stats.lastHour = agg1[0].lastHour;
 
-                                    })
+                                    //DONE
 
+                                    console.log("Stats update took " + (Date.now() - start / 1000) + "s");
 
+                                    try {
+                                        metrics.influx.writePoints([
+                                            {
+                                                measurement: 'mineskin.accounts',
+                                                tags: {
+                                                    server: config.server
+                                                },
+                                                fields: {
+                                                    total: stats.accounts,
+                                                    healthy: stats.healthyAccounts,
+                                                    useable: stats.useableAccounts
+                                                }
+                                            },
+                                            {
+                                                measurement: 'mineskin.skins',
+                                                fields: {
+                                                    total: stats.total,
+                                                    unique: stats.unique,
+                                                    duplicate: stats.duplicate
+                                                }
+                                            }
+                                        ], {
+                                            database: 'metrics'
+                                        })
+                                    } catch (e) {
+                                        console.warn(e);
+                                    }
+                                });
                             })
                         })
                     })
