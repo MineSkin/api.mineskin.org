@@ -23,7 +23,8 @@ module.exports = function (app, config, optimus, limiter) {
     const GENERATE_METRIC = metrics.metric('metrics', 'mineskin.generate');
 
     const urlFollowWhitelist = [
-        "novask.in"
+        "novask.in",
+        "imgur.com"
     ]
 
     var imageHash = function (path, callback) {
