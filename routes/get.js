@@ -14,7 +14,7 @@ module.exports = function (app) {
     const Stat = require("../db/schemas/stat").Stat;
 
     app.get("/get/delay", function (req, res) {
-        var ip = req.realAddress;
+        const ip = req.realAddress;
         Util.getGeneratorDelay().then(function (delay) {
             Traffic.findOne({ip: ip}).lean().exec(function (err, traffic) {
                 if (err) return console.log(err);
@@ -58,25 +58,25 @@ module.exports = function (app) {
                 Account.count({enabled: true, errorCounter: {$lt: (config.errorThreshold || 10)}}, function (err, healthyCount) {
                     if (err) return console.log(err);
                     stats.healthyAccounts = healthyCount;
-                    var time = Date.now() / 1000;
+                    const time = Date.now() / 1000;
                     Account.count({enabled: true, requestServer: {$in: [null, "default", config.server]}, lastUsed: {'$lt': (time - 100)}, forcedTimeoutAt: {'$lt': (time - 500)}, errorCounter: {'$lt': (config.errorThreshold || 10)}}, function (err, useableCount) {
                         if (err) return console.log(err);
                         stats.useableAccounts = useableCount;
                         Stat.find({}).lean().exec(function (err, s) {
                             if (err) return console.log(err);
-                            var generateSuccess = 0;
-                            var generateFail = 0;
-                            var testerSuccess = 0;
-                            var testerFail = 0;
+                            let generateSuccess = 0;
+                            let generateFail = 0;
+                            let testerSuccess = 0;
+                            let testerFail = 0;
                             s.forEach(function (stat) {
                                 if (stat.key === "generate.success") generateSuccess = stat.value;
                                 if (stat.key === "generate.fail") generateFail = stat.value;
                                 if (stat.key === "mineskintester.success") testerSuccess = stat.value;
                                 if (stat.key === "mineskintester.fail") testerFail = stat.value;
                             });
-                            var generateTotal = generateSuccess + generateFail;
+                            let generateTotal = generateSuccess + generateFail;
                             stats.successRate = Number((generateSuccess / generateTotal).toFixed(3));
-                            var testerTotal = testerSuccess + testerFail;
+                            let testerTotal = testerSuccess + testerFail;
                             stats.mineskinTesterSuccessRate = Number((testerSuccess / testerTotal).toFixed(3));
 
                             Skin.aggregate([
@@ -105,9 +105,9 @@ module.exports = function (app) {
                                     }
                                 ], function (err, agg) {
                                     if (err) return console.log(err);
-                                    var user = agg[0];
-                                    var url = agg[1];
-                                    var upload = agg[2];
+                                    const user = agg[0];
+                                    const url = agg[1];
+                                    const upload = agg[2];
 
                                     stats.genUpload = upload.count;
                                     stats.genUrl = url.count;
@@ -131,10 +131,10 @@ module.exports = function (app) {
 
                                     stats.total = stats.unique + stats.duplicate;
 
-                                    var lastHour = new Date(new Date() - 3.6e+6) / 1000;
-                                    var lastDay = new Date(new Date() - 8.64e+7) / 1000;
-                                    var lastMonth = new Date(new Date() - 2.628e+9) / 1000;
-                                    var lastYear = new Date(new Date() - 3.154e+10) / 1000;
+                                    const lastHour = new Date(new Date() - 3.6e+6) / 1000;
+                                    const lastDay = new Date(new Date() - 8.64e+7) / 1000;
+                                    const lastMonth = new Date(new Date() - 2.628e+9) / 1000;
+                                    const lastYear = new Date(new Date() - 3.154e+10) / 1000;
 
                                     Skin.aggregate([
                                         {
@@ -208,12 +208,12 @@ module.exports = function (app) {
 
 
     function buildSkinStats(skins) {
-        var lastHour = new Date(new Date() - 3.6e+6) / 1000;
-        var lastDay = new Date(new Date() - 8.64e+7) / 1000;
-        var lastMonth = new Date(new Date() - 2.628e+9) / 1000;
-        var lastYear = new Date(new Date() - 3.154e+10) / 1000;
+        const lastHour = new Date(new Date() - 3.6e+6) / 1000;
+        const lastDay = new Date(new Date() - 8.64e+7) / 1000;
+        const lastMonth = new Date(new Date() - 2.628e+9) / 1000;
+        const lastYear = new Date(new Date() - 3.154e+10) / 1000;
 
-        var stats = {};
+        const stats = {};
 
         stats.unique = skins.length;
 
@@ -234,7 +234,7 @@ module.exports = function (app) {
         stats.viaApi = 0;
         stats.viaWebsite = 0;
 
-        var totalDuration = 0;
+        let totalDuration = 0;
         skins.forEach(function (skin) {
             stats.duplicate += skin.duplicate;
             stats.views += skin.views;

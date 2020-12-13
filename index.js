@@ -159,10 +159,10 @@ app.post("/testing/upload_tester_result", function (req, res) {
     }
 });
 
-var optimus = new Optimus(config.optimus.prime, config.optimus.inverse, config.optimus.random);
+const optimus = new Optimus(config.optimus.prime, config.optimus.inverse, config.optimus.random);
 console.log("Optimus Test:", optimus.encode(Math.floor(Date.now() / 10)));
 
-var limiter = rateLimit({
+const limiter = rateLimit({
     windowMs: 2*60*1000, // 2 minutes,
     max:6,
     message:JSON.stringify({error:"Too many requests"}),

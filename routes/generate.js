@@ -169,7 +169,7 @@ module.exports = function (app, config, optimus, limiter) {
                                                                                 };
                                                                                 getAndSaveSkinData(account, skinOptions, fileHash, hashFromMojangTexture, uuid(), tmpName, genStart, function (err, skin) {
                                                                                     if (err) {
-                                                                                        var reason = "skin_data_fetch_failed";
+                                                                                        const reason = "skin_data_fetch_failed";
                                                                                         res.status(500).json({error: "Failed to get skin data", err: err, accountId: account.id, reason: reason});
                                                                                         console.log(("Failed to download skin data (URL, Account " + account.id + ")").warn)
 
@@ -379,7 +379,7 @@ module.exports = function (app, config, optimus, limiter) {
                                                                 };
                                                                 getAndSaveSkinData(account, skinOptions, fileHash, hashFromMojangTexture, uuid(), tmpName, genStart, function (err, skin) {
                                                                     if (err) {
-                                                                        var reason = "skin_data_fetch_failed";
+                                                                        const reason = "skin_data_fetch_failed";
                                                                         res.status(500).json({error: "Failed to get skin data", err: err, accountId: account.id, reason: reason});
                                                                         console.log(("Failed to download skin data (UPLOAD, Account " + account.id + ")").warn)
 
@@ -445,7 +445,7 @@ module.exports = function (app, config, optimus, limiter) {
             Skin.findOne({uuid: longUuid, name: name, visibility: visibility}, function (err, skin) {
                 if (err) return console.log(err);
                 if (skin) {// Skin already generated
-                    var time = Date.now() / 1000;
+                    const time = Date.now() / 1000;
                     if (skin.time > time - 1800) {// Wait 30 minutes before generating again
                         skin.duplicate += 1;
                         skin.save(function (err, skin) {

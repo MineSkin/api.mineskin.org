@@ -71,7 +71,7 @@ module.exports.authenticate = function (account, cb) {
 module.exports.authenticateMojang = function (account, cb) {
     console.log("[Auth] authenticate(" + account.username + ")");
     // Callback to login
-    var loginCallback = function (account) {
+    const loginCallback = function (account) {
         if (account.microsoftAccount || !account.passwordNew) {
             console.warn("[Auth] (#" + account.id + ") Microsoft account doesn't have an access token!")
             notifyMissingAccessToken(account);
@@ -83,7 +83,7 @@ module.exports.authenticateMojang = function (account, cb) {
         if (!account.clientToken)
             account.clientToken = md5(uuid());
         console.log(("[Auth] POST " + urls.authenticate).debug);
-        var body = {
+        const body = {
             agent: {
                 name: "Minecraft",
                 version: 1
@@ -163,7 +163,7 @@ module.exports.authenticateMojang = function (account, cb) {
                 });
             } else {
                 console.debug("[Auth] POST " + urls.refresh);
-                var body = {
+                const body = {
                     accessToken: account.accessToken,
                     clientToken: account.clientToken,
                     requestUser: true
@@ -234,7 +234,7 @@ module.exports.authenticateMojang = function (account, cb) {
         } else {
             console.log("[Auth] (#" + account.id + ") validating tokens");
             console.log(("[Auth] POST " + urls.validate).debug);
-            var body = {
+            const body = {
                 accessToken: account.accessToken,
                 clientToken: account.clientToken,
                 requestUser: true
@@ -588,12 +588,12 @@ module.exports.completeChallengesMojang = function (account, cb) {
                 console.log("[Auth] Challenges:");
                 console.log(body);
 
-                var questions = JSON.parse(body);
-                var answers = [];
+                const questions = JSON.parse(body);
+                const answers = [];
                 if (questions && questions.length > 0) {
                     console.log(typeof questions);
                     if (account.multiSecurity) {
-                        var answersById = {};
+                        const answersById = {};
                         account.multiSecurity.forEach(function (answer) {
                             answersById[answer.id] = answer.answer;
                         });

@@ -1,7 +1,7 @@
 const auth = require("http-auth");
 
 module.exports = function (app, config) {
-    var basic = auth.basic({realm: "Monitor Area"}, function (user, pass, callback) {
+    const basic = auth.basic({realm: "Monitor Area"}, function (user, pass, callback) {
         callback(user === config.monitor.auth.user && pass === config.monitor.auth.pass);
     });
 

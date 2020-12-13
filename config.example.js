@@ -1,4 +1,4 @@
-var config = {};
+const config = {};
 
 config.port = 3017;
 config.server = "default";

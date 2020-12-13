@@ -26,7 +26,7 @@ module.exports.checkTraffic = function (req, res) {
                 if (!traffic) {// First request
                     fullfill(true, delay);
                 } else {
-                    var time = Date.now() / 1000;
+                    const time = Date.now() / 1000;
 
                     if ((traffic.lastRequest.getTime() / 1000) > time - delay) {
                         res.status(429).json({error: "Too many requests", nextRequest: time + delay + 10, delay: delay});

@@ -1,6 +1,6 @@
 const hasha = require("hasha");
 
-var imageHash = function (path, callback) {
+const imageHash = function (path, callback) {
     hasha.fromFile(path, {
         algorithm: "sha1"
     }).then(function (value) {

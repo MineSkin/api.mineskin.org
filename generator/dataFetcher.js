@@ -8,7 +8,7 @@ const cache = {};
 module.exports.cache = cache;
 
 setInterval(function () {
-    for (var id in cache) {
+    for (let id in cache) {
         if ((Date.now() / 1000) - cache[id].time > (cache[id].notFound ? 240 : 90)) {
             delete cache[id];
         }
@@ -38,7 +38,7 @@ module.exports.getSkinData = function (account, cb) {
     setTimeout(function () {
         if (cache.hasOwnProperty(account.uuid)) {
             console.warn("DATA FETCHER CACHE HIT! Current Size: " + Object.keys(cache).length);
-            var ca = cache[account.uuid];
+            const ca = cache[account.uuid];
             if(ca.notFound){
                 console.warn("Requested " + account.uuid + ", cached as NotFound " + ((Date.now() / 1000) - ca.time) + "s ago")
                 cb(null, null);
