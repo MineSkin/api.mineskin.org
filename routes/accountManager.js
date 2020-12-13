@@ -1,8 +1,8 @@
 module.exports = function (app, config) {
 
-    var util = require("../util");
-    var urls = require("../generator/urls");
-    var request = require("request").defaults({
+    const util = require("../util");
+    const urls = require("../generator/urls");
+    const request = require("request").defaults({
         headers: {
             "Accept": "application/json, text/plain, */*",
             "Accept-Encoding": "gzip, deflate",
@@ -11,15 +11,15 @@ module.exports = function (app, config) {
             "Content-Type": "application/json;charset=UTF-8"
         }
     });
-    var md5 = require("md5");
+    const md5 = require("md5");
     const authentication = require("../generator/authentication");
     const {URL} = require("url");
 
     var pendingDiscordLinks = {};
 
     // Schemas
-    var Account = require("../db/schemas/account").Account;
-    var Skin = require("../db/schemas/skin").Skin;
+    const Account = require("../db/schemas/account").Account;
+    const Skin = require("../db/schemas/skin").Skin;
 
 
     app.get("/accountManager/myAccount", function (req, res) {

@@ -1,8 +1,8 @@
-var uuid = require('uuid/v4');
-var md5 = require("md5");
-var urls = require("./urls");
-var fs = require("fs");
-var request = require("request").defaults({
+const uuid = require('uuid/v4');
+const md5 = require("md5");
+const urls = require("./urls");
+const fs = require("fs");
+const request = require("request").defaults({
     headers: {
         "Accept": "application/json, text/plain, */*",
         "Accept-Encoding": "gzip, deflate",
@@ -11,14 +11,14 @@ var request = require("request").defaults({
         "Content-Type": "application/json"
     }
 });
-var Util = require("../util");
-var config = require("../config");
+const Util = require("../util");
+const config = require("../config");
 const metrics = require("../metrics");
 
 // Schemas
-var Account = require("../db/schemas/account").Account;
-var Skin = require("../db/schemas/skin").Skin;
-var Traffic = require("../db/schemas/traffic").Traffic;
+const Account = require("../db/schemas/account").Account;
+const Skin = require("../db/schemas/skin").Skin;
+const Traffic = require("../db/schemas/traffic").Traffic;
 
 module.exports = {};
 

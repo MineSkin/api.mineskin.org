@@ -1,6 +1,6 @@
-var mongoose = require('mongoose')
+const mongoose = require('mongoose')
     , Schema = mongoose.Schema;
-var Int32 = require("mongoose-int32");
+const Int32 = require("mongoose-int32");
 var accountSchema = new Schema({
     id: {
         type: Number,

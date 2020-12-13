@@ -1,15 +1,15 @@
 module.exports = function (app) {
 
-    var http = require('http');
-    var https = require('https');
-    var request = require("request");
-    var fs = require('fs');
-    var tmp = require("tmp");
+    const http = require('http');
+    const https = require('https');
+    const request = require("request");
+    const fs = require('fs');
+    const tmp = require("tmp");
 
     // Schemas
-    var Account = require("../db/schemas/account").Account;
-    var Skin = require("../db/schemas/skin").Skin;
-    var Traffic = require("../db/schemas/traffic").Traffic;
+    const Account = require("../db/schemas/account").Account;
+    const Skin = require("../db/schemas/skin").Skin;
+    const Traffic = require("../db/schemas/traffic").Traffic;
 
     app.get("/render/:type(head|skin)", function (req, res) {
         var url = req.query.url;

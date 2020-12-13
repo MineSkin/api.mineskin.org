@@ -1,8 +1,8 @@
 // https://gist.github.com/vlucas/2bd40f62d20c1d49237a109d491974eb
 'use strict';
 
-var crypto = require('crypto');
-var config = require("./config");
+const crypto = require('crypto');
+const config = require("./config");
 
 var ENCRYPTION_KEY = config.crypto.key; // Must be 256 bytes (32 characters)
 var IV_LENGTH = 16; // For AES, this is always 16

@@ -1,9 +1,9 @@
 module.exports = function (app) {
 
     // Schemas
-    var Account = require("../db/schemas/account").Account;
-    var Skin = require("../db/schemas/skin").Skin;
-    var Traffic = require("../db/schemas/traffic").Traffic;
+    const Account = require("../db/schemas/account").Account;
+    const Skin = require("../db/schemas/skin").Skin;
+    const Traffic = require("../db/schemas/traffic").Traffic;
 
 
     // app.get("/admin/accounts",function (req,res) {
@@ -15,5 +15,5 @@ module.exports = function (app) {
     //         });
     //     })
     // })
-    
+
 }

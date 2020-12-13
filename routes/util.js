@@ -1,12 +1,12 @@
 module.exports = function (app) {
 
-    var https = require("https");
-    var request = require("request");
+    const https = require("https");
+    const request = require("request");
 
     // Schemas
-    var Account = require("../db/schemas/account").Account;
-    var Skin = require("../db/schemas/skin").Skin;
-    var Traffic = require("../db/schemas/traffic").Traffic;
+    const Account = require("../db/schemas/account").Account;
+    const Skin = require("../db/schemas/skin").Skin;
+    const Traffic = require("../db/schemas/traffic").Traffic;
 
     var userByNameCache = {};
     var nameByIdCache = {};

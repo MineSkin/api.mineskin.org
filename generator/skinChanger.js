@@ -1,9 +1,9 @@
-var request = require('request');
+const request = require('request');
 // request.debug=true;
-var urls = require("./urls");
-var fs = require("fs");
-var authentication = require("./authentication");
-var randomip = require("random-ip");
+const urls = require("./urls");
+const fs = require("fs");
+const authentication = require("./authentication");
+const randomip = require("random-ip");
 const metrics = require("../metrics");
 
 const config = require("../config");

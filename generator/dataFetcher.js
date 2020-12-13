@@ -1,4 +1,4 @@
-var request = require("request");
+const request = require("request");
 const config = require("../config");
 const metrics = require("../metrics");
 

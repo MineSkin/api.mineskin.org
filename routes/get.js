@@ -1,17 +1,17 @@
 module.exports = function (app) {
 
-    var Util = require("../util");
-    var skinChanger = require("../generator/skinChanger");
-    var auth = require("../generator/authentication");
-    var dataFetcher = require("../generator/dataFetcher")
-    var config = require("../config");
+    const Util = require("../util");
+    const skinChanger = require("../generator/skinChanger");
+    const auth = require("../generator/authentication");
+    const dataFetcher = require("../generator/dataFetcher")
+    const config = require("../config");
     const metrics = require("../metrics");
 
     // Schemas
-    var Account = require("../db/schemas/account").Account;
-    var Skin = require("../db/schemas/skin").Skin;
-    var Traffic = require("../db/schemas/traffic").Traffic;
-    var Stat = require("../db/schemas/stat").Stat;
+    const Account = require("../db/schemas/account").Account;
+    const Skin = require("../db/schemas/skin").Skin;
+    const Traffic = require("../db/schemas/traffic").Traffic;
+    const Stat = require("../db/schemas/stat").Stat;
 
     app.get("/get/delay", function (req, res) {
         var ip = req.realAddress;

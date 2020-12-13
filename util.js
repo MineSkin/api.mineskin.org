@@ -1,17 +1,17 @@
-var http = require('http');
-var fs = require('fs');
-var readChunk = require('read-chunk');
-var fileType = require("file-type");
-var imageSize = require("image-size");
-var config = require("./config");
-var crypto = require("crypto");
-var request = require("request");
+const http = require('http');
+const fs = require('fs');
+const readChunk = require('read-chunk');
+const fileType = require("file-type");
+const imageSize = require("image-size");
+const config = require("./config");
+const crypto = require("crypto");
+const request = require("request");
 
 // Schemas
-var Account = require("./db/schemas/account").Account;
-var Skin = require("./db/schemas/skin").Skin;
-var Traffic = require("./db/schemas/traffic").Traffic;
-var Stat = require("./db/schemas/stat").Stat;
+const Account = require("./db/schemas/account").Account;
+const Skin = require("./db/schemas/skin").Skin;
+const Traffic = require("./db/schemas/traffic").Traffic;
+const Stat = require("./db/schemas/stat").Stat;
 
 module.exports = {}
 

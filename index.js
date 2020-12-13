@@ -1,28 +1,28 @@
-var express = require('express');
+const express = require('express');
 var app = express();
-var http = require('http');
+const http = require('http');
 var server = http.Server(app);
-var session = require("express-session");
-var Util = require('./util');
-var bodyParser = require("body-parser");
-var expressValidator = require('express-validator')
-var fileUpload = require('express-fileupload');
-var mongoose = require("mongoose");
-var cookieParser = require("cookie-parser");
-var Cookies = require("cookies");
-var extend = require('util')._extend
+const session = require("express-session");
+const Util = require('./util');
+const bodyParser = require("body-parser");
+const expressValidator = require('express-validator')
+const fileUpload = require('express-fileupload');
+const mongoose = require("mongoose");
+const cookieParser = require("cookie-parser");
+const Cookies = require("cookies");
+const extend = require('util')._extend
 var restClient = new (require("node-rest-client")).Client()
-var unirest = require("unirest");
-var crypto = require('crypto');
-var fs = require('fs')
-var morgan = require('morgan')
-var rfs = require("rotating-file-stream");
-var rateLimit = require("express-rate-limit");
-var Optimus = require("optimus-js");
-var puller = require("express-git-puller");
-var path = require('path')
-var colors = require("colors");
-var config = require("./config");
+const unirest = require("unirest");
+const crypto = require('crypto');
+const fs = require('fs')
+const morgan = require('morgan')
+const rfs = require("rotating-file-stream");
+const rateLimit = require("express-rate-limit");
+const Optimus = require("optimus-js");
+const puller = require("express-git-puller");
+const path = require('path')
+const colors = require("colors");
+const config = require("./config");
 var port = process.env.PORT || config.port || 3014;
 
 console.log("\n" +
@@ -70,7 +70,7 @@ app.use(function (req, res, next) {
 
 app.use("/.well-known",express.static(".well-known"));
 
-var swStats = require('swagger-stats');
+const swStats = require('swagger-stats');
 app.use(swStats.getMiddleware( config.swagger));
 
 // create a rotating write stream
@@ -117,7 +117,7 @@ colors.setTheme({
 
 // Databse
 require("./db/db")(mongoose, config);
-var Skin = require("./db/schemas/skin").Skin;
+const Skin = require("./db/schemas/skin").Skin;
 
 // API methods
 app.get("/", function (req, res) {

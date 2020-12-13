@@ -1,4 +1,4 @@
-var hasha = require("hasha");
+const hasha = require("hasha");
 
 var imageHash = function (path, callback) {
     hasha.fromFile(path, {

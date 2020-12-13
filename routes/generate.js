@@ -3,20 +3,20 @@ module.exports = function (app, config, optimus, limiter) {
 
     var SKIN_COUNTER = 1000000;
 
-    var remoteFileSize = require("remote-file-size");
-    var Util = require("../util");
-    var http = require('http');
-    var https = require('https');
-    var fs = require('fs');
-    var fileType = require("file-type");
-    var imageSize = require("image-size");
-    var tmp = require("tmp");
+    const remoteFileSize = require("remote-file-size");
+    const Util = require("../util");
+    const http = require('http');
+    const https = require('https');
+    const fs = require('fs');
+    const fileType = require("file-type");
+    const imageSize = require("image-size");
+    const tmp = require("tmp");
     tmp.setGracefulCleanup();
-    var md5 = require("md5");
-    var uuid = require("uuid/v4");
-    var mongoose = require("mongoose");
-    var request = require("request");
-    var hasha = require("hasha");
+    const md5 = require("md5");
+    const uuid = require("uuid/v4");
+    const mongoose = require("mongoose");
+    const request = require("request");
+    const hasha = require("hasha");
     const {URL} = require("url");
     const metrics = require("../metrics");
 
@@ -38,15 +38,15 @@ module.exports = function (app, config, optimus, limiter) {
     };
 
 
-    var authentication = require("../generator/authentication");
-    var dataFetcher = require("../generator/dataFetcher");
-    var skinChanger = require("../generator/skinChanger");
+    const authentication = require("../generator/authentication");
+    const dataFetcher = require("../generator/dataFetcher");
+    const skinChanger = require("../generator/skinChanger");
 
     // Schemas
-    var Account = require("../db/schemas/account").Account;
-    var Skin = require("../db/schemas/skin").Skin;
-    var Traffic = require("../db/schemas/traffic").Traffic;
-    var Stat = require("../db/schemas/stat").Stat;
+    const Account = require("../db/schemas/account").Account;
+    const Skin = require("../db/schemas/skin").Skin;
+    const Traffic = require("../db/schemas/traffic").Traffic;
+    const Stat = require("../db/schemas/stat").Stat;
 
 
     app.post("/generate/url", limiter, function (req, res) {

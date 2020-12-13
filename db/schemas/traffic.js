@@ -1,4 +1,4 @@
-var mongoose = require('mongoose')
+const mongoose = require('mongoose')
     , Schema = mongoose.Schema;
 var trafficSchema = new Schema(
     {
