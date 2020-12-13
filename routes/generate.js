@@ -1,7 +1,7 @@
 module.exports = function (app, config, optimus, limiter) {
 
 
-    var SKIN_COUNTER = 1000000;
+    let SKIN_COUNTER = 1000000;
 
     const remoteFileSize = require("remote-file-size");
     const Util = require("../util");
@@ -27,7 +27,7 @@ module.exports = function (app, config, optimus, limiter) {
         "imgur.com"
     ]
 
-    var imageHash = function (path, callback) {
+    const imageHash = function (path, callback) {
         hasha.fromFile(path, {
             algorithm: "sha1"
         }).then(function (value) {
@@ -50,10 +50,10 @@ module.exports = function (app, config, optimus, limiter) {
 
 
     app.post("/generate/url", limiter, function (req, res) {
-        var url = req.body.url || req.query.url;
-        var model = Util.validateModel(req.body.model || req.query.model || "steve");
-        var visibility = parseInt(req.body.visibility || req.query.visibility) || 0;
-        var name = req.body.name || req.query.name || "";
+        const url = req.body.url || req.query.url;
+        const model = Util.validateModel(req.body.model || req.query.model || "steve");
+        const visibility = parseInt(req.body.visibility || req.query.visibility) || 0;
+        const name = req.body.name || req.query.name || "";
 
         console.log(req.body)
         console.log(req.query)
@@ -73,7 +73,7 @@ module.exports = function (app, config, optimus, limiter) {
         }
 
         function internalUrlCheckCallback() {
-            var genStart = Date.now();
+            const genStart = Date.now();
 
             Util.checkTraffic(req, res).then(function (allowed, generatorDelay) {
                 if (!allowed) return;
@@ -91,7 +91,7 @@ module.exports = function (app, config, optimus, limiter) {
                                 return;
                             }
 
-                            var tmpName = "t" + Date.now() + "url";
+                            const tmpName = "t" + Date.now() + "url";
                             tmp.file({name: tmpName, dir: "/tmp/url"}, function (err, path, fd, fileCleanup) {
                                 console.log("url hash tmp name: " + path)
                                 if (err) {
@@ -136,7 +136,7 @@ module.exports = function (app, config, optimus, limiter) {
                                                     close(fd);
                                                     fileCleanup();
                                                 } else {
-                                                    var validImage = Util.validateImage(req, res, path);
+                                                    const validImage = Util.validateImage(req, res, path);
                                                     // cleanup();
                                                     if (validImage) {
                                                         skinChanger.getAvailableAccount(req, res, function (account) {
@@ -185,7 +185,7 @@ module.exports = function (app, config, optimus, limiter) {
                                                                             }, config.genSaveDelay * 1000)
                                                                         })
                                                                     } else {
-                                                                        var reason = errorCause || "skin_data_generation_failed";
+                                                                        const reason = errorCause || "skin_data_generation_failed";
                                                                         res.status(500).json({error: "Failed to generate skin data", err: result, accountId: account.id, reason: reason});
                                                                         console.log(("Failed to generate skin data").warn)
 
@@ -226,8 +226,8 @@ module.exports = function (app, config, optimus, limiter) {
             url.indexOf("http://mineskin.org/") === 0 ||
             url.indexOf("https://minesk.in/") === 0 ||
             url.indexOf("http://minesk.in/") === 0) {
-            var split = url.split("/");
-            var idPart = split[split.length - 1];
+            const split = url.split("/");
+            const idPart = split[split.length - 1];
             if (idPart.length > 0 && /^\d+$/.test(idPart)) {
                 Skin.findOne({id: idPart}).exec(function (err, skin) {
                     if (err) return console.log(err);
@@ -285,9 +285,9 @@ module.exports = function (app, config, optimus, limiter) {
             res.status(400).json({error: "Missing files"});
             return;
         }
-        var model = Util.validateModel(req.body.model || req.query.model || "steve");
-        var visibility = parseInt(req.body.visibility || req.query.visibility) || 0;
-        var name = req.body.name || req.query.name || "";
+        const model = Util.validateModel(req.body.model || req.query.model || "steve");
+        const visibility = parseInt(req.body.visibility || req.query.visibility) || 0;
+        const name = req.body.name || req.query.name || "";
 
         console.log(req.body)
         console.log(req.query)
@@ -297,18 +297,18 @@ module.exports = function (app, config, optimus, limiter) {
         console.log(("Visibility: " + visibility).debug);
         console.log(("Name:       " + name).debug);
 
-        var fileUpload = req.files.file;
+        const fileUpload = req.files.file;
         if (!fileUpload) {
             res.status(400).json({error: "Missing file"});
             return;
         }
 
-        var genStart = Date.now();
+        const genStart = Date.now();
 
         Util.checkTraffic(req, res).then(function (allowed, generatorDelay) {
             if (!allowed) return;
 
-            var tmpName = "t" + Date.now() + "upl";
+            const tmpName = "t" + Date.now() + "upl";
             tmp.file({name: tmpName, dir: "/tmp/upl"}, function (err, path, fd, fileCleanup) {
                 console.log("upload hash tmp name: " + path)
                 if (err) {
@@ -347,7 +347,7 @@ module.exports = function (app, config, optimus, limiter) {
                                     }
 
 
-                                    var validImage = Util.validateImage(req, res, path);
+                                    const validImage = Util.validateImage(req, res, path);
                                     // cleanup();
                                     if (validImage) {
                                         skinChanger.getAvailableAccount(req, res, function (account) {
@@ -395,7 +395,7 @@ module.exports = function (app, config, optimus, limiter) {
                                                             }, config.genSaveDelay * 1000)
                                                         })
                                                     } else {
-                                                        var reason = errorCause || "skin_data_generation_failed";
+                                                        const reason = errorCause || "skin_data_generation_failed";
                                                         res.status(500).json({error: "Failed to upload skin data (" + result + ")", err: result, accountId: account.id, reason: reason});
                                                         console.log(("Failed to upload skin data").warn)
 
@@ -416,16 +416,16 @@ module.exports = function (app, config, optimus, limiter) {
     });
 
     app.get("/generate/user/:uuid", limiter, function (req, res) {
-        var visibility = parseInt(req.body.visibility || req.query.visibility) || 0;
-        var name = req.body.name || req.query.name || "";
-        var uuid = req.params.uuid;
+        const visibility = parseInt(req.body.visibility || req.query.visibility) || 0;
+        const name = req.body.name || req.query.name || "";
+        const uuid = req.params.uuid;
 
         console.log(("USER:       " + uuid).debug);
         console.log(("Visibility: " + visibility).debug);
         console.log(("Name:       " + name).debug);
 
-        var shortUuid = uuid;
-        var longUuid = uuid;
+        let shortUuid = uuid;
+        let longUuid = uuid;
         if (shortUuid.indexOf("-") > -1) {
             shortUuid = shortUuid.replace(/-/g, "");
         }
@@ -438,7 +438,7 @@ module.exports = function (app, config, optimus, limiter) {
             return;
         }
 
-        var genStart = Date.now();
+        const genStart = Date.now();
 
         Util.checkTraffic(req, res).then(function (allowed, generatorDelay) {
             if (!allowed) return;
@@ -469,7 +469,7 @@ module.exports = function (app, config, optimus, limiter) {
                 };
                 getAndSaveSkinData({uuid: shortUuid}, skinOptions, hashFromMojangTexture, null, longUuid, "t" + Date.now() + "usr", genStart, function (err, skin) {
                     if (err) {
-                        var reason = "skin_data_fetch_failed";
+                        const reason = "skin_data_fetch_failed";
                         res.status(500).json({error: "Failed to get skin data", err: err, reason: reason});
                         console.log(("Failed to download skin data (USER)").warn)
 
@@ -495,7 +495,7 @@ module.exports = function (app, config, optimus, limiter) {
                 return;
             }
 
-            var file = fs.createWriteStream(path);
+            const file = fs.createWriteStream(path);
             console.log("Downloading user texture from " + skinTexture.url + " to " + path);
             request(skinTexture.url).pipe(file)
                 .on("error", function (err) {
@@ -539,10 +539,10 @@ module.exports = function (app, config, optimus, limiter) {
                 return;
             }
 
-            var textures = JSON.parse(new Buffer(skinData.value, 'base64').toString('utf8')).textures;
+            const textures = JSON.parse(new Buffer(skinData.value, 'base64').toString('utf8')).textures;
             console.log(JSON.stringify(textures).debug);
-            var skinTexture = textures.SKIN;
-            var capeTexture = textures.CAPE || {url: undefined};
+            const skinTexture = textures.SKIN;
+            const capeTexture = textures.CAPE || {url: undefined};
             console.log("Skin: " + JSON.stringify(skinTexture));
             console.log("Cape: " + JSON.stringify(capeTexture));
 
@@ -563,8 +563,8 @@ module.exports = function (app, config, optimus, limiter) {
                         cb(null, skin);
                     });
                 } else {
-                    var fileHashCallback = function (fileHash) {
-                        var mojangHashCallback = function (mojangHash, mojTmp) {
+                    const fileHashCallback = function (fileHash) {
+                        const mojangHashCallback = function (mojangHash, mojTmp) {
                             if (options.type !== "user" && fileHash !== mojangHash) {
                                 console.error("IMAGE HASH AND TEXTURE HASH DO NOT MATCH");
                                 console.warn("Image:   " + fileHash + (options.tmpPath ? " [" + options.tmpPath + "]" : "") + (options.genUrl ? " (" + options.genUrl + ")" : ""));
@@ -595,14 +595,14 @@ module.exports = function (app, config, optimus, limiter) {
                                     return;
                                 }
 
-                                var rand = Math.ceil((Date.now() - 1500000000000) + Math.random());
-                                var newId = optimus.encode(rand);
+                                const rand = Math.ceil((Date.now() - 1500000000000) + Math.random());
+                                const newId = optimus.encode(rand);
                                 Skin.findOne({id: newId}, "id", function (err, existingId) {
                                     if (err) return console.log(err);
                                     if (existingId) {// Duplicate ID!
                                         makeIdAndSave(tryN + 1);
                                     } else {
-                                        var skin = new Skin({
+                                        const skin = new Skin({
                                             // '_id': mongoose.Types.ObjectId(md5(fileHash + options.name + Date.now())),
                                             id: newId,
                                             hash: fileHash,

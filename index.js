@@ -1,7 +1,7 @@
 const express = require('express');
-var app = express();
+const app = express();
 const http = require('http');
-var server = http.Server(app);
+const server = http.Server(app);
 const session = require("express-session");
 const Util = require('./util');
 const bodyParser = require("body-parser");
@@ -11,7 +11,7 @@ const mongoose = require("mongoose");
 const cookieParser = require("cookie-parser");
 const Cookies = require("cookies");
 const extend = require('util')._extend
-var restClient = new (require("node-rest-client")).Client()
+const restClient = new (require("node-rest-client")).Client()
 const unirest = require("unirest");
 const crypto = require('crypto');
 const fs = require('fs')
@@ -23,7 +23,7 @@ const puller = require("express-git-puller");
 const path = require('path')
 const colors = require("colors");
 const config = require("./config");
-var port = process.env.PORT || config.port || 3014;
+const port = process.env.PORT || config.port || 3014;
 
 console.log("\n" +
     "  ==== STARTING UP ==== " +
@@ -74,7 +74,7 @@ const swStats = require('swagger-stats');
 app.use(swStats.getMiddleware( config.swagger));
 
 // create a rotating write stream
-var accessLogStream = rfs('access.log', {
+const accessLogStream = rfs('access.log', {
     interval: '1d', // rotate daily
     path: path.join(__dirname, 'log'),
     compress: "gzip"
@@ -86,7 +86,7 @@ morgan.token('remote-addr', function (req) {
     return req.headers['x-real-ip'] || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 });
 
-var updatingApp = false;
+let updatingApp = false;
 config.puller.beforeRun = function(req, res){
     updatingApp = true;
 };

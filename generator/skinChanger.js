@@ -15,7 +15,7 @@ const Traffic = require("../db/schemas/traffic").Traffic;
 
 module.exports = {};
 
-var requestQueue = [];
+const requestQueue = [];
 module.exports.requestQueue = requestQueue;
 setInterval(function () {
     var next = requestQueue.shift();
@@ -90,7 +90,7 @@ module.exports.findExistingSkinForTextureUrl = function (url, name, model, visib
 
 
 module.exports.getAvailableAccount = function (req, res, cb) {
-    var time = Date.now() / 1000;
+    const time = Date.now() / 1000;
     Account.findOne({enabled: true, requestServer: {$in: [null, "default", config.server]}, lastUsed: {'$lt': (time - 100)}, forcedTimeoutAt: {'$lt': (time - 500)}, errorCounter: {'$lt': (config.errorThreshold || 10)}, timeAdded: {'$lt': time - 60}})
         .sort({lastUsed: 1, lastSelected: 1, sameTextureCounter: 1}).exec(function (err, account) {
         if (err) return console.log(err);

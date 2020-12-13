@@ -1,6 +1,6 @@
 const mongoose = require('mongoose')
     , Schema = mongoose.Schema;
-var skinSchema = new Schema({
+const skinSchema = new Schema({
     id: {
         type: Number,
         index: true,

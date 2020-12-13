@@ -8,8 +8,8 @@ module.exports = function (app) {
     const Skin = require("../db/schemas/skin").Skin;
     const Traffic = require("../db/schemas/traffic").Traffic;
 
-    var userByNameCache = {};
-    var nameByIdCache = {};
+    const userByNameCache = {};
+    const nameByIdCache = {};
 
     module.exports.cache = {
         byName: userByNameCache,
@@ -20,12 +20,12 @@ module.exports = function (app) {
         console.log("[Util] ByName cache size: " + Object.keys(userByNameCache).length);
         console.log("[Util] ById cache size: " + Object.keys(nameByIdCache).length);
 
-        for (var name in userByNameCache) {
+        for (let name in userByNameCache) {
             if ((Date.now() / 1000) - userByNameCache[name].time > 240) {
                 delete userByNameCache[name];
             }
         }
-        for (var id in nameByIdCache) {
+        for (let id in nameByIdCache) {
             if ((Date.now() / 1000) - nameByIdCache[id].time > 240) {
                 delete userByNameCache[id];
             }
@@ -37,7 +37,7 @@ module.exports = function (app) {
             res.json({error: "invalid name"});
             return;
         }
-        var name = req.params.name.toLowerCase();
+        const name = req.params.name.toLowerCase();
         if (userByNameCache.hasOwnProperty(name)) {
             res.json(userByNameCache[name]);
             return;
@@ -45,7 +45,7 @@ module.exports = function (app) {
         request("https://api.mojang.com/users/profiles/minecraft/" + name, function (err, response, body) {
             console.log(("" + body).debug);
 
-            var result = {
+            const result = {
                 valid: false,
                 uuid: null,
                 name: req.params.name
@@ -78,7 +78,7 @@ module.exports = function (app) {
             res.json({error: "invalid uuid"});
             return;
         }
-        var uuid = req.params.uuid.toLowerCase();
+        const uuid = req.params.uuid.toLowerCase();
         if (nameByIdCache.hasOwnProperty(uuid)) {
             res.json(nameByIdCache[uuid]);
             return;
@@ -86,7 +86,7 @@ module.exports = function (app) {
         request("https://api.mojang.com/user/profiles/" + uuid + "/names", function (err, response, body) {
             console.log(("" + body).debug);
 
-            var result = {
+            const result = {
                 uuid: req.params.uuid,
                 name: ""
             };

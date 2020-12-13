@@ -282,7 +282,7 @@ module.exports = function (app) {
     });
 
     app.get("/get/forTexture/:value/:signature?", function (req, res) {
-        var search = {value: req.params.value};
+        const search = {value: req.params.value};
         if (req.params.signature) {
             search.signature = req.params.signature;
         }
@@ -297,12 +297,12 @@ module.exports = function (app) {
     });
 
     app.get("/get/list/:page?", function (req, res) {
-        var page = Math.max(req.params.page || 1, 1);
-        var size = Math.max(req.query.size || 16, 1);
+        const page = Math.max(req.params.page || 1, 1);
+        let size = Math.max(req.query.size || 16, 1);
         size = Math.min(64, size);
-        var sort = req.query.sort || -1;
+        const sort = req.query.sort || -1;
 
-        var query = {visibility: 0};
+        const query = {visibility: 0};
         if (req.query.filter && req.query.filter.length > 0) {
             query.name = {'$regex': ".*" + req.query.filter + ".*"};
         }

@@ -1,7 +1,7 @@
 const mongoose = require('mongoose')
     , Schema = mongoose.Schema;
 const Int32 = require("mongoose-int32");
-var accountSchema = new Schema({
+const accountSchema = new Schema({
     id: {
         type: Number,
         index: true

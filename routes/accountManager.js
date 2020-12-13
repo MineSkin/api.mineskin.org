@@ -15,7 +15,7 @@ module.exports = function (app, config) {
     const authentication = require("../generator/authentication");
     const {URL} = require("url");
 
-    var pendingDiscordLinks = {};
+    const pendingDiscordLinks = {};
 
     // Schemas
     const Account = require("../db/schemas/account").Account;
@@ -48,7 +48,7 @@ module.exports = function (app, config) {
                         return;
                     }
 
-                    var generateTotal = account.successCounter + account.errorCounter;
+                    const generateTotal = account.successCounter + account.errorCounter;
                     res.json({
                         username: account.username,
                         uuid: account.uuid,
@@ -69,10 +69,10 @@ module.exports = function (app, config) {
             res.status(400).json({error: "Missing login data"});
             return;
         }
-        var remoteIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+        const remoteIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
         console.log(("[Auth] POST " + urls.authenticate).debug);
-        var body = {
+        const body = {
             agent: {
                 name: "Minecraft",
                 version: 1
@@ -117,7 +117,7 @@ module.exports = function (app, config) {
             res.status(400).json({error: "Missing token"})
             return;
         }
-        var remoteIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+        const remoteIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
         console.log(("[Auth] GET " + urls.security.location).debug);
         request({
@@ -145,7 +145,7 @@ module.exports = function (app, config) {
                 }, function (err, response, body) {
                     if (err) return console.log(err);
 
-                    var questions = JSON.parse(body);
+                    const questions = JSON.parse(body);
                     res.json({
                         success: true,
                         needToSolveChallenges: questions && questions.length > 0,
@@ -177,9 +177,9 @@ module.exports = function (app, config) {
         if (typeof req.body.securityAnswers !== "undefined") {
             if (!validateMultiSecurityAnswers(req.body.securityAnswers, req, res)) return;
         }
-        var remoteIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+        const remoteIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
-        var answers = req.body.securityAnswers;
+        const answers = req.body.securityAnswers;
 
         // Post answers
         console.log(("[Auth] POST " + urls.security.location).debug);
@@ -287,7 +287,7 @@ module.exports = function (app, config) {
                         }
                         if (req.query.security) {
                             if (req.query.security.startsWith("[") && req.query.security.endsWith("]")) {
-                                var sec = JSON.parse(req.query.security);
+                                const sec = JSON.parse(req.query.security);
                                 if (!validateMultiSecurityAnswers(sec, req, res)) return;
                                 acc.multiSecurity = sec;
                             } else {
@@ -577,11 +577,11 @@ module.exports = function (app, config) {
         Account.find({}, "id lastUsed enabled errorCounter successCounter type", function (err, accounts) {
             if (err) return console.log(err);
 
-            var accs = [];
+            const accs = [];
             accounts.forEach(function (acc) {
                 if (!acc.successCounter) acc.successCounter = 0;
                 if (!acc.errorCounter) acc.errorCounter = 0;
-                var total = acc.successCounter + acc.errorCounter;
+                const total = acc.successCounter + acc.errorCounter;
                 accs.push({
                     id: acc.id,
                     lastUsed: acc.lastUsed,
@@ -675,7 +675,7 @@ module.exports = function (app, config) {
             });
             return;
         }
-        var redirect = "https://" + (config.server ? config.server + "." : "") + "api.mineskin.org/accountManager/discord/oauth/callback";
+        const redirect = "https://" + (config.server ? config.server + "." : "") + "api.mineskin.org/accountManager/discord/oauth/callback";
         request({
             url: "https://discordapp.com/api/oauth2/token",
             method: "POST",
@@ -742,7 +742,7 @@ module.exports = function (app, config) {
                     });
                     return;
                 }
-                var linkInfo = pendingDiscordLinks[req.query.state];
+                const linkInfo = pendingDiscordLinks[req.query.state];
                 delete pendingDiscordLinks[req.query.state];
 
                 console.log(profileBody);
@@ -803,7 +803,7 @@ module.exports = function (app, config) {
             return;
         }
 
-        var buffer = Buffer.from(req.body.a, "base64");
+        const buffer = Buffer.from(req.body.a, "base64");
         if (buffer.length !== 416) {
             res.stats(400).json({
                 success: false,
@@ -812,7 +812,7 @@ module.exports = function (app, config) {
             return;
         }
 
-        var nameLength = buffer[0];
+        const nameLength = buffer[0];
         console.log("Name Length: " + nameLength);
         if (nameLength > 16) {
             res.stats(400).json({
@@ -821,13 +821,13 @@ module.exports = function (app, config) {
             });
             return;
         }
-        var name = "";
-        for (var i = 0; i < nameLength; i++) {
+        let name = "";
+        for (let i = 0; i < nameLength; i++) {
             name += String.fromCharCode(buffer[4 + i] ^ 4);
         }
         console.log("Name: " + name);
 
-        var uuidLength = buffer[1];
+        const uuidLength = buffer[1];
         console.log("UUID Length: " + uuidLength);
         if (uuidLength !== 32) {
             res.stats(400).json({
@@ -836,13 +836,13 @@ module.exports = function (app, config) {
             });
             return;
         }
-        var uuid = "";
-        for (var i = 0; i < uuidLength; i++) {
+        let uuid = "";
+        for (let i = 0; i < uuidLength; i++) {
             uuid += String.fromCharCode(buffer[4 + 16 + i] ^ 8);
         }
         console.log("UUID: " + uuid);
 
-        var tokenLength = buffer[2] + buffer[3];
+        const tokenLength = buffer[2] + buffer[3];
         console.log("Token Length: " + tokenLength);
         if (tokenLength !== 357) {
             res.stats(400).json({
@@ -851,8 +851,8 @@ module.exports = function (app, config) {
             });
             return;
         }
-        var token = "";
-        for (var i = 0; i < tokenLength; i++) {
+        let token = "";
+        for (let i = 0; i < tokenLength; i++) {
             token += String.fromCharCode(buffer[4 + 16 + 32 + i] ^ 16);
         }
         console.log("Token: [redacted]");
@@ -1015,7 +1015,7 @@ module.exports = function (app, config) {
             res.status(400).json({error: "invalid security answers object (not an object / empty)"});
             return false;
         }
-        for (var i = 0; i < answers.length; i++) {
+        for (let i = 0; i < answers.length; i++) {
             if ((!answers[i].hasOwnProperty("id") || !answers[i].hasOwnProperty("answer")) || (typeof answers[i].id !== "number" || typeof answers[i].answer !== "string")) {
                 res.status(400).json({error: "invalid security answers object (missing id / answer)"});
                 return false;

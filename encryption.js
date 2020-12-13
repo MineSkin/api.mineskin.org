@@ -4,13 +4,13 @@
 const crypto = require('crypto');
 const config = require("./config");
 
-var ENCRYPTION_KEY = config.crypto.key; // Must be 256 bytes (32 characters)
-var IV_LENGTH = 16; // For AES, this is always 16
+const ENCRYPTION_KEY = config.crypto.key; // Must be 256 bytes (32 characters)
+const IV_LENGTH = 16; // For AES, this is always 16
 
 module.exports.encrypt = function (text) {
-    var iv = crypto.randomBytes(IV_LENGTH);
-    var cipher = crypto.createCipheriv(config.crypto.algorithm, new Buffer(ENCRYPTION_KEY), iv);
-    var encrypted = cipher.update(text);
+    const iv = crypto.randomBytes(IV_LENGTH);
+    const cipher = crypto.createCipheriv(config.crypto.algorithm, new Buffer(ENCRYPTION_KEY), iv);
+    let encrypted = cipher.update(text);
 
     encrypted = Buffer.concat([encrypted, cipher.final()]);
 
@@ -18,11 +18,11 @@ module.exports.encrypt = function (text) {
 }
 
 module.exports.decrypt = function (text) {
-    var textParts = new Buffer(text, 'base64').toString('ascii').split(':');
-    var iv = new Buffer(textParts.shift(), 'hex');
-    var encryptedText = new Buffer(textParts.join(':'), 'hex');
-    var decipher = crypto.createDecipheriv(config.crypto.algorithm, new Buffer(ENCRYPTION_KEY), iv);
-    var decrypted = decipher.update(encryptedText);
+    const textParts = new Buffer(text, 'base64').toString('ascii').split(':');
+    const iv = new Buffer(textParts.shift(), 'hex');
+    const encryptedText = new Buffer(textParts.join(':'), 'hex');
+    const decipher = crypto.createDecipheriv(config.crypto.algorithm, new Buffer(ENCRYPTION_KEY), iv);
+    let decrypted = decipher.update(encryptedText);
 
     decrypted = Buffer.concat([decrypted, decipher.final()]);
 

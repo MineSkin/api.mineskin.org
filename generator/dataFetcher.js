@@ -4,7 +4,7 @@ const metrics = require("../metrics");
 
 module.exports = {};
 
-var cache = {};
+const cache = {};
 module.exports.cache = cache;
 
 setInterval(function () {
@@ -65,8 +65,8 @@ module.exports.getSkinData = function (account, cb) {
                     };
                     return;
                 }
-                var json = JSON.parse(body);
-                var data = {
+                const json = JSON.parse(body);
+                const data = {
                     value: json.properties[0].value,
                     signature: json.properties[0].signature,
                     raw: json,

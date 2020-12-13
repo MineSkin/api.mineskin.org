@@ -17,7 +17,7 @@ module.exports = {}
 
 module.exports.checkTraffic = function (req, res) {
     return new Promise(function (fullfill) {
-        var ip = req.realAddress;
+        const ip = req.realAddress;
         console.log(("IP: " + ip).debug);
 
         module.exports.getGeneratorDelay().then(function (delay) {
@@ -42,15 +42,15 @@ module.exports.checkTraffic = function (req, res) {
 };
 
 module.exports.validateImage = function (req, res, file) {
-    var stats = fs.statSync(file);
-    var size = stats.size;
+    const stats = fs.statSync(file);
+    const size = stats.size;
     if (size <= 0 || size > 16000) {
         res.status(400).json({error: "Invalid file size (" + size + ")"});
         return false;
     }
 
     try {
-        var dimensions = imageSize(file);
+        const dimensions = imageSize(file);
         console.log(("Dimensions: " + JSON.stringify(dimensions)).debug);
         if ((dimensions.width !== 64) || (dimensions.height !== 64 && dimensions.height !== 32)) {
             res.status(400).json({error: "Invalid skin dimensions. Must be 64x32 or 64x64. (Were " + dimensions.width + "x" + dimensions.height + ")"});
@@ -62,8 +62,8 @@ module.exports.validateImage = function (req, res, file) {
         return;
     }
 
-    var imageBuffer = readChunk.sync(file, 0, 4100);
-    var type = fileType(imageBuffer);
+    const imageBuffer = readChunk.sync(file, 0, 4100);
+    const type = fileType(imageBuffer);
     if (!type || type.ext !== "png" || type.mime !== "image/png") {
         res.status(400).json({error: "Invalid image type. Must be PNG. (Is " + type.ext + " / " + type.mime + ")"});
         return false;
@@ -78,14 +78,14 @@ module.exports.getGeneratorDelay = function () {
         Account.count({enabled: true}, function (err, count) {
             if (err) return console.log(err);
 
-            var delay = Math.round(config.generateDelay / Math.max(1, count));
+            const delay = Math.round(config.generateDelay / Math.max(1, count));
             fullfill(delay);
         })
     })
 };
 
 module.exports.skinToJson = function (skin, delay, req) {
-    var d = {
+    const d = {
         id: skin.id,
         idStr: "" + skin.id,
         name: skin.name,
@@ -120,7 +120,7 @@ module.exports.skinToJson = function (skin, delay, req) {
 
 // https://coderwall.com/p/_g3x9q/how-to-check-if-javascript-object-is-empty
 module.exports.isEmpty = function (obj) {
-    for (var key in obj) {
+    for (let key in obj) {
         if (obj.hasOwnProperty(key))
             return false;
     }
@@ -214,7 +214,7 @@ module.exports.increaseStat = function (key, amount, cb) {
 };
 
 module.exports.getVia = function (req) {
-    var via = "api";
+    let via = "api";
     if (req.headers["referer"]) {
         if (req.headers["referer"].indexOf("mineskin.org") > -1) {
             via = "website";

@@ -1,6 +1,6 @@
 const mongoose = require('mongoose')
     , Schema = mongoose.Schema;
-var trafficSchema = new Schema(
+const trafficSchema = new Schema(
     {
         ip: String,
         lastRequest: {

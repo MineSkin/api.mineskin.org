@@ -12,12 +12,12 @@ module.exports = function (app) {
     const Traffic = require("../db/schemas/traffic").Traffic;
 
     app.get("/render/:type(head|skin)", function (req, res) {
-        var url = req.query.url;
+        const url = req.query.url;
         if (!url) {
             res.status(400).json({error: "Missing URL"});
             return;
         }
-        var options = req.query.options || "&aa=true";
+        const options = req.query.options || "&aa=true";
 
         doRender(req, res, url, req.params.type, options);
     })
@@ -26,7 +26,7 @@ module.exports = function (app) {
         Skin.findOne({id: req.params.id}).lean().exec( function (err, skin) {
             if (err) return console.log(err);
             if (skin) {
-                var options = req.query.options || "&aa=true";
+                const options = req.query.options || "&aa=true";
 
                 doRender(req, res, skin.url, req.params.type, options);
             } else {
