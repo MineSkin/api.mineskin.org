@@ -23,6 +23,11 @@ setInterval(function () {
         try {
             const d = new Date().toUTCString();
             request(next.options, function (err, res, body) {
+                try {
+                    metrics.requestsMetric(next.options, res).inc();
+                } catch (e) {
+                    console.warn(e);
+                }
                 // fs.appendFileSync("requests.log", "[" + d  + "] SKIN "+ (next.options.method||"GET")+" " + (next.options.url||next.options.uri) + " => "+res.statusCode+"\n", "utf8");
                 next.callback(err, res, body);
             });

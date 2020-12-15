@@ -14,6 +14,7 @@ module.exports = function (app, config) {
     const md5 = require("md5");
     const authentication = require("../generator/authentication");
     const {URL} = require("url");
+    const metrics = require("../metrics");
 
     const pendingDiscordLinks = {};
 

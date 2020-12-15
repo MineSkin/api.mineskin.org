@@ -32,6 +32,11 @@ setInterval(function () {
             const d = new Date().toUTCString();
             request(next.options, function (err, res, body) {
                 fs.appendFileSync("requests.log", "[" + d + "] AUTH " + (next.options.method || "GET") + " " + (next.options.url || next.options.uri) + " => " + res.statusCode + "\n", "utf8");
+                try {
+                    metrics.requestsMetric(next.options, res).inc()
+                } catch (e) {
+                    console.warn(e);
+                }
                 next.callback(err, res, body);
             });
         } catch (e) {
