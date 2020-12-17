@@ -127,16 +127,6 @@ app.get("/", function (req, res) {
     res.json({msg: "Hi!"});
 });
 
-app.get("/encrypt/:text", function (req, res) {
-    if (!config.crypto.reqToken || req.query.key !== config.crypto.reqToken) return;
-    res.json({enc: Util.crypto.encrypt(req.params.text)});
-});
-
-app.get("/decrypt/:text", function (req, res) {
-    if (!config.crypto.reqToken || req.query.key !== config.crypto.reqToken) return;
-    res.json({dec: Util.crypto.decrypt(req.params.text)});
-});
-
 
 app.post("/testing/upload_tester_result", function (req, res) {
     if (!config.testing.testerToken || req.body.token !== config.testing.testerToken) return;
