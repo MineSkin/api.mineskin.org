@@ -7,6 +7,7 @@ const Util = require('./util');
 const bodyParser = require("body-parser");
 const expressValidator = require('express-validator')
 const fileUpload = require('express-fileupload');
+const Sentry = require("@sentry/node");
 const mongoose = require("mongoose");
 const cookieParser = require("cookie-parser");
 const Cookies = require("cookies");
@@ -32,6 +33,10 @@ console.log("\n" +
     "  ==== STARTING UP ==== " +
     "\n");
 
+Sentry.init({
+    dsn: config.sentry.dsn
+});
+
 require("rootpath")();
 require('console-stamp')(console, 'HH:MM:ss.l');
 
@@ -49,6 +54,8 @@ try {
     fs.mkdirSync("/tmp/moj");
 } catch (e) {
 }
+
+app.use(Sentry.Handlers.requestHandler());
 
 app.use(function (req, res, next) {
     res.header('Access-Control-Allow-Origin', '*');
@@ -191,6 +198,7 @@ function exitHandler(err) {
     process.exit();
 }
 
+app.use(Sentry.Handlers.errorHandler());
 
 server.listen(port, function () {
     console.log(' ==> listening on *:' + port + "\n");

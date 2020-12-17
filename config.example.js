@@ -49,6 +49,10 @@ config.puller = {
     logCommands: true
 };
 
+config.sentry ={
+    dsn: ""
+};
+
 config.metrics = {};
 
 module.exports = config;

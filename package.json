@@ -5,6 +5,7 @@
     "start": "node index.js"
   },
   "dependencies": {
+    "@sentry/node": "^5.29.1",
     "body-parser": "^1.19.0",
     "colors": "^1.4.0",
     "connect-mongo": "^3.0.0",
@@ -29,6 +30,7 @@
     "http-auth": "^3.2.3",
     "image-hash": "git://github.com/InventivetalentDev/image-hash.git",
     "image-size": "^0.7.2",
+    "inventive-metrics-node": "git://github.com/InventivetalentDev/inventive-metrics-node.git",
     "ip": "^1.1.5",
     "md5": "^2.2.1",
     "mime": ">=1.4.1",
@@ -58,7 +60,6 @@
     "tunnel-ssh": "^4.1.4",
     "unirest": "^0.6.0",
     "uuid": "^3.3.3",
-    "yggdrasil": "^1.1.0",
-    "inventive-metrics-node": "git://github.com/InventivetalentDev/inventive-metrics-node.git"
+    "yggdrasil": "^1.1.0"
   }
 }
