@@ -4,6 +4,7 @@ const urls = require("./urls");
 const fs = require("fs");
 const authentication = require("./authentication");
 const randomip = require("random-ip");
+const Sentry = require("@sentry/node");
 const metrics = require("../metrics");
 
 const config = require("../config");
@@ -27,12 +28,14 @@ setInterval(function () {
                     metrics.requestsMetric(next.options, res).inc();
                 } catch (e) {
                     console.warn(e);
+                    Sentry.captureException(e);
                 }
                 // fs.appendFileSync("requests.log", "[" + d  + "] SKIN "+ (next.options.method||"GET")+" " + (next.options.url||next.options.uri) + " => "+res.statusCode+"\n", "utf8");
                 next.callback(err, res, body);
             });
         } catch (e) {
             console.error(e);
+            Sentry.captureException(e);
         }
     }
 }, config.requestQueue.skinChanger);
@@ -51,6 +54,7 @@ setInterval(function () {
         });
     } catch (e) {
         console.warn(e);
+        Sentry.captureException(e);
     }
 }, 10000);
 setInterval(function () {

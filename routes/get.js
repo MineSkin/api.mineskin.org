@@ -6,6 +6,7 @@ module.exports = function (app) {
     const dataFetcher = require("../generator/dataFetcher")
     const config = require("../config");
     const metrics = require("../metrics");
+    const Sentry = require("@sentry/node");
 
     // Schemas
     const Account = require("../db/schemas/account").Account;
@@ -185,6 +186,7 @@ module.exports = function (app) {
                                             })
                                         } catch (e) {
                                             console.warn(e);
+                                            Sentry.captureException(e);
                                         }
                                     });
                                 })

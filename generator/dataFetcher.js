@@ -29,6 +29,7 @@ setInterval(function () {
         });
     } catch (e) {
         console.warn(e);
+        Sentry.captureException(e);
     }
 }, 10000);
 

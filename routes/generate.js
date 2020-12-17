@@ -1,6 +1,5 @@
 module.exports = function (app, config, optimus, limiter) {
 
-
     let SKIN_COUNTER = 1000000;
 
     const remoteFileSize = require("remote-file-size");
@@ -16,6 +15,7 @@ module.exports = function (app, config, optimus, limiter) {
     const uuid = require("uuid/v4");
     const mongoose = require("mongoose");
     const request = require("request");
+    const Sentry = require("@sentry/node");
     const hasha = require("hasha");
     const {URL} = require("url");
     const metrics = require("../metrics");
@@ -34,6 +34,7 @@ module.exports = function (app, config, optimus, limiter) {
             callback(null, value);
         }).catch(function (reason) {
             callback(reason, null);
+            Sentry.captureException(reason);
         })
     };
 
@@ -277,6 +278,7 @@ module.exports = function (app, config, optimus, limiter) {
         } catch (e) {
             console.warn(e);
             cb(urlStr);
+            Sentry.captureException(e);
         }
     }
 
@@ -709,6 +711,7 @@ module.exports = function (app, config, optimus, limiter) {
                 .inc();
         } catch (e) {
             console.warn(e);
+            Sentry.captureException(e);
         }
     }
 
@@ -723,6 +726,7 @@ module.exports = function (app, config, optimus, limiter) {
                 .inc();
         } catch (e) {
             console.warn(e);
+            Sentry.captureException(e);
         }
     }
 
@@ -750,6 +754,7 @@ module.exports = function (app, config, optimus, limiter) {
             fs.closeSync(fd);
         } catch (e) {
             console.log(e);
+            Sentry.captureException(e);
         }
     }
 

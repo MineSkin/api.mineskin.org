@@ -2,6 +2,7 @@ const uuid = require('uuid/v4');
 const md5 = require("md5");
 const urls = require("./urls");
 const fs = require("fs");
+const Sentry = require("@sentry/node");
 const request = require("request").defaults({
     headers: {
         "Accept": "application/json, text/plain, */*",
@@ -36,11 +37,13 @@ setInterval(function () {
                     metrics.requestsMetric(next.options, res).inc()
                 } catch (e) {
                     console.warn(e);
+                    Sentry.captureException(e);
                 }
                 next.callback(err, res, body);
             });
         } catch (e) {
             console.error(e);
+            Sentry.captureException(e);
         }
     }
 }, config.requestQueue.auth);
@@ -59,6 +62,7 @@ setInterval(function () {
         });
     } catch (e) {
         console.warn(e);
+        Sentry.captureException(e);
     }
 }, 10000);
 setInterval(function () {

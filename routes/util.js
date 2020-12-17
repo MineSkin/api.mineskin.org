@@ -2,6 +2,7 @@ module.exports = function (app) {
 
     const https = require("https");
     const request = require("request");
+    const Sentry = require("@sentry/node");
 
     // Schemas
     const Account = require("../db/schemas/account").Account;
@@ -58,6 +59,7 @@ module.exports = function (app) {
                         body = JSON.parse(body);
                     } catch (e) {
                         res.json({error:"failed to parse body"});
+                        Sentry.captureException(e);
                         return;
                     }
                     result.valid = true;
@@ -98,6 +100,7 @@ module.exports = function (app) {
                         body = JSON.parse(body);
                     } catch (e) {
                         res.json({error:"failed to parse body"});
+                        Sentry.captureException(e);
                         return;
                     }
                     result.name = body[body.length - 1]["name"];

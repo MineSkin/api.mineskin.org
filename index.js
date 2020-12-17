@@ -148,6 +148,7 @@ app.post("/testing/upload_tester_result", function (req, res) {
             .inc();
     } catch (e) {
         console.warn(e);
+        Sentry.captureException(e);
     }
 
     if (req.body.data.r === "success") {

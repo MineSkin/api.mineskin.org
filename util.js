@@ -6,6 +6,7 @@ const imageSize = require("image-size");
 const config = require("./config");
 const crypto = require("crypto");
 const request = require("request");
+const Sentry = require("@sentry/node");
 
 // Schemas
 const Account = require("./db/schemas/account").Account;
@@ -59,6 +60,7 @@ module.exports.validateImage = function (req, res, file) {
     } catch (e) {
         console.log(e)
         res.status(500).json({error: "Failed to get image dimensions", err: e});
+        Sentry.captureException(e);
         return;
     }
 
