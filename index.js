@@ -22,8 +22,11 @@ const Optimus = require("optimus-js");
 const puller = require("express-git-puller");
 const path = require('path')
 const colors = require("colors");
+const metrics = require("./metrics");
 const config = require("./config");
 const port = process.env.PORT || config.port || 3014;
+
+const TESTER_METRICS = metrics.metric('mineskin', 'tester');
 
 console.log("\n" +
     "  ==== STARTING UP ==== " +
@@ -40,11 +43,11 @@ try {
 }
 try {
     fs.mkdirSync("/tmp/upl");
-} catch (e){
+} catch (e) {
 }
 try {
     fs.mkdirSync("/tmp/moj");
-}catch (e){
+} catch (e) {
 }
 
 app.use(function (req, res, next) {
@@ -68,10 +71,10 @@ app.use(function (req, res, next) {
     next();
 });
 
-app.use("/.well-known",express.static(".well-known"));
+app.use("/.well-known", express.static(".well-known"));
 
 const swStats = require('swagger-stats');
-app.use(swStats.getMiddleware( config.swagger));
+app.use(swStats.getMiddleware(config.swagger));
 
 // create a rotating write stream
 const accessLogStream = rfs('access.log', {
@@ -87,10 +90,10 @@ morgan.token('remote-addr', function (req) {
 });
 
 let updatingApp = false;
-config.puller.beforeRun = function(req, res){
+config.puller.beforeRun = function (req, res) {
     updatingApp = true;
 };
-config.puller.afterRun = function(req, res){
+config.puller.afterRun = function (req, res) {
     updatingApp = false;
 };
 app.use(function (req, res, next) {
@@ -140,8 +143,18 @@ app.post("/testing/upload_tester_result", function (req, res) {
     if (!req.body.data) return;
     if (req.headers["user-agent"] !== "mineskin-tester") return;
 
+    try {
+        TESTER_METRICS
+            .tag("server", config.server)
+            .tag("result", req.body.data.r || "fail")
+            .tag("mismatches", req.body.data.m > 0 ? "true" : "false")
+            .inc();
+    } catch (e) {
+        console.warn(e);
+    }
+
     if (req.body.data.r === "success") {
-        Util.increaseStat("mineskintester.success")
+        Util.increaseStat("mineskintester.success");
         res.sendStatus(202);
 
         if (req.body.data.m > 0) {
@@ -152,10 +165,10 @@ app.post("/testing/upload_tester_result", function (req, res) {
             Skin.findOneAndUpdate({id: req.body.data.i, server: req.body.data.s}, {testerRequest: true, testerMismatchCounter: req.body.data.m || 0});
         }
     } else if (req.body.data.r === "fail") {
-        Util.increaseStat("mineskintester.fail")
+        Util.increaseStat("mineskintester.fail");
         res.sendStatus(202);
     } else {
-        res.sendStatus(400)
+        res.sendStatus(400);
     }
 });
 
@@ -163,11 +176,11 @@ const optimus = new Optimus(config.optimus.prime, config.optimus.inverse, config
 console.log("Optimus Test:", optimus.encode(Math.floor(Date.now() / 10)));
 
 const limiter = rateLimit({
-    windowMs: 2*60*1000, // 2 minutes,
-    max:6,
-    message:JSON.stringify({error:"Too many requests"}),
-    keyGenerator:function (req) {
-        return  req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || req.realAddress || req.connection.remoteAddress
+    windowMs: 2 * 60 * 1000, // 2 minutes,
+    max: 6,
+    message: JSON.stringify({error: "Too many requests"}),
+    keyGenerator: function (req) {
+        return req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || req.realAddress || req.connection.remoteAddress
     }
 })
 
