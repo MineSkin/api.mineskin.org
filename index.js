@@ -8,6 +8,7 @@ const bodyParser = require("body-parser");
 const expressValidator = require('express-validator')
 const fileUpload = require('express-fileupload');
 const Sentry = require("@sentry/node");
+const Tracing = require("@sentry/tracing");
 const mongoose = require("mongoose");
 const cookieParser = require("cookie-parser");
 const Cookies = require("cookies");
@@ -34,7 +35,11 @@ console.log("\n" +
     "\n");
 
 Sentry.init({
-    dsn: config.sentry.dsn
+    dsn: config.sentry.dsn,
+    integrations: [
+        new Sentry.Integrations.Http({tracing: true}),
+        new Tracing.Integrations.Express({app})
+    ]
 });
 
 require("rootpath")();
@@ -56,6 +61,7 @@ try {
 }
 
 app.use(Sentry.Handlers.requestHandler());
+app.use(Sentry.Handlers.tracingHandler());
 
 app.use(function (req, res, next) {
     res.header('Access-Control-Allow-Origin', '*');
