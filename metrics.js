@@ -1,5 +1,5 @@
 const config = require("./config");
-const {Metrics, IntervalFlusher} = require("inventive-metrics-node");
+const {Metrics, IntervalFlusher} = require("metrics-node");
 const {URL} = require("url");
 
 const metrics = new Metrics(config.metrics);
