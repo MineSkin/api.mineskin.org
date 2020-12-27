@@ -30,7 +30,7 @@
     "hoek": ">=6.1.3",
     "http-auth": "^3.2.3",
     "image-hash": "git://github.com/InventivetalentDev/image-hash.git",
-    "image-size": "^0.7.2",
+    "image-size": "^0.9.3",
     "ip": "^1.1.5",
     "md5": "^2.2.1",
     "metrics-node": "1.0.0",
