@@ -9,10 +9,10 @@ const request = require("request");
 const Sentry = require("@sentry/node");
 
 // Schemas
-const Account = require("./db/schemas/account").Account;
-const Skin = require("./db/schemas/skin").Skin;
-const Traffic = require("./db/schemas/traffic").Traffic;
-const Stat = require("./db/schemas/stat").Stat;
+const Account = require("./database/schemas/account").Account;
+const Skin = require("./database/schemas/skin").Skin;
+const Traffic = require("./database/schemas/traffic").Traffic;
+const Stat = require("./database/schemas/stat").Stat;
 
 module.exports = {}
 

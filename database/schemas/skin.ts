@@ -1,6 +1,7 @@
-const mongoose = require('mongoose')
-    , Schema = mongoose.Schema;
-const skinSchema = new Schema({
+import { model, Schema } from "mongoose";
+import { Skin } from "../../types/Skin";
+
+const skinSchema: Schema = new Schema({
     id: {
         type: Number,
         index: true,
@@ -56,4 +57,4 @@ const skinSchema = new Schema({
     testerRequest: Boolean,
     testerMismatchCounter: Number
 }, {id: false})
-module.exports.Skin = mongoose.model("Skin", skinSchema);
+export default model<Skin>("Skin", skinSchema);

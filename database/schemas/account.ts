@@ -1,7 +1,8 @@
-const mongoose = require('mongoose')
-    , Schema = mongoose.Schema;
+import { model, Schema } from "mongoose";
+import { Account } from "../../types/Account";
+
 const Int32 = require("mongoose-int32");
-const accountSchema = new Schema({
+const accountSchema: Schema = new Schema({
     id: {
         type: Number,
         index: true
@@ -76,4 +77,4 @@ const accountSchema = new Schema({
     discordMessageSent: Boolean,
     sendEmails: Boolean
 }, {id: false});
-module.exports.Account = mongoose.model("Account", accountSchema);
+export default model<Account>("Account", accountSchema);

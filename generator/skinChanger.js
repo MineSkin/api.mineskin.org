@@ -10,9 +10,9 @@ const metrics = require("../metrics");
 const config = require("../config");
 
 // Schemas
-const Account = require("../db/schemas/account").Account;
-const Skin = require("../db/schemas/skin").Skin;
-const Traffic = require("../db/schemas/traffic").Traffic;
+const Account = require("../database/schemas/account").Account;
+const Skin = require("../database/schemas/skin").Skin;
+const Traffic = require("../database/schemas/traffic").Traffic;
 
 module.exports = {};
 

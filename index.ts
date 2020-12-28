@@ -1,4 +1,5 @@
-const express = require('express');
+import express from "express";
+import { Skin } from "./types/Skin";
 const app = express();
 const http = require('http');
 const server = http.Server(app);
@@ -132,8 +133,9 @@ colors.setTheme({
 });
 
 // Databse
-require("./db/db")(mongoose, config);
-const Skin = require("./db/schemas/skin").Skin;
+require("./database/database")(mongoose, config);
+
+
 
 // API methods
 app.get("/", function (req, res) {

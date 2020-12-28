@@ -2,7 +2,7 @@
   "name": "api.mineskin.org",
   "version": "0.0.0",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.ts"
   },
   "dependencies": {
     "@sentry/node": "^5.29.1",
@@ -59,8 +59,13 @@
     "swagger-stats": "^0.95.11",
     "tmp": "0.1.0",
     "tunnel-ssh": "^4.1.4",
+    "typescript": "^4.1.3",
     "unirest": "^0.6.0",
     "uuid": "^3.3.3",
     "yggdrasil": "^1.1.0"
+  },
+  "devDependencies": {
+    "@types/mongoose": "^5.10.3",
+    "@types/node": "^14.14.16"
   }
 }
