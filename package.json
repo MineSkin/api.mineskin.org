@@ -5,6 +5,7 @@
     "start": "node index.ts"
   },
   "dependencies": {
+    "@inventivetalent/loading-cache": "^0.4.0",
     "@sentry/node": "^5.29.1",
     "@sentry/tracing": "^5.29.1",
     "axios": "^0.21.1",
@@ -25,6 +26,7 @@
     "image-hash": "git://github.com/InventivetalentDev/image-hash.git",
     "image-size": "^0.7.2",
     "ip": "^1.1.5",
+    "jobqu": "^2.0.0",
     "md5": "^2.2.1",
     "metrics-node": "^1.0.0",
     "mime": ">=1.4.1",

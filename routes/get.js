@@ -1,7 +1,7 @@
 module.exports = function (app) {
 
     const Util = require("../util");
-    const skinChanger = require("../generator/skinChanger");
+    const skinChanger = require("../generator/SkinChanger");
     const auth = require("../generator/authentication");
     const dataFetcher = require("../generator/dataFetcher")
     const config = require("../config");

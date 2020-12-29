@@ -1,3 +1,11 @@
+
+export class SkinChanger {
+
+    static requestQueue
+
+}
+
+
 const request = require('request');
 // request.debug=true;
 const urls = require("./urls");

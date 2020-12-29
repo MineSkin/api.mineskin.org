@@ -41,7 +41,7 @@ module.exports = function (app, config, optimus, limiter) {
 
     const authentication = require("../generator/authentication");
     const dataFetcher = require("../generator/dataFetcher");
-    const skinChanger = require("../generator/skinChanger");
+    const skinChanger = require("../generator/SkinChanger");
 
     // Schemas
     const Account = require("../database/schemas/Account").IAccount;
