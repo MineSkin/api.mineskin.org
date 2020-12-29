@@ -18,7 +18,7 @@ module.exports = function (app, config, optimus, limiter) {
     const Sentry = require("@sentry/node");
     const hasha = require("hasha");
     const {URL} = require("url");
-    const metrics = require("../metrics");
+    const metrics = require("../util/metrics");
 
     const GENERATE_METRIC = metrics.metric('mineskin', 'generate');
 
@@ -44,10 +44,10 @@ module.exports = function (app, config, optimus, limiter) {
     const skinChanger = require("../generator/skinChanger");
 
     // Schemas
-    const Account = require("../database/schemas/account").Account;
-    const Skin = require("../database/schemas/skin").Skin;
-    const Traffic = require("../database/schemas/traffic").Traffic;
-    const Stat = require("../database/schemas/stat").Stat;
+    const Account = require("../database/schemas/Account").IAccount;
+    const Skin = require("../database/schemas/Skin").ISkin;
+    const Traffic = require("../database/schemas/Traffic").ITraffic;
+    const Stat = require("../database/schemas/Stat").IStat;
 
 
     app.post("/generate/url", limiter, function (req, res) {

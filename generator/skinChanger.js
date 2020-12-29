@@ -5,14 +5,14 @@ const fs = require("fs");
 const authentication = require("./authentication");
 const randomip = require("random-ip");
 const Sentry = require("@sentry/node");
-const metrics = require("../metrics");
+const metrics = require("../util/metrics");
 
 const config = require("../config");
 
 // Schemas
-const Account = require("../database/schemas/account").Account;
-const Skin = require("../database/schemas/skin").Skin;
-const Traffic = require("../database/schemas/traffic").Traffic;
+const Account = require("../database/schemas/Account").IAccount;
+const Skin = require("../database/schemas/Skin").ISkin;
+const Traffic = require("../database/schemas/Traffic").ITraffic;
 
 module.exports = {};
 

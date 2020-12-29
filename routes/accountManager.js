@@ -14,13 +14,13 @@ module.exports = function (app, config) {
     const md5 = require("md5");
     const authentication = require("../generator/authentication");
     const {URL} = require("url");
-    const metrics = require("../metrics");
+    const metrics = require("../util/metrics");
 
     const pendingDiscordLinks = {};
 
     // Schemas
-    const Account = require("../database/schemas/account").Account;
-    const Skin = require("../database/schemas/skin").Skin;
+    const Account = require("../database/schemas/Account").IAccount;
+    const Skin = require("../database/schemas/Skin").ISkin;
 
 
     app.get("/accountManager/myAccount", function (req, res) {

@@ -14,12 +14,12 @@ const request = require("request").defaults({
 });
 const Util = require("../util");
 const config = require("../config");
-const metrics = require("../metrics");
+const metrics = require("../util/metrics");
 
 // Schemas
-const Account = require("../database/schemas/account").Account;
-const Skin = require("../database/schemas/skin").Skin;
-const Traffic = require("../database/schemas/traffic").Traffic;
+const Account = require("../database/schemas/Account").IAccount;
+const Skin = require("../database/schemas/Skin").ISkin;
+const Traffic = require("../database/schemas/Traffic").ITraffic;
 
 module.exports = {};
 

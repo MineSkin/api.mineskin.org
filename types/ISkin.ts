@@ -11,7 +11,7 @@ export enum SkinVisibility {
     PRIVATE = 1,
 }
 
-export interface Skin extends Document {
+export interface ISkin extends Document {
     id: number | any;
     hash: string;
     name: string;

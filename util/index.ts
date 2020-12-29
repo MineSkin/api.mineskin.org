@@ -1,52 +1,50 @@
-const http = require('http');
-const fs = require('fs');
-const readChunk = require('read-chunk');
-const fileType = require("file-type");
-const imageSize = require("image-size");
-const config = require("./config");
-const crypto = require("crypto");
-const request = require("request");
-const Sentry = require("@sentry/node");
+export * from "./colors";
+export * from "./metrics";
+export * from "./encryption";
 
-// Schemas
-const Account = require("./database/schemas/account").Account;
-const Skin = require("./database/schemas/skin").Skin;
-const Traffic = require("./database/schemas/traffic").Traffic;
-const Stat = require("./database/schemas/stat").Stat;
+import * as colors from "./colors";
+import * as fs from "fs";
+import { CallbackError } from "mongoose";
+import { Request, Response } from "express";
+import { Account, Skin, Traffic, Stat } from "../database/schemas";
+import { Config } from "../types/Config";
+import { ITraffic } from "../types";
 
-module.exports = {}
+const config: Config = require("../config");
 
-module.exports.checkTraffic = function (req, res) {
-    return new Promise(function (fullfill) {
-        const ip = req.realAddress;
-        console.log(("IP: " + ip).debug);
+export function checkTraffic(req: Request, res: Response): Promise<boolean> {
+    return new Promise<boolean>(resolve => {
+        const ip = req.get("x-real-ip");
+        console.log(colors.debug("IP: " + ip));
 
-        module.exports.getGeneratorDelay().then(function (delay) {
-            Traffic.findOne({ip: ip}).lean().exec(function (err, traffic) {
-                if (err) return console.log(err);
+        getGeneratorDelay().then((delay: number) => {
+            Traffic.findOne({ ip: ip }).lean().exec((err: CallbackError, traffic: ITraffic) => {
+                if (err) {
+                    resolve(false);
+                    return console.log(err);
+                }
                 if (!traffic) {// First request
-                    fullfill(true, delay);
+                    resolve(true);
                 } else {
                     const time = Date.now() / 1000;
 
                     if ((traffic.lastRequest.getTime() / 1000) > time - delay) {
-                        res.status(429).json({error: "Too many requests", nextRequest: time + delay + 10, delay: delay});
-                        fullfill(false, delay);
+                        res.status(429).json({ error: "Too many requests", nextRequest: time + delay + 10, delay: delay });
+                        resolve(false);
                     } else {
-                        fullfill(true, delay);
+                        resolve(true);
                     }
-
                 }
             })
         })
     })
-};
+}
 
-module.exports.validateImage = function (req, res, file) {
+export function validateImage(req: Request, res: Response, file: string) {
     const stats = fs.statSync(file);
     const size = stats.size;
     if (size <= 0 || size > 16000) {
-        res.status(400).json({error: "Invalid file size (" + size + ")"});
+        res.status(400).json({ error: "Invalid file size (" + size + ")" });
         return false;
     }
 
@@ -54,12 +52,12 @@ module.exports.validateImage = function (req, res, file) {
         const dimensions = imageSize(file);
         console.log(("Dimensions: " + JSON.stringify(dimensions)).debug);
         if ((dimensions.width !== 64) || (dimensions.height !== 64 && dimensions.height !== 32)) {
-            res.status(400).json({error: "Invalid skin dimensions. Must be 64x32 or 64x64. (Were " + dimensions.width + "x" + dimensions.height + ")"});
+            res.status(400).json({ error: "Invalid skin dimensions. Must be 64x32 or 64x64. (Were " + dimensions.width + "x" + dimensions.height + ")" });
             return false;
         }
     } catch (e) {
         console.log(e)
-        res.status(500).json({error: "Failed to get image dimensions", err: e});
+        res.status(500).json({ error: "Failed to get image dimensions", err: e });
         Sentry.captureException(e);
         return;
     }
@@ -67,7 +65,7 @@ module.exports.validateImage = function (req, res, file) {
     const imageBuffer = readChunk.sync(file, 0, 4100);
     const type = fileType(imageBuffer);
     if (!type || type.ext !== "png" || type.mime !== "image/png") {
-        res.status(400).json({error: "Invalid image type. Must be PNG. (Is " + type.ext + " / " + type.mime + ")"});
+        res.status(400).json({ error: "Invalid image type. Must be PNG. (Is " + type.ext + " / " + type.mime + ")" });
         return false;
     }
 
@@ -75,18 +73,12 @@ module.exports.validateImage = function (req, res, file) {
 };
 
 
-module.exports.getGeneratorDelay = function () {
-    return new Promise(function (fullfill, reject) {
-        Account.count({enabled: true}, function (err, count) {
-            if (err) return console.log(err);
+export async function getGeneratorDelay(): Promise<number> {
+    return Account.count({ enabled: true }).exec()
+        .then((count: number) => Math.round(config.generateDelay / Math.max(1, count)));
+}
 
-            const delay = Math.round(config.generateDelay / Math.max(1, count));
-            fullfill(delay);
-        })
-    })
-};
-
-module.exports.skinToJson = function (skin, delay, req) {
+export function skinToJson(skin, delay, req) {
     const d = {
         id: skin.id,
         idStr: "" + skin.id,
@@ -114,14 +106,14 @@ module.exports.skinToJson = function (skin, delay, req) {
     };
     if (req) {
         if (!req.headers["user-agent"] || req.headers["user-agent"].startsWith("Java/") || req.headers["user-agent"].startsWith("unirest")) {
-            d._comment = "Please use a custom User-Agent header.";
+            d["_comment"] = "Please use a custom User-Agent header.";
         }
     }
     return d;
 };
 
 // https://coderwall.com/p/_g3x9q/how-to-check-if-javascript-object-is-empty
-module.exports.isEmpty = function (obj) {
+export function isEmpty(obj: any) {
     for (let key in obj) {
         if (obj.hasOwnProperty(key))
             return false;
@@ -129,7 +121,7 @@ module.exports.isEmpty = function (obj) {
     return true;
 };
 
-module.exports.validateModel = function (model) {
+export function validateModel(model: string) {
     if (!model) return model;
     model = model.toLowerCase();
 
@@ -141,7 +133,7 @@ module.exports.validateModel = function (model) {
     }
 
     return model;
-};
+}
 
 module.exports.postDiscordMessage = function (content, channel, fallback) {
     if (!config.discord || !config.discord.token) return;
@@ -205,7 +197,7 @@ module.exports.sendDiscordDirectMessage = function (content, receiver, fallback)
 module.exports.increaseStat = function (key, amount, cb) {
     if (!amount) amount = 1;
 
-    Stat.findOne({key: key}, function (err, stat) {
+    Stat.findOne({ key: key }, function (err, stat) {
         if (err) return console.log(err);
         if (!stat) {
             return console.warn("Invalid Stat key: " + key);

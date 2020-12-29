@@ -10,7 +10,7 @@ export enum AccountType {
     EXTERNAL = "external",
 }
 
-export interface Account extends Document {
+export interface IAccount extends Document {
     id: number | any;
     username: string;
     uuid: string;

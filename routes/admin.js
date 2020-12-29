@@ -1,9 +1,9 @@
 module.exports = function (app) {
 
     // Schemas
-    const Account = require("../database/schemas/account").Account;
-    const Skin = require("../database/schemas/skin").Skin;
-    const Traffic = require("../database/schemas/traffic").Traffic;
+    const Account = require("../database/schemas/Account").IAccount;
+    const Skin = require("../database/schemas/Skin").ISkin;
+    const Traffic = require("../database/schemas/Traffic").ITraffic;
 
 
     // app.get("/admin/accounts",function (req,res) {

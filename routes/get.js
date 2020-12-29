@@ -5,14 +5,14 @@ module.exports = function (app) {
     const auth = require("../generator/authentication");
     const dataFetcher = require("../generator/dataFetcher")
     const config = require("../config");
-    const metrics = require("../metrics");
+    const metrics = require("../util/metrics");
     const Sentry = require("@sentry/node");
 
     // Schemas
-    const Account = require("../database/schemas/account").Account;
-    const Skin = require("../database/schemas/skin").Skin;
-    const Traffic = require("../database/schemas/traffic").Traffic;
-    const Stat = require("../database/schemas/stat").Stat;
+    const Account = require("../database/schemas/Account").IAccount;
+    const Skin = require("../database/schemas/Skin").ISkin;
+    const Traffic = require("../database/schemas/Traffic").ITraffic;
+    const Stat = require("../database/schemas/Stat").IStat;
 
     app.get("/get/delay", function (req, res) {
         const ip = req.realAddress;

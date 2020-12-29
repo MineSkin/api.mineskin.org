@@ -1,7 +1,7 @@
-import { model, Schema } from "mongoose";
-import { Skin } from "../../types/Skin";
+import { Model, model, Schema } from "mongoose";
+import { ISkin } from "../../types";
 
-const skinSchema: Schema = new Schema({
+const schema: Schema = new Schema({
     id: {
         type: Number,
         index: true,
@@ -57,4 +57,4 @@ const skinSchema: Schema = new Schema({
     testerRequest: Boolean,
     testerMismatchCounter: Number
 }, {id: false})
-export default model<Skin>("Skin", skinSchema);
+export const Skin: Model<ISkin> = model<ISkin>("Skin", schema);

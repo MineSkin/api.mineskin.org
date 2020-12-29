@@ -1,4 +1,4 @@
-module.exports = {
+export const urls =  {
     authenticate: "https://authserver.mojang.com/authenticate",
     refresh: "https://authserver.mojang.com/refresh",
     validate: "https://authserver.mojang.com/validate",

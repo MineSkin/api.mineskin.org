@@ -1,8 +1,8 @@
-import { model, Schema } from "mongoose";
-import { Account } from "../../types/Account";
+import { Model, model, Schema } from "mongoose";
+import { IAccount } from "../../types";
 
 const Int32 = require("mongoose-int32");
-const accountSchema: Schema = new Schema({
+const schema: Schema = new Schema({
     id: {
         type: Number,
         index: true
@@ -76,5 +76,5 @@ const accountSchema: Schema = new Schema({
     discordUser: String,
     discordMessageSent: Boolean,
     sendEmails: Boolean
-}, {id: false});
-export default model<Account>("Account", accountSchema);
+}, { id: false });
+export const Account: Model<IAccount> = model<IAccount>("Account", schema);

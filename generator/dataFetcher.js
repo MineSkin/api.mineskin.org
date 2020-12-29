@@ -1,6 +1,6 @@
 const request = require("request");
 const config = require("../config");
-const metrics = require("../metrics");
+const metrics = require("../util/metrics");
 const Sentry = require("@sentry/node");
 
 module.exports = {};
