@@ -1,8 +1,13 @@
 import { Model, model, Schema } from "mongoose";
-import { IAccount } from "../../types";
+import { IAccountDocument } from "../../types";
+import { IAccountModel } from "../../types/IAccountDocument";
+import { Config } from "../../types/Config";
+import { warn, error } from "../../util";
+
+const config: Config = require("../../config");
 
 const Int32 = require("mongoose-int32");
-const schema: Schema = new Schema({
+export const AccountSchema: Schema = new Schema({
     id: {
         type: Number,
         index: true
@@ -77,4 +82,54 @@ const schema: Schema = new Schema({
     discordMessageSent: Boolean,
     sendEmails: Boolean
 }, { id: false });
-export const Account: Model<IAccount> = model<IAccount>("Account", schema);
+
+/// STATICS
+
+AccountSchema.statics.findUsable = function (this: IAccountModel): Promise<IAccountDocument> {
+    const time = Math.floor(Date.now() / 1000);
+    return this.findOne({
+        enabled: true,
+        requestServer: { $in: [null, "default", config.server] },
+        lastUsed: { $lt: (time - 100) },
+        forcedTimeoutAt: { $lt: (time - 500) },
+        errorCounter: { $lt: (config.errorThreshold || 10) },
+        timeAdded: { $lt: (time - 60) }
+    }).sort({
+        lastUsed: 1,
+        lastSelected: 1,
+        sameTextureCounter: 1
+    } as IAccountDocument).exec()
+        .then(account => {
+            if (!account) {
+                console.warn(error("There are no accounts available!"));
+                return undefined;
+            }
+            console.log("Account #" + account.id + " last used " + Math.round(time - account.lastUsed) + "s ago, last selected " + Math.round(time - account.lastSelected) + "s ago");
+            account.lastUsed = time;
+            account.lastSelected = time;
+            if (!account.successCounter) account.successCounter = 0;
+            if (!account.errorCounter) account.errorCounter = 0;
+            if (!account.totalSuccessCounter) account.totalSuccessCounter = 0;
+            if (!account.totalErrorCounter) account.totalErrorCounter = 0;
+            return account.save();
+        })
+};
+
+AccountSchema.statics.countGlobalUsable = function (this: IAccountModel): Promise<number> {
+    return this.count({
+        enabled: true,
+        errorCounter: { $lt: (config.errorThreshold || 10) }
+    }).exec();
+};
+
+AccountSchema.statics.calculateDelay = function (this: IAccountModel): Promise<number> {
+    return this.countGlobalUsable().then(usable => {
+        if (usable <= 0) {
+            console.warn(error("Global usable account count is " + usable));
+            return 200;
+        }
+        return Math.round(config.generateDelay / Math.max(1, usable))
+    });
+};
+
+export const Account: IAccountModel = model<IAccountDocument, IAccountModel>("Account", AccountSchema);

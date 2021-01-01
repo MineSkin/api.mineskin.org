@@ -1,4 +1,4 @@
-export { IAccount } from "./IAccount";
-export { ISkin } from "./ISkin";
-export { ITraffic } from "./ITraffic";
-export { IStat } from "./IStat";
+export { IAccountDocument } from "./IAccountDocument";
+export { ISkinDocument } from "./ISkinDocument";
+export { ITrafficDocument } from "./ITrafficDocument";
+export { IStatDocument } from "./IStatDocument";

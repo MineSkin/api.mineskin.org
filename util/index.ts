@@ -8,17 +8,22 @@ import { CallbackError } from "mongoose";
 import { Request, Response } from "express";
 import { Account, Skin, Traffic, Stat } from "../database/schemas";
 import { Config } from "../types/Config";
-import { ITraffic } from "../types";
+import { ITrafficDocument } from "../types";
+import * as Sentry from "@sentry/node";
 
 const config: Config = require("../config");
 
 export function checkTraffic(req: Request, res: Response): Promise<boolean> {
     return new Promise<boolean>(resolve => {
-        const ip = req.get("x-real-ip");
+        const ip = req.get("x-real-ip") || req.ip;
         console.log(colors.debug("IP: " + ip));
 
+        Traffic.findForIp(ip).then(traffic=>{
+
+        })
+
         getGeneratorDelay().then((delay: number) => {
-            Traffic.findOne({ ip: ip }).lean().exec((err: CallbackError, traffic: ITraffic) => {
+            Traffic.findOne({ ip: ip }).lean().exec((err: CallbackError, traffic: ITrafficDocument) => {
                 if (err) {
                     resolve(false);
                     return console.log(err);
@@ -133,6 +138,15 @@ export function validateModel(model: string) {
     }
 
     return model;
+}
+
+export function stripUuid(uuid: string): string {
+    return uuid.replace(/-/g, "");
+}
+
+export function addDashesToUuid(uuid: string): string {
+    if (uuid.length >= 36) return uuid; // probably already has dashes
+    return uuid.substr(0, 8) + "-" + uuid.substr(8, 4) + "-" + uuid.substr(12, 4) + "-" + uuid.substr(16, 4) + "-" + uuid.substr(20);
 }
 
 module.exports.postDiscordMessage = function (content, channel, fallback) {

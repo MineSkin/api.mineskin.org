@@ -44,10 +44,10 @@ module.exports = function (app, config, optimus, limiter) {
     const skinChanger = require("../generator/SkinChanger");
 
     // Schemas
-    const Account = require("../database/schemas/Account").IAccount;
-    const Skin = require("../database/schemas/Skin").ISkin;
-    const Traffic = require("../database/schemas/Traffic").ITraffic;
-    const Stat = require("../database/schemas/Stat").IStat;
+    const Account = require("../database/schemas/Account").IAccountDocument;
+    const Skin = require("../database/schemas/Skin").ISkinDocument;
+    const Traffic = require("../database/schemas/Traffic").ITrafficDocument;
+    const Stat = require("../database/schemas/Stat").IStatDocument;
 
 
     app.post("/generate/url", limiter, function (req, res) {

@@ -19,8 +19,8 @@ module.exports = function (app, config) {
     const pendingDiscordLinks = {};
 
     // Schemas
-    const Account = require("../database/schemas/Account").IAccount;
-    const Skin = require("../database/schemas/Skin").ISkin;
+    const Account = require("../database/schemas/Account").IAccountDocument;
+    const Skin = require("../database/schemas/Skin").ISkinDocument;
 
 
     app.get("/accountManager/myAccount", function (req, res) {

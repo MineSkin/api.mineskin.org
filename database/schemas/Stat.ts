@@ -1,5 +1,5 @@
 import { Model, model, Schema } from "mongoose";
-import { IStat } from "../../types";
+import { IStatDocument } from "../../types";
 
 const schema: Schema = new Schema(
     {
@@ -9,4 +9,4 @@ const schema: Schema = new Schema(
     {
         collection: "stats"
     });
-export const Stat: Model<IStat> = model<IStat>("Stat", schema);
+export const Stat: Model<IStatDocument> = model<IStatDocument>("Stat", schema);

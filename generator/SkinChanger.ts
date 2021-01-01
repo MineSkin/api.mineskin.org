@@ -18,9 +18,9 @@ const metrics = require("../util/metrics");
 const config = require("../config");
 
 // Schemas
-const Account = require("../database/schemas/Account").IAccount;
-const Skin = require("../database/schemas/Skin").ISkin;
-const Traffic = require("../database/schemas/Traffic").ITraffic;
+const Account = require("../database/schemas/Account").IAccountDocument;
+const Skin = require("../database/schemas/Skin").ISkinDocument;
+const Traffic = require("../database/schemas/Traffic").ITrafficDocument;
 
 module.exports = {};
 

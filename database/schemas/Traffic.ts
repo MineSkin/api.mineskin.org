@@ -1,7 +1,8 @@
 import { Model, model, Schema } from "mongoose";
-import { ITraffic } from "../../types";
+import { ITrafficDocument } from "../../types";
+import { ITrafficModel } from "../../types/ITrafficDocument";
 
-const schema: Schema = new Schema(
+export const schema: Schema = new Schema(
     {
         ip: String,
         lastRequest: {
@@ -11,5 +12,14 @@ const schema: Schema = new Schema(
     },
     {
         collection: "traffic"
-    })
-export const Traffic: Model<ITraffic> = model<ITraffic>("Traffic", schema);
+    });
+
+schema.statics.findForIp = function (this: ITrafficModel, ip: string): Promise<ITrafficDocument> {
+    return this.findOne({ ip: ip }).lean().exec();
+};
+
+schema.statics.updateRequestTime = function (this: ITrafficModel, ip: string, time: Date = new Date()): Promise<any> {
+    return this.update({ip: ip},{lastRequest: time}, {upsert: true}).exec();
+};
+
+export const Traffic: ITrafficModel = model<ITrafficDocument, ITrafficModel>("Traffic", schema);

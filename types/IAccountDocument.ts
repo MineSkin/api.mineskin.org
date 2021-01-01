@@ -1,4 +1,4 @@
-import { Document } from "mongoose";
+import { Document, Model } from "mongoose";
 
 export interface SecurityQuestion {
     id: string;
@@ -10,7 +10,7 @@ export enum AccountType {
     EXTERNAL = "external",
 }
 
-export interface IAccount extends Document {
+export interface IAccountDocument extends Document {
     id: number | any;
     username: string;
     uuid: string;
@@ -48,4 +48,12 @@ export interface IAccount extends Document {
     discordUser?: string;
     discordMessageSent?: boolean;
     sendEmails?: boolean
+}
+
+export interface IAccountModel extends Model<IAccountDocument> {
+    findUsable(): Promise<IAccountDocument>;
+
+    countGlobalUsable(): Promise<number>;
+
+    calculateDelay(): Promise<number>;
 }

@@ -1,17 +1,19 @@
-import { Document, model } from "mongoose";
+import { Document, Model, model } from "mongoose";
+import { SkinInfo } from "./SkinInfo";
 
 export enum SkinModel {
     UNKNOWN = "unknown",
     CLASSIC = "steve",
-    SLIM = "slim",
+    SLIM = "slim"
 }
+
 
 export enum SkinVisibility {
     PUBLIC = 0,
     PRIVATE = 1,
 }
 
-export interface ISkin extends Document {
+export interface ISkinDocument extends Document {
     id: number | any;
     hash: string;
     name: string;
@@ -38,5 +40,10 @@ export interface ISkin extends Document {
     testerRequest: boolean;
     testerMismatchCounter: number;
 
+    toResponseJson(): SkinInfo;
+}
 
+export interface ISkinModel extends Model<ISkinDocument> {
+    findExistingForHash(hash: string, name: string, model: SkinModel, visibility: SkinVisibility): Promise<ISkinDocument>;
+    findExistingForTextureUrl(url: string, name: string, model: SkinModel, visibility: SkinVisibility): Promise<ISkinDocument>;
 }

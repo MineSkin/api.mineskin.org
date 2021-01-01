@@ -9,10 +9,10 @@ module.exports = function (app) {
     const Sentry = require("@sentry/node");
 
     // Schemas
-    const Account = require("../database/schemas/Account").IAccount;
-    const Skin = require("../database/schemas/Skin").ISkin;
-    const Traffic = require("../database/schemas/Traffic").ITraffic;
-    const Stat = require("../database/schemas/Stat").IStat;
+    const Account = require("../database/schemas/Account").IAccountDocument;
+    const Skin = require("../database/schemas/Skin").ISkinDocument;
+    const Traffic = require("../database/schemas/Traffic").ITrafficDocument;
+    const Stat = require("../database/schemas/Stat").IStatDocument;
 
     app.get("/get/delay", function (req, res) {
         const ip = req.realAddress;
