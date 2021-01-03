@@ -7,7 +7,9 @@ import * as Sentry from "@sentry/node";
 import { Severity } from "@sentry/node";
 import { metrics, stripUuid } from "../util";
 import { IPoint } from "influx";
+import { Config } from "../types/Config";
 
+const config: Config = require("../config");
 
 export class Caching {
 

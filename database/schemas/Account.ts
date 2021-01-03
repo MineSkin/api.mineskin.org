@@ -2,7 +2,8 @@ import { Model, model, Schema } from "mongoose";
 import { IAccountDocument } from "../../types";
 import { IAccountModel } from "../../types/IAccountDocument";
 import { Config } from "../../types/Config";
-import { warn, error } from "../../util";
+import { warn, error, md5 } from "../../util";
+import { v4 as uuid } from "uuid";
 
 const config: Config = require("../../config");
 
@@ -35,6 +36,7 @@ export const AccountSchema: Schema = new Schema({
         type: String,
         index: true
     },
+    microsoftAccessToken: String,
     microsoftRefreshToken: String,
     minecraftXboxUsername: {
         type: String,
@@ -83,6 +85,27 @@ export const AccountSchema: Schema = new Schema({
     sendEmails: Boolean
 }, { id: false });
 
+
+/// METHODS
+
+AccountSchema.methods.getOrCreateClientToken = function (this: IAccountDocument): string {
+    if (!this.clientToken) {
+        this.clientToken = md5(uuid());
+    }
+    return this.clientToken;
+};
+
+AccountSchema.methods.updateRequestServer = function (this: IAccountDocument, newRequestServer: string) {
+    if (this.requestServer && this.requestServer !== newRequestServer) {
+        this.lastRequestServer = this.requestServer;
+    }
+    this.requestServer = newRequestServer;
+};
+
+AccountSchema.methods.toSimplifiedString = function (this: IAccountDocument): string {
+    return `Account{ id=${ this.id }, uuid=${ this.uuid }, type=${ this.microsoftAccount ? 'microsoft' : 'mojang' } }`
+};
+
 /// STATICS
 
 AccountSchema.statics.findUsable = function (this: IAccountModel): Promise<IAccountDocument> {
@@ -99,7 +122,7 @@ AccountSchema.statics.findUsable = function (this: IAccountModel): Promise<IAcco
         lastSelected: 1,
         sameTextureCounter: 1
     } as IAccountDocument).exec()
-        .then(account => {
+        .then((account: IAccountDocument) => {
             if (!account) {
                 console.warn(error("There are no accounts available!"));
                 return undefined;

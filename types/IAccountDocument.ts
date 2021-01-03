@@ -1,4 +1,5 @@
 import { Document, Model } from "mongoose";
+import { access } from "fs";
 
 export interface SecurityQuestion {
     id: string;
@@ -10,19 +11,31 @@ export enum AccountType {
     EXTERNAL = "external",
 }
 
+export enum AccessTokenSource {
+    LOGIN_MOJANG = "login_mojang",
+    REFRESH_MOJANG = "refresh_mojang",
+
+    LOGIN_MICROSOFT = "login_microsoft",
+    REFRESH_MICROSOFT = "refresh_microsoft"
+}
+
 export interface IAccountDocument extends Document {
     id: number | any;
     username: string;
     uuid: string;
     playername?: string;
     authInterceptorEnabled?: boolean;
+    /**@deprecated**/
     password?: string;
+    /**@deprecated**/
     passwordOld?: string;
     passwordNew?: string;
+    /**@deprecated**/
     security?: string;
     multiSecurity?: SecurityQuestion[];
     microsoftAccount?: boolean;
     microsoftUserId?: string;
+    microsoftAccessToken?: string;
     microsoftRefreshToken?: string;
     minecraftXboxUsername?: string;
     lastSelected?: number;
@@ -39,7 +52,7 @@ export interface IAccountDocument extends Document {
     sameTextureCounter: number;
     accessToken: string;
     accessTokenExpiration: number;
-    accessTokenSource: string;
+    accessTokenSource: AccessTokenSource;
     clientToken: string;
     requestIp: string;
     requestServer: string;
@@ -48,6 +61,12 @@ export interface IAccountDocument extends Document {
     discordUser?: string;
     discordMessageSent?: boolean;
     sendEmails?: boolean
+
+    getOrCreateClientToken(): string;
+
+    updateRequestServer(newRequestServer: string): void;
+
+    toSimplifiedString(): string;
 }
 
 export interface IAccountModel extends Model<IAccountDocument> {

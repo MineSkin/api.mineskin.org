@@ -15,6 +15,7 @@ import { MemoizeExpiring } from "typescript-memoize";
 import { imageSize } from "image-size";
 import * as fileType from "file-type";
 import * as readChunk from "read-chunk";
+import * as crypto from "crypto";
 
 const config: Config = require("../config");
 
@@ -99,7 +100,7 @@ export function addDashesToUuid(uuid: string): string {
     return uuid.substr(0, 8) + "-" + uuid.substr(8, 4) + "-" + uuid.substr(12, 4) + "-" + uuid.substr(16, 4) + "-" + uuid.substr(20);
 }
 
-export function getVia(req: Request) {
+export function getVia(req: Request): string {
     let via = "api";
     if (req.headers["referer"]) {
         if (req.headers["referer"].indexOf("mineskin.org") > -1) {
@@ -112,3 +113,12 @@ export function getVia(req: Request) {
     return via;
 }
 
+export function md5(str: string): string {
+    return crypto.createHash('md5').update(str).digest("hex");
+}
+
+export function sleep(duration: number): Promise<void> {
+    return new Promise(resolve => {
+        setTimeout(() => resolve(), duration);
+    });
+}

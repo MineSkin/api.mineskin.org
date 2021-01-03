@@ -1,658 +1,534 @@
-const uuid = require('uuid/v4');
-const md5 = require("md5");
-const urls = require("./urls");
-const fs = require("fs");
-const Sentry = require("@sentry/node");
-const request = require("request").defaults({
-    headers: {
-        "Accept": "application/json, text/plain, */*",
-        "Accept-Encoding": "gzip, deflate",
-        "Origin": "mojang://launcher",
-        "User-Agent": /*"MineSkin.org"*/ "Minecraft Launcher/2.1.2481 (bcb98e4a63) Windows (10.0; x86_64)",
-        "Content-Type": "application/json"
-    }
-});
-const Util = require("../util");
-const config = require("../config");
-const metrics = require("../util/metrics");
+import { Config } from "../types/Config";
+import { IAccountDocument } from "../types";
+import { Requests } from "./Requests";
+import { debug, Encryption, warn } from "../util";
+import * as Sentry from "@sentry/node";
+import { AccessTokenSource } from "../types/IAccountDocument";
+import * as XboxLiveAuth from "@xboxreplay/xboxlive-auth";
+import { AuthenticateResponse } from "@xboxreplay/xboxlive-auth";
+import * as qs from "querystring";
+import { Discord } from "../util/Discord";
 
-// Schemas
-const Account = require("../database/schemas/Account").IAccountDocument;
-const Skin = require("../database/schemas/Skin").ISkinDocument;
-const Traffic = require("../database/schemas/Traffic").ITrafficDocument;
+const config: Config = require("../config");
 
-export class Authentication {
+const ACCESS_TOKEN_EXPIRATION_MOJANG = 86360;
+const ACCESS_TOKEN_EXPIRATION_MICROSOFT = 86360;
 
-}
+const ACCESS_TOKEN_EXPIRATION_THRESHOLD = 1800;
 
-module.exports = {};
+const XSTSRelyingParty = 'rp://api.minecraftservices.com/'
 
+export class Mojang {
 
-
-module.exports.authenticate = function (account, cb) {
-    return module.exports.authenticateMojang(account, cb);
-}
-
-module.exports.authenticateMojang = function (account, cb) {
-    console.log("[Auth] authenticate(" + account.username + ")");
-    // Callback to login
-    const loginCallback = function (account) {
-        if (account.microsoftAccount || !account.passwordNew) {
-            console.warn("[Auth] (#" + account.id + ") Microsoft account doesn't have an access token!")
-            notifyMissingAccessToken(account);
-            cb("Missing Access Token", null);
-            return;
+    public static async authenticate(account: IAccountDocument): Promise<IAccountDocument> {
+        if (account.microsoftAccount) {
+            throw new AuthenticationError(AuthError.UNSUPPORTED_ACCOUNT, "Can't authenticate microsoft account via mojang auth", account);
         }
 
-        console.log(("[Auth] (#" + account.id + ") Logging in with Username+Password").info);
-        if (!account.clientToken)
-            account.clientToken = md5(uuid());
-        console.log(("[Auth] POST " + urls.authenticate).debug);
+        if (!account.accessToken) { // Needs login
+            console.log(warn("[Auth] Account #" + account.id + " doesn't have access token"));
+            return await this.login(account);
+        }
+
+        // Check token expiration
+        if (account.accessTokenExpiration && account.accessTokenExpiration - Math.round(Date.now() / 1000) < ACCESS_TOKEN_EXPIRATION_THRESHOLD) {
+            console.log(debug("[Auth] (#" + account.id + ") Force-refreshing accessToken, since it will expire in less than 30 minutes"));
+            return await this.refreshAccessTokenOrLogin(account);
+        }
+
+        // Validate token which shouldn't be expired yet
+        if (await this.validateAccessToken(account)) {
+            // Still valid!
+            return account;
+        }
+
+        // Fallback to refresh / login
+        return await this.refreshAccessTokenOrLogin(account);
+    }
+
+    static async login(account: IAccountDocument): Promise<IAccountDocument> {
+        if (account.microsoftAccount) {
+            throw new AuthenticationError(AuthError.UNSUPPORTED_ACCOUNT, "Can't login microsoft account via mojang auth", account);
+        }
+
+        if (!account.passwordNew) {
+            throw new AuthenticationError(AuthError.MISSING_CREDENTIALS, "Account has no password", account);
+        }
+
+        console.log(debug("[Auth] Logging in " + account.toSimplifiedString()));
         const body = {
             agent: {
                 name: "Minecraft",
                 version: 1
             },
             username: account.username,
-            password: Util.crypto.decrypt(account.passwordNew),
-            clientToken: account.clientToken,
+            password: Encryption.decrypt(account.passwordNew),
+            clientToken: account.getOrCreateClientToken(),
             requestUser: true,
             _timestamp: Date.now()
         };
-        console.log(("[Auth] " + JSON.stringify(body)).debug);
-        setTimeout(function () {
-            queueRequest({
+        const authResponse = await Requests.mojangAuthRequest({
+            method: "POST",
+            url: "/authenticate",
+            data: JSON.stringify(body)
+        });
+        const authBody = authResponse.data;
+        if (!Requests.isOk(authResponse)) {
+            throw new AuthenticationError(AuthError.MOJANG_AUTH_FAILED, "Failed to authenticate via mojang", account, authBody);
+        }
+        if (authBody.hasOwnProperty("selectedProfile")) {
+            account.playername = authBody["selectedProfile"]["name"];
+        }
+
+        console.log(debug("[Auth] Got new access token for " + account.toSimplifiedString()));
+        account.accessToken = authBody["accessToken"];
+        account.accessTokenExpiration = Math.round(Date.now() / 1000) + ACCESS_TOKEN_EXPIRATION_MOJANG;
+        account.accessTokenSource = AccessTokenSource.LOGIN_MOJANG;
+        account.updateRequestServer(config.server);
+        console.log(debug("[Auth] (#" + account.id + ") Request server set to " + account.requestServer));
+
+        return await account.save();
+    }
+
+    static async validateAccessToken(account: IAccountDocument): Promise<boolean> {
+        if (account.microsoftAccount) {
+            throw new AuthenticationError(AuthError.UNSUPPORTED_ACCOUNT, "Can't validate microsoft account access token via mojang auth", account);
+        }
+
+        const body = {
+            accessToken: account.accessToken,
+            clientToken: account.getOrCreateClientToken(),
+            requestUser: true
+        };
+        try {
+            const validateResponse = await Requests.mojangAuthRequest({
                 method: "POST",
-                url: urls.authenticate,
-                headers: {
-                    "User-Agent": "Mineskin Auth",
-                    "Content-Type": "application/json",
-                    "X-Forwarded-For": account.requestIp,
-                    "REMOTE_ADDR": account.requestIp
-                },
-                json: true,
-                body: body
-            }, function (err, response, body) {
-                console.log(("[Auth] (#" + account.id + ") Auth Body:").debug);
-                console.log(("" + body).debug);
-                console.log(("" + JSON.stringify(body)).debug);
-                if (err || response.statusCode < 200 || response.statusCode > 230 || (body && body.error)) {
-                    cb(err || body, null);
-                    return console.log(err);
+                url: "/validate",
+                data: JSON.stringify(body)
+            });
+            return Requests.isOk(validateResponse);
+        } catch (e) {
+            return false;
+        }
+    }
+
+    static async refreshAccessTokenOrLogin(account: IAccountDocument): Promise<IAccountDocument> {
+        try {
+            return await this.refreshAccessToken(account);
+        } catch (e) {
+            if (e instanceof AuthenticationError) {
+                if (e.error === AuthError.MOJANG_REFRESH_FAILED) {
+                    // Couldn't refresh, attempt to login
+                    return await this.login(account);
                 }
+            }
+            throw e;
+        }
+    }
 
-                if (body.hasOwnProperty("selectedProfile")) {
-                    account.playername = body.selectedProfile.name;
+    static async refreshAccessToken(account: IAccountDocument): Promise<IAccountDocument> {
+        if (account.microsoftAccount) {
+            throw new AuthenticationError(AuthError.UNSUPPORTED_ACCOUNT, "Can't refresh microsoft account access token via mojang auth", account);
+        }
+
+        console.log(debug("[Auth] Refreshing " + account.toSimplifiedString()));
+        const body = {
+            accessToken: account.accessToken,
+            clientToken: account.getOrCreateClientToken(),
+            requestUser: true
+        };
+        const refreshResponse = await Requests.mojangAuthRequest({
+            method: "POST",
+            url: "/refresh",
+            data: JSON.stringify(body)
+        });
+        const refreshBody = refreshResponse.data;
+        if (!Requests.isOk(refreshResponse)) {
+            throw new AuthenticationError(AuthError.MOJANG_REFRESH_FAILED, "Failed to refresh token via mojang", account, refreshBody);
+        }
+        if (refreshBody.hasOwnProperty("selectedProfile")) {
+            account.playername = refreshBody["selectedProfile"]["name"];
+        }
+
+        console.log(debug("[Auth] Refreshed access token for " + account.toSimplifiedString()));
+        account.accessToken = refreshBody["accessToken"];
+        account.accessTokenExpiration = Math.round(Date.now() / 1000) + ACCESS_TOKEN_EXPIRATION_MOJANG;
+        account.accessTokenSource = AccessTokenSource.REFRESH_MOJANG;
+        account.updateRequestServer(config.server);
+        console.log(debug("[Auth] (#" + account.id + ") Request server set to " + account.requestServer));
+
+        return await account.save();
+    }
+
+
+    static async completeChallenges(account: IAccountDocument): Promise<IAccountDocument> {
+        if (account.microsoftAccount) {
+            throw new AuthenticationError(AuthError.UNSUPPORTED_ACCOUNT, "Can't complete challenges for microsoft account", account);
+        }
+
+        if ((!account.multiSecurity || account.multiSecurity.length < 3) && (!account.security || account.security.length === 0)) {
+            console.log(debug("[Auth] (#" + account.id + ") Skipping security questions as there are no answers configured"));
+            return account;
+        }
+
+        const locationResponse = await Requests.mojangApiRequest({
+            method: "GET",
+            url: "/user/security/location",
+            headers: {
+                "Authorization": `Bearer ${ account.accessToken }`
+            }
+        });
+        if (Requests.isOk(locationResponse)) {
+            // Already answered
+            return account;
+        }
+
+        const challengesResponse = await Requests.mojangApiRequest({
+            method: "GET",
+            url: "/user/security/challenges",
+            headers: {
+                "Authorization": `Bearer ${ account.accessToken }`
+            }
+        });
+        const challengesBody = challengesResponse.data;
+        if (!challengesBody || challengesBody.length <= 0) {
+            // Probably no questions?
+            return account;
+        }
+        const questions: { answer: { id: number }, question: { id: number, question: string } }[] = challengesBody;
+        const answers: { id: number, answer: string; }[] = [];
+
+        if (account.multiSecurity && account.multiSecurity.length > 0) {
+            const answersById: { [s: string]: string } = {};
+            account.multiSecurity.forEach(answer => {
+                answersById[answer.id] = answer.answer;
+            });
+            questions.forEach(question => {
+                if (!answersById.hasOwnProperty(question.answer.id)) {
+                    console.warn("Missing security answer for question " + question.question.id + "(" + question.question.question + "), Answer #" + question.answer.id);
                 }
+                answers.push({ id: question.answer.id, answer: answersById[question.answer.id] || account.security });
+            });
+        } else {
+            questions.forEach(question => {
+                answers.push({ id: question.answer.id, answer: account.security });
+            });
+        }
 
-                // Get new token
-                // account.clientToken = body.clientToken;
-                console.log(("[Auth] (#" + account.id + ") AccessToken: " + body.accessToken).debug);
-                account.accessToken = body.accessToken;
-                account.accessTokenExpiration = Math.round(Date.now() / 1000) + 86360;
-                account.accessTokenSource = "login_mojang";
-                account.requestServer = config.server;
-                console.log(("[Auth] (#" + account.id + ") RequestServer set to " + config.server));
-                account.save(function (err, account) {
-                    cb(null, account);
-                })
-            })
-        }, 8000);
-    };
+        const answerPostResponse = await Requests.mojangApiRequest({
+            method: "POST",
+            url: "/user/security/location",
+            headers: {
+                "Authorization": `Bearer ${ account.accessToken }`
+            },
+            data: answers
+        });
 
-    console.log(("[Auth] (#" + account.id + ") Authenticating account #" + account.id).info);
-    if (account.clientToken && account.accessToken) {
-        function refresh() {
-            console.info("[Auth] (#" + account.id + ") Refreshing tokens");
-            if (account.microsoftAccount) {
-                module.exports.authenticateXboxWithRefreshToken(account.microsoftRefreshToken, function (err, result) {
-                    if (err) {
-                        console.warn("[Auth] (#" + account.id + ") Failed to refresh microsoft token");
-                        cb("Failed to refresh microsoft token", null);
-                        return;
-                    }
-                    console.log(("[Auth] (#" + account.id + ") Microsoft access token refreshed").info);
+        if (!Requests.isOk(answerPostResponse)) {
+            throw new AuthenticationError(AuthError.MOJANG_CHALLENGES_FAILED, "Failed to complete security challenges", account, answerPostResponse.data);
+        }
+        return account;
+    }
 
-                    account.accessToken = result.token;
-                    account.accessTokenExpiration = Math.round(Date.now() / 1000) + 86360;
-                    account.accessTokenSource = "refresh_microsoft";
-                    account.microsoftRefreshToken = result.refreshToken;
-                    if (account.requestServer)
-                        account.lastRequestServer = account.requestServer;
-                    account.requestServer = config.server;
-                    console.log(("[Auth] (#" + account.id + ") RequestServer set to " + config.server));
-                    account.save(function (err, account) {
-                        console.log(("[Auth] (#" + account.id + ") Logging in with AccessToken").info);
-                        cb(null, account);
-                    })
+
+}
+
+export class Microsoft {
+
+    public static async authenticate(account: IAccountDocument): Promise<IAccountDocument> {
+        if (!account.microsoftAccount) {
+            throw new AuthenticationError(AuthError.UNSUPPORTED_ACCOUNT, "Can't authenticate non-microsoft account via microsoft auth", account);
+        }
+
+        if (!account.accessToken) { // Needs login
+            return await this.login(account);
+        }
+
+        // Check token expiration
+        if (account.accessTokenExpiration && account.accessTokenExpiration - Math.round(Date.now() / 1000) < ACCESS_TOKEN_EXPIRATION_THRESHOLD) {
+            console.log(debug("[Auth] (#" + account.id + ") Force-refreshing accessToken, since it will expire in less than 30 minutes"));
+            return await this.refreshAccessTokenOrLogin(account);
+        }
+
+        try {
+            // Try to use the access token
+            if (await this.checkGameOwnership(account.accessToken)) {
+                // Still valid!
+                return account;
+            }
+        } catch (e) {
+            Sentry.captureException(e);
+        }
+
+        // Fallback to refresh / login
+        return await this.refreshAccessTokenOrLogin(account);
+    }
+
+    static async login(account: IAccountDocument): Promise<IAccountDocument> {
+        if (!account.microsoftAccount) {
+            throw new AuthenticationError(AuthError.UNSUPPORTED_ACCOUNT, "Can't login non-microsoft account via microsoft auth", account);
+        }
+
+        if (!account.passwordNew) {
+            throw new AuthenticationError(AuthError.MISSING_CREDENTIALS, "Account has no password", account);
+        }
+
+
+        console.log(debug("[Auth] Logging in " + account.toSimplifiedString()));
+        const minecraftAccessToken = await this.loginWithEmailAndPassword(account.username, Encryption.decrypt(account.passwordNew), xboxInfo => {
+            account.microsoftAccessToken = xboxInfo.accessToken;
+            account.microsoftRefreshToken = xboxInfo.refreshToken;
+            account.microsoftUserId = xboxInfo.userId;
+            account.minecraftXboxUsername = xboxInfo.username;
+        });
+        const ownsMinecraft = await this.checkGameOwnership(minecraftAccessToken);
+        if (!ownsMinecraft) {
+            throw new AuthenticationError(AuthError.DOES_NOT_OWN_MINECRAFT, "User does not own minecraft", account);
+        }
+
+        console.log(debug("[Auth] Got new access token for " + account.toSimplifiedString()));
+        account.accessToken = minecraftAccessToken;
+        account.accessTokenExpiration = Math.round(Date.now() / 1000) + ACCESS_TOKEN_EXPIRATION_MICROSOFT;
+        account.accessTokenSource = AccessTokenSource.LOGIN_MICROSOFT;
+        account.updateRequestServer(config.server);
+        console.log(debug("[Auth] (#" + account.id + ") Request server set to " + account.requestServer));
+
+        return await account.save();
+    }
+
+    static async refreshAccessTokenOrLogin(account: IAccountDocument): Promise<IAccountDocument> {
+        try {
+            return await this.refreshAccessToken(account);
+        } catch (e) {
+            if (e instanceof AuthenticationError) {
+                if (e.error === AuthError.MICROSOFT_REFRESH_FAILED) {
+                    // Couldn't refresh, attempt to login
+                    return await this.login(account);
+                }
+            }
+            throw e;
+        }
+    }
+
+    static async refreshAccessToken(account: IAccountDocument): Promise<IAccountDocument> {
+        if (!account.microsoftAccount) {
+            throw new AuthenticationError(AuthError.UNSUPPORTED_ACCOUNT, "Can't refresh token of non-microsoft account via microsoft auth", account);
+        }
+
+        const newMinecraftAccessToken = await this.refreshXboxAccessToken(account.microsoftRefreshToken, xboxInfo => {
+            account.microsoftAccessToken = xboxInfo.accessToken;
+            account.microsoftRefreshToken = xboxInfo.refreshToken;
+            account.minecraftXboxUsername = xboxInfo.username;
+        });
+        console.log(debug("[Auth] Refreshed access token for " + account.toSimplifiedString()));
+        account.accessToken = newMinecraftAccessToken;
+        account.accessTokenExpiration = Math.round(Date.now() / 1000) + ACCESS_TOKEN_EXPIRATION_MICROSOFT;
+        account.accessTokenSource = AccessTokenSource.REFRESH_MICROSOFT;
+        account.updateRequestServer(config.server);
+        console.log(debug("[Auth] (#" + account.id + ") Request server set to " + account.requestServer));
+
+        return await account.save();
+    }
+
+    // based on https://github.com/PrismarineJS/node-minecraft-protocol/blob/master/src/client/microsoftAuth.js
+    static async loginWithEmailAndPassword(email: string, password: string, xboxInfoConsumer?: (info: XboxInfo) => void): Promise<string> {
+        // https://login.live.com/oauth20_authorize.srf
+        const preAuthResponse = await XboxLiveAuth.preAuth();
+        console.log("preAuth")
+        console.log(JSON.stringify(preAuthResponse))
+        const loginResponse = await XboxLiveAuth.logUser(preAuthResponse, { email, password });
+        console.log("logUser")
+        console.log(JSON.stringify(loginResponse));
+
+        const xboxUserId = loginResponse.user_id;
+        const xboxAccessToken = loginResponse.access_token;
+        const xboxRefreshToken = loginResponse.refresh_token;
+
+        const identityResponse = await this.exchangeRpsTicketForIdentity(xboxAccessToken);
+
+        const userHash = identityResponse.userHash;
+
+        const xboxLoginResponse = await this.loginToMinecraftWithXbox(identityResponse.userHash, identityResponse.XSTSToken);
+        const minecraftXboxUsername = xboxLoginResponse.username;
+
+        if (xboxInfoConsumer) {
+            try {
+                xboxInfoConsumer({
+                    accessToken: xboxAccessToken,
+                    refreshToken: xboxRefreshToken,
+                    userId: xboxUserId,
+                    userHash: userHash,
+                    username: minecraftXboxUsername
                 });
-            } else {
-                console.debug("[Auth] POST " + urls.refresh);
-                const body = {
-                    accessToken: account.accessToken,
-                    clientToken: account.clientToken,
-                    requestUser: true
-                };
-                console.log(("[Auth] " + JSON.stringify(body)).debug);
-                queueRequest({
-                    method: "POST",
-                    url: urls.refresh,
-                    headers: {
-                        "User-Agent": "Mineskin Auth",
-                        "Content-Type": "application/json",
-                        "X-Forwarded-For": account.requestIp,
-                        "REMOTE_ADDR": account.requestIp
-                    },
-                    json: true,
-                    body: body
-                }, function (err, response, body) {
-                    console.log(("[Auth] (#" + account.id + ") Refresh Body:").debug)
-                    console.log(("[Auth] " + JSON.stringify(body)).debug);
-                    if (err || response.statusCode < 200 || response.statusCode > 230 || (body && body.error)) {
-                        console.log(err)
-                        account.accessToken = null;
-                        if (account.requestServer)
-                            account.lastRequestServer = account.requestServer;
-                        account.requestServer = null;
-                        account.save(function (err, account) {
-                            console.log(("[Auth] Couldn't refresh accessToken").debug);
-
-                            // Login
-                            // module.exports.signout(account, function (err) {
-                            //     if (err) console.log((err).warn);
-                            setTimeout(function () {
-                                loginCallback(account);
-                            }, body.error === "TooManyRequestsException" ? 10000 : 1000);
-                            // })
-                        })
-                    } else {
-                        console.log("[Auth] (#" + account.id + ") got a new accessToken");
-
-                        if (body.hasOwnProperty("selectedProfile")) {
-                            account.playername = body.selectedProfile.name;
-                        }
-
-                        console.log(("[Auth] AccessToken: " + body.accessToken).debug);
-                        account.accessToken = body.accessToken;
-                        account.accessTokenExpiration = Math.round(Date.now() / 1000) + 86360;
-                        account.accessTokenSource = "refresh_mojang";
-                        if (account.requestServer)
-                            account.lastRequestServer = account.requestServer;
-                        account.requestServer = config.server;
-                        console.log(("[Auth] (#" + account.id + ") RequestServer set to " + config.server));
-                        account.save(function (err, account) {
-                            console.log(("[Auth] (#" + account.id + ") Logging in with AccessToken").info);
-                            cb(null, account);
-                        })
-                    }
-                })
+            } catch (e) {
+                console.warn(e);
+                Sentry.captureException(e);
             }
         }
-
-        if (account.accessTokenExpiration && account.accessTokenExpiration - Math.round(Date.now() / 1000) < 1800) {
-            console.log("[Auth] (#" + account.id + ") force-refreshing accessToken, since it will expire in less than 30 minutes");
-            setTimeout(function () {
-                refresh();
-            }, 1000);
-        } else if (account.microsoftAccount) {
-            cb(null, account);
-        } else {
-            console.log("[Auth] (#" + account.id + ") validating tokens");
-            console.log(("[Auth] POST " + urls.validate).debug);
-            const body = {
-                accessToken: account.accessToken,
-                clientToken: account.clientToken,
-                requestUser: true
-            };
-            console.log(("[Auth] " + JSON.stringify(body)).debug);
-            queueRequest({
-                method: "POST",
-                url: urls.validate,
-                headers: {
-                    "User-Agent": "Mineskin Auth",
-                    "Content-Type": "application/json",
-                    "X-Forwarded-For": account.requestIp,
-                    "REMOTE_ADDR": account.requestIp
-                },
-                json: true,
-                body: body
-            }, function (err, response, body) {
-                console.log("[Auth] Validate Body:".debug)
-                console.log(("" + JSON.stringify(body)).debug);
-                if (err || response.statusCode < 200 || response.statusCode > 230 || (body && body.error)) {
-                    console.info("[Auth] Couldn't validate tokens");
-                    console.log(err);
-                    setTimeout(function () {
-                        refresh();
-                    }, body.error === "TooManyRequestsException" ? 10000 : 1000);
-                } else {
-                    console.info("[Auth] Tokens are still valid!");
-                    cb(null, account);
-                }
-            })
-        }
-    } else {
-        console.log(("[Auth] Account (#" + account.id + ") doesn't have accessToken").debug);
-        // Login
-        setTimeout(function () {
-            loginCallback(account);
-        }, 2000);
+        return xboxLoginResponse.access_token;
     }
-};
 
-module.exports.authenticateXboxWithCode = function (code, cb) {
-    console.log("[MSA] Attempting to get auth token from code " + code);
-    request({
-        url: urls.microsoft.oauth20token,
-        method: "POST",
-        headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-            "Accept": "application/json"
-        },
-        form: {
-            "client_id": "00000000402b5328",
-            "code": code,
-            "grant_type": "authorization_code",
-            "redirect_uri": "https://login.live.com/oauth20_desktop.srf",
-            "scope": "service::user.auth.xboxlive.com::MBI_SSL"
-        },
-        json: true
-    }, function (err, tokenResponse, tokenBody) {
-        console.log("oauth20:")
-        console.log(JSON.stringify(tokenBody));
-        if (err) {
-            console.warn("Failed to get oauth20token");
-            console.warn(err);
-            cb({error: "failed to get auth token"}, null);
-            return;
-        }
-        if (!tokenBody || tokenBody.error) {
-            console.warn("Got error from oauth20token");
-            console.warn(tokenBody);
-            cb({error: "failed to get auth token", details: tokenBody}, null);
-            return;
-        }
-
-        module.exports.authenticateXboxWithOauthToken(tokenBody, cb);
-    });
-};
-
-module.exports.authenticateXboxWithRefreshToken = function (refreshToken, cb) {
-    console.log("[MSA] Attempting to refresh token ");
-    request({
-        url: urls.microsoft.oauth20token,
-        method: "POST",
-        headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-            "Accept": "application/json"
-        },
-        form: {
-            "client_id": "00000000402b5328",
-            "refresh_token": refreshToken,
-            "grant_type": "refresh_token",
-            "redirect_uri": "https://login.live.com/oauth20_desktop.srf",
-            "scope": "service::user.auth.xboxlive.com::MBI_SSL"
-        },
-        json: true
-    }, function (err, tokenResponse, tokenBody) {
-        console.log("oauth20:")
-        console.log(JSON.stringify(tokenBody));
-        if (err) {
-            console.warn("Failed to get oauth20token");
-            console.warn(err);
-            cb({error: "failed to get auth token"}, null);
-            return;
-        }
-        if (!tokenBody || tokenBody.error) {
-            console.warn("Got error from oauth20token");
-            console.warn(tokenBody);
-            cb({error: "failed to get auth token", details: tokenBody}, null);
-            return;
-        }
-
-        module.exports.authenticateXboxWithOauthToken(tokenBody, cb);
-    });
-};
+    static async exchangeRpsTicketForIdentity(rpsTicket: string): Promise<AuthenticateResponse> {
+        // https://user.auth.xboxlive.com/user/authenticate
+        const userTokenResponse = await XboxLiveAuth.exchangeRpsTicketForUserToken(rpsTicket);
+        console.log("exchangeRpsTicket")
+        console.log(JSON.stringify(userTokenResponse))
+        // https://xsts.auth.xboxlive.com/xsts/authorize
+        const identityResponse = await XboxLiveAuth.exchangeUserTokenForXSTSIdentity(userTokenResponse.Token, { XSTSRelyingParty, raw: false }) as AuthenticateResponse;
+        console.log("exchangeUserToken")
+        console.log(JSON.stringify(identityResponse))
+        return identityResponse;
+    }
 
 
-module.exports.authenticateXboxWithOauthToken = function (tokenData, cb) {
-    let oauthAccessToken = tokenData.access_token;
-    let oauthRefreshToken = tokenData.refresh_token;
-    let microsoftUserId = tokenData.user_id;
-
-    console.log("[MSA] Authenticating with XBL")
-    request({
-        url: urls.microsoft.xblAuth,
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "Accept": "application/json"
-        },
-        json: {
-            "Properties": {
-                "AuthMethod": "RPS",
-                "SiteName": "user.auth.xboxlive.com",
-                "RpsTicket": oauthAccessToken
-            },
-            "RelyingParty": "http://auth.xboxlive.com",
-            "TokenType": "JWT"
-        }
-    }, function (err, xblResponse, xblBody) {
-        console.log("xbl:")
-        console.log(JSON.stringify(xblBody));
-        if (err) {
-            console.warn("Failed to auth with xbl");
-            console.warn(err);
-            cb({error: "xbl auth failed"}, null);
-            return;
-        }
-        if (!xblBody || xblBody.error) {
-            console.warn("Got error from xbl");
-            console.warn(xblBody);
-            cb({error: "xbl auth failed", details: xblBody}, null);
-            return;
-        }
-
-        let xblToken = xblBody.Token;
-        let xblUhs = xblBody.DisplayClaims.xui[0].uhs;
-
-        console.log("got xblToken " + xblToken)
-        console.log("got xblUhs " + xblUhs)
-
-        console.log("[MSA] Authenticating with XSTS")
-        request({
-            url: urls.microsoft.xstsAuth,
+    static async loginToMinecraftWithXbox(userHash: string, xstsToken: string): Promise<XboxLoginResponse> {
+        const body = {
+            identityToken: `XBL3.0 x=${ userHash };${ xstsToken }`
+        };
+        const xboxLoginResponse = await Requests.minecraftServicesRequest({
             method: "POST",
+            url: "/authentication/login_with_xbox",
             headers: {
                 "Content-Type": "application/json",
                 "Accept": "application/json"
             },
-            json: {
-                "Properties": {
-                    "SandboxId": "RETAIL",
-                    "UserTokens": [
-                        xblToken
-                    ]
-                },
-                "RelyingParty": "rp://api.minecraftservices.com/",
-                "TokenType": "JWT"
-            }
-        }, function (err, xstsResponse, xstsBody) {
-            console.log("xsts:")
-            console.log(JSON.stringify(xstsBody));
-            if (err) {
-                console.warn("Failed to auth with xsts");
-                console.warn(err);
-                cb({error: "xsts auth failed"}, null);
-                return;
-            }
-            if (!xstsBody || xstsBody.error) {
-                console.warn("Got error from xsts");
-                console.warn(xstsBody);
-                cb({error: "xsts auth failed", details: xstsBody}, null);
-                return;
-            }
-
-            let xstsToken = xstsBody.Token;
-            let xstsUhs = xblBody.DisplayClaims.xui[0].uhs;
-
-            console.log("got xstsToken " + xstsToken)
-            console.log("got xstsUhs " + xstsUhs)
-
-            request({
-                url: urls.microsoft.loginWithXbox,
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Accept": "application/json"
-                },
-                json: {
-                    "identityToken": "XBL3.0 x=" + xstsUhs + ";" + xstsToken
-                }
-            }, function (err, loginResponse, loginBody) {
-                console.log("login:");
-                console.log(JSON.stringify(loginBody));
-                if (err) {
-                    console.warn("Failed to login_with_xbox");
-                    console.warn(err);
-                    cb({error: "minecraft xbox login failed"}, null);
-                    return;
-                }
-                if (!loginBody || loginBody.error) {
-                    console.warn("Got error from login_with_xbox");
-                    console.warn(loginBody);
-                    cb({error: "minecraft xbox login failed", details: loginBody}, null);
-                    return;
-                }
-
-                let minecraftAccessToken = loginBody.access_token; // FINALLY
-                let minecraftXboxUsername = loginBody.username;
-
-                console.log("got MC access token!!!");
-                console.log(minecraftAccessToken);
-
-                // Has some weird encoding issues
-                // request({
-                //     url: urls.microsoft.entitlements,
-                //     method: "GET",
-                //     headers: {
-                //         "Content-Type": "application/json",
-                //         "Accept": "application/json",
-                //         "Authorization": "Bearer " + minecraftAccessToken
-                //     },
-                //     json: true
-                // }, function (err, entitlementsResponse, entitlementsBody) {
-                //     console.log("entitlements:");
-                //     console.log(Buffer.from(JSON.stringify(entitlementsBody)).toString("base64"));
-                //     if (err) {
-                //         console.warn("Failed to get entitlements");
-                //         console.warn(err);
-                //         res.status(500).json({error: "failed to get entitlements"})
-                //         return;
-                //     }
-                //     if (!entitlementsBody || entitlementsBody.error) {
-                //         console.warn("Got error from entitlements");
-                //         // console.warn(entitlementsBody);
-                //         res.status(500).json({error: "failed to get entitlements", details: entitlementsBody})
-                //         return;
-                //     }
-                //
-                //     let ownsMinecraft = false;
-                //     if (entitlementsBody.items) {
-                //         for (let ent of entitlementsBody.items) {
-                //             if ("product_minecraft" === ent.name) {
-                //                 ownsMinecraft = true;
-                //             }
-                //         }
-                //     }
-                //
-                //
-                // });
-
-                cb(null, {
-                    token: minecraftAccessToken,
-                    userId: microsoftUserId,
-                    username: minecraftXboxUsername,
-                    refreshToken: oauthRefreshToken
-                })
-            });
+            data: body
         });
-    });
-};
-
-function notifyMissingAccessToken(account) {
-    if (account.discordMessageSent) return;
-    Util.postDiscordMessage("⚠️ Account #" + account.id + " just lost its access token\n" +
-        "  Current Server: " + account.lastRequestServer + "/" + account.requestServer + "\n" +
-        "  Account Type: " + (account.microsoftAccount ? "microsoft" : "mojang") + "\n" +
-        "  Total Success/Error: " + account.totalSuccessCounter + "/" + account.totalErrorCounter + "\n" +
-        "  Account Added: " + new Date((account.timeAdded || 0) * 1000).toUTCString() + "\n" +
-        "  Linked to <@" + account.discordUser + ">");
-
-    if (account.discordUser) {
-        Util.sendDiscordDirectMessage("Hi there!\n" +
-            "This is an automated notification that a MineSkin lost access to an account you linked to your Discord profile and has been disabled\n" +
-            "  Affected Account: " + (account.playername || account.uuid) + " (" + account.username.substr(0, 4) + "****)\n" +
-            "  Account Type: " + (account.microsoftAccount ? "microsoft" : "mojang") + "\n" +
-            "  Last Error Code:  " + account.lastErrorCode + "\n" +
-            "\n" +
-            "The account won't be used for skin generation until the issues are resolved.\n" +
-            "Please log back in to your account at https://mineskin.org/account\n" +
-            "For further assistance feel free to ask in <#482181024445497354> 🙂", account.discordUser,
-            function () {
-                Util.postDiscordMessage("Hey <@" + account.discordUser + ">! I tried to send a private message but couldn't reach you :(\n" +
-                    "MineSkin just lost access to one of your accounts (" + (account.microsoftAccount ? "microsoft" : "mojang") + ")\n" +
-                    "  Account UUID (trimmed): " + (account.uuid || account.playername).substr(0, 5) + "****\n" +
-                    "  Please log back in at https://mineskin.org/account\n", "636632020985839619");
-            });
-    }
-    account.discordMessageSent = true;
-}
-
-module.exports.completeChallenges = function (account, cb) {
-    return module.exports.completeChallengesMojang(account, cb);
-}
-
-module.exports.completeChallengesMojang = function (account, cb) {
-    if ((!account.security || account.security.length === 0) && (!account.multiSecurity || account.multiSecurity.length < 3)) {
-        console.log("[Auth] (#" + account.id + ") Skipping security questions as there are no answers configured");
-        // No security questions set
-        cb(account);
-        return;
+        const xboxLoginBody = xboxLoginResponse.data;
+        console.log("xboxLogin")
+        console.log(JSON.stringify(xboxLoginBody));
+        return xboxLoginBody as XboxLoginResponse;
     }
 
-    // Check if we can access
-    console.log(("[Auth] GET " + urls.security.location).debug);
-    queueRequest({
-        url: urls.security.location,
-        headers: {
-            "User-Agent": "Mineskin Auth",
-            "Content-Type": "application/json",
-            "Authorization": "Bearer " + account.accessToken,
-            "X-Forwarded-For": account.requestIp,
-            "REMOTE_ADDR": account.requestIp
+    static async checkGameOwnership(accessToken: string): Promise<boolean> {
+        const entitlementsResponse = await Requests.minecraftServicesRequest({
+            method: "POST",
+            url: "/entitlements/mcstore",
+            headers: {
+                Authorization: `Bearer ${ accessToken }`
+            }
+        });
+        const entitlementsBody = entitlementsResponse.data;
+        return entitlementsBody.hasOwnProperty("items") && entitlementsBody["items"].length > 0;
+    }
+
+    static async loginWithXboxCode(code: string, xboxInfoConsumer?: (info: XboxInfo) => void): Promise<string> {
+        const form = {
+            "client_id": /*"00000000402b5328"*/"000000004C12AE6F",
+            "code": code,
+            "grant_type": "authorization_code",
+            "redirect_uri": "https://login.live.com/oauth20_desktop.srf",
+            "scope": "service::user.auth.xboxlive.com::MBI_SSL"
         }
-    }, function (err, response, body) {
-        if (err) return console.log(err);
+        return this.authenticateXboxWithFormData(form, xboxInfoConsumer);
+    }
 
-        if (!response || response.statusCode < 200 || response.statusCode > 230) {// Not yet answered
-            console.log(("[Auth] (#" + account.id + ") Completing challenges").debug);
-            console.log(account.security.debug);
-
-            // Get the questions
-            queueRequest({
-                url: urls.security.challenges,
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": "Bearer " + account.accessToken,
-                    "X-Forwarded-For": account.requestIp,
-                    "REMOTE_ADDR": account.requestIp
-                }
-            }, function (err, response, body) {
-                if (err) return console.log(err);
-                console.log("[Auth] Challenges:");
-                console.log(body);
-
-                const questions = JSON.parse(body);
-                const answers = [];
-                if (questions && questions.length > 0) {
-                    console.log(typeof questions);
-                    if (account.multiSecurity) {
-                        const answersById = {};
-                        account.multiSecurity.forEach(function (answer) {
-                            answersById[answer.id] = answer.answer;
-                        });
-                        questions.forEach(function (question) {
-                            if (!answersById.hasOwnProperty(question.answer.id)) {
-                                console.warn("Missing security answer for question " + question.question.id + "(" + question.question.question + "), Answer #" + question.answer.id);
-                            }
-                            answers.push({id: question.answer.id, answer: answersById[question.answer.id] || account.security});
-                        });
-                    } else {
-                        questions.forEach(function (question) {
-                            answers.push({id: question.answer.id, answer: account.security});
-                        });
-                    }
-                } else {
-                    console.log(("[Auth] Got empty security questions object").warn)
-                    // I'm guessing this means that there are no questions defined in the account,
-                    //  though I'm not sure what kind of response the API expects here (since the access was denied in order to even get here)
-                    cb(null, body);
-                    return;
-                }
-
-                console.log("[Auth] Sending Challenge Answers:");
-                console.log(JSON.stringify(answers).debug);
-
-                setTimeout(function () {
-                    // Post answers
-                    console.log(("[Auth] POST " + urls.security.location).debug);
-                    queueRequest({
-                        method: "POST",
-                        url: urls.security.location,
-                        headers: {
-                            "User-Agent": "Mineskin Auth",
-                            "Content-Type": "application/json",
-                            "Authorization": "Bearer " + account.accessToken,
-                            "X-Forwarded-For": account.requestIp,
-                            "REMOTE_ADDR": account.requestIp
-                        },
-                        json: answers
-                    }, function (err, response, body) {
-                        if (err) return console.log(err);
-
-                        if (response.statusCode >= 200 && response.statusCode < 300) {
-                            console.log("[Auth] (#" + account.id + ") challenges completed");
-                            // Challenges completed
-                            cb(account);
-                        } else {
-                            console.log(("[Auth] (#" + account.id + ") Failed to complete security challenges").warn);
-                            console.log(("" + JSON.stringify(body)).warn);
-                            cb(null, body);
-                        }
-                    })
-                }, 1000);
-            })
-        } else {
-            cb(account);
+    static async refreshXboxAccessToken(xboxRefreshToken: string, xboxInfoConsumer?: (info: XboxInfo) => void): Promise<string> {
+        const form = {
+            "client_id": /*"00000000402b5328"*/"000000004C12AE6F",
+            "refresh_token": xboxRefreshToken,
+            "grant_type": "refresh_token",
+            "redirect_uri": "https://login.live.com/oauth20_desktop.srf",
+            "scope": "service::user.auth.xboxlive.com::MBI_SSL"
         }
-    })
+        return await this.authenticateXboxWithFormData(form, xboxInfoConsumer);
+    }
+
+    static async authenticateXboxWithFormData(form: any, xboxInfoConsumer?: (info: XboxInfo) => void): Promise<string> {
+        const refreshResponse = await Requests.liveLoginRequest({
+            method: "POST",
+            url: "/oauth20_token.srf",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Accept": "application/json"
+            },
+            data: qs.stringify(form)
+        });
+        const refreshBody = refreshResponse.data;
+        console.log("refreshBody");
+        console.log(JSON.stringify(refreshBody))
+
+        // Microsoft/Xbox accessToken
+        const xboxAccessToken = refreshBody["access_token"];
+        const xboxRefreshToken = refreshBody["refresh_token"];
+
+        const identityResponse = await this.exchangeRpsTicketForIdentity(xboxAccessToken);
+
+        const xboxLoginResponse = await this.loginToMinecraftWithXbox(identityResponse.userHash, identityResponse.XSTSToken);
+        const minecraftXboxUsername = xboxLoginResponse.username;
+
+        if (xboxInfoConsumer) {
+            try {
+                xboxInfoConsumer({
+                    accessToken: xboxAccessToken,
+                    refreshToken: xboxRefreshToken,
+                    username: minecraftXboxUsername
+                });
+            } catch (e) {
+                console.warn(e);
+                Sentry.captureException(e);
+            }
+        }
+        // Minecraft accessToken
+        return xboxLoginResponse.access_token;
+    }
+
 }
 
-module.exports.signout = function (account, cb) {
-    return module.exports.signoutMojang(account, cb);
+
+export class Authentication {
+
+    public static async authenticate(account: IAccountDocument): Promise<IAccountDocument> {
+        try {
+            if (account.microsoftAccount) {
+                return Microsoft.authenticate(account);
+            } else {
+                return Mojang.authenticate(account)
+                    .then(Mojang.completeChallenges);
+            }
+        } catch (e) {
+            if (e instanceof AuthenticationError) {
+                if (e.error === AuthError.MISSING_CREDENTIALS) {
+                    Discord.notifyMissingCredentials(account);
+                }
+            }
+            throw e;
+        }
+    }
+
 }
 
-module.exports.signoutMojang = function (account, cb) {
-    // ygg.signout(account.username, Util.crypto.decrypt(account.passwordNew), account.requestIp, cb);
-    account.accessToken = null;
-    if (account.requestServer)
-        account.lastRequestServer = account.requestServer;
-    account.requestServer = null;
-    // account.clientToken = null;
-    console.log(("[Auth] POST " + urls.signout).debug);
-    queueRequest({
-        method: "POST",
-        url: urls.signout,
-        headers: {
-            "User-Agent": "Mineskin Auth",
-            "Content-Type": "application/json",
-            "X-Forwarded-For": account.requestIp,
-            "REMOTE_ADDR": account.requestIp
-        },
-        json: true,
-        body: {
-            username: account.username,
-            password: Util.crypto.decrypt(account.passwordNew)
-        }
-    }, function (err, response, body) {
-        console.log("Signout Body:".debug)
-        console.log(("" + JSON.stringify(body)).debug);
-        if (err) {
-            cb(err);
-            return console.log(err);
-        }
+export enum AuthError {
+    UNSUPPORTED_ACCOUNT = "unsupported_account",
+    MISSING_CREDENTIALS = "missing_credentials",
 
-        cb();
-    })
-};
+    MOJANG_AUTH_FAILED = "mojang_auth_failed",
+    MOJANG_REFRESH_FAILED = "mojang_refresh_failed",
+    MOJANG_CHALLENGES_FAILED = "mojang_challenges_failed",
+
+    MICROSOFT_AUTH_FAILED = "microsoft_auth_failed",
+    MICROSOFT_REFRESH_FAILED = "microsoft_refresh_failed",
+
+    DOES_NOT_OWN_MINECRAFT = "does_not_own_minecraft"
+}
+
+export class AuthenticationError extends Error {
+    constructor(public error: AuthError, message: string, public account?: IAccountDocument, public details?: any) {
+        super("[" + error + "] " + message + (account ? " " + account.toSimplifiedString() : ""));
+    }
+}
+
+interface XboxInfo {
+    accessToken?: string;
+    refreshToken?: string;
+    userId?: string;
+    userHash?: string;
+    username?: string;
+}
+
+interface XboxLoginResponse {
+    username: string;
+    access_token: string;
+    expires_in: number;
+}
+

@@ -12,6 +12,7 @@ const config: Config = require("../config");
 
 axios.defaults.headers["User-Agent"] = "MineSkin";
 axios.defaults.headers["Content-Type"] = "application/json";
+axios.defaults.headers["Accept"] = "application/json";
 axios.defaults.timeout = 20000;
 
 export const REQUESTS_METRIC = metrics.metric('mineskin', 'requests');
@@ -22,10 +23,10 @@ export class Requests {
     protected static readonly mojangAuthInstance: AxiosInstance = axios.create({
         baseURL: "https://authserver.mojang.com",
         headers: {
-            "Accept": "application/json, text/plain, */*",
-            "Accept-Encoding": "gzip, deflate",
-            "Origin": "mojang://launcher",
-            "User-Agent": "Minecraft Launcher/2.1.2481 (bcb98e4a63) Windows (10.0; x86_64)"
+            // "Accept": "application/json, text/plain, */*",
+            // "Accept-Encoding": "gzip, deflate",
+            // "Origin": "mojang://launcher",
+            // "User-Agent": "Minecraft Launcher/2.1.2481 (bcb98e4a63) Windows (10.0; x86_64)"
         }
     });
     protected static readonly mojangApiInstance: AxiosInstance = axios.create({
@@ -40,25 +41,32 @@ export class Requests {
         baseURL: "https://api.minecraftservices.com",
         headers: {}
     });
+    protected static readonly liveLoginInstance: AxiosInstance = axios.create({
+        baseURL: "https://login.live.com",
+        headers: {}
+    });
 
     protected static readonly mojangAuthRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
-        = new JobQueue<AxiosRequestConfig, AxiosResponse>(request => Requests.runAxiosRequest(request, Requests.mojangAuthInstance), Time.seconds(4));
+        = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, Requests.mojangAuthInstance), Time.seconds(5));
     protected static readonly mojangApiRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
-        = new JobQueue<AxiosRequestConfig, AxiosResponse>(request => Requests.runAxiosRequest(request, Requests.mojangApiInstance), Time.seconds(1));
+        = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, Requests.mojangApiInstance), Time.seconds(1));
     protected static readonly mojangSessionRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
-        = new JobQueue<AxiosRequestConfig, AxiosResponse>(request => Requests.runAxiosRequest(request, Requests.mojangSessionInstance), Time.seconds(1));
+        = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, Requests.mojangSessionInstance), Time.seconds(1));
     protected static readonly minecraftServicesRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
-        = new JobQueue<AxiosRequestConfig, AxiosResponse>(request => Requests.runAxiosRequest(request, Requests.minecraftServicesInstance), Time.seconds(1.2));
+        = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, Requests.minecraftServicesInstance), Time.seconds(1.2));
+    protected static readonly liveLoginRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
+        = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, Requests.liveLoginInstance), Time.seconds(1));
 
     protected static metricsCollector = setInterval(() => {
         const queues = new Map<string, JobQueue<AxiosRequestConfig, AxiosResponse>>([
             ["mojangAuth", Requests.mojangAuthRequestQueue],
             ["mojangApi", Requests.mojangApiRequestQueue],
             ["mojangSession", Requests.mojangSessionRequestQueue],
-            ["minecraftServices", Requests.minecraftServicesRequestQueue]
+            ["minecraftServices", Requests.minecraftServicesRequestQueue],
+            ["liveLogin", Requests.liveLoginRequestQueue]
         ]);
         const points: IPoint[] = [];
-        queues.forEach((queue, name)=>{
+        queues.forEach((queue, name) => {
             points.push({
                 measurement: "queue." + name,
                 tags: {
@@ -79,15 +87,23 @@ export class Requests {
     protected static runAxiosRequest(request: AxiosRequestConfig, instance = this.axiosInstance): Promise<AxiosResponse> {
         return instance.request(request)
             .then(response => {
-                const m = REQUESTS_METRIC
-                    .tag("server", config.server);
-                if (request) {
-                    const url = new URL(axios.getUri(request));
-                    m.tag("method", request.method || "GET")
-                        .tag("endpoint", url.host + "" + url.pathname)
-                }
-                if (response) {
-                    m.tag("statusCode", "" + response.status)
+                try {
+                    console.log(axios.getUri(request));
+                    console.log(request.url);
+                    console.log(response.config.url)
+                    const m = REQUESTS_METRIC
+                        .tag("server", config.server);
+                    if (request) {
+                        const url = new URL(axios.getUri(request));
+                        m.tag("method", request.method || "GET")
+                            .tag("endpoint", url.host + "" + url.pathname)
+                    }
+                    if (response) {
+                        m.tag("statusCode", "" + response.status)
+                    }
+                    m.inc();
+                } catch (e) {
+                    Sentry.captureException(e);
                 }
                 return response;
             })
@@ -107,6 +123,10 @@ export class Requests {
 
     public static minecraftServicesRequest(request: AxiosRequestConfig): Promise<AxiosResponse> {
         return this.minecraftServicesRequestQueue.add(request);
+    }
+
+    public static liveLoginRequest(request: AxiosRequestConfig): Promise<AxiosResponse> {
+        return this.liveLoginRequestQueue.add(request);
     }
 
     public static isOk(response: AxiosResponse): boolean {
