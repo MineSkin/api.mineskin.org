@@ -4,6 +4,9 @@ import { Time } from "@inventivetalent/loading-cache";
 import { metrics } from "../util";
 import { Config } from "../types/Config";
 import { URL } from "url";
+import { setInterval } from "timers";
+import { IPoint } from "influx";
+import * as Sentry from "@sentry/node";
 
 const config: Config = require("../config");
 
@@ -15,7 +18,7 @@ export const REQUESTS_METRIC = metrics.metric('mineskin', 'requests');
 
 export class Requests {
 
-    protected static readonly axiosInstance: AxiosInstance = axios.create({});
+    static readonly axiosInstance: AxiosInstance = axios.create({});
     protected static readonly mojangAuthInstance: AxiosInstance = axios.create({
         baseURL: "https://authserver.mojang.com",
         headers: {
@@ -46,6 +49,32 @@ export class Requests {
         = new JobQueue<AxiosRequestConfig, AxiosResponse>(request => Requests.runAxiosRequest(request, Requests.mojangSessionInstance), Time.seconds(1));
     protected static readonly minecraftServicesRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
         = new JobQueue<AxiosRequestConfig, AxiosResponse>(request => Requests.runAxiosRequest(request, Requests.minecraftServicesInstance), Time.seconds(1.2));
+
+    protected static metricsCollector = setInterval(() => {
+        const queues = new Map<string, JobQueue<AxiosRequestConfig, AxiosResponse>>([
+            ["mojangAuth", Requests.mojangAuthRequestQueue],
+            ["mojangApi", Requests.mojangApiRequestQueue],
+            ["mojangSession", Requests.mojangSessionRequestQueue],
+            ["minecraftServices", Requests.minecraftServicesRequestQueue]
+        ]);
+        const points: IPoint[] = [];
+        queues.forEach((queue, name)=>{
+            points.push({
+                measurement: "queue." + name,
+                tags: {
+                    server: config.server
+                },
+                fields: {
+                    size: queue.size
+                }
+            });
+        });
+        try {
+            metrics.influx.writePoints(points);
+        } catch (e) {
+            Sentry.captureException(e);
+        }
+    }, 10000);
 
     protected static runAxiosRequest(request: AxiosRequestConfig, instance = this.axiosInstance): Promise<AxiosResponse> {
         return instance.request(request)
@@ -89,6 +118,8 @@ export class Requests {
         this.mojangApiRequestQueue.end();
         this.mojangSessionRequestQueue.end();
         this.minecraftServicesRequestQueue.end();
+
+        clearInterval(this.metricsCollector);
     }
 
 }

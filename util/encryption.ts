@@ -10,7 +10,7 @@ const IV_LENGTH = 16; // For AES, this is always 16
 
 export class Encryption {
 
-    static encrypt(text: string) {
+    static encrypt(text: string): string {
         const iv = crypto.randomBytes(IV_LENGTH);
         const cipher = crypto.createCipheriv(config.crypto.algorithm, new Buffer(ENCRYPTION_KEY), iv);
         let encrypted = cipher.update(text);
@@ -21,7 +21,7 @@ export class Encryption {
     }
 
 
-    static decrypt(text: string) {
+    static decrypt(text: string): string {
         const textParts = new Buffer(text, 'base64').toString('ascii').split(':');
         const iv = new Buffer(textParts.shift(), 'hex');
         const encryptedText = new Buffer(textParts.join(':'), 'hex');

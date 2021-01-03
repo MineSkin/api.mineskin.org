@@ -10,7 +10,12 @@ import connectToMongo from "./database/database";
 import RotatingFileStream from "rotating-file-stream";
 import * as morgan from "morgan";
 import * as bodyParser from "body-parser";
-import fileUpload = require("express-fileupload");
+import * as fileUpload from "express-fileupload";
+import { RateLimit } from "express-rate-limit";
+import Optimus from "optimus-js";
+import { info, metrics } from "./util";
+import * as rateLimit from "express-rate-limit";
+import { testerRoute, utilRoute } from "./routes";
 
 
 const config: Config = require("./config");
@@ -23,6 +28,7 @@ console.log("\n" +
     "\n");
 
 const app: Express = express();
+
 
 async function init() {
 
@@ -92,7 +98,7 @@ async function init() {
         });
         app.use(bodyParser.urlencoded({ extended: true }));
         app.use(bodyParser.json());
-        app.use(expressValidator());
+        // app.use(expressValidator());
         app.use(fileUpload());
         app.use((req, res, next) => {
             res.header("X-Mineskin-Server", config.server || "default");
@@ -128,84 +134,47 @@ async function init() {
         await connectToMongo(config);
     }
 
+    {
+        console.log("Registering routes");
+
+        app.get("/", function (req, res) {
+            res.json({ msg: "Hi!" });
+        });
+
+        const limiter = rateLimit({
+            windowMs: 2 * 60 * 1000, // 2 minutes,
+            max: 6,
+            message: JSON.stringify({ error: "Too many requests" }),
+            keyGenerator: function (req) {
+                return req.get('cf-connecting-ip') || req.get('x-forwarded-for') || req.get("x-real-ip") || req.connection.remoteAddress
+            }
+        });
+
+
+        require("./routes/generate")(app, config, optimus, limiter);
+        require("./routes/get")(app);
+        require("./routes/render")(app);
+        require("./routes/util")(app);
+        require("./routes/admin")(app);
+        require("./routes/accountManager")(app, config);
+
+        testerRoute.register(app);
+        utilRoute.register(app);
+
+
+    }
+
+    app.use(Sentry.Handlers.errorHandler());
 }
 
-// API methods
-app.get("/", function (req, res) {
-    res.json({ msg: "Hi!" });
-});
-
-
-app.post("/testing/upload_tester_result", function (req, res) {
-    if (!config.testerToken || req.body.token !== config.testerToken) return;
-    if (!req.body.data) return;
-    if (req.headers["user-agent"] !== "mineskin-tester") return;
-
-    try {
-        TESTER_METRICS
-            .tag("server", config.server)
-            .tag("result", req.body.data.r || "fail")
-            .tag("mismatches", req.body.data.m > 0 ? "true" : "false")
-            .inc();
-    } catch (e) {
-        console.warn(e);
-        Sentry.captureException(e);
-    }
-
-    if (req.body.data.r === "success") {
-        Util.increaseStat("mineskintester.success");
-        res.sendStatus(202);
-
-        if (req.body.data.m > 0) {
-            Util.postDiscordMessage("🛑 mineskin-tester generated data with " + req.body.data.m + " image mismatches! ID: " + req.body.data.i);
-        }
-
-        if (req.body.data.i) {
-            Skin.findOneAndUpdate({ id: req.body.data.i, server: req.body.data.s }, { testerRequest: true, testerMismatchCounter: req.body.data.m || 0 });
-        }
-    } else if (req.body.data.r === "fail") {
-        Util.increaseStat("mineskintester.fail");
-        res.sendStatus(202);
-    } else {
-        res.sendStatus(400);
-    }
-});
 
 const optimus = new Optimus(config.optimus.prime, config.optimus.inverse, config.optimus.random);
 console.log("Optimus Test:", optimus.encode(Math.floor(Date.now() / 10)));
 
-const limiter = rateLimit({
-    windowMs: 2 * 60 * 1000, // 2 minutes,
-    max: 6,
-    message: JSON.stringify({ error: "Too many requests" }),
-    keyGenerator: function (req) {
-        return req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || req["realAddress"] || req.connection.remoteAddress
-    }
-})
-
-/// Routes
-require("./routes/generate")(app, config, optimus, limiter);
-require("./routes/get")(app);
-require("./routes/render")(app);
-require("./routes/util")(app);
-require("./routes/admin")(app);
-require("./routes/accountManager")(app, config);
-
-function exitHandler(err) {
-    if (err) {
-        console.log("\n\n\n\n\n\n\n\n");
-        console.log(err);
-        console.log("\n\n\n");
-    }
-    process.exit();
-}
-
-app.use(Sentry.Handlers.errorHandler());
-
-server.listen(port, function () {
-    console.log(' ==> listening on *:' + port + "\n");
+init().then(() => {
+    app.listen(port, function () {
+        console.log(info(" ==> listening on *:" + port + "\n"));
+    });
 });
 
-process.on("exit", exitHandler);
-process.on("SIGINT", exitHandler);
-process.on("uncaughtException", exitHandler);
+

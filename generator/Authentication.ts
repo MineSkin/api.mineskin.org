@@ -21,57 +21,13 @@ const Account = require("../database/schemas/Account").IAccountDocument;
 const Skin = require("../database/schemas/Skin").ISkinDocument;
 const Traffic = require("../database/schemas/Traffic").ITrafficDocument;
 
+export class Authentication {
+
+}
+
 module.exports = {};
 
-const requestQueue = [];
-module.exports.requestQueue = requestQueue;
 
-setInterval(function () {
-    const next = requestQueue.shift();
-    if (next) {
-        try {
-            const d = new Date().toUTCString();
-            request(next.options, function (err, res, body) {
-                fs.appendFileSync("requests.log", "[" + d + "] AUTH " + (next.options.method || "GET") + " " + (next.options.url || next.options.uri) + " => " + res.statusCode + "\n", "utf8");
-                try {
-                    metrics.requestsMetric(next.options, res).inc()
-                } catch (e) {
-                    console.warn(e);
-                    Sentry.captureException(e);
-                }
-                next.callback(err, res, body);
-            });
-        } catch (e) {
-            console.error(e);
-            Sentry.captureException(e);
-        }
-    }
-}, config.requestQueue.auth);
-setInterval(function () {
-    try {
-        metrics.influx.writePoints([{
-            measurement: "queue.authentication",
-            tags: {
-              server: config.server
-            },
-            fields: {
-                size: requestQueue.length
-            }
-        }],{
-            database: 'mineskin'
-        });
-    } catch (e) {
-        console.warn(e);
-        Sentry.captureException(e);
-    }
-}, 10000);
-setInterval(function () {
-    console.log("[Auth] Request Queue Size: " + requestQueue.length);
-}, 30000)
-
-function queueRequest(options, callback) {
-    requestQueue.push({options: options, callback: callback})
-}
 
 module.exports.authenticate = function (account, cb) {
     return module.exports.authenticateMojang(account, cb);

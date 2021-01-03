@@ -39,7 +39,7 @@ module.exports = function (app, config, optimus, limiter) {
     };
 
 
-    const authentication = require("../generator/authentication");
+    const authentication = require("../generator/Authentication");
     const dataFetcher = require("../generator/dataFetcher");
     const skinChanger = require("../generator/SkinChanger");
 

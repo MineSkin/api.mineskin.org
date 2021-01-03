@@ -12,7 +12,7 @@ module.exports = function (app, config) {
         }
     });
     const md5 = require("md5");
-    const authentication = require("../generator/authentication");
+    const authentication = require("../generator/Authentication");
     const {URL} = require("url");
     const metrics = require("../util/metrics");
 

@@ -1,11 +1,13 @@
 import { Requests } from "./Requests";
-import { AsyncLoadingCache, Caches, Time } from "@inventivetalent/loading-cache";
+import { AsyncLoadingCache, Caches, LoadingCache, Time } from "@inventivetalent/loading-cache";
 import { SkinData } from "../types/SkinData";
 import { ProfileResponse } from "../types/ProfileResponse";
 import { User } from "../types/User";
 import * as Sentry from "@sentry/node";
 import { Severity } from "@sentry/node";
-import { stripUuid } from "../util";
+import { metrics, stripUuid } from "../util";
+import { IPoint } from "influx";
+
 
 export class Caching {
 
@@ -106,6 +108,31 @@ export class Caching {
             });
         });
 
+    protected static metricsCollector = setInterval(() => {
+        const caches = new Map<string, AsyncLoadingCache<string, any>>([
+            ["skinData", Caching.skinDataCache],
+            ["userByName", Caching.userByNameCache],
+            ["userByUuid", Caching.userByUuidCache]
+        ]);
+        const points: IPoint[] = [];
+        caches.forEach((cache, name) => {
+            points.push({
+                measurement: "cache." + name,
+                tags: {
+                    server: config.server
+                },
+                fields: {
+                    size: cache.keys().length
+                }
+            });
+        });
+        try {
+            metrics.influx.writePoints(points);
+        } catch (e) {
+            Sentry.captureException(e);
+        }
+    }, 10000);
+
     public static getSkinData(uuid: string): Promise<SkinData | undefined> {
         return this.skinDataCache.get(uuid);
     }
@@ -122,6 +149,8 @@ export class Caching {
         this.skinDataCache.end();
         this.userByNameCache.end();
         this.userByUuidCache.end();
+
+        clearInterval(this.metricsCollector);
     }
 
 }
