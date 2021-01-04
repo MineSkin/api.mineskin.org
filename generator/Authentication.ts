@@ -1,5 +1,5 @@
 import { Config } from "../types/Config";
-import { IAccountDocument } from "../types";
+import { IAccountDocument, MineSkinError } from "../types";
 import { Requests } from "./Requests";
 import { debug, Encryption, warn } from "../util";
 import * as Sentry from "@sentry/node";
@@ -117,7 +117,7 @@ export class Mojang {
             return await this.refreshAccessToken(account);
         } catch (e) {
             if (e instanceof AuthenticationError) {
-                if (e.error === AuthError.MOJANG_REFRESH_FAILED) {
+                if (e.code=== AuthError.MOJANG_REFRESH_FAILED) {
                     // Couldn't refresh, attempt to login
                     return await this.login(account);
                 }
@@ -301,7 +301,7 @@ export class Microsoft {
             return await this.refreshAccessToken(account);
         } catch (e) {
             if (e instanceof AuthenticationError) {
-                if (e.error === AuthError.MICROSOFT_REFRESH_FAILED) {
+                if (e.code=== AuthError.MICROSOFT_REFRESH_FAILED) {
                     // Couldn't refresh, attempt to login
                     return await this.login(account);
                 }
@@ -488,7 +488,7 @@ export class Authentication {
             }
         } catch (e) {
             if (e instanceof AuthenticationError) {
-                if (e.error === AuthError.MISSING_CREDENTIALS) {
+                if (e.code === AuthError.MISSING_CREDENTIALS) {
                     Discord.notifyMissingCredentials(account);
                 }
             }
@@ -512,9 +512,14 @@ export enum AuthError {
     DOES_NOT_OWN_MINECRAFT = "does_not_own_minecraft"
 }
 
-export class AuthenticationError extends Error {
-    constructor(public error: AuthError, message: string, public account?: IAccountDocument, public details?: any) {
-        super("[" + error + "] " + message + (account ? " " + account.toSimplifiedString() : ""));
+export class AuthenticationError extends MineSkinError {
+    constructor(code: AuthError, msg: string, public account?: IAccountDocument, public details?: any) {
+        super(code, msg);
+        Object.setPrototypeOf(this, AuthenticationError.prototype);
+    }
+
+    get name(): string {
+        return 'AuthenticationError';
     }
 }
 

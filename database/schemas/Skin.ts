@@ -95,6 +95,10 @@ SkinSchema.methods.toResponseJson = function (this: ISkinDocument, delay?: numbe
 
 /// STATICS
 
+SkinSchema.statics.findForId = function (this: ISkinModel, id: number): Promise<ISkinDocument> {
+    return this.findOne({ id: id }).exec();
+};
+
 SkinSchema.statics.findExistingForHash = function (this: ISkinModel, hash: string, name: string, model: SkinModel, visibility: SkinVisibility): Promise<ISkinDocument> {
     return this.findOne({ hash: hash, name: name, model: model, visibility: visibility }).exec()
         .then((skin: ISkinDocument) => {

@@ -122,3 +122,17 @@ export function sleep(duration: number): Promise<void> {
         setTimeout(() => resolve(), duration);
     });
 }
+
+export const POW_2_32 = Math.pow(2, 32);
+
+export function random32BitNumber(): Promise<number> {
+    return new Promise((resolve, reject) => {
+        crypto.randomInt(POW_2_32, (err, val) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(val);
+            }
+        });
+    });
+}

@@ -3,9 +3,10 @@ import * as Sentry from "@sentry/node";
 import { Config } from "../types/Config";
 import { metrics } from "../util";
 import { Skin, Stat } from "../database/schemas";
+import { Discord } from "../util/Discord";
 
 const config: Config = require("../config");
-const TESTER_METRICS = metrics.metric('mineskin', 'tester');
+const TESTER_METRIC = metrics.metric('mineskin', 'tester');
 
 export const register = (app: Application) => {
 
@@ -15,7 +16,7 @@ export const register = (app: Application) => {
         if (req.headers["user-agent"] !== "mineskin-tester") return;
 
         try {
-            TESTER_METRICS
+            TESTER_METRIC
                 .tag("server", config.server)
                 .tag("result", req.body.data.r || "fail")
                 .tag("mismatches", req.body.data.m > 0 ? "true" : "false")
@@ -31,7 +32,7 @@ export const register = (app: Application) => {
             });
 
             if (req.body.data.m > 0) {
-                Util.postDiscordMessage("🛑 mineskin-tester generated data with " + req.body.data.m + " image mismatches! ID: " + req.body.data.i);
+                Discord.postDiscordMessage("🛑 mineskin-tester generated data with " + req.body.data.m + " image mismatches! ID: " + req.body.data.i);
             }
 
             if (req.body.data.i) {

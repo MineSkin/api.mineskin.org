@@ -1,136 +1,16 @@
+import { Config } from "../types/Config";
+
+const config: Config = require("../config");
 
 export class SkinChanger {
 
-    static requestQueue
 
 }
 
 
-const request = require('request');
-// request.debug=true;
-const urls = require("./urls");
-const fs = require("fs");
-const authentication = require("./Authentication");
-const randomip = require("random-ip");
-const Sentry = require("@sentry/node");
-const metrics = require("../util/metrics");
-
-const config = require("../config");
-
-// Schemas
-const Account = require("../database/schemas/Account").IAccountDocument;
-const Skin = require("../database/schemas/Skin").ISkinDocument;
-const Traffic = require("../database/schemas/Traffic").ITrafficDocument;
-
-module.exports = {};
-
-const requestQueue = [];
-module.exports.requestQueue = requestQueue;
-setInterval(function () {
-    const next = requestQueue.shift();
-    if (next) {
-        try {
-            const d = new Date().toUTCString();
-            request(next.options, function (err, res, body) {
-                try {
-                    metrics.requestsMetric(next.options, res).inc();
-                } catch (e) {
-                    console.warn(e);
-                    Sentry.captureException(e);
-                }
-                // fs.appendFileSync("requests.log", "[" + d  + "] SKIN "+ (next.options.method||"GET")+" " + (next.options.url||next.options.uri) + " => "+res.statusCode+"\n", "utf8");
-                next.callback(err, res, body);
-            });
-        } catch (e) {
-            console.error(e);
-            Sentry.captureException(e);
-        }
-    }
-}, config.requestQueue.skinChanger);
-setInterval(function () {
-    try {
-        metrics.influx.writePoints([{
-            measurement: "queue.skinChanger",
-            tags: {
-                server: config.server
-            },
-            fields: {
-                size: requestQueue.length
-            }
-        }],{
-            database: 'mineskin'
-        });
-    } catch (e) {
-        console.warn(e);
-        Sentry.captureException(e);
-    }
-}, 10000);
-setInterval(function () {
-    console.log("[SkinChanger] Request Queue Size: " + requestQueue.length);
-}, 30000)
-
-function queueRequest(options, callback) {
-    requestQueue.push({options: options, callback: callback})
-}
-
-module.exports.findExistingSkin = function (hash, name, model, visibility, cb) {
-    Skin.findOne({hash: hash, name: name, model: model, visibility: visibility}).exec(function (err, skin) {
-        if (err) return console.log(err);
-        if (skin) {
-            console.log("Found existing skin with same hash");
-            skin.duplicate += 1;
-            skin.save(function (err, skin) {
-                if (err) return console.log(err);
-                cb(skin);
-            })
-        } else {
-            cb();
-        }
-    })
-};
-
-module.exports.findExistingSkinForTextureUrl = function (url, name, model, visibility, cb) {
-    Skin.findOne({url: url, name: name, model: model, visibility: visibility}).exec(function (err, skin) {
-        if (err) return console.log(err);
-        if (skin) {
-            console.log("Found existing skin with same texture url");
-            skin.duplicate += 1;
-            skin.save(function (err, skin) {
-                if (err) return console.log(err);
-                cb(skin);
-            })
-        } else {
-            cb();
-        }
-    })
-};
 
 
-module.exports.getAvailableAccount = function (req, res, cb) {
-    const time = Date.now() / 1000;
-    Account.findOne({enabled: true, requestServer: {$in: [null, "default", config.server]}, lastUsed: {'$lt': (time - 100)}, forcedTimeoutAt: {'$lt': (time - 500)}, errorCounter: {'$lt': (config.errorThreshold || 10)}, timeAdded: {'$lt': time - 60}})
-        .sort({lastUsed: 1, lastSelected: 1, sameTextureCounter: 1}).exec(function (err, account) {
-        if (err) return console.log(err);
-        if (!account) {
-            console.log(("[SkinChanger] There are no accounts available!").error);
-            res.status(500).json({error: "No accounts available"});
-        } else {
-            // if (time - account.lastUsed > 3600) {// Reset tokens after 30 minutes
-            //     account.accessToken = null;
-            //     // account.clientToken = null;
-            // }
-            console.log("Account #" + account.id + " last used " + Math.round(time - account.lastUsed) + "s ago, last selected " + Math.round(time - account.lastSelected) + "s ago")
-            account.lastUsed = account.lastSelected = time;
-            if (!account.successCounter) account.successCounter = 0;
-            if (!account.errorCounter) account.errorCounter = 0;
-            if (!account.totalSuccessCounter) account.totalSuccessCounter = 0;
-            if (!account.totalErrorCounter) account.totalErrorCounter = 0;
-            account.save(function (err, account) {
-                cb(account);
-            });
-        }
-    })
-}
+
 
 module.exports.generateUrl = function (account, url, model, cb) {
     console.log(("[SkinChanger] Generating Skin from URL").info);

@@ -1,6 +1,9 @@
 {
   "name": "api.mineskin.org",
   "version": "0.0.0",
+  "engines": {
+    "node": ">=12.20.0"
+  },
   "scripts": {
     "start": "node index.ts"
   },

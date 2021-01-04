@@ -44,6 +44,8 @@ export interface ISkinDocument extends Document {
 }
 
 export interface ISkinModel extends Model<ISkinDocument> {
+    findForId(id: number): Promise<ISkinDocument>;
+
     findExistingForHash(hash: string, name: string, model: SkinModel, visibility: SkinVisibility): Promise<ISkinDocument>;
 
     findExistingForTextureUrl(url: string, name: string, model: SkinModel, visibility: SkinVisibility): Promise<ISkinDocument>;

@@ -13,15 +13,13 @@ import * as bodyParser from "body-parser";
 import * as fileUpload from "express-fileupload";
 import { RateLimit } from "express-rate-limit";
 import Optimus from "optimus-js";
-import { info, metrics } from "./util";
+import { apiRequestsMiddleware, info, metrics } from "./util";
 import * as rateLimit from "express-rate-limit";
 import { testerRoute, utilRoute } from "./routes";
 
 
 const config: Config = require("./config");
 const port = process.env.PORT || config.port || 3014;
-
-const TESTER_METRICS = metrics.metric('mineskin', 'tester');
 
 console.log("\n" +
     "  ==== STARTING UP ==== " +
@@ -104,6 +102,7 @@ async function init() {
             res.header("X-Mineskin-Server", config.server || "default");
             next();
         });
+        app.use(apiRequestsMiddleware);
 
         app.use("/.well-known", express.static(".well-known"));
     }
@@ -168,8 +167,6 @@ async function init() {
 }
 
 
-const optimus = new Optimus(config.optimus.prime, config.optimus.inverse, config.optimus.random);
-console.log("Optimus Test:", optimus.encode(Math.floor(Date.now() / 10)));
 
 init().then(() => {
     app.listen(port, function () {
