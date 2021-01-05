@@ -11,10 +11,12 @@ const skinSchema = new Schema({
         index: true
     },
     name: {
-        type: String
+        type: String,
+        index: true
     },
     uuid: {
-        type: String
+        type: String,
+        index: true
     },
     model: {
         type: String,
