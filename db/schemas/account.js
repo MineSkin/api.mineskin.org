@@ -26,13 +26,11 @@ const accountSchema = new Schema({
     }],
     microsoftAccount: Boolean,
     microsoftUserId: {
-        type: String,
-        index: true
+        type: String
     },
     microsoftRefreshToken: String,
     minecraftXboxUsername: {
-        type: String,
-        index: true
+        type: String
     },
     lastSelected: Number,
     timeAdded: {

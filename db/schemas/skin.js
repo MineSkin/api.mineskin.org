@@ -11,12 +11,10 @@ const skinSchema = new Schema({
         index: true
     },
     name: {
-        type: String,
-        index: true
+        type: String
     },
     uuid: {
-        type: String,
-        index: true
+        type: String
     },
     model: {
         type: String,
@@ -37,8 +35,7 @@ const skinSchema = new Schema({
     skinTextureId: String,
     textureHash: String,
     capeUrl: {
-        type: String,
-        index: true
+        type: String
     },
     time: {
         type: Number,
