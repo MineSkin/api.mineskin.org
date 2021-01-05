@@ -53,7 +53,8 @@ async function init() {
             integrations: [
                 new Sentry.Integrations.Http({ tracing: true }),
                 new Tracing.Integrations.Express({ app })
-            ]
+            ],
+            serverName: config.server
         });
 
         app.use(Sentry.Handlers.requestHandler());
