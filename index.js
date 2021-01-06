@@ -86,8 +86,8 @@ app.use(function (req, res, next) {
 
 app.use("/.well-known", express.static(".well-known"));
 
-const swStats = require('swagger-stats');
-app.use(swStats.getMiddleware(config.swagger));
+// const swStats = require('swagger-stats');
+// app.use(swStats.getMiddleware(config.swagger));
 
 // create a rotating write stream
 const accessLogStream = rfs('access.log', {
