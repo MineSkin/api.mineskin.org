@@ -55,7 +55,8 @@ async function init() {
                 new Sentry.Integrations.Http({ tracing: true }),
                 new Tracing.Integrations.Express({ app })
             ],
-            serverName: config.server
+            serverName: config.server,
+            tracesSampleRate: 0.05
         });
 
         app.use(Sentry.Handlers.requestHandler());
