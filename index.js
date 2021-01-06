@@ -39,7 +39,9 @@ Sentry.init({
     integrations: [
         new Sentry.Integrations.Http({tracing: true}),
         new Tracing.Integrations.Express({app})
-    ]
+    ],
+    tracesSampleRate: 0.05,
+    serverName: config.server
 });
 
 require("rootpath")();
