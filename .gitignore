@@ -5,6 +5,5 @@
 /todo.txt
 /config.js
 /access.log
-/ecosystem.config.js
 /id_rsa*
 *.log
