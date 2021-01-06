@@ -16,6 +16,7 @@ import Optimus from "optimus-js";
 import { apiRequestsMiddleware, info, metrics } from "./util";
 import * as rateLimit from "express-rate-limit";
 import { testerRoute, utilRoute } from "./routes";
+import { generateLimiter } from "./util/rateLimiters";
 
 
 const config: Config = require("./config");
@@ -141,22 +142,15 @@ async function init() {
             res.json({ msg: "Hi!" });
         });
 
-        const limiter = rateLimit({
-            windowMs: 2 * 60 * 1000, // 2 minutes,
-            max: 6,
-            message: JSON.stringify({ error: "Too many requests" }),
-            keyGenerator: function (req) {
-                return req.get('cf-connecting-ip') || req.get('x-forwarded-for') || req.get("x-real-ip") || req.connection.remoteAddress
-            }
-        });
+        app.use("/generate", generateLimiter);
 
-
-        require("./routes/generate")(app, config, optimus, limiter);
+        //TODO: replace these
+        require("./routes/generate")(app);
         require("./routes/get")(app);
         require("./routes/render")(app);
         require("./routes/util")(app);
         require("./routes/admin")(app);
-        require("./routes/accountManager")(app, config);
+        require("./routes/accountManager")(app);
 
         testerRoute.register(app);
         utilRoute.register(app);
