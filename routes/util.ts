@@ -1,6 +1,7 @@
 import { Application } from "express";
 import { Caching } from "../generator/Caching";
 import { Request, Response } from "express";
+import * as Sentry from "@sentry/node";
 
 export const register = (app: Application) => {
 
@@ -15,6 +16,7 @@ export const register = (app: Application) => {
             }
             res.json(user);
         }).catch(err => {
+            Sentry.captureException(err);
             res.status(404).json({ error: "failed to get user" });
         })
     });
@@ -30,6 +32,7 @@ export const register = (app: Application) => {
             }
             res.json(user);
         }).catch(err => {
+            Sentry.captureException(err);
             res.status(404).json({ error: "failed to get user" });
         })
     });
