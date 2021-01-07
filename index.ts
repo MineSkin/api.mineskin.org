@@ -163,11 +163,13 @@ async function init() {
 }
 
 
-
 init().then(() => {
-    app.listen(port, function () {
-        console.log(info(" ==> listening on *:" + port + "\n"));
-    });
+    setTimeout(() => {
+        console.log("Starting app");
+        app.listen(port, function () {
+            console.log(info(" ==> listening on *:" + port + "\n"));
+        });
+    }, 2000);
 });
 
 
