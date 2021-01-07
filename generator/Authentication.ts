@@ -481,7 +481,8 @@ export class Authentication {
     public static async authenticate(account: IAccountDocument): Promise<IAccountDocument> {
         const metric = AUTHENTICATION_METRIC
             .tag("server", config.server)
-            .tag("type", account.microsoftAccount ? "microsoft" : "mojang");
+            .tag("type", account.microsoftAccount ? "microsoft" : "mojang")
+            .tag("account", account.id);
         try {
             let result: IAccountDocument;
             if (account.microsoftAccount) {
