@@ -35,7 +35,10 @@ export const register = (app: Application) => {
             if (!skin) {
                 res.status(404).end();
             } else {
-                Requests.axiosInstance.get(skin.url).then(response => {
+                Requests.axiosInstance.request({
+                    url: skin.url,
+                    responseType: "stream"
+                }).then(response => {
                     response.data.pipe(res);
                 }).catch((err: any) => {
                     Sentry.captureException(err);
@@ -48,7 +51,10 @@ export const register = (app: Application) => {
     });
 
     function doRender(req: Request, res: Response, url: string, type: string | undefined, options: string) {
-        Requests.axiosInstance.get("https://tools.inventivetalent.org/skinrender/3d.php?headOnly=" + (type === "head") + "&user=" + url + options).then(response => {
+        Requests.axiosInstance.request({
+            url: "https://tools.inventivetalent.org/skinrender/3d.php?headOnly=" + (type === "head") + "&user=" + url + options,
+            responseType: "stream"
+        }).then(response => {
             response.data.pipe(res);
         }).catch((err: any) => {
             Sentry.captureException(err);
