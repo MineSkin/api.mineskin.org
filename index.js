@@ -40,7 +40,7 @@ Sentry.init({
         new Sentry.Integrations.Http({tracing: true}),
         new Tracing.Integrations.Express({app})
     ],
-    tracesSampleRate: 0.05,
+    tracesSampleRate: 0.001,
     serverName: config.server
 });
 
