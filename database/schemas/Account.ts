@@ -102,6 +102,10 @@ AccountSchema.methods.updateRequestServer = function (this: IAccountDocument, ne
     this.requestServer = newRequestServer;
 };
 
+AccountSchema.methods.authenticationHeader = function (this: IAccountDocument): string {
+    return `Bearer ${ this.accessToken }`;
+};
+
 AccountSchema.methods.toSimplifiedString = function (this: IAccountDocument): string {
     return `Account{ id=${ this.id }, uuid=${ this.uuid }, type=${ this.microsoftAccount ? 'microsoft' : 'mojang' } }`
 };
@@ -128,7 +132,6 @@ AccountSchema.statics.findUsable = function (this: IAccountModel): Promise<IAcco
                 return undefined;
             }
             console.log("Account #" + account.id + " last used " + Math.round(time - account.lastUsed) + "s ago, last selected " + Math.round(time - account.lastSelected) + "s ago");
-            account.lastUsed = time;
             account.lastSelected = time;
             if (!account.successCounter) account.successCounter = 0;
             if (!account.errorCounter) account.errorCounter = 0;

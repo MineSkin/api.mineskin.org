@@ -11,6 +11,7 @@ import RotatingFileStream from "rotating-file-stream";
 import * as morgan from "morgan";
 import * as bodyParser from "body-parser";
 import * as fileUpload from "express-fileupload";
+import * as ExpressValidator from "express-validator";
 import { RateLimit } from "express-rate-limit";
 import Optimus from "optimus-js";
 import { apiRequestsMiddleware, info, metrics } from "./util";
@@ -99,7 +100,7 @@ async function init() {
         });
         app.use(bodyParser.urlencoded({ extended: true }));
         app.use(bodyParser.json());
-        // app.use(expressValidator());
+        app.use(ExpressValidator());
         app.use(fileUpload());
         app.use((req, res, next) => {
             res.header("X-Mineskin-Server", config.server || "default");

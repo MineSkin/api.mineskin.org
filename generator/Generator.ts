@@ -1,14 +1,20 @@
 import { Account, Skin } from "../database/schemas";
 import { MemoizeExpiring } from "typescript-memoize";
-import { random32BitNumber, stripUuid } from "../util";
-import { IAccountDocument, MineSkinError } from "../types";
+import { error, info, random32BitNumber, stripUuid, warn } from "../util";
+import { IAccountDocument, ISkinDocument, MineSkinError } from "../types";
 import { Caching } from "./Caching";
 import { SkinData } from "../types/SkinData";
 import { Config } from "../types/Config";
-import { SkinModel } from "../types/ISkinDocument";
+import { SkinModel, ISkinModel } from "../types/ISkinDocument";
 import Optimus from "optimus-js";
-import { AuthError } from "./Authentication";
+import { Authentication, AuthenticationError, AuthError } from "./Authentication";
 import * as crypto from "crypto";
+import * as Sentry from "@sentry/node";
+import { Requests } from "./Requests";
+import * as FormData from "form-data";
+import { GenerateOptions } from "../types/GenerateOptions";
+import { ClientInfo } from "../types/ClientInfo";
+
 
 const config: Config = require("../config");
 
@@ -46,22 +52,146 @@ export class Generator {
         return Caching.getSkinData(uuid);
     }
 
-    static async generateFromUrl(url: string, model: SkinModel) {
+
+    protected static async saveSkin(data: SkinData, options: GenerateOptions, client: ClientInfo) {
+        const skin: ISkinDocument = new Skin({
+            //TODO
+        } as ISkinDocument)
+
+    }
+
+    static async generateFromUrlAndSave(url: string, options: GenerateOptions, client: ClientInfo): Promise<ISkinDocument> {
+        const data = await this.generateFromUrl(url, options.model);
+        await this.saveSkin(data, options, client);
+    }
+
+    protected static async generateFromUrl(url: string, model: SkinModel): Promise<SkinData> {
+        console.log(info("[Generator] Generating from url"));
+
+        let account;
+        try {
+            account = await this.getAndAuthenticateAccount();
+
+            const body = {
+                variant: model,
+                url: url
+            };
+            const skinResponse = await Requests.minecraftServicesRequest({
+                method: "POST",
+                url: "/minecraft/profile/skins",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": account.authenticationHeader()
+                },
+                data: body
+            });
+            if (!Requests.isOk(skinResponse)) {
+                throw new GeneratorError(GenError.SKIN_CHANGE_FAILED, "Failed to change skin", account);
+            }
+
+            return await this.getSkinData(account);
+        } catch (e) {
+            await this.handleGenerateError(e, account);
+            throw e;
+        }
+
+    }
+
+    static async generateFromUploadAndSave(buffer: Buffer, options: GenerateOptions, client: ClientInfo): Promise<ISkinDocument> {
         //TODO
     }
 
-    static async generateFromUpload(buffer: Buffer, model: SkinModel) {
+    protected static async generateFromUpload(buffer: Buffer, model: SkinModel): Promise<GeneratorResult> {
+        console.log(info("[Generator] Generating from upload"));
+
+        let account;
+        try {
+            account = await this.getAndAuthenticateAccount();
+
+            const body = new FormData();
+            body.append("variant", model);
+            body.append("file", new Blob([buffer], { type: "image/png" }), {
+                filename: "skin.png",
+                contentType: "image/png"
+            });
+            const skinResponse = await Requests.minecraftServicesRequest({
+                method: "POST",
+                url: "/minecraft/profile/skins",
+                headers: body.getHeaders({
+                    "Content-Type": "multipart/form-data",
+                    "Authorization": account.authenticationHeader()
+                }),
+                data: body
+            });
+            if (!Requests.isOk(skinResponse)) {
+                throw new GeneratorError(GenError.SKIN_CHANGE_FAILED, "Failed to change skin", account);
+            }
+
+            return this.getSkinData(account);
+        } catch (e) {
+            await this.handleGenerateError(e, account);
+            throw e;
+        }
+    }
+
+    protected static async generateFromUser() {
         //TODO
     }
 
-    static async generateFromUser() {
-        //TODO
+    protected static async getAndAuthenticateAccount(): Promise<IAccountDocument> {
+        let account: IAccountDocument = await Account.findUsable();
+        if (!account) {
+            console.warn(error("[Generator] No account available!"));
+            throw new GeneratorError(GenError.NO_ACCOUNT_AVAILABLE, "No account available");
+        }
+        account = await Authentication.authenticate(account);
+
+        account.lastUsed = Math.floor(Date.now() / 1000);
+        account.updateRequestServer(config.server);
+
+        return account;
     }
+
+    protected static async handleGenerateSuccess(account: IAccountDocument): Promise<IAccountDocument> {
+        if (!account) return account;
+        try {
+            account.errorCounter = 0;
+            account.successCounter++;
+            account.totalSuccessCounter++;
+            return account.save();
+        } catch (e1) {
+            Sentry.captureException(e1);
+        }
+    }
+
+    protected static async handleGenerateError(e: any, account: IAccountDocument): Promise<IAccountDocument> {
+        if (!account) return account;
+        try {
+            account.successCounter = 0;
+            account.errorCounter++;
+            account.totalErrorCounter++;
+            if (e instanceof AuthenticationError) {
+                account.forcedTimeoutAt = Math.floor(Date.now() / 1000);
+                console.warn(warn("[Generator] Account #" + account.id + " forced timeout"));
+                account.updateRequestServer(null);
+            }
+            return account.save();
+        } catch (e1) {
+            Sentry.captureException(e1);
+        }
+        return account;
+    }
+
+}
+
+export interface GeneratorResult {
 
 }
 
 export enum GenError {
     FAILED_TO_CREATE_ID = "failed_to_create_id",
+    NO_ACCOUNT_AVAILABLE = "no_account_available",
+    SKIN_CHANGE_FAILED = "skin_change_failed",
 }
 
 export class GeneratorError extends MineSkinError {

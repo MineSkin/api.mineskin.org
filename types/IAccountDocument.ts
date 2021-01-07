@@ -66,6 +66,8 @@ export interface IAccountDocument extends Document {
 
     updateRequestServer(newRequestServer: string): void;
 
+    authenticationHeader(): string;
+
     toSimplifiedString(): string;
 }
 
