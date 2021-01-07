@@ -1,7 +1,7 @@
 import { Config } from "../types/Config";
 import { IAccountDocument, MineSkinError } from "../types";
 import { Requests } from "./Requests";
-import { debug, Encryption, warn } from "../util";
+import { AUTHENTICATION_METRIC, debug, Encryption, warn } from "../util";
 import * as Sentry from "@sentry/node";
 import { AccessTokenSource } from "../types/IAccountDocument";
 import * as XboxLiveAuth from "@xboxreplay/xboxlive-auth";
@@ -117,7 +117,7 @@ export class Mojang {
             return await this.refreshAccessToken(account);
         } catch (e) {
             if (e instanceof AuthenticationError) {
-                if (e.code=== AuthError.MOJANG_REFRESH_FAILED) {
+                if (e.code === AuthError.MOJANG_REFRESH_FAILED) {
                     // Couldn't refresh, attempt to login
                     return await this.login(account);
                 }
@@ -301,7 +301,7 @@ export class Microsoft {
             return await this.refreshAccessToken(account);
         } catch (e) {
             if (e instanceof AuthenticationError) {
-                if (e.code=== AuthError.MICROSOFT_REFRESH_FAILED) {
+                if (e.code === AuthError.MICROSOFT_REFRESH_FAILED) {
                     // Couldn't refresh, attempt to login
                     return await this.login(account);
                 }
@@ -479,18 +479,31 @@ export class Microsoft {
 export class Authentication {
 
     public static async authenticate(account: IAccountDocument): Promise<IAccountDocument> {
+        const metric = AUTHENTICATION_METRIC
+            .tag("server", config.server)
+            .tag("type", account.microsoftAccount ? "microsoft" : "mojang");
         try {
+            let result: IAccountDocument;
             if (account.microsoftAccount) {
-                return Microsoft.authenticate(account);
+                result = await Microsoft.authenticate(account);
             } else {
-                return Mojang.authenticate(account)
+                result = await Mojang.authenticate(account)
                     .then(Mojang.completeChallenges);
             }
+            metric
+                .tag("result", "success")
+                .tag("source", result.accessTokenSource)
+                .inc();
+            return result;
         } catch (e) {
             if (e instanceof AuthenticationError) {
                 if (e.code === AuthError.MISSING_CREDENTIALS) {
                     Discord.notifyMissingCredentials(account);
                 }
+                metric
+                    .tag("result", "fail")
+                    .tag("reason", e.code)
+                    .inc();
             }
             throw e;
         }

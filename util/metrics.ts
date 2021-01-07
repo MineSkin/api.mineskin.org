@@ -2,6 +2,7 @@ import { IntervalFlusher, Metrics } from "metrics-node";
 import { URL } from "url";
 import { Request, Response, NextFunction } from "express";
 import * as Sentry from "@sentry/node";
+import { AxiosRequestConfig, AxiosResponse } from "axios";
 
 const config = require("../config");
 
@@ -11,8 +12,8 @@ metrics.setFlusher(flusher);
 
 
 export const API_REQUESTS_METRIC = metrics.metric('mineskin', 'api_requests');
-export const apiRequestsMiddleware = (req: Request,res:Response,next:NextFunction)=>{
-    try{
+export const apiRequestsMiddleware = (req: Request, res: Response, next: NextFunction) => {
+    try {
         const route = req.route;
         if (route) {
             const path = route["path"];
@@ -24,27 +25,12 @@ export const apiRequestsMiddleware = (req: Request,res:Response,next:NextFunctio
                     .inc();
             }
         }
-    }catch (e){
+    } catch (e) {
         Sentry.captureException(e);
     }
     next();
 }
 
+export const AUTHENTICATION_METRIC = metrics.metric('mineskin', 'authentication');
 
 export const REQUESTS_METRIC = metrics.metric('mineskin', 'requests');
-
-export function requestsMetric(request: Request, response: Response) {
-    let m = REQUESTS_METRIC
-        .tag("server", config.server);
-    if (request) {
-        let url = new URL(request.url);
-        m
-            .tag("method", (request.method || "GET"))
-            .tag("endpoint", url.host + "" + url.pathname)
-    }
-    if (response) {
-        m
-            .tag("statusCode", "" + response.statusCode)
-    }
-    return m;
-}
