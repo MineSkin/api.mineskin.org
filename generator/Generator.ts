@@ -1,6 +1,6 @@
 import { Account, Skin } from "../database/schemas";
 import { MemoizeExpiring } from "typescript-memoize";
-import { error, info, random32BitNumber, stripUuid, warn } from "../util";
+import { DUPLICATES_METRIC, error, info, random32BitNumber, stripUuid, warn } from "../util";
 import { IAccountDocument, ISkinDocument, MineSkinError } from "../types";
 import { Caching } from "./Caching";
 import { SkinData } from "../types/SkinData";
@@ -14,11 +14,22 @@ import { Requests } from "./Requests";
 import * as FormData from "form-data";
 import { GenerateOptions } from "../types/GenerateOptions";
 import { ClientInfo } from "../types/ClientInfo";
+import * as URL from "url";
+import { urls } from "./urls";
 
 
 const config: Config = require("../config");
 
 const MAX_ID_TRIES = 10;
+
+const MINESKIN_URL_REGEX = /https?:\/\/minesk(\.in|in\.org)\/([0-9]+)/i;
+const MINECRAFT_TEXTURE_REGEX = /https?:\/\/textures\.minecraft\.net\/texture\/([0-9a-z]+)/i;
+
+const URL_FOLLOW_WHITELIST = [
+    "novask.in",
+    "imgur.com"
+];
+const MAX_FOLLOW_REDIRECTS = 5;
 
 export class Generator {
 
@@ -28,6 +39,8 @@ export class Generator {
     static async getDelay(): Promise<number> {
         return Account.calculateDelay();
     }
+
+    /// SAVING
 
     static async makeNewSkinId(): Promise<number> {
         return this.makeRandomSkinId(0);
@@ -54,22 +67,91 @@ export class Generator {
 
 
     protected static async saveSkin(data: SkinData, options: GenerateOptions, client: ClientInfo) {
+        const id = await this.makeNewSkinId();
         const skin: ISkinDocument = new Skin({
-            //TODO
+            id: id,
+
         } as ISkinDocument)
 
     }
 
-    static async generateFromUrlAndSave(url: string, options: GenerateOptions, client: ClientInfo): Promise<ISkinDocument> {
-        const data = await this.generateFromUrl(url, options.model);
-        await this.saveSkin(data, options, client);
+    /// DUPLICATE CHECKS
+
+    protected static async findDuplicateFromUrl(url: string): Promise<ISkinDocument> {
+        if (!url || url.length < 8 || !url.startsWith("http")) {
+            return null;
+        }
+
+        const mineskinUrlResult = MINESKIN_URL_REGEX.exec(url);
+        if (!!mineskinUrlResult && mineskinUrlResult.length >= 3) {
+            const mineskinId = parseInt(mineskinUrlResult[2]);
+            const existingSkin = await Skin.findOne({ id: mineskinId }).exec();
+            if (existingSkin) {
+                existingSkin.duplicate++;
+                try {
+                    DUPLICATES_METRIC
+                        .tag("server", config.server)
+                        .tag("source", DuplicateSource.MINESKIN_URL)
+                        .inc();
+                } catch (e) {
+                    Sentry.captureException(e);
+                }
+                return await existingSkin.save();
+            } else {
+                return null;
+            }
+        }
+
+        const minecraftTextureResult = MINECRAFT_TEXTURE_REGEX.exec(url);
+        if (!!minecraftTextureResult && minecraftTextureResult.length >= 2) {
+            const textureUrl = minecraftTextureResult[0];
+            const textureHash = minecraftTextureResult[1];
+            const existingSkin = await Skin.findOne({
+                $or: [
+                    { url: textureUrl },
+                    { minecraftTextureHash: textureHash }
+                ]
+            });
+            if (existingSkin) {
+                existingSkin.duplicate++;
+                try {
+                    DUPLICATES_METRIC
+                        .tag("server", config.server)
+                        .tag("source", DuplicateSource.TEXTURE_URL)
+                        .inc();
+                } catch (e) {
+                    Sentry.captureException(e);
+                }
+                return await existingSkin.save();
+            } else {
+                return null;
+            }
+        }
+
+        return null;
     }
 
-    protected static async generateFromUrl(url: string, model: SkinModel): Promise<SkinData> {
+
+    /// GENERATE URL
+
+    static async generateFromUrlAndSave(url: string, options: GenerateOptions, client: ClientInfo): Promise<ISkinDocument> {
+        const duplicate = await this.findDuplicateFromUrl(url);
+        if (duplicate) {
+            return duplicate;
+        }
+
+        const data = await this.generateFromUrl(url, options.model);
+        await this.saveSkin(data, options, client);
+
+    }
+
+    protected static async generateFromUrl(originalUrl: string, model: SkinModel): Promise<SkinData> {
         console.log(info("[Generator] Generating from url"));
 
         let account;
         try {
+            const url = await this.followUrlToImage(originalUrl);
+
             account = await this.getAndAuthenticateAccount();
 
             const body = {
@@ -96,6 +178,30 @@ export class Generator {
         }
 
     }
+
+    protected static async followUrlToImage(urlStr: string): Promise<string> {
+        if (!urlStr) return urlStr;
+        try {
+            const url = URL.parse(urlStr, false);
+            if (URL_FOLLOW_WHITELIST.includes(url.host)) {
+                const followResponse = await Requests.axiosInstance.request({
+                    method: "GET",
+                    url: url.href,
+                    maxRedirects: MAX_FOLLOW_REDIRECTS,
+                    headers: {
+                        "User-Agent": "MineSkin"
+                    }
+                });
+                // https://github.com/axios/axios/issues/390
+                return followResponse.request.res.responseUrl;
+            }
+        } catch (e) {
+            Sentry.captureException(e);
+        }
+        return urlStr;
+    }
+
+    /// GENERATE UPLOAD
 
     static async generateFromUploadAndSave(buffer: Buffer, options: GenerateOptions, client: ClientInfo): Promise<ISkinDocument> {
         //TODO
@@ -134,9 +240,13 @@ export class Generator {
         }
     }
 
+    /// GENERATE USER
+
     protected static async generateFromUser() {
         //TODO
     }
+
+    /// AUTH
 
     protected static async getAndAuthenticateAccount(): Promise<IAccountDocument> {
         let account: IAccountDocument = await Account.findUsable();
@@ -151,6 +261,8 @@ export class Generator {
 
         return account;
     }
+
+    /// SUCCESS / ERROR HANDLERS
 
     protected static async handleGenerateSuccess(account: IAccountDocument): Promise<IAccountDocument> {
         if (!account) return account;
@@ -185,7 +297,7 @@ export class Generator {
 }
 
 export interface GeneratorResult {
-
+//TODO
 }
 
 export enum GenError {
@@ -202,6 +314,13 @@ export class GeneratorError extends MineSkinError {
     get name(): string {
         return 'GeneratorError';
     }
+}
+
+export enum DuplicateSource {
+    MINESKIN_URL = "mineskin_url",
+    TEXTURE_URL = "texture_url",
+    IMAGE_HASH = "image_hash",
+    USER_UUID = "user_uuid"
 }
 
 console.log("Optimus Test:", Generator.optimus.encode(Math.floor(Date.now() / 10)));

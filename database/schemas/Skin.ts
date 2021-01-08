@@ -36,12 +36,15 @@ export const SkinSchema: Schema = new Schema({
         type: String,
         index: true
     },
+    minecraftTextureHash: {
+       type: String,
+       index:  true
+    },
     skinId: String,
     skinTextureId: String,
     textureHash: String,
     capeUrl: {
-        type: String,
-        index: true
+        type: String
     },
     time: {
         type: Number,

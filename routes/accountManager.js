@@ -947,7 +947,7 @@ module.exports = function (app, config) {
      * @param {object} profile
      * @param {string} [profile.error]
      * @param {string} profile.id
-     * @param {string} profile.name
+     * @param {string} profile.path
      */
 
     /**

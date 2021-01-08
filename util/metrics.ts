@@ -33,4 +33,6 @@ export const apiRequestsMiddleware = (req: Request, res: Response, next: NextFun
 
 export const AUTHENTICATION_METRIC = metrics.metric('mineskin', 'authentication');
 
+export const DUPLICATES_METRIC = metrics.metric('mineskin', 'duplicates');
+
 export const REQUESTS_METRIC = metrics.metric('mineskin', 'requests');

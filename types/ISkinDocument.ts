@@ -13,32 +13,65 @@ export enum SkinVisibility {
     PRIVATE = 1,
 }
 
+export enum GenerateType {
+    UPLOAD = "upload",
+    URL = "url",
+    USER = "user"
+}
+
 export interface ISkinDocument extends Document {
+    /** Unique numeric ID for this skin **/
     id: number | any;
+    /** Hash of the texture image **/
     hash: string;
-    name: string;
+    /** UUID of the skin - Not unique - random for url/upload or user uuid **/
     uuid: string;
+
+    /** Custom path given by the user **/
+    name?: string;
+    /** Model of the skin **/
     model: SkinModel | any;
+    /** Selected visibility **/
     visibility: SkinVisibility;
+
+    /** Texture Value **/
     value: string;
+    /** Texture Signature **/
     signature: string;
+    /** Minecraft texture url **/
     url: string;
+    /** Hash part of the minecraft texture url **/
+    minecraftTextureHash?: string;
+    /** @deprecated **/
     skinId: string;
+    /** @deprecated **/
     skinTextureId: string;
     textureHash: string;
-    capeUrl: string;
+    capeUrl?: string;
+    /** Time of generating the skin (seconds) **/
+
     time: number;
+    /** Time it took to generate (milliseconds) **/
     generateDuration: number;
-    account: number;
-    type: string;
+    /** ID of the account that generated the skin (only for url/upload) **/
+    account?: number;
+    /** Generation type **/
+    type: GenerateType;
+    /** Number of times the same skin was requested on this existing entry **/
     duplicate: number;
+    /** Number of times this skin has been viewed **/
     views: number;
-    via: string;
-    server: string;
-    ua: string;
-    apiVer: string;
-    testerRequest: boolean;
-    testerMismatchCounter: number;
+    /** Where this skin was generated from (api/website) **/
+    via?: string;
+    /** Server this skin was generated on **/
+    server?: string;
+    /** User-Agent of generation request **/
+    ua?: string;
+    /** @deprecated **/
+    apiVer?: string;
+
+    testerRequest?: boolean;
+    testerMismatchCounter?: number;
 
     toResponseJson(): SkinInfo;
 }

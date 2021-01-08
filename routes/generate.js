@@ -94,7 +94,7 @@ module.exports = function (app, config, optimus, limiter) {
 
                             const tmpName = "t" + Date.now() + "url";
                             tmp.file({name: tmpName, dir: "/tmp/url"}, function (err, path, fd, fileCleanup) {
-                                console.log("url hash tmp name: " + path)
+                                console.log("url hash tmp path: " + path)
                                 if (err) {
                                     console.log(err);
                                     return;
@@ -312,7 +312,7 @@ module.exports = function (app, config, optimus, limiter) {
 
             const tmpName = "t" + Date.now() + "upl";
             tmp.file({name: tmpName, dir: "/tmp/upl"}, function (err, path, fd, fileCleanup) {
-                console.log("upload hash tmp name: " + path)
+                console.log("upload hash tmp path: " + path)
                 if (err) {
                     console.log(err);
                     return;
@@ -491,7 +491,7 @@ module.exports = function (app, config, optimus, limiter) {
     function hashFromMojangTexture(skinTexture, tmpName, cb) {// Generate the file hash from the skin's texture url
         if (!skinTexture) return;
         tmp.file({name: tmpName, dir: "/tmp/moj"}, function (err, path, fd, fileCleanup) {
-            console.log("mojang hash tmp name: " + path)
+            console.log("mojang hash tmp path: " + path)
             if (err) {
                 console.log(err);
                 return;
@@ -605,7 +605,7 @@ module.exports = function (app, config, optimus, limiter) {
                                         makeIdAndSave(tryN + 1);
                                     } else {
                                         const skin = new Skin({
-                                            // '_id': mongoose.Types.ObjectId(md5(fileHash + options.name + Date.now())),
+                                            // '_id': mongoose.Types.ObjectId(md5(fileHash + options.path + Date.now())),
                                             id: newId,
                                             hash: fileHash,
                                             name: options.name,

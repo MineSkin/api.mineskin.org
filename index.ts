@@ -18,6 +18,7 @@ import { apiRequestsMiddleware, info, metrics } from "./util";
 import * as rateLimit from "express-rate-limit";
 import { renderRoute, testerRoute, utilRoute } from "./routes";
 import { generateLimiter } from "./util/rateLimiters";
+import { MOJ_DIR, Temp, UPL_DIR, URL_DIR } from "./generator/Temp";
 
 
 const config: Config = require("./config");
@@ -35,15 +36,15 @@ async function init() {
     {
         console.log("Creating temp directories");
         try {
-            fs.mkdirSync("/tmp/url");
+            fs.mkdirSync(URL_DIR);
         } catch (e) {
         }
         try {
-            fs.mkdirSync("/tmp/upl");
+            fs.mkdirSync(UPL_DIR);
         } catch (e) {
         }
         try {
-            fs.mkdirSync("/tmp/moj");
+            fs.mkdirSync(MOJ_DIR);
         } catch (e) {
         }
     }

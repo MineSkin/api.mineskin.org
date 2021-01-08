@@ -7,6 +7,9 @@ import { URL } from "url";
 import { setInterval } from "timers";
 import { IPoint } from "influx";
 import * as Sentry from "@sentry/node";
+import { Temp, TempFile } from "./Temp";
+import * as fs from "fs";
+import { Stream } from "stream";
 
 const config: Config = require("../config");
 
@@ -109,6 +112,8 @@ export class Requests {
             })
     }
 
+    /// API REQUESTS
+
     public static mojangAuthRequest(request: AxiosRequestConfig): Promise<AxiosResponse> {
         return this.mojangAuthRequestQueue.add(request);
     }
@@ -128,6 +133,8 @@ export class Requests {
     public static liveLoginRequest(request: AxiosRequestConfig): Promise<AxiosResponse> {
         return this.liveLoginRequestQueue.add(request);
     }
+
+    /// UTIL
 
     public static isOk(response: AxiosResponse): boolean {
         return response.status >= 200 && response.status < 230;
