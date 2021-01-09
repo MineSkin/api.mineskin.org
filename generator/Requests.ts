@@ -114,6 +114,8 @@ export class Requests {
 
     /// API REQUESTS
 
+    //TODO: should probably try/catch all requests https://github.com/axios/axios#handling-errors
+
     public static mojangAuthRequest(request: AxiosRequestConfig): Promise<AxiosResponse> {
         return this.mojangAuthRequestQueue.add(request);
     }

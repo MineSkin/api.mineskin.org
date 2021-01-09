@@ -148,7 +148,7 @@ export class Generator {
     protected static async generateFromUrl(originalUrl: string, model: SkinModel): Promise<SkinData> {
         console.log(info("[Generator] Generating from url"));
 
-        let account;
+        let account: IAccountDocument;
         try {
             const url = await this.followUrlToImage(originalUrl);
 
@@ -166,10 +166,12 @@ export class Generator {
                     "Authorization": account.authenticationHeader()
                 },
                 data: body
-            });
-            if (!Requests.isOk(skinResponse)) {
-                throw new GeneratorError(GenError.SKIN_CHANGE_FAILED, "Failed to change skin", account);
-            }
+            }).catch(err => {
+                if (err.response) {
+                    throw new GeneratorError(GenError.SKIN_CHANGE_FAILED, "Failed to change skin", account, err);
+                }
+                throw err;
+            })
 
             return await this.getSkinData(account);
         } catch (e) {
@@ -210,7 +212,7 @@ export class Generator {
     protected static async generateFromUpload(buffer: Buffer, model: SkinModel): Promise<GeneratorResult> {
         console.log(info("[Generator] Generating from upload"));
 
-        let account;
+        let account: IAccountDocument;
         try {
             account = await this.getAndAuthenticateAccount();
 
@@ -228,10 +230,12 @@ export class Generator {
                     "Authorization": account.authenticationHeader()
                 }),
                 data: body
+            }).catch(err=>{
+                if (err.response) {
+                    throw new GeneratorError(GenError.SKIN_CHANGE_FAILED, "Failed to change skin", account, err);
+                }
+                throw err;
             });
-            if (!Requests.isOk(skinResponse)) {
-                throw new GeneratorError(GenError.SKIN_CHANGE_FAILED, "Failed to change skin", account);
-            }
 
             return this.getSkinData(account);
         } catch (e) {

@@ -71,11 +71,13 @@ export class Mojang {
             method: "POST",
             url: "/authenticate",
             data: JSON.stringify(body)
-        });
+        }).catch(err => {
+            if (err.response) {
+                throw new AuthenticationError(AuthError.MOJANG_AUTH_FAILED, "Failed to authenticate via mojang", account, err);
+            }
+            throw err;
+        })
         const authBody = authResponse.data;
-        if (!Requests.isOk(authResponse)) {
-            throw new AuthenticationError(AuthError.MOJANG_AUTH_FAILED, "Failed to authenticate via mojang", account, authBody);
-        }
         if (authBody.hasOwnProperty("selectedProfile")) {
             account.playername = authBody["selectedProfile"]["name"];
         }
@@ -141,11 +143,13 @@ export class Mojang {
             method: "POST",
             url: "/refresh",
             data: JSON.stringify(body)
-        });
+        }).catch(err => {
+            if (err.response) {
+                throw new AuthenticationError(AuthError.MOJANG_REFRESH_FAILED, "Failed to refresh token via mojang", account, err);
+            }
+            throw err;
+        })
         const refreshBody = refreshResponse.data;
-        if (!Requests.isOk(refreshResponse)) {
-            throw new AuthenticationError(AuthError.MOJANG_REFRESH_FAILED, "Failed to refresh token via mojang", account, refreshBody);
-        }
         if (refreshBody.hasOwnProperty("selectedProfile")) {
             account.playername = refreshBody["selectedProfile"]["name"];
         }
@@ -171,14 +175,18 @@ export class Mojang {
             return account;
         }
 
-        const locationResponse = await Requests.mojangApiRequest({
+        const locationResponse: boolean = await Requests.mojangApiRequest({
             method: "GET",
             url: "/user/security/location",
             headers: {
                 "Authorization": `Bearer ${ account.accessToken }`
             }
-        });
-        if (Requests.isOk(locationResponse)) {
+        }).then(res => {
+            return Requests.isOk(res);
+        }).catch(() => {
+            return false;
+        })
+        if (locationResponse) {
             // Already answered
             return account;
         }
@@ -222,11 +230,12 @@ export class Mojang {
                 "Authorization": `Bearer ${ account.accessToken }`
             },
             data: answers
-        });
-
-        if (!Requests.isOk(answerPostResponse)) {
-            throw new AuthenticationError(AuthError.MOJANG_CHALLENGES_FAILED, "Failed to complete security challenges", account, answerPostResponse.data);
-        }
+        }).catch(err => {
+            if (err.response) {
+                throw new AuthenticationError(AuthError.MOJANG_CHALLENGES_FAILED, "Failed to complete security challenges", account, err);
+            }
+            throw err;
+        })
         return account;
     }
 
