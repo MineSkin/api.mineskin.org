@@ -1,6 +1,6 @@
 import { Account, Skin } from "../database/schemas";
 import { MemoizeExpiring } from "typescript-memoize";
-import { DUPLICATES_METRIC, error, info, random32BitNumber, stripUuid, warn } from "../util";
+import { DUPLICATES_METRIC, error, imageHash, info, random32BitNumber, stripUuid, warn } from "../util";
 import { IAccountDocument, ISkinDocument, MineSkinError } from "../types";
 import { Caching } from "./Caching";
 import { SkinData } from "../types/SkinData";
@@ -16,6 +16,12 @@ import { GenerateOptions } from "../types/GenerateOptions";
 import { ClientInfo } from "../types/ClientInfo";
 import * as URL from "url";
 import { urls } from "./urls";
+import { Temp, TempFile, UPL_DIR, URL_DIR } from "./Temp";
+import { AxiosResponse } from "axios";
+import imageSize from "image-size";
+import { promises as fs } from "fs";
+import * as fileType from "file-type";
+import { UploadedFile } from "express-fileupload";
 
 
 const config: Config = require("../config");
@@ -30,6 +36,9 @@ const URL_FOLLOW_WHITELIST = [
     "imgur.com"
 ];
 const MAX_FOLLOW_REDIRECTS = 5;
+
+const MAX_IMAGE_SIZE = 20000; // about 70x70px at 32bit
+const ALLOWED_IMAGE_TYPES = ["image/png"];
 
 export class Generator {
 
@@ -66,7 +75,7 @@ export class Generator {
     }
 
 
-    protected static async saveSkin(data: SkinData, options: GenerateOptions, client: ClientInfo) {
+    protected static async saveSkin(data: SkinData, options: GenerateOptions, client: ClientInfo): Promise<ISkinDocument> {
         const id = await this.makeNewSkinId();
         const skin: ISkinDocument = new Skin({
             id: id,
@@ -77,7 +86,7 @@ export class Generator {
 
     /// DUPLICATE CHECKS
 
-    protected static async findDuplicateFromUrl(url: string): Promise<ISkinDocument> {
+    protected static async findDuplicateFromUrl(url: string, options: GenerateOptions): Promise<ISkinDocument> {
         if (!url || url.length < 8 || !url.startsWith("http")) {
             return null;
         }
@@ -85,7 +94,10 @@ export class Generator {
         const mineskinUrlResult = MINESKIN_URL_REGEX.exec(url);
         if (!!mineskinUrlResult && mineskinUrlResult.length >= 3) {
             const mineskinId = parseInt(mineskinUrlResult[2]);
-            const existingSkin = await Skin.findOne({ id: mineskinId }).exec();
+            const existingSkin = await Skin.findOne({
+                id: mineskinId,
+                name: options.name, model: options.model, visibility: options.visibility
+            }).exec();
             if (existingSkin) {
                 existingSkin.duplicate++;
                 try {
@@ -110,7 +122,8 @@ export class Generator {
                 $or: [
                     { url: textureUrl },
                     { minecraftTextureHash: textureHash }
-                ]
+                ],
+                name: options.name, model: options.model, visibility: options.visibility
             });
             if (existingSkin) {
                 existingSkin.duplicate++;
@@ -131,31 +144,100 @@ export class Generator {
         return null;
     }
 
+    protected static async findDuplicateFromImageHash(hash: string, options: GenerateOptions): Promise<ISkinDocument> {
+        if (!hash || hash.length < 30) {
+            return null;
+        }
+
+        const existingSkin = await Skin.findOne({
+            hash: hash,
+            name: options.name, model: options.name, visibility: options.visibility
+        }).exec();
+        if (existingSkin) {
+            existingSkin.duplicate++;
+            try {
+                DUPLICATES_METRIC
+                    .tag("server", config.server)
+                    .tag("source", DuplicateSource.IMAGE_HASH)
+                    .inc();
+            } catch (e) {
+                Sentry.captureException(e);
+            }
+            return await existingSkin.save();
+        } else {
+            return null;
+        }
+    }
 
     /// GENERATE URL
 
     static async generateFromUrlAndSave(url: string, options: GenerateOptions, client: ClientInfo): Promise<ISkinDocument> {
-        const duplicate = await this.findDuplicateFromUrl(url);
-        if (duplicate) {
-            return duplicate;
+        const data = await this.generateFromUrl(url, options);
+        if (data.duplicate) {
+            return data.duplicate;
         }
-
-        const data = await this.generateFromUrl(url, options.model);
-        await this.saveSkin(data, options, client);
-
+        if (data.data) {
+            return await this.saveSkin(data.data, options, client);
+        }
+        // shouldn't ever get here
+        throw new MineSkinError('unknown', "Something went wrong while generating");
     }
 
-    protected static async generateFromUrl(originalUrl: string, model: SkinModel): Promise<SkinData> {
+    protected static async generateFromUrl(originalUrl: string, options: GenerateOptions): Promise<GenerateResult> {
         console.log(info("[Generator] Generating from url"));
 
-        let account: IAccountDocument;
+        let account: IAccountDocument = null;
+        let tempFile: TempFile = null;
         try {
-            const url = await this.followUrlToImage(originalUrl);
+            // Try to find the source image
+            const followResponse = await this.followUrl(originalUrl);
+            if (!followResponse) {
+                throw new GeneratorError(GenError.INVALID_IMAGE_URL, "Failed to find image from url");
+            }
+            // Validate response headers
+            const url = this.getUrlFromResponse(followResponse);
+            if (!url) {
+                throw new GeneratorError(GenError.INVALID_IMAGE_URL, "Failed to follow url");
+            }
+            // Check for duplicate from url
+            const urlDuplicate = await this.findDuplicateFromUrl(url, options);
+            if (urlDuplicate) {
+                return {
+                    duplicate: urlDuplicate
+                };
+            }
+            const contentType = this.getContentTypeFromResponse(followResponse);
+            if (!contentType || !contentType.startsWith("image") || !ALLOWED_IMAGE_TYPES.includes(contentType)) {
+                throw new GeneratorError(GenError.INVALID_IMAGE, "Invalid image content type: " + contentType, 400);
+            }
+            const size = this.getSizeFromResponse(followResponse);
+            if (!size || size < 100 || size > MAX_IMAGE_SIZE) {
+                throw new GeneratorError(GenError.INVALID_IMAGE, "Invalid image file size", 400);
+            }
+
+            // Download the image temporarily
+            tempFile = await Temp.file({
+                dir: URL_DIR
+            });
+            try {
+                await Temp.downloadImage(url, tempFile)
+            } catch (e) {
+                throw new GeneratorError(GenError.INVALID_IMAGE, "Failed to download image", 500, null, e);
+            }
+
+            // Validate downloaded image file
+            const tempFileValidation = await this.validateTempFile(tempFile, options);
+            if (tempFileValidation.duplicate) {
+                // found a duplicate
+                return tempFileValidation;
+            }
+
+            /// Run generation for new skin
 
             account = await this.getAndAuthenticateAccount();
 
             const body = {
-                variant: model,
+                variant: options.model,
                 url: url
             };
             const skinResponse = await Requests.minecraftServicesRequest({
@@ -168,57 +250,89 @@ export class Generator {
                 data: body
             }).catch(err => {
                 if (err.response) {
-                    throw new GeneratorError(GenError.SKIN_CHANGE_FAILED, "Failed to change skin", account, err);
+                    throw new GeneratorError(GenError.SKIN_CHANGE_FAILED, "Failed to change skin", 500, account, err);
                 }
                 throw err;
             })
 
-            return await this.getSkinData(account);
+            return {
+                data: await this.getSkinData(account)
+            };
         } catch (e) {
             await this.handleGenerateError(e, account);
             throw e;
+        } finally {
+            if (tempFile) {
+                tempFile.remove();
+            }
         }
 
     }
 
-    protected static async followUrlToImage(urlStr: string): Promise<string> {
-        if (!urlStr) return urlStr;
+    protected static async followUrl(urlStr: string): Promise<AxiosResponse | undefined> {
         try {
             const url = URL.parse(urlStr, false);
             if (URL_FOLLOW_WHITELIST.includes(url.host)) {
-                const followResponse = await Requests.axiosInstance.request({
-                    method: "GET",
+                return await Requests.axiosInstance.request({
+                    method: "HEAD",
                     url: url.href,
                     maxRedirects: MAX_FOLLOW_REDIRECTS,
                     headers: {
                         "User-Agent": "MineSkin"
                     }
                 });
-                // https://github.com/axios/axios/issues/390
-                return followResponse.request.res.responseUrl;
             }
         } catch (e) {
             Sentry.captureException(e);
         }
-        return urlStr;
+        return undefined;
     }
+
 
     /// GENERATE UPLOAD
 
-    static async generateFromUploadAndSave(buffer: Buffer, options: GenerateOptions, client: ClientInfo): Promise<ISkinDocument> {
-        //TODO
+    static async generateFromUploadAndSave(file: UploadedFile, options: GenerateOptions, client: ClientInfo): Promise<ISkinDocument> {
+        const data = await this.generateFromUpload(file, options);
+        if (data.duplicate) {
+            return data.duplicate;
+        }
+        if (data.data) {
+            return await this.saveSkin(data.data, options, client);
+        }
+        // shouldn't ever get here
+        throw new MineSkinError('unknown', "Something went wrong while generating");
     }
 
-    protected static async generateFromUpload(buffer: Buffer, model: SkinModel): Promise<GeneratorResult> {
+    protected static async generateFromUpload(file: UploadedFile, options: GenerateOptions): Promise<GenerateResult> {
         console.log(info("[Generator] Generating from upload"));
 
-        let account: IAccountDocument;
+        let account: IAccountDocument = null;
+        let tempFile: TempFile = null;
         try {
+            // Copy uploaded file
+            tempFile = await Temp.file({
+                dir: UPL_DIR
+            });
+            try {
+                await Temp.copyUploadedImage(file, tempFile);
+            } catch (e) {
+                throw new GeneratorError(GenError.INVALID_IMAGE, "Failed to upload image", 500, null, e);
+            }
+
+            // Validate uploaded image file
+            const tempFileValidation = await this.validateTempFile(tempFile, options);
+            if (tempFileValidation.duplicate) {
+                // found a duplicate
+                return tempFileValidation;
+            }
+
+            /// Run generation for new skin
+
             account = await this.getAndAuthenticateAccount();
 
             const body = new FormData();
-            body.append("variant", model);
-            body.append("file", new Blob([buffer], { type: "image/png" }), {
+            body.append("variant", options.model);
+            body.append("file", new Blob([tempFileValidation.buffer], { type: "image/png" }), {
                 filename: "skin.png",
                 contentType: "image/png"
             });
@@ -230,17 +344,23 @@ export class Generator {
                     "Authorization": account.authenticationHeader()
                 }),
                 data: body
-            }).catch(err=>{
+            }).catch(err => {
                 if (err.response) {
-                    throw new GeneratorError(GenError.SKIN_CHANGE_FAILED, "Failed to change skin", account, err);
+                    throw new GeneratorError(GenError.SKIN_CHANGE_FAILED, "Failed to change skin", 500, account, err);
                 }
                 throw err;
             });
 
-            return this.getSkinData(account);
+            return {
+                data: await this.getSkinData(account)
+            };
         } catch (e) {
             await this.handleGenerateError(e, account);
             throw e;
+        } finally {
+            if (tempFile) {
+                tempFile.remove();
+            }
         }
     }
 
@@ -278,9 +398,10 @@ export class Generator {
         } catch (e1) {
             Sentry.captureException(e1);
         }
+        return account;
     }
 
-    protected static async handleGenerateError(e: any, account: IAccountDocument): Promise<IAccountDocument> {
+    protected static async handleGenerateError(e: any, account?: IAccountDocument): Promise<IAccountDocument> {
         if (!account) return account;
         try {
             account.successCounter = 0;
@@ -298,21 +419,80 @@ export class Generator {
         return account;
     }
 
+
+    /// VALIDATION
+
+
+    protected static getUrlFromResponse(response: AxiosResponse): string {
+        if (!response) return undefined;
+        return response.request.res.responseUrl;
+    }
+
+    protected static getSizeFromResponse(response: AxiosResponse): number {
+        if (!response) return undefined;
+        return response.headers["content-length"];
+    }
+
+    protected static getContentTypeFromResponse(response: AxiosResponse): string {
+        if (!response) return undefined;
+        return response.headers["content-type"];
+    }
+
+    protected static async validateTempFile(tempFile: TempFile, options: GenerateOptions): Promise<TempFileValidationResult> {
+        // Validate downloaded image file
+        const imageBuffer = await fs.readFile(tempFile.path);
+        const size = imageBuffer.byteLength;
+        if (!size || size < 100 || size > MAX_IMAGE_SIZE) {
+            throw new GeneratorError(GenError.INVALID_IMAGE, "Invalid file size", 400);
+        }
+        const dimensions = imageSize(imageBuffer);
+        if ((dimensions.width !== 64) || (dimensions.height !== 64 && dimensions.height !== 32)) {
+            throw new GeneratorError(GenError.INVALID_IMAGE, "Invalid image dimensions. Must be 64x32 or 64x64 (Were " + dimensions.width + "x" + dimensions.height + ")", 400);
+        }
+        const fType = await fileType.fromBuffer(imageBuffer);
+        if (!fType || !fType.mime.startsWith("image") || !ALLOWED_IMAGE_TYPES.includes(fType.mime)) {
+            throw new GeneratorError(GenError.INVALID_IMAGE, "Invalid file type: " + fType, 400);
+        }
+
+        // Get the hash
+        const imgHash = await imageHash(imageBuffer);
+        // Check duplicate from hash
+        const hashDuplicate = await this.findDuplicateFromImageHash(imgHash, options);
+        if (hashDuplicate) {
+            return {
+                duplicate: hashDuplicate
+            };
+        }
+
+        return {
+            buffer: imageBuffer
+        };
+    }
+
+
 }
 
-export interface GeneratorResult {
-//TODO
+interface GenerateResult {
+    duplicate?: ISkinDocument;
+    data?: SkinData;
+}
+
+interface TempFileValidationResult extends GenerateResult {
+    buffer?: Buffer;
 }
 
 export enum GenError {
     FAILED_TO_CREATE_ID = "failed_to_create_id",
     NO_ACCOUNT_AVAILABLE = "no_account_available",
     SKIN_CHANGE_FAILED = "skin_change_failed",
+    INVALID_IMAGE = "invalid_image",
+    INVALID_IMAGE_URL = "invalid_image_url",
+    INVALID_IMAGE_UPLOAD = "invalid_image_upload"
 }
 
 export class GeneratorError extends MineSkinError {
-    constructor(code: GenError, msg: string, public account?: IAccountDocument, public details?: any) {
-        super(code, msg);
+    constructor(code: GenError, msg: string, httpCode: number = 500, public account?: IAccountDocument, public details?: any) {
+        super(code, msg, httpCode);
     }
 
     get name(): string {
@@ -327,4 +507,3 @@ export enum DuplicateSource {
     USER_UUID = "user_uuid"
 }
 
-console.log("Optimus Test:", Generator.optimus.encode(Math.floor(Date.now() / 10)));

@@ -114,8 +114,6 @@ export class Requests {
 
     /// API REQUESTS
 
-    //TODO: should probably try/catch all requests https://github.com/axios/axios#handling-errors
-
     public static mojangAuthRequest(request: AxiosRequestConfig): Promise<AxiosResponse> {
         return this.mojangAuthRequestQueue.add(request);
     }
@@ -147,6 +145,7 @@ export class Requests {
         this.mojangApiRequestQueue.end();
         this.mojangSessionRequestQueue.end();
         this.minecraftServicesRequestQueue.end();
+        this.liveLoginRequestQueue.end();
 
         clearInterval(this.metricsCollector);
     }

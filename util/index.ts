@@ -1,3 +1,5 @@
+import * as hasha from "hasha";
+
 export * from "./colors";
 export * from "./metrics";
 export * from "./encryption";
@@ -135,4 +137,10 @@ export function random32BitNumber(): Promise<number> {
             }
         });
     });
+}
+
+export async function imageHash(buffer: Buffer) {
+    return hasha.async(buffer, {
+        algorithm: "sha1"
+    })
 }

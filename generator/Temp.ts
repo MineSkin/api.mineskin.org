@@ -11,7 +11,7 @@ export const USR_DIR = "/tmp/usr";
 export const MOJ_DIR = "/tmp/moj";
 
 export class TempDir {
-    constructor(public readonly path: string, public readonly removeCallback: () => void) {
+    constructor(public readonly path: string, private readonly removeCallback: () => void) {
     }
 
     remove(): void {
@@ -20,7 +20,7 @@ export class TempDir {
 }
 
 export class TempFile extends TempDir {
-    constructor(public readonly path: string, public readonly fd: number, public readonly removeCallback: () => void) {
+    constructor(public readonly path: string, public readonly fd: number, removeCallback: () => void) {
         super(path, removeCallback);
     }
 
