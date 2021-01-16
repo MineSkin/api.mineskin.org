@@ -18,6 +18,7 @@ import { imageSize } from "image-size";
 import * as fileType from "file-type";
 import * as readChunk from "read-chunk";
 import * as crypto from "crypto";
+import exp = require("constants");
 
 const config: Config = require("../config");
 
@@ -102,6 +103,18 @@ export function addDashesToUuid(uuid: string): string {
     return uuid.substr(0, 8) + "-" + uuid.substr(8, 4) + "-" + uuid.substr(12, 4) + "-" + uuid.substr(16, 4) + "-" + uuid.substr(20);
 }
 
+export function longAndShortUuid(str: string) {
+    if (str.length < 32) {
+        return undefined; // not an uuid
+    }
+    const short = stripUuid(str);
+    const long = addDashesToUuid(short);
+    return {
+        long,
+        short
+    };
+}
+
 export function getVia(req: Request): string {
     let via = "api";
     if (req.headers["referer"]) {
@@ -117,6 +130,20 @@ export function getVia(req: Request): string {
 
 export function md5(str: string): string {
     return crypto.createHash('md5').update(str).digest("hex");
+}
+
+export function base64encode(str: string): string {
+    return new Buffer(str).toString("base64");
+}
+
+export function base64decode(str: string): string {
+    return new Buffer(str, "base64").toString("ascii");
+}
+
+export function getHashFromMojangTextureUrl(url: string): string {
+    const res = /textures\.minecraft\.net\/texture\/([0-9a-z]+)/i.exec(url);
+    if (!res || res.length <= 1) return undefined;
+    return res[1];
 }
 
 export function sleep(duration: number): Promise<void> {

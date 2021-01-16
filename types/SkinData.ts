@@ -1,6 +1,14 @@
 import { ProfileProperty } from "./ProfileResponse";
+import exp = require("constants");
 
 export interface SkinData extends ProfileProperty {
+    decodedValue?: SkinValue;
+}
+
+export interface SkinMeta {
+    uuid: string;
+    imageHash: string;
+    mojangHash: string;
 }
 
 export interface TextureMetadata {

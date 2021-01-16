@@ -3,6 +3,9 @@ import { URL } from "url";
 import { Request, Response, NextFunction } from "express";
 import * as Sentry from "@sentry/node";
 import { AxiosRequestConfig, AxiosResponse } from "axios";
+import { GenerateOptions } from "../types/GenerateOptions";
+import { IAccountDocument } from "../types";
+import { GenerateType } from "../types/ISkinDocument";
 
 const config = require("../config");
 
@@ -36,3 +39,29 @@ export const AUTHENTICATION_METRIC = metrics.metric('mineskin', 'authentication'
 export const DUPLICATES_METRIC = metrics.metric('mineskin', 'duplicates');
 
 export const REQUESTS_METRIC = metrics.metric('mineskin', 'requests');
+
+export const durationMetric = (duration: number, type: GenerateType, options?: GenerateOptions, account?: IAccountDocument) => {
+    try {
+        const tags: {
+            [name: string]: string;
+        } = {
+            server: config.server,
+            type: type
+        };
+        if (account) {
+            tags.account = account.id;
+        }
+
+        metrics.influx.writePoints([{
+            measurement: 'duration',
+            tags: tags,
+            fields: {
+                duration: duration
+            }
+        }], {
+            database: 'mineskin'
+        });
+    } catch (e) {
+        Sentry.captureException(e);
+    }
+}

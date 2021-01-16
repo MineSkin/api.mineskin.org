@@ -1,27 +1,28 @@
 import { Account, Skin } from "../database/schemas";
 import { MemoizeExpiring } from "typescript-memoize";
-import { DUPLICATES_METRIC, error, imageHash, info, random32BitNumber, stripUuid, warn } from "../util";
+import { base64decode, DUPLICATES_METRIC, durationMetric, error, getHashFromMojangTextureUrl, imageHash, info, longAndShortUuid, random32BitNumber, stripUuid, warn } from "../util";
 import { IAccountDocument, ISkinDocument, MineSkinError } from "../types";
 import { Caching } from "./Caching";
-import { SkinData } from "../types/SkinData";
+import { SkinData, SkinMeta, SkinValue, Texture } from "../types/SkinData";
 import { Config } from "../types/Config";
-import { SkinModel, ISkinModel } from "../types/ISkinDocument";
+import { GenerateType } from "../types/ISkinDocument";
 import Optimus from "optimus-js";
-import { Authentication, AuthenticationError, AuthError } from "./Authentication";
-import * as crypto from "crypto";
+import { Authentication, AuthenticationError } from "./Authentication";
 import * as Sentry from "@sentry/node";
 import { Requests } from "./Requests";
 import * as FormData from "form-data";
 import { GenerateOptions } from "../types/GenerateOptions";
 import { ClientInfo } from "../types/ClientInfo";
 import * as URL from "url";
-import { urls } from "./urls";
-import { Temp, TempFile, UPL_DIR, URL_DIR } from "./Temp";
+import { MOJ_DIR, Temp, TempFile, UPL_DIR, URL_DIR } from "./Temp";
 import { AxiosResponse } from "axios";
 import imageSize from "image-size";
 import { promises as fs } from "fs";
 import * as fileType from "file-type";
 import { UploadedFile } from "express-fileupload";
+import { ISizeCalculationResult } from "image-size/dist/types/interface";
+import { FileTypeResult } from "file-type";
+import { v4 as uuid } from "uuid";
 
 
 const config: Config = require("../config");
@@ -75,13 +76,41 @@ export class Generator {
     }
 
 
-    protected static async saveSkin(data: SkinData, options: GenerateOptions, client: ClientInfo): Promise<ISkinDocument> {
+    protected static async saveSkin(result: GenerateResult, options: GenerateOptions, client: ClientInfo, start: number): Promise<ISkinDocument> {
         const id = await this.makeNewSkinId();
         const skin: ISkinDocument = new Skin({
             id: id,
 
+            hash: result.meta.imageHash,
+            uuid: result.meta.uuid,
+
+            name: options.name,
+            model: options.model,
+            visibility: options.visibility,
+
+            value: result.data.value,
+            signature: result.data.signature,
+            url: result.data.decodedValue.textures.CAPE.url,
+            minecraftTextureHash: getHashFromMojangTextureUrl(result.data.decodedValue.textures.CAPE.url),
+            textureHash: result.meta.mojangHash,
+
+            time: (Date.now()/1000),
+            generateDuration: (Date.now()-start),
+
+            account: result.account.id
         } as ISkinDocument)
 
+    }
+
+    protected static async getDuplicateOrSaved(result: GenerateResult, options: GenerateOptions, client: ClientInfo, start: number): Promise<ISkinDocument> {
+        if (result.duplicate) {
+            return result.duplicate;
+        }
+        if (result.data) {
+            return await this.saveSkin(result, options, client, start);
+        }
+        // shouldn't ever get here
+        throw new MineSkinError('unknown', "Something went wrong while generating");
     }
 
     /// DUPLICATE CHECKS
@@ -169,18 +198,40 @@ export class Generator {
         }
     }
 
+    protected static async findDuplicateFromUuid(uuid: string, options: GenerateOptions): Promise<ISkinDocument> {
+        if (!uuid || uuid.length < 34) {
+            return null;
+        }
+
+        const existingSkin = await Skin.findOne({
+            uuid: uuid,
+            name: options.name, model: options.name, visibility: options.visibility
+        }).exec();
+        if (existingSkin) {
+            existingSkin.duplicate++;
+            try {
+                DUPLICATES_METRIC
+                    .tag("server", config.server)
+                    .tag("source", DuplicateSource.USER_UUID)
+                    .inc();
+            } catch (e) {
+                Sentry.captureException(e);
+            }
+            return await existingSkin.save();
+        } else {
+            return null;
+        }
+    }
+
     /// GENERATE URL
 
-    static async generateFromUrlAndSave(url: string, options: GenerateOptions, client: ClientInfo): Promise<ISkinDocument> {
+    public static async generateFromUrlAndSave(url: string, options: GenerateOptions, client: ClientInfo): Promise<ISkinDocument> {
+        const start = Date.now();
         const data = await this.generateFromUrl(url, options);
-        if (data.duplicate) {
-            return data.duplicate;
-        }
-        if (data.data) {
-            return await this.saveSkin(data.data, options, client);
-        }
-        // shouldn't ever get here
-        throw new MineSkinError('unknown', "Something went wrong while generating");
+        const doc = await this.getDuplicateOrSaved(data, options, client, start);
+        const end = Date.now();
+        durationMetric(end - start, GenerateType.URL, options, data.account);
+        return doc;
     }
 
     protected static async generateFromUrl(originalUrl: string, options: GenerateOptions): Promise<GenerateResult> {
@@ -255,8 +306,19 @@ export class Generator {
                 throw err;
             })
 
+            const data = await this.getSkinData(account);
+            const mojangHash = await this.getMojangHash(this.decodeValue(data).textures.CAPE.url);
+
+            await this.handleGenerateSuccess(account);
+
             return {
-                data: await this.getSkinData(account)
+                data: data,
+                account: account,
+                meta: {
+                    uuid: uuid(),
+                    imageHash: tempFileValidation.hash,
+                    mojangHash: mojangHash
+                }
             };
         } catch (e) {
             await this.handleGenerateError(e, account);
@@ -291,16 +353,13 @@ export class Generator {
 
     /// GENERATE UPLOAD
 
-    static async generateFromUploadAndSave(file: UploadedFile, options: GenerateOptions, client: ClientInfo): Promise<ISkinDocument> {
+    public static async generateFromUploadAndSave(file: UploadedFile, options: GenerateOptions, client: ClientInfo): Promise<ISkinDocument> {
+        const start = Date.now();
         const data = await this.generateFromUpload(file, options);
-        if (data.duplicate) {
-            return data.duplicate;
-        }
-        if (data.data) {
-            return await this.saveSkin(data.data, options, client);
-        }
-        // shouldn't ever get here
-        throw new MineSkinError('unknown', "Something went wrong while generating");
+        const doc = await this.getDuplicateOrSaved(data, options, client, start);
+        const end = Date.now();
+        durationMetric(end - start, GenerateType.UPLOAD, options, data.account);
+        return doc;
     }
 
     protected static async generateFromUpload(file: UploadedFile, options: GenerateOptions): Promise<GenerateResult> {
@@ -351,8 +410,19 @@ export class Generator {
                 throw err;
             });
 
+            const data = await this.getSkinData(account);
+            const mojangHash = await this.getMojangHash(this.decodeValue(data).textures.CAPE.url);
+
+            await this.handleGenerateSuccess(account);
+
             return {
-                data: await this.getSkinData(account)
+                data: data,
+                account: account,
+                meta: {
+                    uuid: uuid(),
+                    imageHash: tempFileValidation.hash,
+                    mojangHash: mojangHash
+                }
             };
         } catch (e) {
             await this.handleGenerateError(e, account);
@@ -366,8 +436,38 @@ export class Generator {
 
     /// GENERATE USER
 
-    protected static async generateFromUser() {
-        //TODO
+    public static async generateFromUserAndSave(user: string, options: GenerateOptions, client: ClientInfo): Promise<ISkinDocument> {
+        const start = Date.now();
+        const data = await this.generateFromUser(user, options);
+        const doc = await this.getDuplicateOrSaved(data, options, client, start);
+        const end = Date.now();
+        durationMetric(end - start, GenerateType.USER, options, data.account);
+        return doc;
+    }
+
+    protected static async generateFromUser(uuid: string, options: GenerateOptions): Promise<GenerateResult> {
+        console.log(info("[Generator] Generating from user"));
+
+        const uuids = longAndShortUuid(uuid);
+        const uuidDuplicate = await this.findDuplicateFromUuid(uuids.long, options);
+        if (uuidDuplicate) {
+            return {
+                duplicate: uuidDuplicate
+            };
+        }
+
+        const data = await this.getSkinData({
+            uuid: uuids.short
+        });
+        const mojangHash = await this.getMojangHash(this.decodeValue(data).textures.CAPE.url);
+        return {
+            data: data,
+            meta: {
+                uuid: uuids.long,
+                imageHash: mojangHash,
+                mojangHash: mojangHash
+            }
+        };
     }
 
     /// AUTH
@@ -422,7 +522,6 @@ export class Generator {
 
     /// VALIDATION
 
-
     protected static getUrlFromResponse(response: AxiosResponse): string {
         if (!response) return undefined;
         return response.request.res.responseUrl;
@@ -454,9 +553,9 @@ export class Generator {
             throw new GeneratorError(GenError.INVALID_IMAGE, "Invalid file type: " + fType, 400);
         }
 
-        // Get the hash
+        // Get the imageHash
         const imgHash = await imageHash(imageBuffer);
-        // Check duplicate from hash
+        // Check duplicate from imageHash
         const hashDuplicate = await this.findDuplicateFromImageHash(imgHash, options);
         if (hashDuplicate) {
             return {
@@ -465,8 +564,33 @@ export class Generator {
         }
 
         return {
-            buffer: imageBuffer
+            buffer: imageBuffer,
+            size: size,
+            dimensions: dimensions,
+            fileType: fType,
+            hash: imgHash
         };
+    }
+
+    protected static decodeValue(data: SkinData): SkinValue {
+        const decoded = JSON.parse(base64decode(data.value)) as SkinValue;
+        data.decodedValue = decoded;
+        return decoded;
+    }
+
+    protected static async getMojangHash(url: string): Promise<string> {
+        const tempFile = await Temp.file({
+            dir: MOJ_DIR
+        });
+        try {
+            await Temp.downloadImage(url, tempFile);
+            const imageBuffer = await fs.readFile(tempFile.path);
+            return await imageHash(imageBuffer);
+        } finally {
+            if (tempFile) {
+                tempFile.remove();
+            }
+        }
     }
 
 
@@ -475,10 +599,16 @@ export class Generator {
 interface GenerateResult {
     duplicate?: ISkinDocument;
     data?: SkinData;
+    meta?: SkinMeta;
+    account?: IAccountDocument;
 }
 
 interface TempFileValidationResult extends GenerateResult {
     buffer?: Buffer;
+    size?: number;
+    dimensions?: ISizeCalculationResult;
+    fileType?: FileTypeResult;
+    hash?: string;
 }
 
 export enum GenError {

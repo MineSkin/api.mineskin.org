@@ -106,7 +106,7 @@ SkinSchema.statics.findExistingForHash = function (this: ISkinModel, hash: strin
     return this.findOne({ hash: hash, name: name, model: model, visibility: visibility }).exec()
         .then((skin: ISkinDocument) => {
             if (skin) {
-                console.log("Found existing skin with same hash");
+                console.log("Found existing skin with same imageHash");
                 skin.duplicate += 1;
                 return skin.save();
             }

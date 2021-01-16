@@ -22,6 +22,7 @@ export enum GenerateType {
 export interface ISkinDocument extends Document {
     /** Unique numeric ID for this skin **/
     id: number | any;
+
     /** Hash of the texture image **/
     hash: string;
     /** UUID of the skin - Not unique - random for url/upload or user uuid **/
@@ -46,10 +47,11 @@ export interface ISkinDocument extends Document {
     skinId: string;
     /** @deprecated **/
     skinTextureId: string;
+    /** Hash of the texture image downloaded from mojang **/
     textureHash: string;
     capeUrl?: string;
-    /** Time of generating the skin (seconds) **/
 
+    /** Time of generating the skin (seconds) **/
     time: number;
     /** Time it took to generate (milliseconds) **/
     generateDuration: number;

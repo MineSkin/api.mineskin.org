@@ -94,7 +94,7 @@ module.exports = function (app, config, optimus, limiter) {
 
                             const tmpName = "t" + Date.now() + "url";
                             tmp.file({name: tmpName, dir: "/tmp/url"}, function (err, path, fd, fileCleanup) {
-                                console.log("url hash tmp path: " + path)
+                                console.log("url imageHash tmp path: " + path)
                                 if (err) {
                                     console.log(err);
                                     return;
@@ -312,7 +312,7 @@ module.exports = function (app, config, optimus, limiter) {
 
             const tmpName = "t" + Date.now() + "upl";
             tmp.file({name: tmpName, dir: "/tmp/upl"}, function (err, path, fd, fileCleanup) {
-                console.log("upload hash tmp path: " + path)
+                console.log("upload imageHash tmp path: " + path)
                 if (err) {
                     console.log(err);
                     return;
@@ -488,10 +488,10 @@ module.exports = function (app, config, optimus, limiter) {
         })
     });
 
-    function hashFromMojangTexture(skinTexture, tmpName, cb) {// Generate the file hash from the skin's texture url
+    function hashFromMojangTexture(skinTexture, tmpName, cb) {// Generate the file imageHash from the skin's texture url
         if (!skinTexture) return;
         tmp.file({name: tmpName, dir: "/tmp/moj"}, function (err, path, fd, fileCleanup) {
-            console.log("mojang hash tmp path: " + path)
+            console.log("mojang imageHash tmp path: " + path)
             if (err) {
                 console.log(err);
                 return;
@@ -527,7 +527,7 @@ module.exports = function (app, config, optimus, limiter) {
         })
     }
 
-    // fileHash can either be the hash, or a callback to get the hash
+    // fileHash can either be the imageHash, or a callback to get the imageHash
     function getAndSaveSkinData(account, options, fileHash, textureHash, uuid, tmpName, genStart, cb) {
         dataFetcher.getSkinData(account, function (err, skinData) {
             if (err) {
