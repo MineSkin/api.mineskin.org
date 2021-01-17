@@ -215,11 +215,11 @@ export class Mojang {
                 if (!answersById.hasOwnProperty(question.answer.id)) {
                     console.warn("Missing security answer for question " + question.question.id + "(" + question.question.question + "), Answer #" + question.answer.id);
                 }
-                answers.push({ id: question.answer.id, answer: answersById[question.answer.id] || account.security });
+                answers.push({ id: question.answer.id, answer: (answersById[question.answer.id] || account.security)! });
             });
         } else {
             questions.forEach(question => {
-                answers.push({ id: question.answer.id, answer: account.security });
+                answers.push({ id: question.answer.id, answer: account.security! });
             });
         }
 
@@ -322,6 +322,9 @@ export class Microsoft {
     static async refreshAccessToken(account: IAccountDocument): Promise<IAccountDocument> {
         if (!account.microsoftAccount) {
             throw new AuthenticationError(AuthError.UNSUPPORTED_ACCOUNT, "Can't refresh token of non-microsoft account via microsoft auth", account);
+        }
+        if (!account.microsoftRefreshToken) {
+            throw new AuthenticationError(AuthError.MICROSOFT_REFRESH_FAILED, "Account has no refresh token", account);
         }
 
         const newMinecraftAccessToken = await this.refreshXboxAccessToken(account.microsoftRefreshToken, xboxInfo => {

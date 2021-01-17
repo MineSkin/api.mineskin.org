@@ -1,5 +1,4 @@
 import { ProfileProperty } from "./ProfileResponse";
-import exp = require("constants");
 
 export interface SkinData extends ProfileProperty {
     decodedValue?: SkinValue;

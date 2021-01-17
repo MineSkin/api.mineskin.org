@@ -1,3 +1,34 @@
+import { Application, Request, Response } from "express";
+import { Generator } from "../generator/Generator";
+import { Caching } from "../generator/Caching";
+import { MemoizeExpiring } from "typescript-memoize";
+
+
+
+export const register = (app: Application) => {
+
+    app.get("/get/delay", async (req: Request, res: Response) => {
+        const delay = await Generator.getDelay();
+        const traffic = await Caching.getTrafficByIp(req.get("x-real-ip") || req.ip);
+        if (traffic) {
+            res.json({
+                delay: delay,
+                next: (traffic.lastRequest.getTime() / 1000) + delay,
+                nextRelative: ((traffic.lastRequest.getTime() / 1000) + delay) - (Date.now() / 1000)
+            });
+        } else {
+            res.json({
+                delay: delay,
+                next: Date.now() / 1000,
+                nextRelative: 0
+            });
+        }
+    });
+
+
+
+}
+
 module.exports = function (app) {
 
     const Util = require("../util");
@@ -13,20 +44,6 @@ module.exports = function (app) {
     const Skin = require("../database/schemas/Skin").ISkinDocument;
     const Traffic = require("../database/schemas/Traffic").ITrafficDocument;
     const Stat = require("../database/schemas/Stat").IStatDocument;
-
-    app.get("/get/delay", function (req, res) {
-        const ip = req.realAddress;
-        Util.getGeneratorDelay().then(function (delay) {
-            Traffic.findOne({ip: ip}).lean().exec(function (err, traffic) {
-                if (err) return console.log(err);
-                if (traffic) {
-                    res.json({delay: delay, next: (traffic.lastRequest.getTime() / 1000) + delay, nextRelative: ((traffic.lastRequest.getTime() / 1000) + delay) - (Date.now() / 1000)});
-                } else {
-                    res.json({delay: delay, next: Date.now() / 1000, nextRelative: 0});
-                }
-            })
-        })
-    });
 
     let stats = {
         server: config.server
@@ -50,17 +67,17 @@ module.exports = function (app) {
             dataFetcher: Object.keys(dataFetcher.cache).length
         };
 
-        Account.count({enabled: true}, function (err, count) {
+        Account.count({ enabled: true }, function (err, count) {
             if (err) return console.log(err);
             stats.accounts = count;
-            Account.count({enabled: true, requestServer: config.server}, function (err, serverCount) {
+            Account.count({ enabled: true, requestServer: config.server }, function (err, serverCount) {
                 if (err) return console.log(err);
                 stats.serverAccounts = serverCount;
-                Account.count({enabled: true, errorCounter: {$lt: (config.errorThreshold || 10)}}, function (err, healthyCount) {
+                Account.count({ enabled: true, errorCounter: { $lt: (config.errorThreshold || 10) } }, function (err, healthyCount) {
                     if (err) return console.log(err);
                     stats.healthyAccounts = healthyCount;
                     const time = Date.now() / 1000;
-                    Account.count({enabled: true, requestServer: {$in: [null, "default", config.server]}, lastUsed: {'$lt': (time - 100)}, forcedTimeoutAt: {'$lt': (time - 500)}, errorCounter: {'$lt': (config.errorThreshold || 10)}}, function (err, useableCount) {
+                    Account.count({ enabled: true, requestServer: { $in: [null, "default", config.server] }, lastUsed: { '$lt': (time - 100) }, forcedTimeoutAt: { '$lt': (time - 500) }, errorCounter: { '$lt': (config.errorThreshold || 10) } }, function (err, useableCount) {
                         if (err) return console.log(err);
                         stats.useableAccounts = useableCount;
                         Stat.find({}).lean().exec(function (err, s) {
@@ -81,12 +98,12 @@ module.exports = function (app) {
                             stats.mineskinTesterSuccessRate = Number((testerSuccess / testerTotal).toFixed(3));
 
                             Skin.aggregate([
-                                {"$sort": {time: -1}},
-                                {"$limit": 1000},
+                                { "$sort": { time: -1 } },
+                                { "$limit": 1000 },
                                 {
                                     "$group": {
                                         "_id": null,
-                                        "avgGenTime": {"$avg": "$generateDuration"}
+                                        "avgGenTime": { "$avg": "$generateDuration" }
                                     }
                                 }
                             ], function (err, agg0) {
@@ -99,9 +116,9 @@ module.exports = function (app) {
                                         "$group":
                                             {
                                                 _id: "$type",
-                                                duplicate: {$sum: "$duplicate"},
-                                                views: {$sum: "$views"},
-                                                count: {$sum: 1}
+                                                duplicate: { $sum: "$duplicate" },
+                                                views: { $sum: "$views" },
+                                                count: { $sum: 1 }
                                             }
                                     }
                                 ], function (err, agg) {
@@ -141,10 +158,10 @@ module.exports = function (app) {
                                         {
                                             $group: {
                                                 _id: null,
-                                                lastYear: {$sum: {$cond: [{$gte: ["$time", lastYear]}, 1, 0]}},
-                                                lastMonth: {$sum: {$cond: [{$gte: ["$time", lastMonth]}, 1, 0]}},
-                                                lastDay: {$sum: {$cond: [{$gte: ["$time", lastDay]}, 1, 0]}},
-                                                lastHour: {$sum: {$cond: [{$gte: ["$time", lastHour]}, 1, 0]}}
+                                                lastYear: { $sum: { $cond: [{ $gte: ["$time", lastYear] }, 1, 0] } },
+                                                lastMonth: { $sum: { $cond: [{ $gte: ["$time", lastMonth] }, 1, 0] } },
+                                                lastDay: { $sum: { $cond: [{ $gte: ["$time", lastDay] }, 1, 0] } },
+                                                lastHour: { $sum: { $cond: [{ $gte: ["$time", lastHour] }, 1, 0] } }
                                             }
                                         }
                                     ], function (err, agg1) {
@@ -266,7 +283,7 @@ module.exports = function (app) {
     }
 
     app.get("/get/id/:id", function (req, res) {
-        Skin.findOne({id: req.params.id}).exec(function (err, skin) {
+        Skin.findOne({ id: req.params.id }).exec(function (err, skin) {
             if (err) return console.log(err);
             if (skin) {
                 skin.views += 1;
@@ -278,13 +295,13 @@ module.exports = function (app) {
                     res.json(Util.skinToJson(skin, 0, req));
                 });
             } else {
-                res.status(404).json({error: "Skin not found"});
+                res.status(404).json({ error: "Skin not found" });
             }
         })
     });
 
     app.get("/get/forTexture/:value/:signature?", function (req, res) {
-        const search = {value: req.params.value};
+        const search = { value: req.params.value };
         if (req.params.signature) {
             search.signature = req.params.signature;
         }
@@ -293,7 +310,7 @@ module.exports = function (app) {
             if (skin) {
                 res.json(Util.skinToJson(skin, 0, req));
             } else {
-                res.status(404).json({error: "Skin not found"});
+                res.status(404).json({ error: "Skin not found" });
             }
         });
     });
@@ -304,15 +321,15 @@ module.exports = function (app) {
         size = Math.min(64, size);
         const sort = req.query.sort || -1;
 
-        const query = {visibility: 0};
+        const query = { visibility: 0 };
         if (req.query.filter && req.query.filter.length > 0) {
-            query.name = {'$regex': ".*" + req.query.filter + ".*"};
+            query.name = { '$regex': ".*" + req.query.filter + ".*" };
         }
         if (req.query.cape) {
             if (req.query.cape === "true") {
-                query.capeUrl = {'$ne': null};
+                query.capeUrl = { '$ne': null };
             } else if (req.query.cape === "false") {
-                query.capeUrl = {'$eq': null};
+                query.capeUrl = { '$eq': null };
             }
         }
         Skin.count(query, function (err, count) {
@@ -321,8 +338,8 @@ module.exports = function (app) {
                 .find(query)
                 .skip(size * (page - 1))
                 .limit(size)
-                .select({'_id': 0, id: 1, name: 1, url: 1, time: 1})
-                .sort({time: sort})
+                .select({ '_id': 0, id: 1, name: 1, url: 1, time: 1 })
+                .sort({ time: sort })
                 .lean()
                 .exec(function (err, skins) {
                     if (err) return console.log(err)

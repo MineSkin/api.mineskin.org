@@ -1,9 +1,9 @@
 import { Account, Skin } from "../database/schemas";
 import { MemoizeExpiring } from "typescript-memoize";
-import { base64decode, DUPLICATES_METRIC, durationMetric, error, getHashFromMojangTextureUrl, imageHash, info, longAndShortUuid, random32BitNumber, stripUuid, warn } from "../util";
+import { base64decode, DUPLICATES_METRIC, durationMetric, error, getHashFromMojangTextureUrl, hasOwnProperty, imageHash, info, longAndShortUuid, Maybe, NEW_METRIC, random32BitNumber, stripUuid, warn } from "../util";
 import { IAccountDocument, ISkinDocument, MineSkinError } from "../types";
 import { Caching } from "./Caching";
-import { SkinData, SkinMeta, SkinValue, Texture } from "../types/SkinData";
+import { SkinData, SkinMeta, SkinValue } from "../types/SkinData";
 import { Config } from "../types/Config";
 import { GenerateType } from "../types/ISkinDocument";
 import Optimus from "optimus-js";
@@ -19,10 +19,11 @@ import { AxiosResponse } from "axios";
 import imageSize from "image-size";
 import { promises as fs } from "fs";
 import * as fileType from "file-type";
+import { FileTypeResult } from "file-type";
 import { UploadedFile } from "express-fileupload";
 import { ISizeCalculationResult } from "image-size/dist/types/interface";
-import { FileTypeResult } from "file-type";
 import { v4 as uuid } from "uuid";
+import { Stats } from "../types/Stats";
 
 
 const config: Config = require("../config");
@@ -50,6 +51,11 @@ export class Generator {
         return Account.calculateDelay();
     }
 
+    @MemoizeExpiring(60000)
+    static async getStats(): Promise<Stats> {
+        //TODO
+    }
+
     /// SAVING
 
     static async makeNewSkinId(): Promise<number> {
@@ -72,42 +78,65 @@ export class Generator {
 
     static async getSkinData(accountOrUuid: IAccountDocument | { uuid: string }): Promise<SkinData> {
         const uuid = stripUuid(accountOrUuid.uuid);
-        return Caching.getSkinData(uuid);
+        const data = await Caching.getSkinData(uuid);
+        if (!data || !data.value) {
+            throw new GeneratorError(GenError.INVALID_SKIN_DATA, "Skin data was invalid", 500, hasOwnProperty(accountOrUuid, "id") ? accountOrUuid as IAccountDocument : undefined, data);
+        }
+        const decodedValue = this.decodeValue(data);
+        if (!decodedValue || !decodedValue.textures || !decodedValue.textures.SKIN) {
+            throw new GeneratorError(GenError.INVALID_SKIN_DATA, "Skin data has no skin info", 500, hasOwnProperty(accountOrUuid, "id") ? accountOrUuid as IAccountDocument : undefined, data);
+        }
+        return data;
     }
 
 
-    protected static async saveSkin(result: GenerateResult, options: GenerateOptions, client: ClientInfo, start: number): Promise<ISkinDocument> {
+    protected static async saveSkin(result: GenerateResult, options: GenerateOptions, client: ClientInfo, type: GenerateType, start: number): Promise<ISkinDocument> {
         const id = await this.makeNewSkinId();
         const skin: ISkinDocument = new Skin({
             id: id,
 
-            hash: result.meta.imageHash,
-            uuid: result.meta.uuid,
+            hash: result.meta?.imageHash,
+            uuid: result.meta?.uuid,
 
             name: options.name,
             model: options.model,
             visibility: options.visibility,
 
-            value: result.data.value,
-            signature: result.data.signature,
-            url: result.data.decodedValue.textures.CAPE.url,
-            minecraftTextureHash: getHashFromMojangTextureUrl(result.data.decodedValue.textures.CAPE.url),
-            textureHash: result.meta.mojangHash,
+            value: result.data!.value,
+            signature: result.data!.signature,
+            url: result.data!.decodedValue!.textures!.SKIN!.url!,
+            minecraftTextureHash: getHashFromMojangTextureUrl(result.data!.decodedValue!.textures.SKIN!.url!),
+            textureHash: result.meta?.mojangHash,
 
-            time: (Date.now()/1000),
-            generateDuration: (Date.now()-start),
+            time: (Date.now() / 1000),
+            generateDuration: (Date.now() - start),
 
-            account: result.account.id
+            account: result.account?.id,
+            type: type,
+
+            via: client.via,
+            ua: client.userAgent,
+
+            duplicate: 0,
+            views: 0
         } as ISkinDocument)
-
+        return skin.save();
     }
 
-    protected static async getDuplicateOrSaved(result: GenerateResult, options: GenerateOptions, client: ClientInfo, start: number): Promise<ISkinDocument> {
+    protected static async getDuplicateOrSaved(result: GenerateResult, options: GenerateOptions, client: ClientInfo, type: GenerateType, start: number): Promise<ISkinDocument> {
         if (result.duplicate) {
             return result.duplicate;
         }
         if (result.data) {
-            return await this.saveSkin(result, options, client, start);
+            try {
+                NEW_METRIC
+                    .tag("server", config.server)
+                    .tag("type", type)
+                    .inc();
+            } catch (e) {
+                Sentry.captureException(e);
+            }
+            return await this.saveSkin(result, options, client, type, start);
         }
         // shouldn't ever get here
         throw new MineSkinError('unknown', "Something went wrong while generating");
@@ -115,9 +144,9 @@ export class Generator {
 
     /// DUPLICATE CHECKS
 
-    protected static async findDuplicateFromUrl(url: string, options: GenerateOptions): Promise<ISkinDocument> {
+    protected static async findDuplicateFromUrl(url: string, options: GenerateOptions, type: GenerateType): Promise<Maybe<ISkinDocument>> {
         if (!url || url.length < 8 || !url.startsWith("http")) {
-            return null;
+            return undefined;
         }
 
         const mineskinUrlResult = MINESKIN_URL_REGEX.exec(url);
@@ -133,13 +162,14 @@ export class Generator {
                     DUPLICATES_METRIC
                         .tag("server", config.server)
                         .tag("source", DuplicateSource.MINESKIN_URL)
+                        .tag("type", type)
                         .inc();
                 } catch (e) {
                     Sentry.captureException(e);
                 }
                 return await existingSkin.save();
             } else {
-                return null;
+                return undefined;
             }
         }
 
@@ -160,22 +190,23 @@ export class Generator {
                     DUPLICATES_METRIC
                         .tag("server", config.server)
                         .tag("source", DuplicateSource.TEXTURE_URL)
+                        .tag("type", type)
                         .inc();
                 } catch (e) {
                     Sentry.captureException(e);
                 }
                 return await existingSkin.save();
             } else {
-                return null;
+                return undefined;
             }
         }
 
-        return null;
+        return undefined;
     }
 
-    protected static async findDuplicateFromImageHash(hash: string, options: GenerateOptions): Promise<ISkinDocument> {
+    protected static async findDuplicateFromImageHash(hash: string, options: GenerateOptions, type: GenerateType): Promise<Maybe<ISkinDocument>> {
         if (!hash || hash.length < 30) {
-            return null;
+            return undefined;
         }
 
         const existingSkin = await Skin.findOne({
@@ -188,19 +219,20 @@ export class Generator {
                 DUPLICATES_METRIC
                     .tag("server", config.server)
                     .tag("source", DuplicateSource.IMAGE_HASH)
+                    .tag("type", type)
                     .inc();
             } catch (e) {
                 Sentry.captureException(e);
             }
             return await existingSkin.save();
         } else {
-            return null;
+            return undefined;
         }
     }
 
-    protected static async findDuplicateFromUuid(uuid: string, options: GenerateOptions): Promise<ISkinDocument> {
+    protected static async findDuplicateFromUuid(uuid: string, options: GenerateOptions, type: GenerateType): Promise<Maybe<ISkinDocument>> {
         if (!uuid || uuid.length < 34) {
-            return null;
+            return undefined;
         }
 
         const existingSkin = await Skin.findOne({
@@ -213,13 +245,14 @@ export class Generator {
                 DUPLICATES_METRIC
                     .tag("server", config.server)
                     .tag("source", DuplicateSource.USER_UUID)
+                    .tag("type", type)
                     .inc();
             } catch (e) {
                 Sentry.captureException(e);
             }
             return await existingSkin.save();
         } else {
-            return null;
+            return undefined;
         }
     }
 
@@ -228,7 +261,7 @@ export class Generator {
     public static async generateFromUrlAndSave(url: string, options: GenerateOptions, client: ClientInfo): Promise<ISkinDocument> {
         const start = Date.now();
         const data = await this.generateFromUrl(url, options);
-        const doc = await this.getDuplicateOrSaved(data, options, client, start);
+        const doc = await this.getDuplicateOrSaved(data, options, client, GenerateType.URL, start);
         const end = Date.now();
         durationMetric(end - start, GenerateType.URL, options, data.account);
         return doc;
@@ -237,8 +270,8 @@ export class Generator {
     protected static async generateFromUrl(originalUrl: string, options: GenerateOptions): Promise<GenerateResult> {
         console.log(info("[Generator] Generating from url"));
 
-        let account: IAccountDocument = null;
-        let tempFile: TempFile = null;
+        let account: Maybe<IAccountDocument> = undefined;
+        let tempFile: Maybe<TempFile> = undefined;
         try {
             // Try to find the source image
             const followResponse = await this.followUrl(originalUrl);
@@ -251,7 +284,7 @@ export class Generator {
                 throw new GeneratorError(GenError.INVALID_IMAGE_URL, "Failed to follow url");
             }
             // Check for duplicate from url
-            const urlDuplicate = await this.findDuplicateFromUrl(url, options);
+            const urlDuplicate = await this.findDuplicateFromUrl(url, options, GenerateType.URL);
             if (urlDuplicate) {
                 return {
                     duplicate: urlDuplicate
@@ -273,11 +306,11 @@ export class Generator {
             try {
                 await Temp.downloadImage(url, tempFile)
             } catch (e) {
-                throw new GeneratorError(GenError.INVALID_IMAGE, "Failed to download image", 500, null, e);
+                throw new GeneratorError(GenError.INVALID_IMAGE, "Failed to download image", 500, undefined, e);
             }
 
             // Validate downloaded image file
-            const tempFileValidation = await this.validateTempFile(tempFile, options);
+            const tempFileValidation = await this.validateTempFile(tempFile, options, GenerateType.URL);
             if (tempFileValidation.duplicate) {
                 // found a duplicate
                 return tempFileValidation;
@@ -307,7 +340,7 @@ export class Generator {
             })
 
             const data = await this.getSkinData(account);
-            const mojangHash = await this.getMojangHash(this.decodeValue(data).textures.CAPE.url);
+            const mojangHash = await this.getMojangHash(data.decodedValue!.textures!.SKIN!.url);
 
             await this.handleGenerateSuccess(account);
 
@@ -316,8 +349,8 @@ export class Generator {
                 account: account,
                 meta: {
                     uuid: uuid(),
-                    imageHash: tempFileValidation.hash,
-                    mojangHash: mojangHash
+                    imageHash: tempFileValidation.hash!,
+                    mojangHash: mojangHash!
                 }
             };
         } catch (e) {
@@ -331,10 +364,11 @@ export class Generator {
 
     }
 
-    protected static async followUrl(urlStr: string): Promise<AxiosResponse | undefined> {
+    protected static async followUrl(urlStr: string): Promise<Maybe<AxiosResponse>> {
+        if (!urlStr) return undefined;
         try {
             const url = URL.parse(urlStr, false);
-            if (URL_FOLLOW_WHITELIST.includes(url.host)) {
+            if (URL_FOLLOW_WHITELIST.includes(url.host!)) {
                 return await Requests.axiosInstance.request({
                     method: "HEAD",
                     url: url.href,
@@ -356,7 +390,7 @@ export class Generator {
     public static async generateFromUploadAndSave(file: UploadedFile, options: GenerateOptions, client: ClientInfo): Promise<ISkinDocument> {
         const start = Date.now();
         const data = await this.generateFromUpload(file, options);
-        const doc = await this.getDuplicateOrSaved(data, options, client, start);
+        const doc = await this.getDuplicateOrSaved(data, options, client, GenerateType.UPLOAD, start);
         const end = Date.now();
         durationMetric(end - start, GenerateType.UPLOAD, options, data.account);
         return doc;
@@ -365,8 +399,8 @@ export class Generator {
     protected static async generateFromUpload(file: UploadedFile, options: GenerateOptions): Promise<GenerateResult> {
         console.log(info("[Generator] Generating from upload"));
 
-        let account: IAccountDocument = null;
-        let tempFile: TempFile = null;
+        let account: Maybe<IAccountDocument> = undefined;
+        let tempFile: Maybe<TempFile> = undefined;
         try {
             // Copy uploaded file
             tempFile = await Temp.file({
@@ -375,11 +409,11 @@ export class Generator {
             try {
                 await Temp.copyUploadedImage(file, tempFile);
             } catch (e) {
-                throw new GeneratorError(GenError.INVALID_IMAGE, "Failed to upload image", 500, null, e);
+                throw new GeneratorError(GenError.INVALID_IMAGE, "Failed to upload image", 500, undefined, e);
             }
 
             // Validate uploaded image file
-            const tempFileValidation = await this.validateTempFile(tempFile, options);
+            const tempFileValidation = await this.validateTempFile(tempFile, options, GenerateType.UPLOAD);
             if (tempFileValidation.duplicate) {
                 // found a duplicate
                 return tempFileValidation;
@@ -391,7 +425,7 @@ export class Generator {
 
             const body = new FormData();
             body.append("variant", options.model);
-            body.append("file", new Blob([tempFileValidation.buffer], { type: "image/png" }), {
+            body.append("file", new Blob([tempFileValidation.buffer!], { type: "image/png" }), {
                 filename: "skin.png",
                 contentType: "image/png"
             });
@@ -411,7 +445,7 @@ export class Generator {
             });
 
             const data = await this.getSkinData(account);
-            const mojangHash = await this.getMojangHash(this.decodeValue(data).textures.CAPE.url);
+            const mojangHash = await this.getMojangHash(data.decodedValue!.textures!.SKIN!.url);
 
             await this.handleGenerateSuccess(account);
 
@@ -420,8 +454,8 @@ export class Generator {
                 account: account,
                 meta: {
                     uuid: uuid(),
-                    imageHash: tempFileValidation.hash,
-                    mojangHash: mojangHash
+                    imageHash: tempFileValidation.hash!,
+                    mojangHash: mojangHash!
                 }
             };
         } catch (e) {
@@ -439,7 +473,7 @@ export class Generator {
     public static async generateFromUserAndSave(user: string, options: GenerateOptions, client: ClientInfo): Promise<ISkinDocument> {
         const start = Date.now();
         const data = await this.generateFromUser(user, options);
-        const doc = await this.getDuplicateOrSaved(data, options, client, start);
+        const doc = await this.getDuplicateOrSaved(data, options, client, GenerateType.USER, start);
         const end = Date.now();
         durationMetric(end - start, GenerateType.USER, options, data.account);
         return doc;
@@ -448,8 +482,8 @@ export class Generator {
     protected static async generateFromUser(uuid: string, options: GenerateOptions): Promise<GenerateResult> {
         console.log(info("[Generator] Generating from user"));
 
-        const uuids = longAndShortUuid(uuid);
-        const uuidDuplicate = await this.findDuplicateFromUuid(uuids.long, options);
+        const uuids = longAndShortUuid(uuid)!;
+        const uuidDuplicate = await this.findDuplicateFromUuid(uuids.long, options, GenerateType.USER);
         if (uuidDuplicate) {
             return {
                 duplicate: uuidDuplicate
@@ -459,7 +493,8 @@ export class Generator {
         const data = await this.getSkinData({
             uuid: uuids.short
         });
-        const mojangHash = await this.getMojangHash(this.decodeValue(data).textures.CAPE.url);
+        const mojangHash = await this.getMojangHash(data.decodedValue!.textures!.SKIN!.url);
+
         return {
             data: data,
             meta: {
@@ -473,7 +508,7 @@ export class Generator {
     /// AUTH
 
     protected static async getAndAuthenticateAccount(): Promise<IAccountDocument> {
-        let account: IAccountDocument = await Account.findUsable();
+        let account = await Account.findUsable();
         if (!account) {
             console.warn(error("[Generator] No account available!"));
             throw new GeneratorError(GenError.NO_ACCOUNT_AVAILABLE, "No account available");
@@ -488,21 +523,20 @@ export class Generator {
 
     /// SUCCESS / ERROR HANDLERS
 
-    protected static async handleGenerateSuccess(account: IAccountDocument): Promise<IAccountDocument> {
-        if (!account) return account;
+    protected static async handleGenerateSuccess(account: IAccountDocument): Promise<void> {
+        if (!account) return;
         try {
             account.errorCounter = 0;
             account.successCounter++;
             account.totalSuccessCounter++;
-            return account.save();
+            await account.save();
         } catch (e1) {
             Sentry.captureException(e1);
         }
-        return account;
     }
 
-    protected static async handleGenerateError(e: any, account?: IAccountDocument): Promise<IAccountDocument> {
-        if (!account) return account;
+    protected static async handleGenerateError(e: any, account?: IAccountDocument): Promise<void> {
+        if (!account) return;
         try {
             account.successCounter = 0;
             account.errorCounter++;
@@ -510,34 +544,30 @@ export class Generator {
             if (e instanceof AuthenticationError) {
                 account.forcedTimeoutAt = Math.floor(Date.now() / 1000);
                 console.warn(warn("[Generator] Account #" + account.id + " forced timeout"));
-                account.updateRequestServer(null);
+                account.updateRequestServer(undefined);
             }
-            return account.save();
+            await account.save();
         } catch (e1) {
             Sentry.captureException(e1);
         }
-        return account;
     }
 
 
     /// VALIDATION
 
     protected static getUrlFromResponse(response: AxiosResponse): string {
-        if (!response) return undefined;
         return response.request.res.responseUrl;
     }
 
     protected static getSizeFromResponse(response: AxiosResponse): number {
-        if (!response) return undefined;
         return response.headers["content-length"];
     }
 
     protected static getContentTypeFromResponse(response: AxiosResponse): string {
-        if (!response) return undefined;
         return response.headers["content-type"];
     }
 
-    protected static async validateTempFile(tempFile: TempFile, options: GenerateOptions): Promise<TempFileValidationResult> {
+    protected static async validateTempFile(tempFile: TempFile, options: GenerateOptions, type: GenerateType): Promise<TempFileValidationResult> {
         // Validate downloaded image file
         const imageBuffer = await fs.readFile(tempFile.path);
         const size = imageBuffer.byteLength;
@@ -556,7 +586,7 @@ export class Generator {
         // Get the imageHash
         const imgHash = await imageHash(imageBuffer);
         // Check duplicate from imageHash
-        const hashDuplicate = await this.findDuplicateFromImageHash(imgHash, options);
+        const hashDuplicate = await this.findDuplicateFromImageHash(imgHash, options, type);
         if (hashDuplicate) {
             return {
                 duplicate: hashDuplicate
@@ -617,7 +647,8 @@ export enum GenError {
     SKIN_CHANGE_FAILED = "skin_change_failed",
     INVALID_IMAGE = "invalid_image",
     INVALID_IMAGE_URL = "invalid_image_url",
-    INVALID_IMAGE_UPLOAD = "invalid_image_upload"
+    INVALID_IMAGE_UPLOAD = "invalid_image_upload",
+    INVALID_SKIN_DATA = "invalid_skin_data"
 }
 
 export class GeneratorError extends MineSkinError {

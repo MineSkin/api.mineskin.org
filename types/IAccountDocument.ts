@@ -55,7 +55,7 @@ export interface IAccountDocument extends Document {
     accessTokenSource: AccessTokenSource;
     clientToken: string;
     requestIp: string;
-    requestServer: string;
+    requestServer?: string;
     lastRequestServer: string;
     type: AccountType;
     discordUser?: string;
@@ -64,7 +64,7 @@ export interface IAccountDocument extends Document {
 
     getOrCreateClientToken(): string;
 
-    updateRequestServer(newRequestServer: string): void;
+    updateRequestServer(newRequestServer?: string): void;
 
     authenticationHeader(): string;
 
@@ -72,7 +72,7 @@ export interface IAccountDocument extends Document {
 }
 
 export interface IAccountModel extends Model<IAccountDocument> {
-    findUsable(): Promise<IAccountDocument>;
+    findUsable(): Promise<IAccountDocument|undefined>;
 
     countGlobalUsable(): Promise<number>;
 

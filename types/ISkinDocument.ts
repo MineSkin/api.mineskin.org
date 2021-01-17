@@ -1,5 +1,6 @@
 import { Document, Model, model } from "mongoose";
 import { SkinInfo } from "./SkinInfo";
+import { Maybe } from "../util";
 
 export enum SkinModel {
     UNKNOWN = "unknown",
@@ -79,11 +80,11 @@ export interface ISkinDocument extends Document {
 }
 
 export interface ISkinModel extends Model<ISkinDocument> {
-    findForId(id: number): Promise<ISkinDocument>;
+    findForId(id: number): Promise<Maybe<ISkinDocument>>;
 
-    findExistingForHash(hash: string, name: string, model: SkinModel, visibility: SkinVisibility): Promise<ISkinDocument>;
+    findExistingForHash(hash: string, name: string, model: SkinModel, visibility: SkinVisibility): Promise<Maybe<ISkinDocument>>;
 
-    findExistingForTextureUrl(url: string, name: string, model: SkinModel, visibility: SkinVisibility): Promise<ISkinDocument>;
+    findExistingForTextureUrl(url: string, name: string, model: SkinModel, visibility: SkinVisibility): Promise<Maybe<ISkinDocument>>;
 
     attachTesterResult(id: number, server: string, mismatchCount: number): Promise<ISkinDocument>;
 }

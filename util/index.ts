@@ -19,6 +19,7 @@ import * as fileType from "file-type";
 import * as readChunk from "read-chunk";
 import * as crypto from "crypto";
 import exp = require("constants");
+import { Caching } from "../generator/Caching";
 
 const config: Config = require("../config");
 
@@ -26,7 +27,7 @@ export async function checkTraffic(req: Request, res: Response): Promise<boolean
     const ip = req.get("x-real-ip") || req.ip;
     console.log(colors.debug("IP: " + ip));
 
-    const traffic = await Traffic.findForIp(ip);
+    const traffic = await Caching.getTrafficByIp(ip);
     if (!traffic) { // First request
         return true;
     }
@@ -64,7 +65,7 @@ export async function validateImage(req: Request, res: Response, file: string): 
     const imageBuffer = await readChunk(file, 0, 4100);
     const type = await fileType.fromBuffer(imageBuffer);
     if (!type || type.ext !== "png" || type.mime !== "image/png") {
-        res.status(400).json({ error: "Invalid image type. Must be PNG. (Is " + type.ext + " / " + type.mime + ")" });
+        res.status(400).json({ error: "Invalid image type. Must be PNG. (Is " + type?.ext + " / " + type?.mime + ")" });
         return false;
     }
 
@@ -103,7 +104,7 @@ export function addDashesToUuid(uuid: string): string {
     return uuid.substr(0, 8) + "-" + uuid.substr(8, 4) + "-" + uuid.substr(12, 4) + "-" + uuid.substr(16, 4) + "-" + uuid.substr(20);
 }
 
-export function longAndShortUuid(str: string) {
+export function longAndShortUuid(str: string): Maybe<{ short: string, long: string }> {
     if (str.length < 32) {
         return undefined; // not an uuid
     }
@@ -118,6 +119,7 @@ export function longAndShortUuid(str: string) {
 export function getVia(req: Request): string {
     let via = "api";
     if (req.headers["referer"]) {
+        via = "other";
         if (req.headers["referer"].indexOf("mineskin.org") > -1) {
             via = "website";
             if (req.headers["referer"].indexOf("bulk") > -1) {
@@ -140,7 +142,7 @@ export function base64decode(str: string): string {
     return new Buffer(str, "base64").toString("ascii");
 }
 
-export function getHashFromMojangTextureUrl(url: string): string {
+export function getHashFromMojangTextureUrl(url: string): Maybe<string> {
     const res = /textures\.minecraft\.net\/texture\/([0-9a-z]+)/i.exec(url);
     if (!res || res.length <= 1) return undefined;
     return res[1];
@@ -171,3 +173,11 @@ export async function imageHash(buffer: Buffer) {
         algorithm: "sha1"
     })
 }
+
+// https://fettblog.eu/typescript-hasownproperty/
+export function hasOwnProperty<X extends {}, Y extends PropertyKey>(obj: X, prop: Y): obj is X & Record<Y, unknown> {
+    return obj.hasOwnProperty(prop)
+}
+
+// https://github.com/microsoft/TypeScript/issues/13321#issuecomment-637120710
+export type Maybe<T> = T | undefined;

@@ -37,8 +37,8 @@ export const SkinSchema: Schema = new Schema({
         index: true
     },
     minecraftTextureHash: {
-       type: String,
-       index:  true
+        type: String,
+        index: true
     },
     skinId: String,
     skinTextureId: String,
@@ -69,7 +69,7 @@ SkinSchema.methods.toResponseJson = function (this: ISkinDocument, delay?: numbe
     const info: SkinInfo = {
         id: this.id,
         idStr: "" + this.id,
-        name: this.name,
+        name: this.name || "",
         model: this.model,
         data: {
             uuid: this.uuid,

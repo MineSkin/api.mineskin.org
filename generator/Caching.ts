@@ -5,18 +5,22 @@ import { ProfileResponse } from "../types/ProfileResponse";
 import { User } from "../types/User";
 import * as Sentry from "@sentry/node";
 import { Severity } from "@sentry/node";
-import { metrics, stripUuid } from "../util";
+import { Maybe, metrics, stripUuid } from "../util";
 import { IPoint } from "influx";
 import { Config } from "../types/Config";
+import { ISkinDocument, ITrafficDocument } from "../types";
+import { Skin, Traffic } from "../database/schemas";
 
 const config: Config = require("../config");
 
 export class Caching {
 
-    protected static readonly skinDataCache: AsyncLoadingCache<string, SkinData | undefined> = Caches.builder()
+    //// REQUESTS
+
+    protected static readonly skinDataCache: AsyncLoadingCache<string, SkinData> = Caches.builder()
         .expireAfterWrite(Time.minutes(2))
         .expirationInterval(Time.seconds(30))
-        .buildAsync<string, SkinData | undefined>(uuid => {
+        .buildAsync<string, SkinData>(uuid => {
             return Requests.mojangSessionRequest({
                 url: "/session/minecraft/profile/" + uuid + "?unsigned=false"
             }).then(response => {
@@ -36,10 +40,10 @@ export class Caching {
             });
         });
 
-    protected static readonly userByNameCache: AsyncLoadingCache<string, User | undefined> = Caches.builder()
+    protected static readonly userByNameCache: AsyncLoadingCache<string, User> = Caches.builder()
         .expireAfterWrite(Time.minutes(5))
         .expirationInterval(Time.minutes(1))
-        .buildAsync<string, User | undefined>(name => {
+        .buildAsync<string, User>(name => {
             return Requests.mojangApiRequest({
                 url: "/users/profiles/minecraft/" + name
             }).then(response => {
@@ -55,7 +59,8 @@ export class Caching {
                         uuid: body["id"],
                         name: body["name"]
                     } as User;
-                    Caching.userByUuidCache.put(d.uuid, d);
+                    // update other cache
+                    Caching.userByUuidCache.put(d.uuid!, d);
                 }
                 return d;
             }).catch(err => {
@@ -72,10 +77,10 @@ export class Caching {
                 } as User;
             });
         });
-    protected static readonly userByUuidCache: AsyncLoadingCache<string, User | undefined> = Caches.builder()
+    protected static readonly userByUuidCache: AsyncLoadingCache<string, User> = Caches.builder()
         .expireAfterWrite(Time.minutes(5))
         .expirationInterval(Time.minutes(1))
-        .buildAsync<string, User | undefined>(uuid => {
+        .buildAsync<string, User>(uuid => {
             uuid = stripUuid(uuid);
             return Requests.mojangApiRequest({
                 url: "/user/profiles/" + uuid + "/names"
@@ -92,7 +97,8 @@ export class Caching {
                         uuid: uuid,
                         name: body[body.length - 1]["name"]
                     } as User;
-                    Caching.userByNameCache.put(d.name.toLowerCase(), d);
+                    // update other cache
+                    Caching.userByNameCache.put(d.name!.toLowerCase(), d);
                 }
                 return d;
             }).catch(err => {
@@ -110,11 +116,28 @@ export class Caching {
             });
         });
 
+    //// DATABASE
+
+    protected static readonly trafficByIpCache: AsyncLoadingCache<string, ITrafficDocument> = Caches.builder()
+        .expireAfterWrite(Time.seconds(5))
+        .expirationInterval(Time.seconds(1))
+        .buildAsync<string, ITrafficDocument>(ip => Traffic.findForIp(ip));
+
+    protected static readonly skinByIdCache: AsyncLoadingCache<number, ISkinDocument> = Caches.builder()
+        .expireAfterWrite(Time.seconds(20))
+        .expirationInterval(Time.seconds(5))
+        .buildAsync<number, ISkinDocument>(id => Skin.findForId(id));
+
+    ////
+
     protected static metricsCollector = setInterval(() => {
-        const caches = new Map<string, AsyncLoadingCache<string, any>>([
+        const caches = new Map<string, AsyncLoadingCache<any, any>>([
             ["skinData", Caching.skinDataCache],
             ["userByName", Caching.userByNameCache],
-            ["userByUuid", Caching.userByUuidCache]
+            ["userByUuid", Caching.userByUuidCache],
+
+            ["trafficById", Caching.trafficByIpCache],
+            ["skinById", Caching.skinByIdCache]
         ]);
         const points: IPoint[] = [];
         caches.forEach((cache, name) => {
@@ -135,7 +158,9 @@ export class Caching {
         }
     }, 10000);
 
-    public static getSkinData(uuid: string): Promise<SkinData | undefined> {
+    /// REQUESTS
+
+    public static getSkinData(uuid: string): Promise<SkinData> {
         return this.skinDataCache.get(uuid);
     }
 
@@ -146,6 +171,18 @@ export class Caching {
     public static getUserByUuid(uuid: string): Promise<User> {
         return this.userByUuidCache.get(uuid);
     }
+
+    /// DATABASE
+
+    public static getTrafficByIp(ip: string): Promise<Maybe<ITrafficDocument>> {
+        return this.trafficByIpCache.get(ip);
+    }
+
+    public static getSkinById(id: number): Promise<Maybe<ISkinDocument>> {
+        return this.skinByIdCache.get(id);
+    }
+
+    ///
 
     public static end() {
         this.skinDataCache.end();

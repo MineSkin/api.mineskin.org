@@ -6,6 +6,7 @@ import { AxiosRequestConfig, AxiosResponse } from "axios";
 import { GenerateOptions } from "../types/GenerateOptions";
 import { IAccountDocument } from "../types";
 import { GenerateType } from "../types/ISkinDocument";
+import exp = require("constants");
 
 const config = require("../config");
 
@@ -36,7 +37,8 @@ export const apiRequestsMiddleware = (req: Request, res: Response, next: NextFun
 
 export const AUTHENTICATION_METRIC = metrics.metric('mineskin', 'authentication');
 
-export const DUPLICATES_METRIC = metrics.metric('mineskin', 'duplicates');
+export const DUPLICATES_METRIC = metrics.metric('mineskin', 'gen_duplicate');
+export const NEW_METRIC = metrics.metric('mineskin', 'gen_new');
 
 export const REQUESTS_METRIC = metrics.metric('mineskin', 'requests');
 

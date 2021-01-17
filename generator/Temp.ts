@@ -38,7 +38,7 @@ export class Temp {
 
     static async file(options?: FileOptions): Promise<TempFile> {
         return new Promise((resolve, reject) => {
-            tmp.file(options, (err, name, fd, removeCallback) => {
+            tmp.file(options || {}, (err, name, fd, removeCallback) => {
                 if (err) {
                     reject(err);
                 } else {
@@ -50,7 +50,7 @@ export class Temp {
 
     static async dir(options?: DirOptions): Promise<TempDir> {
         return new Promise((resolve, reject) => {
-            tmp.dir(options, (err, name, removeCallback) => {
+            tmp.dir(options || {}, (err, name, removeCallback) => {
                 if (err) {
                     reject(err);
                 } else {

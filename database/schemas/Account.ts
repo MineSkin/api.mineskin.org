@@ -95,7 +95,7 @@ AccountSchema.methods.getOrCreateClientToken = function (this: IAccountDocument)
     return this.clientToken;
 };
 
-AccountSchema.methods.updateRequestServer = function (this: IAccountDocument, newRequestServer: string) {
+AccountSchema.methods.updateRequestServer = function (this: IAccountDocument, newRequestServer?: string) {
     if (this.requestServer && this.requestServer !== newRequestServer) {
         this.lastRequestServer = this.requestServer;
     }
@@ -112,11 +112,11 @@ AccountSchema.methods.toSimplifiedString = function (this: IAccountDocument): st
 
 /// STATICS
 
-AccountSchema.statics.findUsable = function (this: IAccountModel): Promise<IAccountDocument> {
+AccountSchema.statics.findUsable = function (this: IAccountModel): Promise<IAccountDocument | undefined> {
     const time = Math.floor(Date.now() / 1000);
     return this.findOne({
         enabled: true,
-        requestServer: { $in: [null, "default", config.server] },
+        requestServer: { $in: [undefined, "default", config.server] },
         lastUsed: { $lt: (time - 100) },
         forcedTimeoutAt: { $lt: (time - 500) },
         errorCounter: { $lt: (config.errorThreshold || 10) },
@@ -131,7 +131,7 @@ AccountSchema.statics.findUsable = function (this: IAccountModel): Promise<IAcco
                 console.warn(error("There are no accounts available!"));
                 return undefined;
             }
-            console.log("Account #" + account.id + " last used " + Math.round(time - account.lastUsed) + "s ago, last selected " + Math.round(time - account.lastSelected) + "s ago");
+            console.log("Account #" + account.id + " last used " + Math.round(time - (account.lastUsed || 0)) + "s ago, last selected " + Math.round(time - (account.lastSelected || 0)) + "s ago");
             account.lastSelected = time;
             if (!account.successCounter) account.successCounter = 0;
             if (!account.errorCounter) account.errorCounter = 0;

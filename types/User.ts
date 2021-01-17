@@ -1,5 +1,5 @@
 export interface User {
     valid: boolean;
-    uuid: string;
-    name: string;
+    uuid?: string;
+    name?: string;
 }
