@@ -1,3 +1,33 @@
+import { Application, Request, Response } from "express";
+
+export const register = (app: Application) => {
+
+    //// URL
+
+    app.post("/generate/url", async (req: Request, res: Response)=>{
+        //TODO
+    })
+
+
+    //// UPLOAD
+
+    app.post("/generate/upload", async (req: Request, res: Response)=>{
+        //TODO
+    })
+
+
+    //// USER
+
+    app.post("/generate/user", async (req: Request, res: Response)=>{
+        //TODO
+    })
+
+    app.get("/generate/user/:uuid", async (req: Request, res: Response)=>{
+        //TODO: map to the post request
+    })
+
+}
+
 module.exports = function (app, config, optimus, limiter) {
 
     let SKIN_COUNTER = 1000000;

@@ -1,11 +1,11 @@
 import { Account, Skin } from "../database/schemas";
 import { MemoizeExpiring } from "typescript-memoize";
-import { base64decode, DUPLICATES_METRIC, durationMetric, error, getHashFromMojangTextureUrl, hasOwnProperty, imageHash, info, longAndShortUuid, Maybe, NEW_METRIC, random32BitNumber, stripUuid, warn } from "../util";
+import { base64decode, debug, DUPLICATES_METRIC, durationMetric, error, getHashFromMojangTextureUrl, hasOwnProperty, imageHash, info, longAndShortUuid, Maybe, NEW_METRIC, random32BitNumber, stripUuid, warn } from "../util";
 import { IAccountDocument, ISkinDocument, MineSkinError } from "../types";
 import { Caching } from "./Caching";
 import { SkinData, SkinMeta, SkinValue } from "../types/SkinData";
 import { Config } from "../types/Config";
-import { GenerateType } from "../types/ISkinDocument";
+import { GenerateType, SkinModel } from "../types/ISkinDocument";
 import Optimus from "optimus-js";
 import { Authentication, AuthenticationError } from "./Authentication";
 import * as Sentry from "@sentry/node";
@@ -24,7 +24,7 @@ import { UploadedFile } from "express-fileupload";
 import { ISizeCalculationResult } from "image-size/dist/types/interface";
 import { v4 as uuid } from "uuid";
 import { Stats } from "../types/Stats";
-
+import * as Jimp from "jimp";
 
 const config: Config = require("../config");
 
@@ -80,9 +80,9 @@ export class Generator {
             delay,
 
             accounts: enabledAccounts,
-             serverAccounts,
-             healthyAccounts,
-             useableAccounts,
+            serverAccounts,
+            healthyAccounts,
+            useableAccounts,
 
             //TODO
         }
@@ -615,6 +615,12 @@ export class Generator {
             throw new GeneratorError(GenError.INVALID_IMAGE, "Invalid file type: " + fType, 400);
         }
 
+        const dataValidation = await this.validateImageData(imageBuffer);
+        if (options.model === SkinModel.UNKNOWN && dataValidation.model !== SkinModel.UNKNOWN) {
+            console.log(debug("Switching unknown skin model to " + dataValidation.model + " from detection"));
+            options.model = dataValidation.model;
+        }
+
         // Get the imageHash
         const imgHash = await imageHash(imageBuffer);
         // Check duplicate from imageHash
@@ -655,6 +661,38 @@ export class Generator {
         }
     }
 
+    protected static async validateImageData(buffer: Buffer): Promise<ImageDataValidationResult> {
+        const image = await Jimp.read(buffer);
+        const width = image.getWidth();
+        const height = image.getHeight();
+        if ((width !== 64) || (height !== 64 && height !== 32)) {
+            throw new GeneratorError(GenError.INVALID_IMAGE, "Invalid image dimensions. Must be 64x32 or 64x64 (Were " + width + "x" + height + ")", 400);
+        }
+        if (height < 64) {
+            return {
+                model: SkinModel.CLASSIC
+            };
+        }
+        // https://github.com/InventivetalentDev/MineRender/blob/master/src/skin/index.js#L146
+        let allTransparent = true;
+        image.scan(54, 20, 2, 12, function (x, y, idx) {
+            let a = this.bitmap.data[idx + 3];
+            if (a === 255) {
+                allTransparent = false;
+            }
+        });
+
+        if (allTransparent) {
+            return {
+                model: SkinModel.SLIM
+            };
+        } else {
+            return {
+                model: SkinModel.CLASSIC
+            }
+        }
+    }
+
 
 }
 
@@ -671,6 +709,10 @@ interface TempFileValidationResult extends GenerateResult {
     dimensions?: ISizeCalculationResult;
     fileType?: FileTypeResult;
     hash?: string;
+}
+
+interface ImageDataValidationResult {
+    model: SkinModel;
 }
 
 export enum GenError {

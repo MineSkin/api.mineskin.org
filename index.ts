@@ -16,7 +16,7 @@ import { RateLimit } from "express-rate-limit";
 import Optimus from "optimus-js";
 import { apiRequestsMiddleware, info, metrics } from "./util";
 import * as rateLimit from "express-rate-limit";
-import { renderRoute, testerRoute, utilRoute } from "./routes";
+import { generateRoute, getRoute, renderRoute, testerRoute, utilRoute } from "./routes";
 import { generateLimiter } from "./util/rateLimiters";
 import { MOJ_DIR, Temp, UPL_DIR, URL_DIR } from "./generator/Temp";
 
@@ -153,6 +153,8 @@ async function init() {
         require("./routes/admin")(app);
         require("./routes/accountManager")(app);
 
+        generateRoute.register(app);
+        getRoute.register(app);
         renderRoute.register(app);
         testerRoute.register(app);
         utilRoute.register(app);
