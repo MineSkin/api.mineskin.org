@@ -54,7 +54,7 @@
     "request": "^2.88.0",
     "rootpath": "^0.1.2",
     "rotating-file-stream": "^1.4.4",
-    "socket.io": "^2.0.1",
+    "socket.io": "^2.4.0",
     "socket.io-stream": "^0.9.1",
     "swagger-stats": "^0.95.11",
     "tmp": "0.1.0",
