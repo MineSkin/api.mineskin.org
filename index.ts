@@ -99,8 +99,8 @@ async function init() {
                 return next();
             }
         });
-        app.use(bodyParser.urlencoded({ extended: true }));
-        app.use(bodyParser.json());
+        app.use(bodyParser.urlencoded({ extended: true, limit: '50kb' }));
+        app.use(bodyParser.json({ limit: '20kb' }));
         app.use(ExpressValidator());
         app.use(fileUpload());
         app.use((req, res, next) => {

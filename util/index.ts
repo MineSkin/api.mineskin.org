@@ -23,8 +23,12 @@ import { Caching } from "../generator/Caching";
 
 const config: Config = require("../config");
 
+export function getIp(req: Request): string {
+    return req.get('cf-connecting-ip') || req.get('x-forwarded-for') || req.get("x-real-ip") || req.connection.remoteAddress || req.ip;
+}
+
 export async function checkTraffic(req: Request, res: Response): Promise<boolean> {
-    const ip = req.get("x-real-ip") || req.ip;
+    const ip = getIp(req);
     console.log(colors.debug("IP: " + ip));
 
     const traffic = await Caching.getTrafficByIp(ip);
@@ -109,7 +113,8 @@ export function longAndShortUuid(str: string): Maybe<{ short: string, long: stri
         return undefined; // not an uuid
     }
     const short = stripUuid(str);
-    const long = addDashesToUuid(short);
+    const long = validateUuid(addDashesToUuid(short));
+    if (!long) return undefined;
     return {
         long,
         short
@@ -146,6 +151,25 @@ export function getHashFromMojangTextureUrl(url: string): Maybe<string> {
     const res = /textures\.minecraft\.net\/texture\/([0-9a-z]+)/i.exec(url);
     if (!res || res.length <= 1) return undefined;
     return res[1];
+}
+
+// https://stackoverflow.com/a/55585593/6257838
+export function validateUrl(url: string): Maybe<string> {
+    try {
+        return new URL(url).href;
+    } catch (e) {
+    }
+    return undefined;
+}
+
+export function validateUuid(uuidWithDashes: string): Maybe<string> {
+    try {
+        if (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(uuidWithDashes)) {
+            return uuidWithDashes;
+        }
+    } catch (e) {
+    }
+    return undefined;
 }
 
 export function sleep(duration: number): Promise<void> {

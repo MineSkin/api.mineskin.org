@@ -39,7 +39,7 @@ const URL_FOLLOW_WHITELIST = [
 ];
 const MAX_FOLLOW_REDIRECTS = 5;
 
-const MAX_IMAGE_SIZE = 20000; // about 70x70px at 32bit
+const MAX_IMAGE_SIZE = 20000; // 20KB - about 70x70px at 32bit
 const ALLOWED_IMAGE_TYPES = ["image/png"];
 
 export class Generator {

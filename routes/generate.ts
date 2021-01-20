@@ -1,30 +1,105 @@
 import { Application, Request, Response } from "express";
+import { GenerateOptions } from "../types/GenerateOptions";
+import { SkinModel, SkinVisibility } from "../types/ISkinDocument";
+import { longAndShortUuid, validateUrl, validateUuid } from "../util";
+import { UploadedFile } from "express-fileupload";
 
 export const register = (app: Application) => {
 
     //// URL
 
-    app.post("/generate/url", async (req: Request, res: Response)=>{
+    app.post("/generate/url", async (req: Request, res: Response) => {
+        const url = validateUrl(req.body["url"] || req.query["url"]);
+        if (!url || !url.startsWith("http")) {
+            res.status(400).json({ error: "invalid url" });
+            return;
+        }
+        const options = getAndValidateOptions(req);
+
         //TODO
     })
 
 
     //// UPLOAD
 
-    app.post("/generate/upload", async (req: Request, res: Response)=>{
+    app.post("/generate/upload", async (req: Request, res: Response) => {
+        if (!req.files) {
+            res.status(400).json({ error: "missing files" });
+            return;
+        }
+        const file = req.files["file"] as UploadedFile;
+        if (!file) {
+            res.status(400).json({ error: "missing file" });
+            return;
+        }
+        const options = getAndValidateOptions(req);
+
         //TODO
     })
 
 
     //// USER
 
-    app.post("/generate/user", async (req: Request, res: Response)=>{
+    app.post("/generate/user", async (req: Request, res: Response) => {
+        const uuidStr = req.body["uuid"] || req.query["uuid"];
+        if (!uuidStr) {
+            res.status(400).json({ error: "missing uuid" });
+            return;
+        }
+        const uuids = longAndShortUuid(uuidStr);
+        if (!uuids) {
+            res.status(400).json({ error: "invalid uuid" });
+            return;
+        }
+        const options = getAndValidateOptions(req);
+
         //TODO
     })
 
-    app.get("/generate/user/:uuid", async (req: Request, res: Response)=>{
+    app.get("/generate/user/:uuid", async (req: Request, res: Response) => {
         //TODO: map to the post request
     })
+
+    ///
+
+    function getAndValidateOptions(req: Request): GenerateOptions {
+        const model = validateModel(req.body["model"] || req.query["model"]);
+        const visibility = validateVisibility(req.body["visibility"] || req.query["visibility"]);
+        const name = validateName(req.body["name"] || req.query["name"]);
+
+        return {
+            model,
+            visibility,
+            name
+        };
+    }
+
+    function validateModel(model?: string): SkinModel {
+        if (!model) {
+            return SkinModel.UNKNOWN;
+        }
+        model = model.toLowerCase();
+
+        if (model === "classic" || model === "default" || model === "steve") {
+            return SkinModel.CLASSIC;
+        }
+        if (model === "slim" || model === "alex") {
+            return SkinModel.SLIM;
+        }
+
+        return SkinModel.UNKNOWN;
+    }
+
+    function validateVisibility(visibility?: number): SkinVisibility {
+        return visibility === 1 ? SkinVisibility.PRIVATE : SkinVisibility.PUBLIC;
+    }
+
+    function validateName(name?: string): string {
+        if (!name) {
+            return "";
+        }
+        return `${ name }`.substr(0, 20);
+    }
 
 }
 
@@ -47,7 +122,7 @@ module.exports = function (app, config, optimus, limiter) {
     const request = require("request");
     const Sentry = require("@sentry/node");
     const hasha = require("hasha");
-    const {URL} = require("url");
+    const { URL } = require("url");
     const metrics = require("../util/metrics");
 
     const GENERATE_METRIC = metrics.metric('mineskin', 'generate');
@@ -95,11 +170,11 @@ module.exports = function (app, config, optimus, limiter) {
         console.log(("Name:       " + name).debug);
 
         if (!url) {
-            res.status(400).json({error: "URL is required"});
+            res.status(400).json({ error: "URL is required" });
             return;
         }
         if (!url.startsWith("http")) {
-            res.status(400).json({error: "Invalid URL"});
+            res.status(400).json({ error: "Invalid URL" });
             return;
         }
 
@@ -114,16 +189,16 @@ module.exports = function (app, config, optimus, limiter) {
                     followUrlToImage(url, function (url) {
                         remoteFileSize(url, function (err, remoteSize) {
                             if (err) {
-                                res.status(400).json({error: "Failed to determine file size"});
+                                res.status(400).json({ error: "Failed to determine file size" });
                                 return;
                             }
                             if (remoteSize <= 0 || remoteSize > 102400) {
-                                res.status(400).json({error: "Invalid file size"});
+                                res.status(400).json({ error: "Invalid file size" });
                                 return;
                             }
 
                             const tmpName = "t" + Date.now() + "url";
-                            tmp.file({name: tmpName, dir: "/tmp/url"}, function (err, path, fd, fileCleanup) {
+                            tmp.file({ name: tmpName, dir: "/tmp/url" }, function (err, path, fd, fileCleanup) {
                                 console.log("url imageHash tmp path: " + path)
                                 if (err) {
                                     console.log(err);
@@ -131,7 +206,7 @@ module.exports = function (app, config, optimus, limiter) {
                                 }
 
                                 // var file = fs.createWriteStream(path);
-                                request(url, {"encoding": "binary"}, function (err, response, body) {
+                                request(url, { "encoding": "binary" }, function (err, response, body) {
                                     if (err) {
                                         console.log(err)
                                         fileCleanup();
@@ -139,7 +214,7 @@ module.exports = function (app, config, optimus, limiter) {
                                         return;
                                     }
                                     if (response.statusCode < 200 || response.statusCode > 230) {
-                                        res.status(500).json({"error": "Failed to download image", code: response.statusCode});
+                                        res.status(500).json({ "error": "Failed to download image", code: response.statusCode });
                                         fileCleanup();
                                         close(fd);
                                         return;
@@ -171,7 +246,7 @@ module.exports = function (app, config, optimus, limiter) {
                                                     // cleanup();
                                                     if (validImage) {
                                                         skinChanger.getAvailableAccount(req, res, function (account) {
-                                                            Traffic.update({ip: req.realAddress}, {lastRequest: new Date()}, {upsert: true}, function (err, traffic) {
+                                                            Traffic.update({ ip: req.realAddress }, { lastRequest: new Date() }, { upsert: true }, function (err, traffic) {
                                                                 if (err) {
                                                                     console.log(err)
                                                                     fileCleanup();
@@ -201,7 +276,7 @@ module.exports = function (app, config, optimus, limiter) {
                                                                                 getAndSaveSkinData(account, skinOptions, fileHash, hashFromMojangTexture, uuid(), tmpName, genStart, function (err, skin) {
                                                                                     if (err) {
                                                                                         const reason = "skin_data_fetch_failed";
-                                                                                        res.status(500).json({error: "Failed to get skin data", err: err, accountId: account.id, reason: reason});
+                                                                                        res.status(500).json({ error: "Failed to get skin data", err: err, accountId: account.id, reason: reason });
                                                                                         console.log(("Failed to download skin data (URL, Account " + account.id + ")").warn)
 
                                                                                         console.log(("=> FAIL #" + account.errorCounter + "\n").red);
@@ -217,7 +292,7 @@ module.exports = function (app, config, optimus, limiter) {
                                                                         })
                                                                     } else {
                                                                         const reason = errorCause || "skin_data_generation_failed";
-                                                                        res.status(500).json({error: "Failed to generate skin data", err: result, accountId: account.id, reason: reason});
+                                                                        res.status(500).json({ error: "Failed to generate skin data", err: result, accountId: account.id, reason: reason });
                                                                         console.log(("Failed to generate skin data").warn)
 
                                                                         console.log(("=> FAIL #" + account.errorCounter + "\n").red);
@@ -260,7 +335,7 @@ module.exports = function (app, config, optimus, limiter) {
             const split = url.split("/");
             const idPart = split[split.length - 1];
             if (idPart.length > 0 && /^\d+$/.test(idPart)) {
-                Skin.findOne({id: idPart}).exec(function (err, skin) {
+                Skin.findOne({ id: idPart }).exec(function (err, skin) {
                     if (err) return console.log(err);
                     if (skin) {
                         skin.views += 1;
@@ -302,7 +377,7 @@ module.exports = function (app, config, optimus, limiter) {
                         cb(response.request.uri.href)
                     }
                 });
-            }else{
+            } else {
                 cb(urlStr);
             }
         } catch (e) {
@@ -314,7 +389,7 @@ module.exports = function (app, config, optimus, limiter) {
 
     app.post("/generate/upload", limiter, function (req, res) {
         if (!req.files) {
-            res.status(400).json({error: "Missing files"});
+            res.status(400).json({ error: "Missing files" });
             return;
         }
         const model = Util.validateModel(req.body.model || req.query.model || "steve");
@@ -331,7 +406,7 @@ module.exports = function (app, config, optimus, limiter) {
 
         const fileUpload = req.files.file;
         if (!fileUpload) {
-            res.status(400).json({error: "Missing file"});
+            res.status(400).json({ error: "Missing file" });
             return;
         }
 
@@ -341,7 +416,7 @@ module.exports = function (app, config, optimus, limiter) {
             if (!allowed) return;
 
             const tmpName = "t" + Date.now() + "upl";
-            tmp.file({name: tmpName, dir: "/tmp/upl"}, function (err, path, fd, fileCleanup) {
+            tmp.file({ name: tmpName, dir: "/tmp/upl" }, function (err, path, fd, fileCleanup) {
                 console.log("upload imageHash tmp path: " + path)
                 if (err) {
                     console.log(err);
@@ -383,7 +458,7 @@ module.exports = function (app, config, optimus, limiter) {
                                     // cleanup();
                                     if (validImage) {
                                         skinChanger.getAvailableAccount(req, res, function (account) {
-                                            Traffic.update({ip: req.realAddress}, {lastRequest: new Date()}, {upsert: true}, function (err, traffic) {
+                                            Traffic.update({ ip: req.realAddress }, { lastRequest: new Date() }, { upsert: true }, function (err, traffic) {
                                                 if (err) {
                                                     console.log(err)
                                                     fileCleanup();
@@ -412,7 +487,7 @@ module.exports = function (app, config, optimus, limiter) {
                                                                 getAndSaveSkinData(account, skinOptions, fileHash, hashFromMojangTexture, uuid(), tmpName, genStart, function (err, skin) {
                                                                     if (err) {
                                                                         const reason = "skin_data_fetch_failed";
-                                                                        res.status(500).json({error: "Failed to get skin data", err: err, accountId: account.id, reason: reason});
+                                                                        res.status(500).json({ error: "Failed to get skin data", err: err, accountId: account.id, reason: reason });
                                                                         console.log(("Failed to download skin data (UPLOAD, Account " + account.id + ")").warn)
 
                                                                         console.log(("=> FAIL #" + account.errorCounter + "\n").red);
@@ -428,7 +503,7 @@ module.exports = function (app, config, optimus, limiter) {
                                                         })
                                                     } else {
                                                         const reason = errorCause || "skin_data_generation_failed";
-                                                        res.status(500).json({error: "Failed to upload skin data (" + result + ")", err: result, accountId: account.id, reason: reason});
+                                                        res.status(500).json({ error: "Failed to upload skin data (" + result + ")", err: result, accountId: account.id, reason: reason });
                                                         console.log(("Failed to upload skin data").warn)
 
                                                         console.log(("=> FAIL #" + account.errorCounter + "\n").red);
@@ -466,7 +541,7 @@ module.exports = function (app, config, optimus, limiter) {
         }
 
         if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(longUuid)) {
-            res.status(400).json({error: "Invalid UUID"});
+            res.status(400).json({ error: "Invalid UUID" });
             return;
         }
 
@@ -474,7 +549,7 @@ module.exports = function (app, config, optimus, limiter) {
 
         Util.checkTraffic(req, res).then(function (allowed, generatorDelay) {
             if (!allowed) return;
-            Skin.findOne({uuid: longUuid, name: name, visibility: visibility}, function (err, skin) {
+            Skin.findOne({ uuid: longUuid, name: name, visibility: visibility }, function (err, skin) {
                 if (err) return console.log(err);
                 if (skin) {// Skin already generated
                     const time = Date.now() / 1000;
@@ -499,10 +574,10 @@ module.exports = function (app, config, optimus, limiter) {
                     via: Util.getVia(req),
                     ua: req.headers["user-agent"]
                 };
-                getAndSaveSkinData({uuid: shortUuid}, skinOptions, hashFromMojangTexture, null, longUuid, "t" + Date.now() + "usr", genStart, function (err, skin) {
+                getAndSaveSkinData({ uuid: shortUuid }, skinOptions, hashFromMojangTexture, null, longUuid, "t" + Date.now() + "usr", genStart, function (err, skin) {
                     if (err) {
                         const reason = "skin_data_fetch_failed";
-                        res.status(500).json({error: "Failed to get skin data", err: err, reason: reason});
+                        res.status(500).json({ error: "Failed to get skin data", err: err, reason: reason });
                         console.log(("Failed to download skin data (USER)").warn)
 
                         console.log(("=> FAIL\n").red);
@@ -520,7 +595,7 @@ module.exports = function (app, config, optimus, limiter) {
 
     function hashFromMojangTexture(skinTexture, tmpName, cb) {// Generate the file imageHash from the skin's texture url
         if (!skinTexture) return;
-        tmp.file({name: tmpName, dir: "/tmp/moj"}, function (err, path, fd, fileCleanup) {
+        tmp.file({ name: tmpName, dir: "/tmp/moj" }, function (err, path, fd, fileCleanup) {
             console.log("mojang imageHash tmp path: " + path)
             if (err) {
                 console.log(err);
@@ -574,7 +649,7 @@ module.exports = function (app, config, optimus, limiter) {
             const textures = JSON.parse(new Buffer(skinData.value, 'base64').toString('utf8')).textures;
             console.log(JSON.stringify(textures).debug);
             const skinTexture = textures.SKIN;
-            const capeTexture = textures.CAPE || {url: undefined};
+            const capeTexture = textures.CAPE || { url: undefined };
             console.log("Skin: " + JSON.stringify(skinTexture));
             console.log("Cape: " + JSON.stringify(capeTexture));
 
@@ -584,7 +659,7 @@ module.exports = function (app, config, optimus, limiter) {
             }
 
             // check for duplicates again, this time using the skin's URL
-            Skin.findOne({name: options.name, model: options.model, visibility: options.visibility, url: skinTexture.url}, function (err, skin) {
+            Skin.findOne({ name: options.name, model: options.model, visibility: options.visibility, url: skinTexture.url }, function (err, skin) {
                 if (skin) {// skin with that url already exists
                     console.log("[Generator] Found duplicate skin with same URL");
 
@@ -629,7 +704,7 @@ module.exports = function (app, config, optimus, limiter) {
 
                                 const rand = Math.ceil((Date.now() - 1500000000000) + Math.random());
                                 const newId = optimus.encode(rand);
-                                Skin.findOne({id: newId}, "id", function (err, existingId) {
+                                Skin.findOne({ id: newId }, "id", function (err, existingId) {
                                     if (err) return console.log(err);
                                     if (existingId) {// Duplicate ID!
                                         makeIdAndSave(tryN + 1);

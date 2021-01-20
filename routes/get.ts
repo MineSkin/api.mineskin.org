@@ -3,12 +3,13 @@ import { Generator } from "../generator/Generator";
 import { Caching } from "../generator/Caching";
 import { MemoizeExpiring } from "typescript-memoize";
 import { Account, Skin } from "../database/schemas";
+import { getIp } from "../util";
 
 export const register = (app: Application) => {
 
     app.get("/get/delay", async (req: Request, res: Response) => {
         const delay = await Generator.getDelay();
-        const traffic = await Caching.getTrafficByIp(req.get("x-real-ip") || req.ip);
+        const traffic = await Caching.getTrafficByIp(getIp(req));
         if (traffic) {
             res.json({
                 delay: delay,
