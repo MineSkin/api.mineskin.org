@@ -10,6 +10,7 @@ import { IPoint } from "influx";
 import { Config } from "../types/Config";
 import { ISkinDocument, ITrafficDocument } from "../types";
 import { Skin, Traffic } from "../database/schemas";
+import { MemoizeExpiring } from "typescript-memoize";
 
 const config: Config = require("../config");
 

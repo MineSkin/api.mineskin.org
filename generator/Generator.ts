@@ -53,7 +53,39 @@ export class Generator {
 
     @MemoizeExpiring(60000)
     static async getStats(): Promise<Stats> {
-        //TODO
+        const time = Date.now() / 1000;
+
+        const delay = await this.getDelay();
+
+        const enabledAccounts = await Account.count({
+            enabled: true
+        }).exec();
+        const serverAccounts = await Account.count({
+            enabled: true,
+            requestServer: config.server
+        }).exec();
+        const healthyAccounts = await Account.countGlobalUsable();
+        const useableAccounts = await Account.count({
+            enabled: true,
+            requestServer: { $in: [undefined, "default", config.server] },
+            lastUsed: { '$lt': (time - 100) },
+            forcedTimeoutAt: { '$lt': (time - 500) },
+            errorCounter: { '$lt': (config.errorThreshold || 10) },
+            timeAdded: { $lt: (time - 60) }
+        }).exec();
+
+        return {
+            server: config.server,
+
+            delay,
+
+            accounts: enabledAccounts,
+             serverAccounts,
+             healthyAccounts,
+             useableAccounts,
+
+            //TODO
+        }
     }
 
     /// SAVING
