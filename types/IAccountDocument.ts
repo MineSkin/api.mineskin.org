@@ -1,5 +1,6 @@
 import { Document, Model } from "mongoose";
 import { access } from "fs";
+import { Maybe } from "../util";
 
 export interface SecurityQuestion {
     id: string;
@@ -72,9 +73,13 @@ export interface IAccountDocument extends Document {
 }
 
 export interface IAccountModel extends Model<IAccountDocument> {
-    findUsable(): Promise<IAccountDocument|undefined>;
+    findUsable(): Promise<IAccountDocument | undefined>;
 
     countGlobalUsable(): Promise<number>;
 
     calculateDelay(): Promise<number>;
+
+    getAccountsPerServer(): Promise<{ server: string, count: number }[]>;
+
+    getPreferredAccountServer(): Promise<Maybe<string>>;
 }

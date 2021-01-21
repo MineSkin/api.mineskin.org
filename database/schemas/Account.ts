@@ -2,7 +2,7 @@ import { Model, model, Schema } from "mongoose";
 import { IAccountDocument } from "../../types";
 import { IAccountModel } from "../../types/IAccountDocument";
 import { Config } from "../../types/Config";
-import { warn, error, md5 } from "../../util";
+import { warn, error, md5, Maybe } from "../../util";
 import { v4 as uuid } from "uuid";
 
 const config: Config = require("../../config");
@@ -157,5 +157,34 @@ AccountSchema.statics.calculateDelay = function (this: IAccountModel): Promise<n
         return Math.round(config.generateDelay / Math.max(1, usable))
     });
 };
+
+AccountSchema.statics.getAccountsPerServer = function (this: IAccountModel): Promise<{ server: string, count: number }[]> {
+    return this.aggregate([
+        { $match: { enabled: true, errorCounter: { $lt: 10 } } },
+        { $group: { _id: '$requestServer', count: { $sum: 1 } } },
+        { $sort: { count: 1 } }
+    ]).exec().then((accountsPerServer: any[]) => {
+        const arr: { server: string, count: number }[] = [];
+        if (accountsPerServer && accountsPerServer.length > 0) {
+            accountsPerServer.forEach(a => {
+                arr.push({
+                    server: a["_id"],
+                    count: a["count"]
+                })
+            });
+        }
+        return arr;
+    });
+}
+
+AccountSchema.statics.getPreferredAccountServer = function (this: IAccountModel): Promise<Maybe<string>> {
+    return this.getAccountsPerServer().then(accountsPerServer => {
+        if (!accountsPerServer || accountsPerServer.length < 1) {
+            return undefined;
+        }
+        // sorted from least to most
+        return accountsPerServer[0].server;
+    })
+}
 
 export const Account: IAccountModel = model<IAccountDocument, IAccountModel>("Account", AccountSchema);
