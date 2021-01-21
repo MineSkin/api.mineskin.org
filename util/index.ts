@@ -31,13 +31,13 @@ export async function checkTraffic(req: Request, res: Response): Promise<boolean
     const ip = getIp(req);
     console.log(colors.debug("IP: " + ip));
 
-    const traffic = await Caching.getTrafficByIp(ip);
-    if (!traffic) { // First request
+    const lastRequest = await Caching.getTrafficRequestTimeByIp(ip);
+    if (!lastRequest) { // First request
         return true;
     }
     const time = Date.now() / 1000;
     const delay = await Generator.getDelay();
-    if ((traffic.lastRequest.getTime() / 1000) > time - delay) {
+    if ((lastRequest.getTime() / 1000) > time - delay) {
         res.status(429).json({ error: "Too many requests", nextRequest: time + delay + 10, delay: delay });
         return false;
     }

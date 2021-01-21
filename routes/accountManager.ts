@@ -1,3 +1,12 @@
+import { Application, Request, Response } from "express";
+
+export const register = (app: Application) => {
+
+    //TODO
+
+}
+
+
 module.exports = function (app, config) {
 
     const util = require("../util");

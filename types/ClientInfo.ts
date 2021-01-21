@@ -1,5 +1,5 @@
 export interface ClientInfo {
     userAgent: string;
-    origin: string;
+    origin?: string;
     via: string;
 }

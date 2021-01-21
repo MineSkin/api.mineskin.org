@@ -9,12 +9,12 @@ export const register = (app: Application) => {
 
     app.get("/get/delay", async (req: Request, res: Response) => {
         const delay = await Generator.getDelay();
-        const traffic = await Caching.getTrafficByIp(getIp(req));
-        if (traffic) {
+        const lastRequest = await Caching.getTrafficRequestTimeByIp(getIp(req));
+        if (lastRequest) {
             res.json({
                 delay: delay,
-                next: (traffic.lastRequest.getTime() / 1000) + delay,
-                nextRelative: ((traffic.lastRequest.getTime() / 1000) + delay) - (Date.now() / 1000)
+                next: (lastRequest.getTime() / 1000) + delay,
+                nextRelative: ((lastRequest.getTime() / 1000) + delay) - (Date.now() / 1000)
             });
         } else {
             res.json({

@@ -19,7 +19,7 @@ schema.statics.findForIp = function (this: ITrafficModel, ip: string): Promise<I
 };
 
 schema.statics.updateRequestTime = function (this: ITrafficModel, ip: string, time: Date = new Date()): Promise<any> {
-    return this.update({ip: ip},{lastRequest: time}, {upsert: true}).exec();
+    return this.updateOne({ip: ip},{lastRequest: time}, {upsert: true}).exec();
 };
 
 export const Traffic: ITrafficModel = model<ITrafficDocument, ITrafficModel>("Traffic", schema);

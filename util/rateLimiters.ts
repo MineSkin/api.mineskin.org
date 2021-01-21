@@ -1,9 +1,10 @@
 import { Request } from "express";
 import * as rateLimit from "express-rate-limit";
+import { getIp } from "./index";
 
 
 function keyGenerator(req: Request): string {
-    return req.get('cf-connecting-ip') || req.get('x-forwarded-for') || req.get("x-real-ip") || req.connection.remoteAddress || req.ip
+    return getIp(req);
 }
 
 export const generateLimiter = rateLimit({

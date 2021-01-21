@@ -119,10 +119,13 @@ export class Caching {
 
     //// DATABASE
 
-    protected static readonly trafficByIpCache: AsyncLoadingCache<string, ITrafficDocument> = Caches.builder()
+    protected static readonly trafficByIpCache: AsyncLoadingCache<string, Date> = Caches.builder()
         .expireAfterWrite(Time.seconds(5))
         .expirationInterval(Time.seconds(1))
-        .buildAsync<string, ITrafficDocument>(ip => Traffic.findForIp(ip));
+        .buildAsync<string, Date>(async (ip) => {
+            const traffic = await Traffic.findForIp(ip);
+            return traffic?.lastRequest;
+        });
 
     protected static readonly skinByIdCache: AsyncLoadingCache<number, ISkinDocument> = Caches.builder()
         .expireAfterWrite(Time.seconds(20))
@@ -175,8 +178,13 @@ export class Caching {
 
     /// DATABASE
 
-    public static getTrafficByIp(ip: string): Promise<Maybe<ITrafficDocument>> {
+    public static getTrafficRequestTimeByIp(ip: string): Promise<Maybe<Date>> {
         return this.trafficByIpCache.get(ip);
+    }
+
+    public static async updateTrafficRequestTime(ip: string, time: Date): Promise<any> {
+        this.trafficByIpCache.put(ip, time);
+        return await Traffic.updateRequestTime(ip, time);
     }
 
     public static getSkinById(id: number): Promise<Maybe<ISkinDocument>> {

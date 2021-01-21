@@ -23,7 +23,7 @@ import { FileTypeResult } from "file-type";
 import { UploadedFile } from "express-fileupload";
 import { ISizeCalculationResult } from "image-size/dist/types/interface";
 import { v4 as uuid } from "uuid";
-import { Stats } from "../types/Stats";
+import { CountDuplicateViewStats, DurationStats, Stats, TimeFrameStats } from "../types/Stats";
 import * as Jimp from "jimp";
 
 const config: Config = require("../config");
@@ -45,6 +45,10 @@ const ALLOWED_IMAGE_TYPES = ["image/png"];
 export class Generator {
 
     protected static readonly optimus = new Optimus(config.optimus.prime, config.optimus.inverse, config.optimus.random);
+
+    protected static durationStats: DurationStats;
+    protected static countDuplicateViewStats: CountDuplicateViewStats;
+    protected static timeFrameStats: TimeFrameStats;
 
     @MemoizeExpiring(30000)
     static async getDelay(): Promise<number> {

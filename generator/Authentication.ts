@@ -8,6 +8,7 @@ import * as XboxLiveAuth from "@xboxreplay/xboxlive-auth";
 import { AuthenticateResponse } from "@xboxreplay/xboxlive-auth";
 import * as qs from "querystring";
 import { Discord } from "../util/Discord";
+import { AxiosResponse } from "axios";
 
 const config: Config = require("../config");
 
@@ -92,6 +93,8 @@ export class Mojang {
         return await account.save();
     }
 
+    /// TOKENS
+
     static async validateAccessToken(account: IAccountDocument): Promise<boolean> {
         if (account.microsoftAccount) {
             throw new AuthenticationError(AuthError.UNSUPPORTED_ACCOUNT, "Can't validate microsoft account access token via mojang auth", account);
@@ -164,6 +167,61 @@ export class Mojang {
         return await account.save();
     }
 
+    /// CHALLENGES
+
+    static async getChallenges(accessToken: string): Promise<MojangChallengesResponse> {
+        // Check if location is secured
+        const locationResponse: boolean = await Requests.mojangApiRequest({
+            method: "GET",
+            url: "/user/security/location",
+            headers: {
+                "Authorization": `Bearer ${ accessToken }`
+            }
+        }).then(res => {
+            return Requests.isOk(res);
+        }).catch(() => {
+            return false;
+        })
+        if (locationResponse) {
+            // Already answered
+            return {
+                needSolving: false
+            };
+        }
+
+        // Get security questions
+        const challengesResponse = await Requests.mojangApiRequest({
+            method: "GET",
+            url: "/user/security/challenges",
+            headers: {
+                "Authorization": `Bearer ${ accessToken }`
+            }
+        });
+        const challengesBody = challengesResponse.data;
+        if (!challengesBody || challengesBody.length <= 0) {
+            // Probably no questions?
+            return {
+                needSolving: false
+            };
+        }
+        const questions: MojangSecurityQuestion[] = challengesBody;
+
+        return {
+            needSolving: true,
+            questions: questions
+        }
+    }
+
+    static async submitChallengeAnswers(accessToken: string, answers: MojangSecurityAnswer[]): Promise<AxiosResponse<any>> {
+        return await Requests.mojangApiRequest({
+            method: "POST",
+            url: "/user/security/location",
+            headers: {
+                "Authorization": `Bearer ${ accessToken }`
+            },
+            data: answers
+        });
+    }
 
     static async completeChallenges(account: IAccountDocument): Promise<IAccountDocument> {
         if (account.microsoftAccount) {
@@ -175,36 +233,19 @@ export class Mojang {
             return account;
         }
 
-        const locationResponse: boolean = await Requests.mojangApiRequest({
-            method: "GET",
-            url: "/user/security/location",
-            headers: {
-                "Authorization": `Bearer ${ account.accessToken }`
-            }
-        }).then(res => {
-            return Requests.isOk(res);
-        }).catch(() => {
-            return false;
-        })
-        if (locationResponse) {
-            // Already answered
+        const challenges = await this.getChallenges(account.accessToken)
+            .catch(err => {
+                if (err.response) {
+                    throw new AuthenticationError(AuthError.MOJANG_CHALLENGES_FAILED, "Failed to complete security challenges", account, err);
+                }
+                throw err;
+            })
+        if (!challenges.needSolving || !challenges.questions) {
             return account;
         }
 
-        const challengesResponse = await Requests.mojangApiRequest({
-            method: "GET",
-            url: "/user/security/challenges",
-            headers: {
-                "Authorization": `Bearer ${ account.accessToken }`
-            }
-        });
-        const challengesBody = challengesResponse.data;
-        if (!challengesBody || challengesBody.length <= 0) {
-            // Probably no questions?
-            return account;
-        }
-        const questions: { answer: { id: number }, question: { id: number, question: string } }[] = challengesBody;
-        const answers: { id: number, answer: string; }[] = [];
+        const questions = challenges.questions;
+        const answers: MojangSecurityAnswer[] = [];
 
         if (account.multiSecurity && account.multiSecurity.length > 0) {
             const answersById: { [s: string]: string } = {};
@@ -223,19 +264,13 @@ export class Mojang {
             });
         }
 
-        const answerPostResponse = await Requests.mojangApiRequest({
-            method: "POST",
-            url: "/user/security/location",
-            headers: {
-                "Authorization": `Bearer ${ account.accessToken }`
-            },
-            data: answers
-        }).catch(err => {
-            if (err.response) {
-                throw new AuthenticationError(AuthError.MOJANG_CHALLENGES_FAILED, "Failed to complete security challenges", account, err);
-            }
-            throw err;
-        })
+        const answerPostResponse = await this.submitChallengeAnswers(account.accessToken, answers)
+            .catch(err => {
+                if (err.response) {
+                    throw new AuthenticationError(AuthError.MOJANG_CHALLENGES_FAILED, "Failed to complete security challenges", account, err);
+                }
+                throw err;
+            })
         return account;
     }
 
@@ -549,6 +584,8 @@ export class AuthenticationError extends MineSkinError {
     }
 }
 
+// Microsoft
+
 interface XboxInfo {
     accessToken?: string;
     refreshToken?: string;
@@ -563,3 +600,19 @@ interface XboxLoginResponse {
     expires_in: number;
 }
 
+// Mojang
+
+interface MojangChallengesResponse {
+    needSolving: boolean;
+    questions?: MojangSecurityQuestion[];
+}
+
+interface MojangSecurityQuestion {
+    answer: { id: number };
+    question: { id: number, question: string };
+}
+
+interface MojangSecurityAnswer {
+    id: number;
+    answer: string;
+}

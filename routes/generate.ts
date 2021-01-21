@@ -1,10 +1,14 @@
 import { Application, Request, Response } from "express";
 import { GenerateOptions } from "../types/GenerateOptions";
 import { SkinModel, SkinVisibility } from "../types/ISkinDocument";
-import { longAndShortUuid, validateUrl, validateUuid } from "../util";
+import { checkTraffic, getVia, longAndShortUuid, validateUrl, validateUuid } from "../util";
 import { UploadedFile } from "express-fileupload";
+import { ClientInfo } from "../types/ClientInfo";
+import { generateLimiter } from "../util/rateLimiters";
 
 export const register = (app: Application) => {
+
+    app.use("/generate", generateLimiter);
 
     //// URL
 
@@ -15,6 +19,12 @@ export const register = (app: Application) => {
             return;
         }
         const options = getAndValidateOptions(req);
+        const client = getClientInfo(req);
+
+        const requestAllowed = await checkTraffic(req, res);
+        if (!requestAllowed) {
+            return;
+        }
 
         //TODO
     })
@@ -33,6 +43,12 @@ export const register = (app: Application) => {
             return;
         }
         const options = getAndValidateOptions(req);
+        const client = getClientInfo(req);
+
+        const requestAllowed = await checkTraffic(req, res);
+        if (!requestAllowed) {
+            return;
+        }
 
         //TODO
     })
@@ -52,6 +68,12 @@ export const register = (app: Application) => {
             return;
         }
         const options = getAndValidateOptions(req);
+        const client = getClientInfo(req);
+
+        const requestAllowed = await checkTraffic(req, res);
+        if (!requestAllowed) {
+            return;
+        }
 
         //TODO
     })
@@ -61,6 +83,18 @@ export const register = (app: Application) => {
     })
 
     ///
+
+    function getClientInfo(req: Request): ClientInfo {
+        const userAgent = req.header("user-agent") || "n/a";
+        const origin = req.header("origin");
+        const via = getVia(req);
+
+        return {
+            userAgent,
+            origin,
+            via
+        };
+    }
 
     function getAndValidateOptions(req: Request): GenerateOptions {
         const model = validateModel(req.body["model"] || req.query["model"]);
