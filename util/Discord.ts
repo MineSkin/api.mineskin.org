@@ -56,9 +56,58 @@ export class Discord {
             } else {
                 this.postDiscordMessage(content, response.data.id, fallback);
             }
+        }).catch(err => {
+            Sentry.captureException(err);
         })
     }
 
+    static async addDiscordRole(userId: string): Promise<boolean> {
+        if (!config.discord || !config.discord.token || !config.discord.guild) return false;
+        return Requests.axiosInstance.request({
+            method: "PUT",
+            url: "https://discordapp.com/api/guilds/" + config.discord.guild + "/members/" + userId + "/roles/" + config.discord.role,
+            headers: {
+                "Authorization": "Bot " + config.discord.token
+            }
+        }).then(response => {
+            if (response.status !== 200) {
+                console.warn("addDiscordRole")
+                console.warn(response.status);
+                console.warn(response.data);
+                return false;
+            } else {
+                console.log("Added Mineskin role to discord user #" + userId);
+                return true;
+            }
+        }).catch(err => {
+            Sentry.captureException(err);
+            return false;
+        })
+    }
+
+    static async removeDiscordRole(userId: string): Promise<boolean> {
+        if (!config.discord || !config.discord.token || !config.discord.guild) return false;
+        return Requests.axiosInstance.request({
+            method: "DELETE",
+            url: "https://discordapp.com/api/guilds/" + config.discord.guild + "/members/" + userId + "/roles/" + config.discord.role,
+            headers: {
+                "Authorization": "Bot " + config.discord.token
+            }
+        }).then(response => {
+            if (response.status !== 200) {
+                console.warn("addDiscordRole")
+                console.warn(response.status);
+                console.warn(response.data);
+                return false;
+            } else {
+                console.log("Removed Mineskin role from discord user #" + userId);
+                return true;
+            }
+        }).catch(err => {
+            Sentry.captureException(err);
+            return false;
+        })
+    }
 
     static notifyMissingCredentials(account: IAccountDocument): void {
         if (account.discordMessageSent) return;
@@ -82,7 +131,7 @@ export class Discord {
                 () => {
                     this.postDiscordMessage("Hey <@" + account.discordUser + ">! I tried to send a private message but couldn't reach you :(\n" +
                         "MineSkin just lost access to one of your accounts (" + (account.microsoftAccount ? "microsoft" : "mojang") + ")\n" +
-                        "  Account UUID (trimmed): " + (account.uuid || account.playername).substr(0, 5) + "****\n" +
+                        "  Account UUID (trimmed): " + (account.uuid || account.playername || "").substr(0, 5) + "****\n" +
                         "  Please log back in at https://mineskin.org/account\n", "636632020985839619");
                 });
         }

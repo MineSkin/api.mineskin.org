@@ -29,7 +29,9 @@ interface CryptoConfig {
 
 interface DiscordConfig {
     token: string;
-    channel: string;
+    channel?: string;
+    guild?: string;
+    role?: string;
 }
 
 interface PullerConfig extends GitPullerOptions {
@@ -52,6 +54,7 @@ export interface Config {
     errorThreshold: number;
     genSaveDelay: number;
     testerToken: string;
+    sessionSecret: string;
 
     optimus: OptimusConfig;
     mongo: MongoConfig;

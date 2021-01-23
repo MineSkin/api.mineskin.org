@@ -2,6 +2,7 @@ import { Application } from "express";
 import { Caching } from "../generator/Caching";
 import { Request, Response } from "express";
 import * as Sentry from "@sentry/node";
+import { Generator } from "../generator/Generator";
 
 export const register = (app: Application) => {
 
@@ -36,5 +37,14 @@ export const register = (app: Application) => {
             res.status(404).json({ error: "failed to get user" });
         })
     });
+
+    app.get("/preferredAccountServer", (req: Request, res: Response) => {
+        Generator.getPreferredAccountServer().then(server => {
+            res.json({ preferredServer: server });
+        }).catch(err => {
+            Sentry.captureException(err);
+            res.status(404).json({ error: "failed to get server" });
+        })
+    })
 
 };

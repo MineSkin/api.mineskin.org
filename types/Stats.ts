@@ -1,19 +1,39 @@
-export interface Stats {
+export interface Stats extends AccountStats, DurationStats, TimeFrameStats {
     server: string;
 
     delay: number;
 
-    accounts: number;
-    serverAccounts: number;
-    healthyAccounts: number;
-    useableAccounts: number;
 
-    successRate: number;
-    mineskinTesterSuccessRate: number;
+    successRate?: number;
+    mineskinTesterSuccessRate?: number;
+
+    genUpload?: number;
+    genUrl?: number;
+    genUser?: number;
+
+    unique?: number;
+    duplicate?: number;
+    total?: number;
+    views?: number;
+}
+
+export interface AccountStats {
+    accounts?: number;
+    serverAccounts?: number;
+    healthyAccounts?: number;
+    useableAccounts?: number;
 }
 
 export interface DurationStats {
-    avgGenerateDuration: number;
+    avgGenerateDuration?: number;
+}
+
+export interface SuccessRateStats {
+    generateSuccess: number;
+    generateFail: number;
+
+    testerSuccess: number;
+    testerFail: number;
 }
 
 export interface CountDuplicateViewStats {
@@ -28,11 +48,15 @@ export interface CountDuplicateViewStats {
     viewsUpload: number;
     viewsUrl: number;
     viewsUser: number;
+
+    unique?: number;
+    duplicate?: number;
+    views?: number;
 }
 
 export interface TimeFrameStats {
-    lastYear: number;
-    lastMonth: number;
-    lastDay: number;
-    lastHour: number;
+    lastYear?: number;
+    lastMonth?: number;
+    lastDay?: number;
+    lastHour?: number;
 }

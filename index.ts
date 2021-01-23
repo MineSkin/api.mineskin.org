@@ -4,14 +4,14 @@ import * as path from "path";
 import * as fs from "fs";
 import { Config } from "./types/Config";
 import * as express from "express";
-import { Express } from "express";
+import { ErrorRequestHandler, Express, NextFunction } from "express";
 import { Puller } from "express-git-puller";
 import connectToMongo from "./database/database";
 import RotatingFileStream from "rotating-file-stream";
 import * as morgan from "morgan";
 import * as bodyParser from "body-parser";
 import * as fileUpload from "express-fileupload";
-import * as ExpressValidator from "express-validator";
+import * as session from "express-session";
 import { RateLimit } from "express-rate-limit";
 import Optimus from "optimus-js";
 import { apiRequestsMiddleware, info, metrics } from "./util";
@@ -19,6 +19,8 @@ import * as rateLimit from "express-rate-limit";
 import { generateRoute, getRoute, renderRoute, testerRoute, utilRoute, accountManagerRoute } from "./routes";
 import { generateLimiter } from "./util/rateLimiters";
 import { MOJ_DIR, Temp, UPL_DIR, URL_DIR } from "./generator/Temp";
+import { MineSkinError } from "./types";
+import { Time } from "@inventivetalent/loading-cache";
 
 
 const config: Config = require("./config");
@@ -99,9 +101,14 @@ async function init() {
                 return next();
             }
         });
+        app.use(session({
+            secret: config.sessionSecret,
+            cookie: {
+                maxAge: Time.minutes(10)
+            }
+        }))
         app.use(bodyParser.urlencoded({ extended: true, limit: '50kb' }));
         app.use(bodyParser.json({ limit: '20kb' }));
-        app.use(ExpressValidator());
         app.use(fileUpload());
         app.use((req, res, next) => {
             res.header("X-Mineskin-Server", config.server || "default");
@@ -155,6 +162,26 @@ async function init() {
     }
 
     app.use(Sentry.Handlers.errorHandler());
+    const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
+        if (err instanceof MineSkinError) {
+            if (err.httpCode) {
+                res.status(err.httpCode);
+            } else {
+                res.status(500);
+            }
+            res.json({
+                success: false,
+                errorCode: err.code,
+                error: err.msg
+            });
+        } else {
+            res.status(500).json({
+                success: false,
+                error: "An unexpected error occurred"
+            })
+        }
+    }
+    app.use(errorHandler);
 }
 
 

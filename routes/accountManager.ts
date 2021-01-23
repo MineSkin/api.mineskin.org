@@ -1,9 +1,324 @@
 import { Application, Request, Response } from "express";
+import { AuthenticationError, AuthError, BasicMojangProfile, Microsoft, Mojang, MojangSecurityAnswer, XboxInfo } from "../generator/Authentication";
+import { base64decode, Encryption, getIp, info, md5, stripUuid } from "../util";
+import { Requests } from "../generator/Requests";
+import { IAccountDocument, MineSkinError } from "../types";
+import * as session from "express-session";
+import { Generator } from "../generator/Generator";
+import { Config } from "../types/Config";
+import { Account } from "../database/schemas";
+import { AccessTokenSource, AccountType } from "../types/IAccountDocument";
+
+const config: Config = require("../config");
 
 export const register = (app: Application) => {
 
-    //TODO
+    /// MOJANG
 
+    app.post("/accountManager/mojang/login", async (req: AccountManagerRequest, res: Response) => {
+        if (!req.body["email"] || !req.body["password"]) {
+            res.status(400).json({ error: "missing login data" });
+            return;
+        }
+        const ip = getIp(req);
+
+        const loginResponse = await Mojang.loginWithCredentials(req.body["email"], base64decode(req.body["password"]), md5(req.body["email"] + "_" + ip)).catch(err => {
+            if (err.response) {
+                throw new AuthenticationError(AuthError.MOJANG_AUTH_FAILED, "Failed to authenticate via mojang", undefined, err);
+            }
+            throw err;
+        })
+        if (loginResponse.selectedProfile!.legacy) {
+            res.status(400).json({ error: "cannot add legacy profile" });
+            return;
+        }
+        if (loginResponse.selectedProfile!.suspended) {
+            res.status(400).json({ error: "cannot add suspended profile" });
+            return;
+        }
+        req.session.account = {
+            type: AccountType.MOJANG,
+            email: req.body["email"],
+            token: loginResponse.accessToken
+        };
+        res.json({
+            success: !!loginResponse.accessToken,
+            token: loginResponse.accessToken,
+            profile: loginResponse.selectedProfile
+        });
+    });
+
+    app.post("/accountManager/mojang/getChallenges", async (req: AccountManagerRequest, res: Response) => {
+        if (!validateSessionAndToken(req, res)) return;
+
+        const challengeResponse = await Mojang.getChallenges(req.body["token"]).catch(err => {
+            if (err.response) {
+                throw new AuthenticationError(AuthError.MOJANG_CHALLENGES_FAILED, "Failed to get security challenges", undefined, err);
+            }
+            throw err;
+        });
+        res.json({
+            success: true,
+            needToSolveChallenges: challengeResponse.needSolving && challengeResponse.questions,
+            questions: challengeResponse.questions
+        });
+    });
+
+    app.post("/accountManager/mojang/solveChallenges", async (req: AccountManagerRequest, res: Response) => {
+        if (!validateSessionAndToken(req, res)) return;
+
+        if (!req.body["securityAnswers"]) {
+            res.status(400).json({ error: "missing answers" });
+            return;
+        }
+        if (!validateMultiSecurityAnswers(req.body["securityAnswers"], req, res)) return;
+        const answers = req.body["securityAnswers"] as MojangSecurityAnswer[];
+
+        const solveResponse = await Mojang.submitChallengeAnswers(req.body["token"], answers).catch(err => {
+            if (err.response) {
+                throw new AuthenticationError(AuthError.MOJANG_CHALLENGES_FAILED, "Failed to complete security challenges", undefined, err);
+            }
+            throw err;
+        })
+        res.json({
+            success: true,
+            msg: "Challenges solved"
+        });
+    })
+
+
+    /// MICROSOFT
+
+    app.post("/accountManager/microsoft/login", async (req: AccountManagerRequest, res: Response) => {
+        if (!req.body["email"] || !req.body["password"]) {
+            res.status(400).json({ error: "missing login data" });
+            return;
+        }
+
+        let microsoftInfo = undefined;
+        const minecraftAccessToken = await Microsoft.loginWithEmailAndPassword(req.body["email"], base64decode(req.body["password"]), xboxInfo => {
+            microsoftInfo = xboxInfo;
+        }).catch(err => {
+            if (err.response) {
+                throw new AuthenticationError(AuthError.MICROSOFT_AUTH_FAILED, "Failed to login", undefined, err);
+            }
+            throw err;
+        });
+        req.session.account = {
+            type: AccountType.MICROSOFT,
+            email: req.body["email"],
+            token: minecraftAccessToken,
+            microsoftInfo: microsoftInfo
+        };
+
+        const ownsMinecraft = await Microsoft.checkGameOwnership(minecraftAccessToken);
+        if (!ownsMinecraft) {
+            throw new AuthenticationError(AuthError.DOES_NOT_OWN_MINECRAFT, "User does not own minecraft", undefined);
+        }
+
+        res.json({
+            success: !!minecraftAccessToken,
+            token: minecraftAccessToken
+        });
+    })
+
+
+    /// INDEPENDENT
+
+    app.post("/accountManager/logout", async (req: AccountManagerRequest, res: Response) => {
+        req.session.destroy(() => res.status(200).end());
+    })
+
+    app.post("/accountManager/userProfile", async (req: AccountManagerRequest, res: Response) => {
+        if (!validateSessionAndToken(req, res)) return;
+
+        if (!req.body["uuid"]) {
+            res.status(400).json({ error: "missing uuid" });
+            return;
+        }
+
+        const profileValidation = await getAndValidateMojangProfile(req.body["token"], req.body["uuid"]);
+        if (profileValidation.valid && profileValidation.profile) {
+            if (req.session && req.session.account) {
+                req.session.account.uuid = profileValidation.profile.id;
+            }
+            res.json(profileValidation.profile);
+        }
+    });
+
+    app.post("/accountManager/confirmAccountSubmission", async (req: AccountManagerRequest, res: Response) => {
+        if (!validateSessionAndToken(req, res)) return;
+        if (!req.body["email"] || !req.body["password"]) {
+            res.status(400).json({ error: "missing credentials" });
+            return;
+        }
+        if (req.body["email"] !== req.session.account!.email) {
+            res.status(400).json({ error: "invalid session" });
+            return;
+        }
+        if (!req.body["uuid"]) {
+            res.status(400).json({ error: "missing uuid" });
+            return;
+        }
+        if (req.body["uuid"] !== req.session.account!.uuid) {
+            res.status(400).json({ error: "invalid session" });
+            return;
+        }
+        const profileValidation = await getAndValidateMojangProfile(req.body["token"], req.body["uuid"]);
+        if (!profileValidation.valid || !profileValidation.profile) return;
+
+        const ip = getIp(req);
+
+        const preferredServer = await Generator.getPreferredAccountServer();
+        if (preferredServer !== config.server) {
+            console.warn("Got /confirmAccountSubmission but preferred server is " + preferredServer);
+        }
+
+        const lastAccount = await Account.findOne({}).sort({ id: -1 }).select({ id: 1 }).lean().exec();
+        const lastId = lastAccount?.id!;
+
+        const account = new Account(<IAccountDocument>{
+            id: lastId + 1,
+
+            accountType: req.session.account!.type!,
+            microsoftAccount: req.session.account!.type === AccountType.MICROSOFT,
+
+            username: req.body["email"],
+            email: req.body["email"],
+
+            passwordNew: Encryption.encrypt(base64decode(req.body["password"])),
+
+            uuid: req.body["uuid"],
+            playername: profileValidation.profile.name,
+
+            accessToken: req.body["token"],
+            accessTokenExpiration: Math.round(Date.now() / 1000) + 86360,
+            accessTokenSource: req.session.account!.type === AccountType.MICROSOFT ? AccessTokenSource.USER_LOGIN_MICROSOFT : AccessTokenSource.USER_LOGIN_MOJANG,
+            clientToken: md5(req.body["username"] + "_" + ip),
+
+            requestIp: ip,
+            requestServer: config.server,
+            timeAdded: Math.round(Date.now() / 1000),
+
+            enabled: true,
+            lastUsed: 0,
+            forcedTimeoutAt: 0,
+            errorCounter: 0,
+            totalErrorCounter: 0,
+            successCounter: 0,
+            totalSuccessCounter: 0
+        });
+        if (req.session.account!.type === AccountType.MICROSOFT) {
+            account.microsoftUserId = req.session.account?.microsoftInfo?.userId;
+            account.microsoftAccessToken = req.session.account?.microsoftInfo?.accessToken;
+            account.microsoftRefreshToken = req.session.account?.microsoftInfo?.refreshToken;
+            account.minecraftXboxUsername = req.session.account?.microsoftInfo?.username;
+        } else if (req.session.account!.type === AccountType.MOJANG) {
+            account.multiSecurity = req.session.account?.mojangInfo?.securityAnswers;
+        }
+
+        console.log(info("Saving new " + (req.session.account?.type) + " account #" + account.id + " " + req.body["uuid"]));
+        await account.save();
+        res.json({
+            success: true,
+            msg: "Account saved. Thanks for your contribution!"
+        })
+    })
+
+}
+
+function validateSessionAndToken(req: AccountManagerRequest, res: Response): boolean {
+    if (!req.body["token"]) {
+        res.status(400).json({ error: "missing token" });
+        return false;
+    }
+    if (!req.session || !req.session.account) {
+        res.status(400).json({ error: "invalid session" });
+        return false;
+    }
+    if (req.body["token"] !== req.session.account.token) {
+        res.status(400).json({ error: "invalid session" });
+        return false;
+    }
+    return true;
+}
+
+function validateMultiSecurityAnswers(answers: any, req: Request, res: Response) {
+    if (typeof answers !== "object" || answers.length < 3) {
+        res.status(400).json({ error: "invalid security answers object (not an object / empty)" });
+        return false;
+    }
+    for (let i = 0; i < answers.length; i++) {
+        if ((!answers[i].hasOwnProperty("id") || !answers[i].hasOwnProperty("answer")) || (typeof answers[i].id !== "number" || typeof answers[i].answer !== "string")) {
+            res.status(400).json({ error: "invalid security answers object (missing id / answer)" });
+            return false;
+        }
+    }
+    return true;
+}
+
+async function getMojangProfile(accessToken: string): Promise<BasicMojangProfile> {
+    const profileResponse = await Requests.minecraftServicesRequest({
+        method: "GET",
+        url: "/minecraft/profile",
+        headers: {
+            "Authorization": `Bearer ${ accessToken }`
+        }
+    })
+    return profileResponse.data as BasicMojangProfile;
+}
+
+async function getAndValidateMojangProfile(accessToken: string, uuid: string): Promise<MojangProfileValidation> {
+    if (!uuid || uuid.length < 32 || !accessToken) return { valid: false };
+    const shortUuid = stripUuid(uuid);
+    const profile = await getMojangProfile(accessToken);
+    if (shortUuid !== profile.id) {
+        throw new MineSkinError("invalid_credentials", "invalid credentials for uuid");
+    }
+    return {
+        profile: profile,
+        valid: shortUuid === profile.id
+    }
+}
+
+// session stuff
+
+type AccountManagerRequest = Request & {
+    session: AccountManagerSession;
+}
+
+type AccountManagerSession = session.Session & {
+    account?: SessionAccountInfo;
+}
+
+interface SessionAccountInfo {
+    type?: AccountType;
+    email?: string;
+    token?: string;
+    uuid?: string;
+
+    mojangInfo?: MojangAccountInfo;
+    microsoftInfo?: MicrosoftAccountInfo;
+}
+
+interface MojangAccountInfo {
+    securityAnswers?: MojangSecurityAnswer[];
+}
+
+interface MicrosoftAccountInfo extends XboxInfo {
+}
+
+interface SessionValidation {
+    token?: string;
+    valid: boolean;
+}
+
+
+// other
+
+interface MojangProfileValidation {
+    profile?: BasicMojangProfile;
+    valid: boolean;
 }
 
 
@@ -22,7 +337,7 @@ module.exports = function (app, config) {
     });
     const md5 = require("md5");
     const authentication = require("../generator/Authentication");
-    const {URL} = require("url");
+    const { URL } = require("url");
     const metrics = require("../util/metrics");
 
     const pendingDiscordLinks = {};
@@ -34,27 +349,27 @@ module.exports = function (app, config) {
 
     app.get("/accountManager/myAccount", function (req, res) {
         if (!req.query.token) {
-            res.status(400).json({error: "Missing token"})
+            res.status(400).json({ error: "Missing token" })
             return;
         }
         if (!req.query.username) {
-            res.status(400).json({error: "Missing login data"});
+            res.status(400).json({ error: "Missing login data" });
             return;
         }
 
-        Account.findOne({username: req.query.username, type: "external"}, "username uuid lastUsed enabled hasError lastError successCounter errorCounter").lean().exec(function (err, account) {
+        Account.findOne({ username: req.query.username, type: "external" }, "username uuid lastUsed enabled hasError lastError successCounter errorCounter").lean().exec(function (err, account) {
             if (err) return console.log(err);
             if (!account) {
-                res.status(404).json({error: "Account not found"})
+                res.status(404).json({ error: "Account not found" })
                 return;
             }
 
             getProfile(req.query.token, function (response, body) {
                 if (body.error) {
-                    res.status(response.statusCode).json({error: body.error, msg: body.errorMessage})
+                    res.status(response.statusCode).json({ error: body.error, msg: body.errorMessage })
                 } else {
                     if (body.id !== account.uuid) {
-                        res.status(400).json({error: "uuid mismatch"})
+                        res.status(400).json({ error: "uuid mismatch" })
                         return;
                     }
 
@@ -74,165 +389,17 @@ module.exports = function (app, config) {
 
     });
 
-    app.post("/accountManager/auth/login", function (req, res) {
-        if (!req.body.username || !req.body.password) {
-            res.status(400).json({error: "Missing login data"});
-            return;
-        }
-        const remoteIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-
-        console.log(("[Auth] POST " + urls.authenticate).debug);
-        const body = {
-            agent: {
-                name: "Minecraft",
-                version: 1
-            },
-            username: req.body.username,
-            password: new Buffer(req.body.password, "base64").toString("ascii"),
-            clientToken: md5(req.body.username + "_" + remoteIp),
-            requestUser: true
-        };
-        console.log(("[Acc] " + JSON.stringify(body)).debug);
-        request({
-            method: "POST",
-            url: urls.authenticate,
-            headers: {
-                "Content-Type": "application/json",
-                "X-Forwarded-For": remoteIp,
-                "REMOTE_ADDR": remoteIp
-            },
-            json: true,
-            body: body
-        }, function (err, response, body) {
-            console.log("Auth Body:".debug)
-            console.log(("" + JSON.stringify(body)).debug);
-            if (err) {
-                res.status(500).json({error: body})
-                return console.log(err);
-            }
-            if (body.error) {
-                console.error(body);
-                res.status(response.statusCode).json({error: body.error, msg: body.errorMessage})
-            } else {
-                res.json({
-                    success: !!body.accessToken,
-                    token: body.accessToken
-                })
-            }
-        })
-    });
-
-    app.post("/accountManager/auth/getChallenges", function (req, res) {
-        if (!req.body.token) {
-            res.status(400).json({error: "Missing token"})
-            return;
-        }
-        const remoteIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-
-        console.log(("[Auth] GET " + urls.security.location).debug);
-        request({
-            url: urls.security.location,
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": "Bearer " + req.body.token,
-                "X-Forwarded-For": remoteIp,
-                "REMOTE_ADDR": remoteIp
-            }
-        }, function (err, response, body) {
-            if (err) return console.log(err);
-
-            if (!response || response.statusCode < 200 || response.statusCode > 230) {// Not yet answered
-                // Get the questions
-                console.log(("[Auth] GET " + urls.security.challenges).debug);
-                request({
-                    url: urls.security.challenges,
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": "Bearer " + req.body.token,
-                        "X-Forwarded-For": remoteIp,
-                        "REMOTE_ADDR": remoteIp
-                    }
-                }, function (err, response, body) {
-                    if (err) return console.log(err);
-
-                    const questions = JSON.parse(body);
-                    res.json({
-                        success: true,
-                        needToSolveChallenges: questions && questions.length > 0,
-                        status: "ok",
-                        questions: questions,
-                        msg: "Got security questions"
-                    })
-                })
-            } else {
-                res.json({
-                    success: true,
-                    needToSolveChallenges: false,
-                    status: "ok",
-                    msg: "Challenges already solved"
-                })
-            }
-        })
-    });
-
-    app.post("/accountManager/auth/solveChallenges", function (req, res) {
-        if (!req.body.token) {
-            res.status(400).json({error: "Missing token"})
-            return;
-        }
-        if (!req.body.securityAnswer && !req.body.securityAnswers) {
-            res.status(400).json({error: "Missing security answer(s)"})
-            return;
-        }
-        if (typeof req.body.securityAnswers !== "undefined") {
-            if (!validateMultiSecurityAnswers(req.body.securityAnswers, req, res)) return;
-        }
-        const remoteIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-
-        const answers = req.body.securityAnswers;
-
-        // Post answers
-        console.log(("[Auth] POST " + urls.security.location).debug);
-        request({
-            method: "POST",
-            url: urls.security.location,
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": "Bearer " + req.body.token,
-                "X-Forwarded-For": remoteIp,
-                "REMOTE_ADDR": remoteIp
-            },
-            json: answers
-        }, function (err, response, body) {
-            if (err) return console.log(err);
-
-            if (response.statusCode >= 200 && response.statusCode < 300) {
-                res.json({
-                    success: true,
-                    status: "ok",
-                    msg: "Challenges solved"
-                })
-            } else {
-                res.json({
-                    success: false,
-                    status: "err",
-                    error: body.error,
-                    msg: body.errorMessage
-                })
-            }
-        })
-    })
 
     app.get("/accountManager/auth/user", function (req, res) {
         if (!req.query.token) {
-            res.status(400).json({error: "Missing token"})
+            res.status(400).json({ error: "Missing token" })
             return;
         }
 
         getUser(req.query.token, function (response, body) {
             if (body.error) {
                 console.error(body);
-                res.status(response.statusCode).json({error: body.error, msg: body.errorMessage})
+                res.status(response.statusCode).json({ error: body.error, msg: body.errorMessage })
             } else {
                 res.json({
                     id: body.id,
@@ -246,14 +413,14 @@ module.exports = function (app, config) {
 
     app.get("/accountManager/auth/userProfile", function (req, res) {
         if (!req.query.token) {
-            res.status(400).json({error: "Missing token"})
+            res.status(400).json({ error: "Missing token" })
             return;
         }
 
         getProfile(req.query.token, function (response, body) {
             if (body.error) {
                 console.error(body.error);
-                res.status(response.statusCode).json({error: body.error, msg: body.errorMessage})
+                res.status(response.statusCode).json({ error: body.error, msg: body.errorMessage })
             } else {
                 res.json({
                     uuid: body.id,
@@ -267,32 +434,32 @@ module.exports = function (app, config) {
 
     app.get("/accountManager/accountStatus", function (req, res) {
         if (!req.query.token) {
-            res.status(400).json({error: "Missing token"})
+            res.status(400).json({ error: "Missing token" })
             return;
         }
         if (!req.query.username) {
-            res.status(400).json({error: "Missing username"});
+            res.status(400).json({ error: "Missing username" });
             return;
         }
         if (!req.query.uuid) {
-            res.status(400).json({error: "Missing UUID"})
+            res.status(400).json({ error: "Missing UUID" })
             return;
         }
 
-        Account.findOne({username: req.query.username, uuid: req.query.uuid, type: "external"}, "enabled password security multiSecurity uuid discordUser microsoftAccount microsoftUserId minecraftXboxUsername sendEmails requestServer", function (err, acc) {
+        Account.findOne({ username: req.query.username, uuid: req.query.uuid, type: "external" }, "enabled password security multiSecurity uuid discordUser microsoftAccount microsoftUserId minecraftXboxUsername sendEmails requestServer", function (err, acc) {
             if (err) return console.log(err);
             console.log(acc);
 
             if (acc) {
                 getProfile(req.query.token, function (response, profileBody) {
                     if (profileBody.error) {
-                        res.status(response.statusCode).json({error: profileBody.error, msg: profileBody.errorMessage})
+                        res.status(response.statusCode).json({ error: profileBody.error, msg: profileBody.errorMessage })
                     } else {
                         if (profileBody.id !== acc.uuid) {
-                            res.status(400).json({error: "uuid mismatch"})
+                            res.status(400).json({ error: "uuid mismatch" })
                             return;
                         }
-                        if (req.query.password && req.query.password.length>3) {
+                        if (req.query.password && req.query.password.length > 3) {
                             acc.passwordNew = util.crypto.encrypt(new Buffer(req.query.password, "base64").toString("ascii"));
                         }
                         if (req.query.security) {
@@ -337,35 +504,35 @@ module.exports = function (app, config) {
 
     app.get("/accountManager/accountStats", function (req, res) {
         if (!req.query.token) {
-            res.status(400).json({error: "Missing token"})
+            res.status(400).json({ error: "Missing token" })
             return;
         }
         if (!req.query.username) {
-            res.status(400).json({error: "Missing username"})
+            res.status(400).json({ error: "Missing username" })
             return;
         }
         if (!req.query.uuid) {
-            res.status(400).json({error: "Missing UUID"})
+            res.status(400).json({ error: "Missing UUID" })
             return;
         }
 
         getProfile(req.query.token, function (response, profileBody) {
             if (profileBody.error) {
-                res.status(response.statusCode).json({error: profileBody.error, msg: profileBody.errorMessage})
+                res.status(response.statusCode).json({ error: profileBody.error, msg: profileBody.errorMessage })
             } else {
                 if (profileBody.id !== req.query.uuid) {
-                    res.status(400).json({error: "uuid mismatch"})
+                    res.status(400).json({ error: "uuid mismatch" })
                     return;
                 }
 
-                Account.findOne({username: req.query.username, uuid: req.query.uuid}, "id", function (err, account) {
+                Account.findOne({ username: req.query.username, uuid: req.query.uuid }, "id", function (err, account) {
                     if (err) return console.log(err);
                     if (!account) {
-                        res.status(404).json({error: "Account not found"})
+                        res.status(404).json({ error: "Account not found" })
                         return;
                     }
 
-                    Skin.count({account: account.id}, function (err, count) {
+                    Skin.count({ account: account.id }, function (err, count) {
                         if (err) {
                             console.warn(err);
                             return;
@@ -380,150 +547,33 @@ module.exports = function (app, config) {
         })
     });
 
-    app.post("/accountManager/confirmAccountSubmission", function (req, res) {
-        if (!req.body.token) {
-            res.status(400).json({error: "Missing token"})
-            return;
-        }
-        if (!req.body.username || (!req.body.password && !req.body.microsoftAccount)) {
-            res.status(400).json({error: "Missing login data"});
-            return;
-        }
-        if (!req.body.uuid) {
-            res.status(400).json({error: "Missing UUID"})
-            return;
-        }
-        if (typeof req.body.securityAnswer === "undefined" && typeof req.body.securityAnswers === "undefined" && !req.body.skipSecurityChallenges && !req.body.microsoftAccount) {
-            res.status(400).json({error: "Missing security answer(s)"})
-            return;
-        }
-
-        if (typeof req.body.securityAnswers !== "undefined") {
-            if (!validateMultiSecurityAnswers(req.body.securityAnswers, req, res)) return;
-        }
-
-        let remoteIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-
-        Account.findOne({'$or': [{username: req.body.username}, {uuid: req.body.uuid}]}, function (err, acc) {
-            if (err) return console.log(err);
-            if (acc) {
-                res.status(400).json({error: "Account already exists"})
-                return;
-            }
-
-            // Just some server-side validation
-            getProfile(req.body.token, function (response, profileBody) {
-                if (profileBody.error) {
-                    res.status(response.statusCode).json({error: profileBody.error, msg: profileBody.errorMessage})
-                } else {
-                    if (profileBody.id !== req.body.uuid) {
-                        res.status(400).json({error: "uuid mismatch"})
-                        return;
-                    }
-                    if (profileBody.legacyUser) {
-                        res.status(400).json({error: "cannot add legacy profile"})
-                        return;
-                    }
-                    if (profileBody.suspended) {
-                        res.status(400).json({error: "cannot add suspended profile"})
-                        return;
-                    }
-
-                    Account.aggregate([
-                        {$match: {enabled: true, errorCounter: {$lt: 10}}},
-                        {$group: {_id: '$requestServer', count: {$sum: 1}}},
-                        {$sort: {count: 1}}
-                    ], function (err, accountsPerServer) {
-                        if (err) {
-                            console.warn("Failed to get accounts per server");
-                            console.log(err);
-                        }
-                        let requestServer = accountsPerServer ? accountsPerServer[0]["_id"] : null;
-
-                        // Save the new account!
-                        Account.findOne({}).sort({id: -1}).exec(function (err, last) {
-                            if (err) return console.log(err);
-                            let lastId = last.id;
-
-                            let account = new Account({
-                                id: lastId + 1,
-                                username: req.body.username,
-                                playername: profileBody.name,
-                                uuid: req.body.uuid,
-                                accessToken: req.body.token,
-                                accessTokenExpiration: Math.round(Date.now() / 1000) + 86360,
-                                clientToken: md5(req.body.username + "_" + remoteIp),
-                                type: "external",
-                                microsoftAccount: !!req.body.microsoftAccount,
-                                enabled: true,
-                                lastUsed: 0,
-                                forcedTimeoutAt: 0,
-                                errorCounter: 0,
-                                successCounter: 0,
-                                timeAdded: Math.round(Date.now() / 1000),
-                                requestIp: remoteIp,
-                                sendEmails: !!req.body.sendEmails
-                            });
-                            if (req.body.microsoftAccount) {
-                                account.microsoftUserId = req.body.microsoftUserId || "";
-                                account.microsoftRefreshToken = req.body.microsoftRefreshToken || "";
-                                account.minecraftXboxUsername = req.body.xboxUsername || "";
-                                account.requestServer = config.server || requestServer;
-                            } else {
-                                account.passwordNew = util.crypto.encrypt(req.body.password);
-                                account.security = req.body.securityAnswer || "";
-                                account.multiSecurity = req.body.securityAnswers || [];
-                                account.requestServer = requestServer;
-                            }
-                            account.save(function (err, account) {
-                                if (err) {
-                                    res.status(500).json({
-                                        error: err,
-                                        msg: "Failed to save account"
-                                    });
-                                    return console.log(err);
-                                }
-                                res.json({
-                                    success: true,
-                                    msg: "Account saved. Thanks for your contribution!"
-                                })
-                            });
-                        });
-                    })
-                }
-            })
-        });
-
-
-    })
-
     app.post("/accountManager/settings/status", function (req, res) {
         if (!req.body.token) {
-            res.status(400).json({error: "Missing token"})
+            res.status(400).json({ error: "Missing token" })
             return;
         }
         if (!req.body.username) {
-            res.status(400).json({error: "Missing username"})
+            res.status(400).json({ error: "Missing username" })
             return;
         }
         if (typeof req.body.enabled === "undefined") {
-            res.status(400).json({error: "Missing enabled-status"})
+            res.status(400).json({ error: "Missing enabled-status" })
             return;
         }
 
         getProfile(req.body.token, function (response, profileBody) {
             if (profileBody.error) {
-                res.status(response.statusCode).json({error: profileBody.error, msg: profileBody.errorMessage})
+                res.status(response.statusCode).json({ error: profileBody.error, msg: profileBody.errorMessage })
             } else {
                 if (profileBody.id !== req.body.uuid) {
-                    res.status(400).json({error: "uuid mismatch"})
+                    res.status(400).json({ error: "uuid mismatch" })
                     return;
                 }
 
-                Account.findOne({username: req.body.username, uuid: profileBody.id}, function (err, account) {
+                Account.findOne({ username: req.body.username, uuid: profileBody.id }, function (err, account) {
                     if (err) return console.log(err);
                     if (!account) {
-                        res.status(404).json({error: "Account not found"})
+                        res.status(404).json({ error: "Account not found" })
                         return;
                     }
 
@@ -543,31 +593,31 @@ module.exports = function (app, config) {
 
     app.post("/accountManager/deleteAccount", function (req, res) {
         if (!req.body.token) {
-            res.status(400).json({error: "Missing token"})
+            res.status(400).json({ error: "Missing token" })
             return;
         }
         if (!req.body.username) {
-            res.status(400).json({error: "Missing username"})
+            res.status(400).json({ error: "Missing username" })
             return;
         }
         if (!req.body.uuid) {
-            res.status(400).json({error: "Missing UUID"})
+            res.status(400).json({ error: "Missing UUID" })
             return;
         }
 
         getProfile(req.body.token, function (response, profileBody) {
             if (profileBody.error) {
-                res.status(response.statusCode).json({error: profileBody.error, msg: profileBody.errorMessage})
+                res.status(response.statusCode).json({ error: profileBody.error, msg: profileBody.errorMessage })
             } else {
                 if (profileBody.id !== req.body.uuid) {
-                    res.status(400).json({error: "uuid mismatch"})
+                    res.status(400).json({ error: "uuid mismatch" })
                     return;
                 }
 
-                Account.findOne({username: req.body.username, uuid: req.body.uuid, enabled: false}, "id", function (err, account) {
+                Account.findOne({ username: req.body.username, uuid: req.body.uuid, enabled: false }, "id", function (err, account) {
                     if (err) return console.log(err);
                     if (!account) {
-                        res.status(404).json({error: "Account not found"})
+                        res.status(404).json({ error: "Account not found" })
                         return;
                     }
 
@@ -604,61 +654,33 @@ module.exports = function (app, config) {
         })
     });
 
-    // https://wiki.vg/Microsoft_Authentication_Scheme
-    // Huge thanks to @MiniDigger for figuring this out
-    app.post("/accountManager/auth/microsoft/login", function (req, res) {
-        if (!req.body.url) {
-            res.status(400).json({error: "Missing url"})
-            return;
-        }
-        let url = req.body.url;
-        if (!url.startsWith(urls.microsoft.oauth20prefix)) {
-            res.status(400).json({error: "invalid url"})
-            return;
-        }
-        let parsedUrl = new URL(url);
-        let code = parsedUrl.searchParams.get("code");
-        if (!code || code.length <= 1) {
-            res.status(400).json({error: "missing code"})
-            return;
-        }
-
-        authentication.authenticateXboxWithCode(code, function (err, result) {
-            if (err) {
-                res.status(500).json(err);
-                return;
-            }
-            res.json(result);
-        });
-    });
-
     app.get("/accountManager/discord/oauth/start", function (req, res) {
         if (!req.query.token) {
-            res.status(400).json({error: "Missing token"})
+            res.status(400).json({ error: "Missing token" })
             return;
         }
         if (!req.query.username) {
-            res.status(400).json({error: "Missing username"})
+            res.status(400).json({ error: "Missing username" })
             return;
         }
         if (!req.query.uuid) {
-            res.status(400).json({error: "Missing UUID"})
+            res.status(400).json({ error: "Missing UUID" })
             return;
         }
 
         getProfile(req.query.token, function (response, profileBody) {
             if (profileBody.error) {
-                res.status(response.statusCode).json({error: profileBody.error, msg: profileBody.errorMessage})
+                res.status(response.statusCode).json({ error: profileBody.error, msg: profileBody.errorMessage })
             } else {
                 if (profileBody.id !== req.query.uuid) {
-                    res.status(400).json({error: "uuid mismatch"})
+                    res.status(400).json({ error: "uuid mismatch" })
                     return;
                 }
 
-                Account.findOne({username: req.query.username, uuid: req.query.uuid}, "id username uuid", function (err, account) {
+                Account.findOne({ username: req.query.username, uuid: req.query.uuid }, "id username uuid", function (err, account) {
                     if (err) return console.log(err);
                     if (!account) {
-                        res.status(404).json({error: "Account not found"})
+                        res.status(404).json({ error: "Account not found" })
                         return;
                     }
 
@@ -758,14 +780,14 @@ module.exports = function (app, config) {
                 console.log(profileBody);
 
                 if (!profileBody.id) {
-                    res.status(404).json({error: "Missing profile id in discord response"})
+                    res.status(404).json({ error: "Missing profile id in discord response" })
                     return;
                 }
 
-                Account.findOne({id: linkInfo.account, uuid: linkInfo.uuid}, function (err, account) {
+                Account.findOne({ id: linkInfo.account, uuid: linkInfo.uuid }, function (err, account) {
                     if (err) return console.log(err);
                     if (!account) {
-                        res.status(404).json({error: "Account not found"})
+                        res.status(404).json({ error: "Account not found" })
                         return;
                     }
 
@@ -777,7 +799,7 @@ module.exports = function (app, config) {
                     account.save(function (err, acc) {
                         if (err) {
                             console.warn(err);
-                            res.status(500).json({error: "Unexpected error"})
+                            res.status(500).json({ error: "Unexpected error" })
                             return;
                         }
 
@@ -867,10 +889,10 @@ module.exports = function (app, config) {
         }
         console.log("Token: [redacted]");
 
-        Account.findOne({uuid: uuid, playername: name, authInterceptorEnabled: true}, function (err, account) {
+        Account.findOne({ uuid: uuid, playername: name, authInterceptorEnabled: true }, function (err, account) {
             if (err) return console.log(err);
             if (!account) {
-                res.status(404).json({error: "Account not found"})
+                res.status(404).json({ error: "Account not found" })
                 return;
             }
 
@@ -879,12 +901,12 @@ module.exports = function (app, config) {
             account.save(function (err, acc) {
                 if (err) {
                     console.warn(err);
-                    res.status(500).json({error: "Unexpected error"})
+                    res.status(500).json({ error: "Unexpected error" })
                     return;
                 }
 
                 console.log("Access Token updated for Account #" + acc.id + " via AuthInterceptor");
-                res.status(200).json({success: true})
+                res.status(200).json({ success: true })
             })
         })
 
@@ -892,10 +914,10 @@ module.exports = function (app, config) {
 
     app.get("/accountStats/:account", function (req, res) {
         let id = req.params.account;
-        Account.findOne({id: id, enabled: true}, "id enabled lastUsed errorCounter successCounter totalErrorCounter totalSuccessCounter requestServer lastErrorCode", function (err, account) {
+        Account.findOne({ id: id, enabled: true }, "id enabled lastUsed errorCounter successCounter totalErrorCounter totalSuccessCounter requestServer lastErrorCode", function (err, account) {
             if (err) return console.log(err);
             if (!account) {
-                res.status(404).json({error: "Account not found"})
+                res.status(404).json({ error: "Account not found" })
                 return;
             }
 
@@ -910,124 +932,15 @@ module.exports = function (app, config) {
         })
     })
 
-    app.get("/preferredAccountServer", function (req, res) {
-        Account.aggregate([
-            {$match: {enabled: true, errorCounter: {$lt: 10}}},
-            {$group: {_id: '$requestServer', count: {$sum: 1}}},
-            {$sort: {count: 1}}
-        ], function (err, accountsPerServer) {
-            if (err) {
-                console.warn("Failed to get accounts per server");
-                console.log(err);
-            }
-            let requestServer = accountsPerServer ? accountsPerServer[0]["_id"] : null;
-
-            res.json({
-                preferredServer: requestServer
-            })
-        })
-    });
-
-    /**
-     * @deprecated
-     */
-    function getUser(token, cb) {
-        console.log(("[Auth] GET https://api.mojang.com/user").debug);
-        request({
-            method: "GET",
-            url: "https://api.mojang.com/user",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": "Bearer " + token
-            },
-            json: true
-        }, function (err, response, body) {
-            if (err) {
-                return console.log(err);
-            }
-            cb(response, body);
-        })
-    }
-
-    /**
-     * @callback getProfileCallback
-     * @param {object} response
-     * @param {number} response.statusCode
-     * @param {object} profile
-     * @param {string} [profile.error]
-     * @param {string} profile.id
-     * @param {string} profile.path
-     */
-
-    /**
-     *
-     * @param {string} token
-     * @param {getProfileCallback} cb
-     */
-    function getProfile(token, cb) {
-        console.log(("[Auth] GET https://api.minecraftservices.com/minecraft/profile").debug);
-        request({
-            method: "GET",
-            url: "https://api.minecraftservices.com/minecraft/profile",
-            headers: {
-                "Authorization": "Bearer " + token
-            },
-            json: true
-        }, function (err, response, body) {
-            if (err) {
-                return console.log(err);
-            }
-            cb(response, body.length >= 1 ? body[0] : body);
-        })
-    }
-
-    function addDiscordRole(userId, cb) {
-        request({
-            url: "https://discordapp.com/api/guilds/" + config.discord.guild + "/members/" + userId + "/roles/" + config.discord.role,
-            method: "PUT",
-            headers: {
-                "Authorization": "Bot " + config.discord.token
-            }
-        }, function (err, response, body) {
-            if (err) {
-                console.warn(err);
-                cb(false);
-                return;
-            }
-            console.log(body);
-            console.log("Added Mineskin role to discord user #" + userId);
-            cb(true);
-        });
-    }
-
-    function removeDiscordRole(userId, cb) {
-        request({
-            url: "https://discordapp.com/api/guilds/" + config.discord.guild + "/members/" + userId + "/roles/" + config.discord.role,
-            method: "DELETE",
-            headers: {
-                "Authorization": "Bot " + config.discord.token
-            }
-        }, function (err, response, body) {
-            if (err) {
-                console.warn(err);
-                cb(false);
-                return;
-            }
-            console.log(body);
-            console.log("Removed Mineskin role from discord user #" + userId);
-            cb(true);
-        });
-    }
-
 
     function validateMultiSecurityAnswers(answers, req, res) {
         if (typeof answers !== "object" || answers.length < 3) {
-            res.status(400).json({error: "invalid security answers object (not an object / empty)"});
+            res.status(400).json({ error: "invalid security answers object (not an object / empty)" });
             return false;
         }
         for (let i = 0; i < answers.length; i++) {
             if ((!answers[i].hasOwnProperty("id") || !answers[i].hasOwnProperty("answer")) || (typeof answers[i].id !== "number" || typeof answers[i].answer !== "string")) {
-                res.status(400).json({error: "invalid security answers object (missing id / answer)"});
+                res.status(400).json({ error: "invalid security answers object (missing id / answer)" });
                 return false;
             }
         }

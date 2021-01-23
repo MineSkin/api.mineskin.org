@@ -31,6 +31,7 @@ export const AccountSchema: Schema = new Schema({
         id: Number,
         answer: String
     }],
+    accountType: String,
     microsoftAccount: Boolean,
     microsoftUserId: {
         type: String,

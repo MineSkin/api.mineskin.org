@@ -1,15 +1,14 @@
 import { Document, Model } from "mongoose";
 import { access } from "fs";
 import { Maybe } from "../util";
+import { MojangSecurityAnswer } from "../generator/Authentication";
 
-export interface SecurityQuestion {
-    id: string;
-    answer: string;
+export interface SecurityQuestion extends MojangSecurityAnswer {
 }
 
 export enum AccountType {
-    INTERNAL = "internal",
-    EXTERNAL = "external",
+    MOJANG = "mojang",
+    MICROSOFT = "microsoft"
 }
 
 export enum AccessTokenSource {
@@ -17,13 +16,20 @@ export enum AccessTokenSource {
     REFRESH_MOJANG = "refresh_mojang",
 
     LOGIN_MICROSOFT = "login_microsoft",
-    REFRESH_MICROSOFT = "refresh_microsoft"
+    REFRESH_MICROSOFT = "refresh_microsoft",
+
+    USER_LOGIN_MOJANG = "user_login_mojang",
+    USER_LOGIN_MICROSOFT = "user_login_microsoft"
 }
 
 export interface IAccountDocument extends Document {
     id: number | any;
+    /** email **/
     username: string;
+    email?: string;
+    /** player uuid **/
     uuid: string;
+    /** player name **/
     playername?: string;
     authInterceptorEnabled?: boolean;
     /**@deprecated**/
@@ -34,6 +40,7 @@ export interface IAccountDocument extends Document {
     /**@deprecated**/
     security?: string;
     multiSecurity?: SecurityQuestion[];
+    accountType?: AccountType;
     microsoftAccount?: boolean;
     microsoftUserId?: string;
     microsoftAccessToken?: string;
@@ -58,7 +65,7 @@ export interface IAccountDocument extends Document {
     requestIp: string;
     requestServer?: string;
     lastRequestServer: string;
-    type: AccountType;
+    type: string;
     discordUser?: string;
     discordMessageSent?: boolean;
     sendEmails?: boolean

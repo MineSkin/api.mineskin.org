@@ -3,7 +3,7 @@ import { IAccountDocument, MineSkinError } from "../types";
 import { Requests } from "./Requests";
 import { AUTHENTICATION_METRIC, debug, Encryption, warn } from "../util";
 import * as Sentry from "@sentry/node";
-import { AccessTokenSource } from "../types/IAccountDocument";
+import { AccessTokenSource, AccountType } from "../types/IAccountDocument";
 import * as XboxLiveAuth from "@xboxreplay/xboxlive-auth";
 import { AuthenticateResponse } from "@xboxreplay/xboxlive-auth";
 import * as qs from "querystring";
@@ -47,6 +47,29 @@ export class Mojang {
         return await this.refreshAccessTokenOrLogin(account);
     }
 
+    /// LOGIN
+
+    static async loginWithCredentials(username: string, password: string, clientToken: string): Promise<MojangLoginResponse> {
+        const body = {
+            agent: {
+                name: "Minecraft",
+                version: 1
+            },
+            username: username,
+            password: password,
+            clientToken: clientToken,
+            requestUser: true,
+            _timestamp: Date.now()
+        };
+        const authResponse = await Requests.mojangAuthRequest({
+            method: "POST",
+            url: "/authenticate",
+            data: JSON.stringify(body)
+        });
+        const authBody = authResponse.data;
+        return authBody as MojangLoginResponse;
+    }
+
     static async login(account: IAccountDocument): Promise<IAccountDocument> {
         if (account.microsoftAccount) {
             throw new AuthenticationError(AuthError.UNSUPPORTED_ACCOUNT, "Can't login microsoft account via mojang auth", account);
@@ -57,34 +80,18 @@ export class Mojang {
         }
 
         console.log(debug("[Auth] Logging in " + account.toSimplifiedString()));
-        const body = {
-            agent: {
-                name: "Minecraft",
-                version: 1
-            },
-            username: account.username,
-            password: Encryption.decrypt(account.passwordNew),
-            clientToken: account.getOrCreateClientToken(),
-            requestUser: true,
-            _timestamp: Date.now()
-        };
-        const authResponse = await Requests.mojangAuthRequest({
-            method: "POST",
-            url: "/authenticate",
-            data: JSON.stringify(body)
-        }).catch(err => {
+        const authBody = await this.loginWithCredentials(account.username, Encryption.decrypt(account.passwordNew), account.getOrCreateClientToken()).catch(err => {
             if (err.response) {
                 throw new AuthenticationError(AuthError.MOJANG_AUTH_FAILED, "Failed to authenticate via mojang", account, err);
             }
             throw err;
         })
-        const authBody = authResponse.data;
-        if (authBody.hasOwnProperty("selectedProfile")) {
-            account.playername = authBody["selectedProfile"]["name"];
+        if (authBody.selectedProfile) {
+            account.playername = authBody.selectedProfile.name
         }
 
         console.log(debug("[Auth] Got new access token for " + account.toSimplifiedString()));
-        account.accessToken = authBody["accessToken"];
+        account.accessToken = authBody.accessToken;
         account.accessTokenExpiration = Math.round(Date.now() / 1000) + ACCESS_TOKEN_EXPIRATION_MOJANG;
         account.accessTokenSource = AccessTokenSource.LOGIN_MOJANG;
         account.updateRequestServer(config.server);
@@ -324,7 +331,12 @@ export class Microsoft {
             account.microsoftRefreshToken = xboxInfo.refreshToken;
             account.microsoftUserId = xboxInfo.userId;
             account.minecraftXboxUsername = xboxInfo.username;
-        });
+        }).catch(err => {
+            if (err.response) {
+                throw new AuthenticationError(AuthError.MICROSOFT_AUTH_FAILED, "Failed to login", account, err);
+            }
+            throw err;
+        })
         const ownsMinecraft = await this.checkGameOwnership(minecraftAccessToken);
         if (!ownsMinecraft) {
             throw new AuthenticationError(AuthError.DOES_NOT_OWN_MINECRAFT, "User does not own minecraft", account);
@@ -532,7 +544,7 @@ export class Authentication {
             .tag("account", account.id);
         try {
             let result: IAccountDocument;
-            if (account.microsoftAccount) {
+            if (account.accountType === AccountType.MICROSOFT || account.microsoftAccount) {
                 result = await Microsoft.authenticate(account);
             } else {
                 result = await Mojang.authenticate(account)
@@ -586,7 +598,7 @@ export class AuthenticationError extends MineSkinError {
 
 // Microsoft
 
-interface XboxInfo {
+export interface XboxInfo {
     accessToken?: string;
     refreshToken?: string;
     userId?: string;
@@ -602,17 +614,55 @@ interface XboxLoginResponse {
 
 // Mojang
 
+interface MojangLoginResponse {
+    accessToken: string;
+    clientToken: string;
+    selectedProfile?: MojangProfile;
+    user?: MojangUser;
+}
+
+interface MojangProfile {
+    id: string;
+    name: string;
+    userId: string;
+    createdAt: number;
+    legacyProfile: boolean;
+    suspended: boolean;
+    paid: boolean;
+    migrated: boolean;
+    legacy: boolean;
+}
+
+interface MojangUser {
+    id: string;
+    email: string;
+    username: string;
+}
+
+export interface BasicMojangProfile {
+    id: string;
+    name: string;
+    skins?: MojangProfileSkin[];
+}
+
+export interface MojangProfileSkin {
+    id: string;
+    state: string;
+    url: string;
+    variant: string;
+}
+
 interface MojangChallengesResponse {
     needSolving: boolean;
     questions?: MojangSecurityQuestion[];
 }
 
-interface MojangSecurityQuestion {
+export interface MojangSecurityQuestion {
     answer: { id: number };
     question: { id: number, question: string };
 }
 
-interface MojangSecurityAnswer {
+export interface MojangSecurityAnswer {
     id: number;
     answer: string;
 }

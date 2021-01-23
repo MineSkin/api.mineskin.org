@@ -1,7 +1,7 @@
-import { Account, Skin } from "../database/schemas";
+import { Account, Skin, Stat } from "../database/schemas";
 import { MemoizeExpiring } from "typescript-memoize";
-import { base64decode, debug, DUPLICATES_METRIC, durationMetric, error, getHashFromMojangTextureUrl, hasOwnProperty, imageHash, info, longAndShortUuid, Maybe, NEW_METRIC, random32BitNumber, stripUuid, warn } from "../util";
-import { IAccountDocument, ISkinDocument, MineSkinError } from "../types";
+import { base64decode, debug, DUPLICATES_METRIC, durationMetric, error, getHashFromMojangTextureUrl, hasOwnProperty, imageHash, info, longAndShortUuid, Maybe, metrics, NEW_METRIC, random32BitNumber, stripUuid, warn } from "../util";
+import { IAccountDocument, ISkinDocument, IStatDocument, MineSkinError } from "../types";
 import { Caching } from "./Caching";
 import { SkinData, SkinMeta, SkinValue } from "../types/SkinData";
 import { Config } from "../types/Config";
@@ -23,8 +23,9 @@ import { FileTypeResult } from "file-type";
 import { UploadedFile } from "express-fileupload";
 import { ISizeCalculationResult } from "image-size/dist/types/interface";
 import { v4 as uuid } from "uuid";
-import { CountDuplicateViewStats, DurationStats, Stats, TimeFrameStats } from "../types/Stats";
+import { AccountStats, CountDuplicateViewStats, DurationStats, Stats, SuccessRateStats, TimeFrameStats } from "../types/Stats";
 import * as Jimp from "jimp";
+import { Schema } from "mongoose";
 
 const config: Config = require("../config");
 
@@ -46,20 +47,109 @@ export class Generator {
 
     protected static readonly optimus = new Optimus(config.optimus.prime, config.optimus.inverse, config.optimus.random);
 
+    protected static accountStats: AccountStats;
     protected static durationStats: DurationStats;
+    protected static successRateStats: SuccessRateStats;
     protected static countDuplicateViewStats: CountDuplicateViewStats;
     protected static timeFrameStats: TimeFrameStats;
+
+    protected static detailedStatsQueryTimer = setInterval(() => Generator.queryDetailedStats(), 240000);
 
     @MemoizeExpiring(30000)
     static async getDelay(): Promise<number> {
         return Account.calculateDelay();
     }
 
+    @MemoizeExpiring(30000)
+    static async getPreferredAccountServer(): Promise<string> {
+        return await Account.getPreferredAccountServer() || config.server;
+    }
+
+    // Stats
+
     @MemoizeExpiring(60000)
     static async getStats(): Promise<Stats> {
-        const time = Date.now() / 1000;
-
         const delay = await this.getDelay();
+
+        const stats = <Stats>{
+            server: config.server,
+            delay: delay
+        };
+        if (this.accountStats) {
+            stats.accounts = this.accountStats.accounts;
+            stats.serverAccounts = this.accountStats.serverAccounts;
+            stats.healthyAccounts = this.accountStats.healthyAccounts;
+            stats.useableAccounts = this.accountStats.useableAccounts;
+        }
+        if (this.successRateStats) {
+            const generateTotal = this.successRateStats.generateSuccess + this.successRateStats.generateFail;
+            stats.successRate = Number((this.successRateStats.generateSuccess / generateTotal).toFixed(3));
+            const testerTotal = this.successRateStats.testerSuccess + this.successRateStats.testerFail;
+            stats.mineskinTesterSuccessRate = Number((this.successRateStats.testerSuccess / testerTotal).toFixed(3));
+        }
+        if (this.durationStats) {
+            stats.avgGenerateDuration = this.durationStats.avgGenerateDuration;
+        }
+        if (this.countDuplicateViewStats) {
+            stats.genUpload = this.countDuplicateViewStats.genUpload;
+            stats.genUrl = this.countDuplicateViewStats.genUrl;
+            stats.genUser = this.countDuplicateViewStats.genUser;
+
+            stats.unique = this.countDuplicateViewStats.unique || 0;
+            stats.duplicate = this.countDuplicateViewStats.duplicate || 0;
+            stats.views = this.countDuplicateViewStats.views || 0;
+
+            stats.total = stats.unique + stats.duplicate;
+        }
+        if (this.timeFrameStats) {
+            stats.lastYear = this.timeFrameStats.lastYear;
+            stats.lastMonth = this.timeFrameStats.lastMonth;
+            stats.lastDay = this.timeFrameStats.lastDay;
+            stats.lastHour = this.timeFrameStats.lastHour;
+        }
+        return stats;
+    }
+
+    protected static async queryDetailedStats(): Promise<void> {
+        this.accountStats = await this.queryAccountStats();
+        this.durationStats = await this.queryDurationStats();
+        this.successRateStats = await this.querySuccessRateStats();
+        this.countDuplicateViewStats = await this.queryCountDuplicateViewStats();
+        this.timeFrameStats = await this.queryTimeFrameStats();
+
+        try {
+            await metrics.influx.writePoints([
+                {
+                    measurement: 'accounts',
+                    tags: {
+                        server: config.server
+                    },
+                    fields: {
+                        total: this.accountStats.accounts,
+                        totalServer: this.accountStats.serverAccounts,
+                        healthy: this.accountStats.healthyAccounts,
+                        useable: this.accountStats.useableAccounts
+                    }
+                },
+                {
+                    measurement: 'skins',
+                    fields: {
+                        total: (this.countDuplicateViewStats.unique || 0) + (this.countDuplicateViewStats.duplicate || 0),
+                        unique: this.countDuplicateViewStats.unique || 0,
+                        duplicate: this.countDuplicateViewStats.duplicate || 0
+                    }
+                }
+            ], {
+                database: 'mineskin'
+            })
+        } catch (e) {
+            console.warn(e);
+            Sentry.captureException(e);
+        }
+    }
+
+    protected static async queryAccountStats(): Promise<AccountStats> {
+        const time = Date.now() / 1000;
 
         const enabledAccounts = await Account.count({
             enabled: true
@@ -79,17 +169,118 @@ export class Generator {
         }).exec();
 
         return {
-            server: config.server,
-
-            delay,
-
             accounts: enabledAccounts,
             serverAccounts,
             healthyAccounts,
-            useableAccounts,
+            useableAccounts
+        };
+    }
 
-            //TODO
-        }
+    protected static async queryDurationStats(): Promise<DurationStats> {
+        return Skin.aggregate([
+            { "$sort": { time: -1 } },
+            { "$limit": 1000 },
+            {
+                "$group": {
+                    "_id": null,
+                    "avgGenTime": { "$avg": "$generateDuration" }
+                }
+            }
+        ]).exec().then((res: any[]) => {
+            return <DurationStats>{
+                avgGenerateDuration: res[0]["avgGenTime"] as number
+            };
+        });
+    }
+
+    protected static async querySuccessRateStats(): Promise<SuccessRateStats> {
+        const rawStats = await Stat.find({}).lean().exec();
+        const stats: SuccessRateStats = {
+            generateSuccess: 0,
+            generateFail: 0,
+            testerSuccess: 0,
+            testerFail: 0
+        };
+        rawStats.forEach((stat: IStatDocument) => {
+            switch (stat.key) {
+                case "generate.success":
+                    stats.generateSuccess = stat.value;
+                    break;
+                case "generate.fail":
+                    stats.generateFail = stat.value;
+                    break;
+                case "mineskintester.success":
+                    stats.testerSuccess = stat.value;
+                    break;
+                case "mineskintester.fail":
+                    stats.testerFail = stat.value;
+                    break;
+            }
+        });
+        return stats;
+    }
+
+    protected static async queryCountDuplicateViewStats(): Promise<CountDuplicateViewStats> {
+        return Skin.aggregate([
+            {
+                "$group":
+                    {
+                        _id: "$type",
+                        duplicate: { $sum: "$duplicate" },
+                        views: { $sum: "$views" },
+                        count: { $sum: 1 }
+                    }
+            }
+        ]).exec().then((res: any[]) => {
+            const urlStats = res.find(v => v["_id"] === "url");
+            const uploadStats = res.find(v => v["_id"] === "upload");
+            const userStats = res.find(v => v["_id"] === "user");
+
+            const stats = <CountDuplicateViewStats>{
+                genUpload: Number(uploadStats["count"]),
+                genUrl: Number(urlStats["count"]),
+                genUser: Number(userStats["count"]),
+
+                duplicateUpload: Number(uploadStats["duplicate"]),
+                duplicateUrl: Number(urlStats["duplicate"]),
+                duplicateUser: Number(userStats["duplicate"]),
+
+                viewsUpload: Number(uploadStats["views"]),
+                viewsUrl: Number(urlStats["views"]),
+                viewsUser: Number(userStats["views"])
+            };
+            stats.unique = stats.genUpload + stats.genUrl + stats.genUser;
+            stats.duplicate = stats.duplicateUpload + stats.duplicateUrl + stats.duplicateUser;
+            stats.views = stats.viewsUpload + stats.viewsUrl + stats.viewsUser;
+            return stats;
+        });
+    }
+
+    protected static async queryTimeFrameStats(): Promise<TimeFrameStats> {
+        const now = Date.now();
+        const lastHour = new Date(now - 3.6e+6).getTime() / 1000;
+        const lastDay = new Date(now - 8.64e+7).getTime() / 1000;
+        const lastMonth = new Date(now - 2.628e+9).getTime() / 1000;
+        const lastYear = new Date(now - 3.154e+10).getTime() / 1000;
+
+        return Skin.aggregate([
+            {
+                $group: {
+                    _id: null,
+                    lastYear: { $sum: { $cond: [{ $gte: ["$time", lastYear] }, 1, 0] } },
+                    lastMonth: { $sum: { $cond: [{ $gte: ["$time", lastMonth] }, 1, 0] } },
+                    lastDay: { $sum: { $cond: [{ $gte: ["$time", lastDay] }, 1, 0] } },
+                    lastHour: { $sum: { $cond: [{ $gte: ["$time", lastHour] }, 1, 0] } }
+                }
+            }
+        ]).exec().then((res: any[]) => {
+            return <TimeFrameStats>{
+                lastYear: res[0]["lastYear"] as number,
+                lastMonth: res[0]["lastMonth"] as number,
+                lastDay: res[0]["lastDay"] as number,
+                lastHour: res[0]["lastHour"] as number
+            }
+        })
     }
 
     /// SAVING
@@ -128,7 +319,7 @@ export class Generator {
 
     protected static async saveSkin(result: GenerateResult, options: GenerateOptions, client: ClientInfo, type: GenerateType, start: number): Promise<ISkinDocument> {
         const id = await this.makeNewSkinId();
-        const skin: ISkinDocument = new Skin({
+        const skin: ISkinDocument = new Skin(<ISkinDocument>{
             id: id,
 
             hash: result.meta?.imageHash,
@@ -155,7 +346,7 @@ export class Generator {
 
             duplicate: 0,
             views: 0
-        } as ISkinDocument)
+        })
         return skin.save();
     }
 

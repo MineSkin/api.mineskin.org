@@ -1,0 +1,13 @@
+openapi: 3.0.1
+info:
+  title: MineSkin API
+  version: 0.0.0
+  contact:
+    url: https://discord.gg/nzAdvPc
+    email: info@mineskin.org
+  license:
+    name: MIT
+    url: https://github.com/MineSkin/api.mineskin.org/blob/master/LICENSE
+servers:
+  - url: https://api.mineskin.org
+paths:
