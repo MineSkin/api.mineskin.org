@@ -11,6 +11,7 @@ import { Config } from "../types/Config";
 import { ISkinDocument, ITrafficDocument } from "../types";
 import { Skin, Traffic } from "../database/schemas";
 import { MemoizeExpiring } from "typescript-memoize";
+import { BasicMojangProfile } from "./Authentication";
 
 const config: Config = require("../config");
 
@@ -117,6 +118,29 @@ export class Caching {
             });
         });
 
+    protected static readonly profileByAccessTokenCache: AsyncLoadingCache<string, BasicMojangProfile> = Caches.builder()
+        .expireAfterWrite(Time.minutes(2))
+        .expirationInterval(Time.seconds(30))
+        .buildAsync<string, BasicMojangProfile>(accessToken => {
+            return Requests.minecraftServicesRequest({
+                method: "GET",
+                url: "/minecraft/profile",
+                headers: {
+                    "Authorization": `Bearer ${ accessToken }`
+                }
+            }).then(response => {
+                return response.data as BasicMojangProfile
+            }).catch(err => {
+                Sentry.captureException(err, {
+                    level: Severity.Warning,
+                    tags: {
+                        cache: "profileByAccessToken"
+                    }
+                });
+                return undefined;
+            });
+        })
+
     //// DATABASE
 
     protected static readonly trafficByIpCache: AsyncLoadingCache<string, Date> = Caches.builder()
@@ -139,6 +163,7 @@ export class Caching {
             ["skinData", Caching.skinDataCache],
             ["userByName", Caching.userByNameCache],
             ["userByUuid", Caching.userByUuidCache],
+            ["profileByAccessToken", Caching.profileByAccessTokenCache],
 
             ["trafficById", Caching.trafficByIpCache],
             ["skinById", Caching.skinByIdCache]
@@ -174,6 +199,10 @@ export class Caching {
 
     public static getUserByUuid(uuid: string): Promise<User> {
         return this.userByUuidCache.get(uuid);
+    }
+
+    public static getProfileByAccessToken(accessToken: string): Promise<Maybe<BasicMojangProfile>> {
+        return this.profileByAccessTokenCache.get(accessToken);
     }
 
     /// DATABASE

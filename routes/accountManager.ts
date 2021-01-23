@@ -1,13 +1,13 @@
 import { Application, Request, Response } from "express";
 import { AuthenticationError, AuthError, BasicMojangProfile, Microsoft, Mojang, MojangSecurityAnswer, XboxInfo } from "../generator/Authentication";
-import { base64decode, Encryption, getIp, info, md5, stripUuid } from "../util";
-import { Requests } from "../generator/Requests";
+import { base64decode, Encryption, getIp, info, Maybe, md5, sha512, stripUuid } from "../util";
 import { IAccountDocument, MineSkinError } from "../types";
 import * as session from "express-session";
 import { Generator } from "../generator/Generator";
 import { Config } from "../types/Config";
 import { Account } from "../database/schemas";
 import { AccessTokenSource, AccountType } from "../types/IAccountDocument";
+import { Caching } from "../generator/Caching";
 
 const config: Config = require("../config");
 
@@ -39,6 +39,7 @@ export const register = (app: Application) => {
         req.session.account = {
             type: AccountType.MOJANG,
             email: req.body["email"],
+            passwordHash: sha512(req.body["password"]),
             token: loginResponse.accessToken
         };
         res.json({
@@ -107,6 +108,7 @@ export const register = (app: Application) => {
         req.session.account = {
             type: AccountType.MICROSOFT,
             email: req.body["email"],
+            passwordHash: sha512(req.body["password"]),
             token: minecraftAccessToken,
             microsoftInfo: microsoftInfo
         };
@@ -129,6 +131,8 @@ export const register = (app: Application) => {
         req.session.destroy(() => res.status(200).end());
     })
 
+    // Stuff that requires being logged in
+
     app.post("/accountManager/userProfile", async (req: AccountManagerRequest, res: Response) => {
         if (!validateSessionAndToken(req, res)) return;
 
@@ -146,13 +150,98 @@ export const register = (app: Application) => {
         }
     });
 
+    app.post("/accountManager/myAccount", async (req: AccountManagerRequest, res: Response) => {
+        if (!validateSessionAndToken(req, res)) return;
+        if (!req.body["email"]) {
+            res.status(400).json({ error: "missing credentials" });
+            return;
+        }
+        if (!req.session || !req.session.account) {
+            res.status(400).json({ error: "invalid session" });
+            return;
+        }
+
+        const profileValidation = await getAndValidateMojangProfile(req.body["token"], req.body["uuid"]);
+        if (!profileValidation.valid || !profileValidation.profile) return;
+
+        const account = await Account.findOne({
+            type: "external",
+            uuid: profileValidation.profile.id,
+            accountType: req.session.account.type,
+            $or: [
+                { email: req.session.account.email },
+                { username: req.session.account.email }
+            ]
+        }).exec();
+        if (!account) {
+            res.status(404).json({ error: "account not found" });
+            return;
+        }
+        if (account.uuid !== req.body["uuid"]) {
+            //wth
+            return;
+        }
+
+        // Update password
+        if (req.body["password"] && req.body["password"].length > 3) {
+            account.passwordNew = Encryption.encrypt(base64decode(req.body["password"]));
+        }
+
+        // Update token
+        if (req.session.account.token) {
+            account.accessToken = req.session.account.token;
+            account.accessTokenSource = req.session.account.type === AccountType.MICROSOFT ? AccessTokenSource.USER_LOGIN_MICROSOFT : AccessTokenSource.USER_LOGIN_MOJANG;
+            account.accessTokenExpiration = Math.round(Date.now() / 1000) + 86360;
+        }
+
+        // Update extras
+        if (req.session.account.type === AccountType.MOJANG && req.session.account.mojangInfo) {
+            if (req.session.account.mojangInfo.securityAnswers) {
+                account.multiSecurity = req.session.account.mojangInfo.securityAnswers;
+            }
+        } else if (req.session.account.type === AccountType.MICROSOFT && req.session.account.microsoftInfo) {
+            if (req.session.account.microsoftInfo.accessToken) {
+                account.microsoftAccessToken = req.session.account.microsoftInfo.accessToken;
+            }
+            if (req.session.account.microsoftInfo.refreshToken) {
+                account.microsoftRefreshToken = req.session.account.microsoftInfo.refreshToken;
+            }
+        }
+        account.discordMessageSent = false;
+
+        console.log(info("Saving updated details of " + (req.session.account.type) + " account #" + account.id + " " + req.body["uuid"]));
+        await account.save();
+
+        const generateTotal = account.successCounter + account.errorCounter;
+        res.json({
+            type: account.type || (account.microsoftAccount ? "microsoft" : "mojang"),
+            username: account.username,
+            email: account.email || account.username,
+            uuid: account.uuid,
+            lastUsed: account.lastUsed,
+            enabled: account.enabled,
+            successRate: Number((account.successCounter / generateTotal).toFixed(3)),
+            successStreak: Math.round(account.successCounter / 10) * 10,
+            discordLinked: !!account.discordUser,
+            sendEmails: !!account.sendEmails
+        })
+    })
+
     app.post("/accountManager/confirmAccountSubmission", async (req: AccountManagerRequest, res: Response) => {
         if (!validateSessionAndToken(req, res)) return;
         if (!req.body["email"] || !req.body["password"]) {
             res.status(400).json({ error: "missing credentials" });
             return;
         }
-        if (req.body["email"] !== req.session.account!.email) {
+        if (!req.session || !req.session.account) {
+            res.status(400).json({ error: "invalid session" });
+            return;
+        }
+        if (req.body["email"] !== req.session.account.email) {
+            res.status(400).json({ error: "invalid session" });
+            return;
+        }
+        if (sha512(req.body["password"]) !== req.session.account.passwordHash) {
             res.status(400).json({ error: "invalid session" });
             return;
         }
@@ -160,7 +249,7 @@ export const register = (app: Application) => {
             res.status(400).json({ error: "missing uuid" });
             return;
         }
-        if (req.body["uuid"] !== req.session.account!.uuid) {
+        if (req.body["uuid"] !== req.session.account.uuid) {
             res.status(400).json({ error: "invalid session" });
             return;
         }
@@ -174,27 +263,27 @@ export const register = (app: Application) => {
             console.warn("Got /confirmAccountSubmission but preferred server is " + preferredServer);
         }
 
-        const lastAccount = await Account.findOne({}).sort({ id: -1 }).select({ id: 1 }).lean().exec();
+        const lastAccount = await Account.findOne({}, "id").sort({ id: -1 }).lean().exec();
         const lastId = lastAccount?.id!;
 
         const account = new Account(<IAccountDocument>{
             id: lastId + 1,
 
-            accountType: req.session.account!.type!,
-            microsoftAccount: req.session.account!.type === AccountType.MICROSOFT,
+            accountType: req.session.account.type,
+            microsoftAccount: req.session.account.type === AccountType.MICROSOFT,
 
-            username: req.body["email"],
-            email: req.body["email"],
+            username: req.session.account.email,
+            email: req.session.account.email,
 
             passwordNew: Encryption.encrypt(base64decode(req.body["password"])),
 
-            uuid: req.body["uuid"],
+            uuid: req.session.account.uuid,
             playername: profileValidation.profile.name,
 
             accessToken: req.body["token"],
             accessTokenExpiration: Math.round(Date.now() / 1000) + 86360,
-            accessTokenSource: req.session.account!.type === AccountType.MICROSOFT ? AccessTokenSource.USER_LOGIN_MICROSOFT : AccessTokenSource.USER_LOGIN_MOJANG,
-            clientToken: md5(req.body["username"] + "_" + ip),
+            accessTokenSource: req.session.account.type === AccountType.MICROSOFT ? AccessTokenSource.USER_LOGIN_MICROSOFT : AccessTokenSource.USER_LOGIN_MOJANG,
+            clientToken: md5(req.session.account.email + "_" + ip),
 
             requestIp: ip,
             requestServer: config.server,
@@ -208,16 +297,16 @@ export const register = (app: Application) => {
             successCounter: 0,
             totalSuccessCounter: 0
         });
-        if (req.session.account!.type === AccountType.MICROSOFT) {
-            account.microsoftUserId = req.session.account?.microsoftInfo?.userId;
-            account.microsoftAccessToken = req.session.account?.microsoftInfo?.accessToken;
-            account.microsoftRefreshToken = req.session.account?.microsoftInfo?.refreshToken;
-            account.minecraftXboxUsername = req.session.account?.microsoftInfo?.username;
+        if (req.session.account.type === AccountType.MICROSOFT) {
+            account.microsoftUserId = req.session.account.microsoftInfo?.userId;
+            account.microsoftAccessToken = req.session.account.microsoftInfo?.accessToken;
+            account.microsoftRefreshToken = req.session.account.microsoftInfo?.refreshToken;
+            account.minecraftXboxUsername = req.session.account.microsoftInfo?.username;
         } else if (req.session.account!.type === AccountType.MOJANG) {
-            account.multiSecurity = req.session.account?.mojangInfo?.securityAnswers;
+            account.multiSecurity = req.session.account.mojangInfo?.securityAnswers;
         }
 
-        console.log(info("Saving new " + (req.session.account?.type) + " account #" + account.id + " " + req.body["uuid"]));
+        console.log(info("Saving new " + (req.session.account.type) + " account #" + account.id + " " + req.body["uuid"]));
         await account.save();
         res.json({
             success: true,
@@ -257,22 +346,15 @@ function validateMultiSecurityAnswers(answers: any, req: Request, res: Response)
     return true;
 }
 
-async function getMojangProfile(accessToken: string): Promise<BasicMojangProfile> {
-    const profileResponse = await Requests.minecraftServicesRequest({
-        method: "GET",
-        url: "/minecraft/profile",
-        headers: {
-            "Authorization": `Bearer ${ accessToken }`
-        }
-    })
-    return profileResponse.data as BasicMojangProfile;
+async function getMojangProfile(accessToken: string): Promise<Maybe<BasicMojangProfile>> {
+    return Caching.getProfileByAccessToken(accessToken);
 }
 
 async function getAndValidateMojangProfile(accessToken: string, uuid: string): Promise<MojangProfileValidation> {
     if (!uuid || uuid.length < 32 || !accessToken) return { valid: false };
     const shortUuid = stripUuid(uuid);
     const profile = await getMojangProfile(accessToken);
-    if (shortUuid !== profile.id) {
+    if (!profile || shortUuid !== profile.id) {
         throw new MineSkinError("invalid_credentials", "invalid credentials for uuid");
     }
     return {
@@ -294,6 +376,7 @@ type AccountManagerSession = session.Session & {
 interface SessionAccountInfo {
     type?: AccountType;
     email?: string;
+    passwordHash?: string;
     token?: string;
     uuid?: string;
 
@@ -306,11 +389,6 @@ interface MojangAccountInfo {
 }
 
 interface MicrosoftAccountInfo extends XboxInfo {
-}
-
-interface SessionValidation {
-    token?: string;
-    valid: boolean;
 }
 
 
@@ -347,205 +425,7 @@ module.exports = function (app, config) {
     const Skin = require("../database/schemas/Skin").ISkinDocument;
 
 
-    app.get("/accountManager/myAccount", function (req, res) {
-        if (!req.query.token) {
-            res.status(400).json({ error: "Missing token" })
-            return;
-        }
-        if (!req.query.username) {
-            res.status(400).json({ error: "Missing login data" });
-            return;
-        }
 
-        Account.findOne({ username: req.query.username, type: "external" }, "username uuid lastUsed enabled hasError lastError successCounter errorCounter").lean().exec(function (err, account) {
-            if (err) return console.log(err);
-            if (!account) {
-                res.status(404).json({ error: "Account not found" })
-                return;
-            }
-
-            getProfile(req.query.token, function (response, body) {
-                if (body.error) {
-                    res.status(response.statusCode).json({ error: body.error, msg: body.errorMessage })
-                } else {
-                    if (body.id !== account.uuid) {
-                        res.status(400).json({ error: "uuid mismatch" })
-                        return;
-                    }
-
-                    const generateTotal = account.successCounter + account.errorCounter;
-                    res.json({
-                        username: account.username,
-                        uuid: account.uuid,
-                        lastUsed: account.lastUsed,
-                        enabled: account.enabled,
-                        hasError: account.hasError,
-                        lastError: account.lastError,
-                        successRate: Number((account.successCounter / generateTotal).toFixed(3))
-                    })
-                }
-            })
-        });
-
-    });
-
-
-    app.get("/accountManager/auth/user", function (req, res) {
-        if (!req.query.token) {
-            res.status(400).json({ error: "Missing token" })
-            return;
-        }
-
-        getUser(req.query.token, function (response, body) {
-            if (body.error) {
-                console.error(body);
-                res.status(response.statusCode).json({ error: body.error, msg: body.errorMessage })
-            } else {
-                res.json({
-                    id: body.id,
-                    username: body.username,
-                    legacyUser: body.legacyUser,
-                    _comment: "deprecated, use /auth/userProfile"
-                })
-            }
-        })
-    })
-
-    app.get("/accountManager/auth/userProfile", function (req, res) {
-        if (!req.query.token) {
-            res.status(400).json({ error: "Missing token" })
-            return;
-        }
-
-        getProfile(req.query.token, function (response, body) {
-            if (body.error) {
-                console.error(body.error);
-                res.status(response.statusCode).json({ error: body.error, msg: body.errorMessage })
-            } else {
-                res.json({
-                    uuid: body.id,
-                    name: body.name,
-                    legacyProfile: !!body.legacyProfile,
-                    suspended: !!body.suspended
-                })
-            }
-        })
-    })
-
-    app.get("/accountManager/accountStatus", function (req, res) {
-        if (!req.query.token) {
-            res.status(400).json({ error: "Missing token" })
-            return;
-        }
-        if (!req.query.username) {
-            res.status(400).json({ error: "Missing username" });
-            return;
-        }
-        if (!req.query.uuid) {
-            res.status(400).json({ error: "Missing UUID" })
-            return;
-        }
-
-        Account.findOne({ username: req.query.username, uuid: req.query.uuid, type: "external" }, "enabled password security multiSecurity uuid discordUser microsoftAccount microsoftUserId minecraftXboxUsername sendEmails requestServer", function (err, acc) {
-            if (err) return console.log(err);
-            console.log(acc);
-
-            if (acc) {
-                getProfile(req.query.token, function (response, profileBody) {
-                    if (profileBody.error) {
-                        res.status(response.statusCode).json({ error: profileBody.error, msg: profileBody.errorMessage })
-                    } else {
-                        if (profileBody.id !== acc.uuid) {
-                            res.status(400).json({ error: "uuid mismatch" })
-                            return;
-                        }
-                        if (req.query.password && req.query.password.length > 3) {
-                            acc.passwordNew = util.crypto.encrypt(new Buffer(req.query.password, "base64").toString("ascii"));
-                        }
-                        if (req.query.security) {
-                            if (req.query.security.startsWith("[") && req.query.security.endsWith("]")) {
-                                const sec = JSON.parse(req.query.security);
-                                if (!validateMultiSecurityAnswers(sec, req, res)) return;
-                                acc.multiSecurity = sec;
-                            } else {
-                                acc.security = req.query.security;
-                            }
-                        }
-                        if (acc.microsoftAccount) {
-                            acc.requestServer = config.server || acc.requestServer;
-                            acc.accessToken = req.query.token;
-                            acc.accessTokenExpiration = Math.round(Date.now() / 1000) + 86360
-                            acc.accessTokenSource = "account_manager_login_microsoft";
-                        }
-                        acc.discordMessageSent = false;
-                        acc.errorCounter = 0;
-                        acc.save(function (err, acc) {
-                            res.json({
-                                exists: !!acc,
-                                enabled: !!acc && acc.enabled,
-                                passwordUpdated: !!req.query.password,
-                                securityUpdated: !!req.query.security,
-                                discordLinked: !!acc && !!acc.discordUser,
-                                sendEmails: !!acc && !!acc.sendEmails,
-                                microsoftAccount: !!acc && !!acc.microsoftAccount
-                            });
-                        });
-                    }
-                });
-            } else {
-                res.json({
-                    exists: !!acc,
-                    enabled: !!acc && acc.enabled,
-                    discordLinked: !!acc && acc.discordUser
-                });
-            }
-        })
-    });
-
-    app.get("/accountManager/accountStats", function (req, res) {
-        if (!req.query.token) {
-            res.status(400).json({ error: "Missing token" })
-            return;
-        }
-        if (!req.query.username) {
-            res.status(400).json({ error: "Missing username" })
-            return;
-        }
-        if (!req.query.uuid) {
-            res.status(400).json({ error: "Missing UUID" })
-            return;
-        }
-
-        getProfile(req.query.token, function (response, profileBody) {
-            if (profileBody.error) {
-                res.status(response.statusCode).json({ error: profileBody.error, msg: profileBody.errorMessage })
-            } else {
-                if (profileBody.id !== req.query.uuid) {
-                    res.status(400).json({ error: "uuid mismatch" })
-                    return;
-                }
-
-                Account.findOne({ username: req.query.username, uuid: req.query.uuid }, "id", function (err, account) {
-                    if (err) return console.log(err);
-                    if (!account) {
-                        res.status(404).json({ error: "Account not found" })
-                        return;
-                    }
-
-                    Skin.count({ account: account.id }, function (err, count) {
-                        if (err) {
-                            console.warn(err);
-                            return;
-                        }
-                        res.json({
-                            success: true,
-                            generateCount: count
-                        });
-                    });
-                })
-            }
-        })
-    });
 
     app.post("/accountManager/settings/status", function (req, res) {
         if (!req.body.token) {
@@ -911,26 +791,6 @@ module.exports = function (app, config) {
         })
 
     });
-
-    app.get("/accountStats/:account", function (req, res) {
-        let id = req.params.account;
-        Account.findOne({ id: id, enabled: true }, "id enabled lastUsed errorCounter successCounter totalErrorCounter totalSuccessCounter requestServer lastErrorCode", function (err, account) {
-            if (err) return console.log(err);
-            if (!account) {
-                res.status(404).json({ error: "Account not found" })
-                return;
-            }
-
-            res.json({
-                id: account.id,
-                currentServer: account.requestServer,
-                lastError: account.lastErrorCode,
-                lastUsed: Math.floor(account.lastUsed),
-                successRate: Math.round(account.totalSuccessCounter / (account.totalSuccessCounter + account.totalErrorCounter) * 100) / 100,
-                successStreak: Math.round(account.successCounter / 10) * 10
-            })
-        })
-    })
 
 
     function validateMultiSecurityAnswers(answers, req, res) {

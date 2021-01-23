@@ -139,6 +139,18 @@ export function md5(str: string): string {
     return crypto.createHash('md5').update(str).digest("hex");
 }
 
+export function sha1(str: string): string {
+    return crypto.createHash('sha1').update(str).digest("hex");
+}
+
+export function sha256(str: string): string {
+    return crypto.createHash('sha256').update(str).digest("hex");
+}
+
+export function sha512(str: string): string {
+    return crypto.createHash('sha512').update(str).digest("hex");
+}
+
 export function base64encode(str: string): string {
     return new Buffer(str).toString("base64");
 }
