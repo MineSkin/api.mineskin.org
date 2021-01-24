@@ -44,6 +44,11 @@ export async function checkTraffic(req: Request, res: Response): Promise<boolean
     return true;
 }
 
+export async function updateTraffic(req: Request): Promise<void> {
+    const ip = getIp(req);
+    return await Caching.updateTrafficRequestTime(ip, new Date());
+}
+
 export async function validateImage(req: Request, res: Response, file: string): Promise<boolean> {
     const stats = fs.statSync(file);
     const size = stats.size;

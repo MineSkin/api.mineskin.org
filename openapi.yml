@@ -10,4 +10,62 @@ info:
     url: https://github.com/MineSkin/api.mineskin.org/blob/master/LICENSE
 servers:
   - url: https://api.mineskin.org
+tags:
+  - name: generate
+  - name: account
+  - name: get
+components:
+  schemas:
+    SkinInfo:
+      type: object
+      required: [id, model, data]
+      properties:
+        id:
+          type: number
+        idStr:
+          type: string
+        name:
+          type: string
+        model:
+          type: string
+          enum: [steve, slim, unknown]
+        data:
+          $ref: '#/components/schemas/SkinData'
+        timestamp:
+          type: number
+        duration:
+          type: number
+        accountId:
+          type: number
+        server:
+          type: string
+        private:
+          type: boolean
+        views:
+          type: number
+    SkinData:
+      type: object
+      properties:
+        uuid:
+          type: string
+        texture:
+          $ref: '#/components/schemas/TextureInfo'
+    TextureInfo:
+      type: object
+      properties:
+        value:
+          type: string
+        signature:
+          type: string
+        url:
+          type: string
+    Stats:
+      type: object
+      properties:
+        server:
+          type: string
+        delay:
+          type: number
+
 paths:
+

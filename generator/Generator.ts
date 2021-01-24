@@ -500,6 +500,13 @@ export class Generator {
         let account: Maybe<IAccountDocument> = undefined;
         let tempFile: Maybe<TempFile> = undefined;
         try {
+            // Check original url for duplicate or for mineskin urls
+            const originalUrlDuplicate = await this.findDuplicateFromUrl(originalUrl, options, GenerateType.URL);
+            if (originalUrlDuplicate) {
+                return {
+                    duplicate: originalUrlDuplicate
+                };
+            }
             // Try to find the source image
             const followResponse = await this.followUrl(originalUrl);
             if (!followResponse) {
@@ -510,12 +517,14 @@ export class Generator {
             if (!url) {
                 throw new GeneratorError(GenError.INVALID_IMAGE_URL, "Failed to follow url");
             }
-            // Check for duplicate from url
-            const urlDuplicate = await this.findDuplicateFromUrl(url, options, GenerateType.URL);
-            if (urlDuplicate) {
-                return {
-                    duplicate: urlDuplicate
-                };
+            // Check for duplicate from url again, if the followed url is different
+            if (url !== originalUrl) {
+                const followedUrlDuplicate = await this.findDuplicateFromUrl(url, options, GenerateType.URL);
+                if (followedUrlDuplicate) {
+                    return {
+                        duplicate: followedUrlDuplicate
+                    };
+                }
             }
             const contentType = this.getContentTypeFromResponse(followResponse);
             if (!contentType || !contentType.startsWith("image") || !ALLOWED_IMAGE_TYPES.includes(contentType)) {
@@ -577,7 +586,7 @@ export class Generator {
                 meta: {
                     uuid: uuid(),
                     imageHash: tempFileValidation.hash!,
-                    mojangHash: mojangHash!
+                    mojangHash: mojangHash!.hash!
                 }
             };
         } catch (e) {
@@ -682,7 +691,7 @@ export class Generator {
                 meta: {
                     uuid: uuid(),
                     imageHash: tempFileValidation.hash!,
-                    mojangHash: mojangHash!
+                    mojangHash: mojangHash!.hash!
                 }
             };
         } catch (e) {
@@ -726,8 +735,8 @@ export class Generator {
             data: data,
             meta: {
                 uuid: uuids.long,
-                imageHash: mojangHash,
-                mojangHash: mojangHash
+                imageHash: mojangHash!.hash!,
+                mojangHash: mojangHash!.hash!
             }
         };
     }
@@ -841,14 +850,18 @@ export class Generator {
         return decoded;
     }
 
-    protected static async getMojangHash(url: string): Promise<string> {
+    protected static async getMojangHash(url: string): Promise<MojangHashInfo> {
         const tempFile = await Temp.file({
             dir: MOJ_DIR
         });
         try {
             await Temp.downloadImage(url, tempFile);
             const imageBuffer = await fs.readFile(tempFile.path);
-            return await imageHash(imageBuffer);
+            const hash = await imageHash(imageBuffer);
+            return {
+                buffer: imageBuffer,
+                hash: hash
+            };
         } finally {
             if (tempFile) {
                 tempFile.remove();
@@ -903,6 +916,11 @@ interface TempFileValidationResult extends GenerateResult {
     size?: number;
     dimensions?: ISizeCalculationResult;
     fileType?: FileTypeResult;
+    hash?: string;
+}
+
+interface MojangHashInfo {
+    buffer?: Buffer;
     hash?: string;
 }
 
