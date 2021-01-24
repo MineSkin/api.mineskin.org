@@ -1,5 +1,5 @@
 import { Requests } from "./Requests";
-import { AsyncLoadingCache, Caches, LoadingCache, Time } from "@inventivetalent/loading-cache";
+import { AsyncLoadingCache, Caches, LoadingCache, SimpleCache, Time } from "@inventivetalent/loading-cache";
 import { SkinData } from "../types/SkinData";
 import { ProfileResponse } from "../types/ProfileResponse";
 import { User } from "../types/User";
@@ -12,6 +12,7 @@ import { ISkinDocument, ITrafficDocument } from "../types";
 import { Skin, Traffic } from "../database/schemas";
 import { MemoizeExpiring } from "typescript-memoize";
 import { BasicMojangProfile } from "./Authentication";
+import { PendingDiscordLink } from "../routes/accountManager";
 
 const config: Config = require("../config");
 
@@ -156,6 +157,13 @@ export class Caching {
         .expirationInterval(Time.seconds(5))
         .buildAsync<number, ISkinDocument>(id => Skin.findForId(id));
 
+    //// OTHER
+
+    protected static readonly pendingDiscordLinkByStateCache: SimpleCache<string, PendingDiscordLink> = Caches.builder()
+        .expireAfterWrite(Time.minutes(5))
+        .expirationInterval(Time.seconds(30))
+        .build();
+
     ////
 
     protected static metricsCollector = setInterval(() => {
@@ -218,6 +226,16 @@ export class Caching {
 
     public static getSkinById(id: number): Promise<Maybe<ISkinDocument>> {
         return this.skinByIdCache.get(id);
+    }
+
+    /// OTHER
+
+    public static storePendingDiscordLink(pendingLink: PendingDiscordLink): void {
+        this.pendingDiscordLinkByStateCache.put(pendingLink.state, pendingLink);
+    }
+
+    public static getPendingDiscordLink(state: string): Maybe<PendingDiscordLink> {
+        return this.pendingDiscordLinkByStateCache.getIfPresent(state);
     }
 
     ///

@@ -16,3 +16,4 @@ export class MineSkinError extends Error {
         return 'MineSkinError';
     }
 }
+

@@ -2,7 +2,7 @@ import * as hasha from "hasha";
 
 export * from "./colors";
 export * from "./metrics";
-export * from "./encryption";
+export * from "./Encryption";
 
 import * as colors from "./colors";
 import * as fs from "fs";

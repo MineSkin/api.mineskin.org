@@ -223,8 +223,65 @@ export const register = (app: Application) => {
             successRate: Number((account.successCounter / generateTotal).toFixed(3)),
             successStreak: Math.round(account.successCounter / 10) * 10,
             discordLinked: !!account.discordUser,
-            sendEmails: !!account.sendEmails
+            sendEmails: !!account.sendEmails,
+            settings: {
+                enabled: account.enabled,
+                emails: account.sendEmails
+            }
         })
+    })
+
+    app.put("/accountManager/settings/:setting", async (req: AccountManagerRequest, res: Response) => {
+        if (!validateSessionAndToken(req, res)) return;
+        if (!req.body["email"]) {
+            res.status(400).json({ error: "missing credentials" });
+            return;
+        }
+        if (!req.session || !req.session.account) {
+            res.status(400).json({ error: "invalid session" });
+            return;
+        }
+        const profileValidation = await getAndValidateMojangProfile(req.body["token"], req.body["uuid"]);
+        if (!profileValidation.valid || !profileValidation.profile) return;
+
+        let updater: (account: IAccountDocument) => void;
+        const setting = req.params["setting"];
+        switch (setting) {
+            case 'status':
+                updater = account => {
+                    account.enabled = !!req.body["enabled"]
+                }
+                break;
+            case 'emails':
+                updater = account => {
+                    account.sendEmails = !!req.body["emails"];
+                }
+                break;
+            default:
+                res.status(404).json({ error: "unknown setting" });
+                return;
+        }
+        if (!updater) return;
+
+        const account = await Account.findOne({
+            type: "external",
+            uuid: profileValidation.profile.id,
+            accountType: req.session.account.type,
+            $or: [
+                { email: req.session.account.email },
+                { username: req.session.account.email }
+            ]
+        }).exec();
+        if (!account) {
+            res.status(404).json({ error: "account not found" });
+            return;
+        }
+        updater(account);
+        await account.save();
+        res.json({
+            success: true,
+            msg: "updated"
+        });
     })
 
     app.post("/accountManager/confirmAccountSubmission", async (req: AccountManagerRequest, res: Response) => {
@@ -314,6 +371,44 @@ export const register = (app: Application) => {
         })
     })
 
+    app.delete("/accountManager/deleteAccount", async (req: AccountManagerRequest, res: Response) => {
+        if (!validateSessionAndToken(req, res)) return;
+        if (!req.body["email"]) {
+            res.status(400).json({ error: "missing credentials" });
+            return;
+        }
+        if (!req.session || !req.session.account) {
+            res.status(400).json({ error: "invalid session" });
+            return;
+        }
+        const profileValidation = await getAndValidateMojangProfile(req.body["token"], req.body["uuid"]);
+        if (!profileValidation.valid || !profileValidation.profile) return;
+
+        const account = await Account.findOne({
+            type: "external",
+            uuid: profileValidation.profile.id,
+            accountType: req.session.account.type,
+            $or: [
+                { email: req.session.account.email },
+                { username: req.session.account.email }
+            ]
+        }).exec();
+        if (!account) {
+            res.status(404).json({ error: "account not found" });
+            return;
+        }
+        if (account.enabled) {
+            res.status(400).json({ error: "account needs to be disabled first" });
+            return;
+        }
+
+        await account.remove();
+        res.json({
+            success: true,
+            msg: "account removed"
+        });
+    })
+
 }
 
 function validateSessionAndToken(req: AccountManagerRequest, res: Response): boolean {
@@ -399,6 +494,13 @@ interface MojangProfileValidation {
     valid: boolean;
 }
 
+export interface PendingDiscordLink {
+    state: string;
+    account: number;
+    uuid: string;
+    email: string;
+}
+
 
 module.exports = function (app, config) {
 
@@ -424,94 +526,6 @@ module.exports = function (app, config) {
     const Account = require("../database/schemas/Account").IAccountDocument;
     const Skin = require("../database/schemas/Skin").ISkinDocument;
 
-
-
-
-    app.post("/accountManager/settings/status", function (req, res) {
-        if (!req.body.token) {
-            res.status(400).json({ error: "Missing token" })
-            return;
-        }
-        if (!req.body.username) {
-            res.status(400).json({ error: "Missing username" })
-            return;
-        }
-        if (typeof req.body.enabled === "undefined") {
-            res.status(400).json({ error: "Missing enabled-status" })
-            return;
-        }
-
-        getProfile(req.body.token, function (response, profileBody) {
-            if (profileBody.error) {
-                res.status(response.statusCode).json({ error: profileBody.error, msg: profileBody.errorMessage })
-            } else {
-                if (profileBody.id !== req.body.uuid) {
-                    res.status(400).json({ error: "uuid mismatch" })
-                    return;
-                }
-
-                Account.findOne({ username: req.body.username, uuid: profileBody.id }, function (err, account) {
-                    if (err) return console.log(err);
-                    if (!account) {
-                        res.status(404).json({ error: "Account not found" })
-                        return;
-                    }
-
-                    account.enabled = !!req.body.enabled;
-                    account.save(function (err, account) {
-                        if (err) return console.log(err);
-                        res.json({
-                            success: true,
-                            msg: "Account status updated",
-                            enabled: account.enabled
-                        })
-                    });
-                })
-            }
-        })
-    })
-
-    app.post("/accountManager/deleteAccount", function (req, res) {
-        if (!req.body.token) {
-            res.status(400).json({ error: "Missing token" })
-            return;
-        }
-        if (!req.body.username) {
-            res.status(400).json({ error: "Missing username" })
-            return;
-        }
-        if (!req.body.uuid) {
-            res.status(400).json({ error: "Missing UUID" })
-            return;
-        }
-
-        getProfile(req.body.token, function (response, profileBody) {
-            if (profileBody.error) {
-                res.status(response.statusCode).json({ error: profileBody.error, msg: profileBody.errorMessage })
-            } else {
-                if (profileBody.id !== req.body.uuid) {
-                    res.status(400).json({ error: "uuid mismatch" })
-                    return;
-                }
-
-                Account.findOne({ username: req.body.username, uuid: req.body.uuid, enabled: false }, "id", function (err, account) {
-                    if (err) return console.log(err);
-                    if (!account) {
-                        res.status(404).json({ error: "Account not found" })
-                        return;
-                    }
-
-                    account.remove(function (err, account) {
-                        if (err) return console.log(err);
-                        res.json({
-                            success: true,
-                            msg: "Account removed"
-                        })
-                    });
-                })
-            }
-        })
-    })
 
     app.get("/accountManager/listAccounts", function (req, res) {
         Account.find({}, "id lastUsed enabled errorCounter successCounter type", function (err, accounts) {

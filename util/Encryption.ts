@@ -23,7 +23,7 @@ export class Encryption {
 
     static decrypt(text: string): string {
         const textParts = new Buffer(text, 'base64').toString('ascii').split(':');
-        const iv = new Buffer(textParts.shift(), 'hex');
+        const iv = new Buffer(textParts.shift() as string, 'hex');
         const encryptedText = new Buffer(textParts.join(':'), 'hex');
         const decipher = crypto.createDecipheriv(config.crypto.algorithm, new Buffer(ENCRYPTION_KEY), iv);
         let decrypted = decipher.update(encryptedText);
