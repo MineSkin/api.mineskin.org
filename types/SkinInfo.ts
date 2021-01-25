@@ -1,4 +1,4 @@
-import { SkinModel } from "./ISkinDocument";
+import { SkinModel, SkinVariant } from "./ISkinDocument";
 import { ProfileProperty } from "./ProfileResponse";
 
 export interface SkinInfoTextureUrls {
@@ -21,6 +21,7 @@ export interface SkinInfo {
     idStr: string;
     name: string;
     model: SkinModel;
+    variant: SkinVariant;
     data: SkinInfoData;
     timestamp: number;
     duration: number;

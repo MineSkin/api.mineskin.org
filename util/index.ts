@@ -1,25 +1,21 @@
 import * as hasha from "hasha";
+import * as colors from "./colors";
+import * as fs from "fs";
+import { Request, Response } from "express";
+import { Config } from "../types/Config";
+import * as Sentry from "@sentry/node";
+import { Generator } from "../generator/Generator";
+import { imageSize } from "image-size";
+import * as fileType from "file-type";
+import * as readChunk from "read-chunk";
+import * as crypto from "crypto";
+import { Caching } from "../generator/Caching";
+import { SkinVariant } from "../types/ISkinDocument";
 
 export * from "./colors";
 export * from "./metrics";
 export * from "./Encryption";
 
-import * as colors from "./colors";
-import * as fs from "fs";
-import { CallbackError } from "mongoose";
-import { Request, Response } from "express";
-import { Account, Skin, Traffic, Stat } from "../database/schemas";
-import { Config } from "../types/Config";
-import { ITrafficDocument } from "../types";
-import * as Sentry from "@sentry/node";
-import { Generator } from "../generator/Generator";
-import { MemoizeExpiring } from "typescript-memoize";
-import { imageSize } from "image-size";
-import * as fileType from "file-type";
-import * as readChunk from "read-chunk";
-import * as crypto from "crypto";
-import exp = require("constants");
-import { Caching } from "../generator/Caching";
 
 const config: Config = require("../config");
 
@@ -81,6 +77,16 @@ export async function validateImage(req: Request, res: Response, file: string): 
     return true;
 }
 
+export function modelToVariant(model: string): SkinVariant {
+    if (!model) {
+        return SkinVariant.CLASSIC;
+    }
+    if (model === "slim" || model === "alex") {
+        return SkinVariant.SLIM;
+    }
+    return SkinVariant.CLASSIC;
+}
+
 // https://coderwall.com/p/_g3x9q/how-to-check-if-javascript-object-is-empty
 export function isEmpty(obj: any): boolean {
     for (let key in obj) {
@@ -88,20 +94,6 @@ export function isEmpty(obj: any): boolean {
             return false;
     }
     return true;
-}
-
-export function validateModel(model: string): string {
-    if (!model) return model;
-    model = model.toLowerCase();
-
-    if (model === "default" || model === "steve" || model === "classic") {
-        return "steve";
-    }
-    if (model === "slim" || model === "alex") {
-        return "slim";
-    }
-
-    return model;
 }
 
 export function stripUuid(uuid: string): string {

@@ -1,10 +1,17 @@
 import { Document, Model, model } from "mongoose";
 import { SkinInfo } from "./SkinInfo";
 import { Maybe } from "../util";
+import exp = require("constants");
 
 export enum SkinModel {
     UNKNOWN = "unknown",
     CLASSIC = "steve",
+    SLIM = "slim"
+}
+
+export enum SkinVariant {
+    UNKNOWN = "unknown",
+    CLASSIC = "classic",
     SLIM = "slim"
 }
 

@@ -2,6 +2,7 @@ import { model, Schema } from "mongoose";
 import { ISkinDocument } from "../../types";
 import { ISkinModel, SkinModel, SkinVisibility } from "../../types/ISkinDocument";
 import { SkinInfo } from "../../types/SkinInfo";
+import { modelToVariant } from "../../util";
 
 export const SkinSchema: Schema = new Schema({
     id: {
@@ -71,6 +72,7 @@ SkinSchema.methods.toResponseJson = function (this: ISkinDocument, delay?: numbe
         idStr: "" + this.id,
         name: this.name || "",
         model: this.model,
+        variant: modelToVariant(this.model),
         data: {
             uuid: this.uuid,
             texture: {
