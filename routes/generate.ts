@@ -27,9 +27,9 @@ export const register = (app: Application) => {
         if (!requestAllowed) {
             return;
         }
+        await updateTraffic(req);
 
         const skin = await Generator.generateFromUrlAndSave(url, options, client);
-        await updateTraffic(req);
         res.json(skin.toResponseJson());
     })
 
@@ -54,9 +54,9 @@ export const register = (app: Application) => {
         if (!requestAllowed) {
             return;
         }
+        await updateTraffic(req);
 
         const skin = await Generator.generateFromUploadAndSave(file, options, client);
-        await updateTraffic(req);
         res.json(skin.toResponseJson());
     })
 
@@ -82,9 +82,9 @@ export const register = (app: Application) => {
         if (!requestAllowed) {
             return;
         }
+        await updateTraffic(req);
 
         const skin = await Generator.generateFromUserAndSave(uuids.long, options, client);
-        await updateTraffic(req);
         res.json(skin.toResponseJson());
     })
 

@@ -5,6 +5,9 @@ import { IAccountDocument } from "../types";
 
 const config: Config = require("../config");
 
+const OWNER_CHANNEL = "636632020985839619";
+const SUPPORT_CHANNEL = "482181024445497354";
+
 export class Discord {
 
     static postDiscordMessage(content: string, channel?: string, fallback?: () => void): void {
@@ -61,7 +64,7 @@ export class Discord {
         })
     }
 
-    static async addDiscordRole(userId: string): Promise<boolean> {
+    static async addDiscordAccountOwnerRole(userId: string): Promise<boolean> {
         if (!config.discord || !config.discord.token || !config.discord.guild) return false;
         return Requests.axiosInstance.request({
             method: "PUT",
@@ -71,7 +74,7 @@ export class Discord {
             }
         }).then(response => {
             if (response.status !== 200) {
-                console.warn("addDiscordRole")
+                console.warn("addDiscordAccountOwnerRole")
                 console.warn(response.status);
                 console.warn(response.data);
                 return false;
@@ -85,7 +88,7 @@ export class Discord {
         })
     }
 
-    static async removeDiscordRole(userId: string): Promise<boolean> {
+    static async removeDiscordAccountOwnerRole(userId: string): Promise<boolean> {
         if (!config.discord || !config.discord.token || !config.discord.guild) return false;
         return Requests.axiosInstance.request({
             method: "DELETE",
@@ -95,7 +98,7 @@ export class Discord {
             }
         }).then(response => {
             if (response.status !== 200) {
-                console.warn("addDiscordRole")
+                console.warn("addDiscordAccountOwnerRole")
                 console.warn(response.status);
                 console.warn(response.data);
                 return false;
@@ -127,12 +130,12 @@ export class Discord {
                 "\n" +
                 "The account won't be used for skin generation until the issues are resolved.\n" +
                 "Please log back in to your account at https://mineskin.org/account\n" +
-                "For further assistance feel free to ask in <#482181024445497354> 🙂", account.discordUser,
+                "For further assistance feel free to ask in <#" + SUPPORT_CHANNEL + "> 🙂", account.discordUser,
                 () => {
                     this.postDiscordMessage("Hey <@" + account.discordUser + ">! I tried to send a private message but couldn't reach you :(\n" +
                         "MineSkin just lost access to one of your accounts (" + (account.microsoftAccount ? "microsoft" : "mojang") + ")\n" +
                         "  Account UUID (trimmed): " + (account.uuid || account.playername || "").substr(0, 5) + "****\n" +
-                        "  Please log back in at https://mineskin.org/account\n", "636632020985839619");
+                        "  Please log back in at https://mineskin.org/account\n", OWNER_CHANNEL);
                 });
         }
         account.discordMessageSent = true;

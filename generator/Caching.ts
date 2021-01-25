@@ -238,6 +238,10 @@ export class Caching {
         return this.pendingDiscordLinkByStateCache.getIfPresent(state);
     }
 
+    public static invalidatePendingDiscordLink(state: string): void {
+        this.pendingDiscordLinkByStateCache.invalidate(state);
+    }
+
     ///
 
     public static end() {

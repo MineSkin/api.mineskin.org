@@ -1,6 +1,6 @@
 import { Application, Request, Response } from "express";
 import { AuthenticationError, AuthError, BasicMojangProfile, Microsoft, Mojang, MojangSecurityAnswer, XboxInfo } from "../generator/Authentication";
-import { base64decode, Encryption, getIp, info, Maybe, md5, sha512, stripUuid } from "../util";
+import { base64decode, debug, Encryption, getIp, info, Maybe, md5, sha256, sha512, stripUuid, warn } from "../util";
 import { IAccountDocument, MineSkinError } from "../types";
 import * as session from "express-session";
 import { Generator } from "../generator/Generator";
@@ -8,6 +8,9 @@ import { Config } from "../types/Config";
 import { Account } from "../database/schemas";
 import { AccessTokenSource, AccountType } from "../types/IAccountDocument";
 import { Caching } from "../generator/Caching";
+import { Requests } from "../generator/Requests";
+import * as qs from "querystring";
+import { Discord } from "../util/Discord";
 
 const config: Config = require("../config");
 
@@ -409,6 +412,168 @@ export const register = (app: Application) => {
         });
     })
 
+
+    /// ACCOUNT LINKING
+
+    app.get("/accountManager/discord/oauth/start", async (req: AccountManagerRequest, res: Response) => {
+        if (!config.discord || !config.discord.oauth) {
+            res.status(400).json({ error: "server can't handle discord auth" });
+            return;
+        }
+        if (!validateSessionAndToken(req, res)) return;
+        if (!req.body["email"]) {
+            res.status(400).json({ error: "missing credentials" });
+            return;
+        }
+        if (!req.session || !req.session.account) {
+            res.status(400).json({ error: "invalid session" });
+            return;
+        }
+        const profileValidation = await getAndValidateMojangProfile(req.body["token"], req.body["uuid"]);
+        if (!profileValidation.valid || !profileValidation.profile) return;
+
+        const account = await Account.findOne({
+            type: "external",
+            uuid: profileValidation.profile.id,
+            accountType: req.session.account.type, //TODO: add $or to check for old ones
+            $or: [
+                { email: req.session.account.email },
+                { username: req.session.account.email }
+            ]
+        }).exec();
+        if (!account) {
+            res.status(404).json({ error: "account not found" });
+            return;
+        }
+
+        const clientId = config.discord.oauth.id;
+        const redirect = encodeURIComponent(`https://${ config.server }.api.mineskin.org/accountManager/discord/oauth/callback`);
+        const state = sha256(`${ account.accountType }${ account.uuid }${ Math.random() }${ req.session.account.email! }${ Date.now() }${ account.id }`);
+
+        Caching.storePendingDiscordLink({
+            state: state,
+            account: account.id,
+            uuid: account.uuid,
+            email: req.session.account.email!
+        });
+
+        res.redirect(`https://discordapp.com/api/oauth2/authorize?client_id=${ clientId }&scope=identify&response_type=code&state=${ state }&redirect_uri=${ redirect }`);
+    })
+
+    app.get("/accountManager/discord/oauth/callback", async (req: AccountManagerRequest, res: Response) => {
+        if (!req.query["code"] || !req.query["state"]) {
+            res.status(400).end();
+            return;
+        }
+        if (!config.discord || !config.discord.oauth) {
+            res.status(400).json({ error: "server can't handle discord auth" });
+            return;
+        }
+
+        const pendingLink = Caching.getPendingDiscordLink(req.query["state"] as string);
+        if (!pendingLink) {
+            console.warn("Got a discord OAuth callback but the API wasn't expecting that linking request");
+            res.status(400).json({ error: "invalid state" });
+            return;
+        }
+        Caching.invalidatePendingDiscordLink(req.query["state"] as string);
+
+        // Make sure the session isn't doing anything weird
+        if (!req.session || !req.session.account) {
+            console.warn("discord account link callback had invalid session");
+            res.status(400).json({ error: "invalid session" });
+            return;
+        }
+        const profileValidation = await getAndValidateMojangProfile(req.session.account.token!, pendingLink.uuid);
+        if (!profileValidation.valid || !profileValidation.profile) return;
+
+        const clientId = config.discord.oauth.id;
+        const clientSecret = config.discord.oauth.secret;
+        const redirect = `https://${ config.server }.api.mineskin.org/accountManager/discord/oauth/callback`;
+
+        // Exchange code for token
+        const form: any = {
+            client_id: clientId,
+            client_secret: clientSecret,
+            grant_type: "authorization_code",
+            code: req.query["code"],
+            redirect_uri: redirect,
+            scope: "identify"
+        };
+        const tokenResponse = await Requests.axiosInstance.request({
+            method: "POST",
+            url: "https://discordapp.com/api/oauth2/token",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Accept": "application/json",
+                "Accept-Encoding": "gzip"
+            },
+            data: qs.stringify(form)
+        });
+        const tokenBody = tokenResponse.data;
+        const accessToken = tokenBody["access_token"];
+        if (!accessToken) {
+            console.warn("Failed to get access token from discord");
+            res.status(500).json({ error: "Discord API error" });
+            return;
+        }
+
+        // Get user profile
+        const userResponse = await Requests.axiosInstance.request({
+            method: "GET",
+            url: "https://discordapp.com/api/users/@me",
+            headers: {
+                "Authorization": `Bearer ${ accessToken }`,
+                "Accept": "application/json",
+                "Accept-Encoding": "gzip"
+            }
+        });
+        const userBody = userResponse.data;
+
+        const discordId = userBody["id"];
+        if (!discordId) {
+            console.warn("Discord response did not have an id field")
+            res.status(404).json({ error: "Discord API error" });
+            return;
+        }
+
+        const account = await Account.findOne({
+            id: pendingLink.account,
+            uuid: profileValidation.profile.id,
+            $or: [
+                { email: pendingLink.email },
+                { username: pendingLink.email }
+            ]
+        }).exec();
+        if (!account) {
+            console.warn("account for discord linking callback not found");
+            res.status(404).json({ error: "account not found" });
+            return;
+        }
+
+        if (account.discordUser) {
+            console.warn(warn("Account #" + account.id + " already has a linked discord user (#" + account.discordUser + "), changing to " + discordId));
+        }
+        account.discordUser = discordId;
+        await account.save();
+
+        console.log(info("Discord User " + userBody["username"] + "#" + userBody["discriminator"] + " linked to Mineskin account #" + account.id + "/" + account.uuid + " - adding roles!"));
+        const roleAdded = await Discord.addDiscordAccountOwnerRole(discordId);
+        if (roleAdded) {
+            res.json({
+                success: true,
+                msg: "Successfully linked Mineskin Account " + account.uuid + " to Discord User " + userBody.username + "#" + userBody.discriminator + ", yay! You can close this window now :)"
+            });
+            Discord.sendDiscordDirectMessage("Thanks for linking your Discord account to Mineskin! :)", discordId);
+            Discord.postDiscordMessage(userBody.username + "#" + userBody.discriminator + " linked to account #" + account.id + "/" + account.uuid);
+        } else {
+            res.json({
+                success: false,
+                msg: "Uh oh! Looks like there was an issue linking your discord account! Make sure you've joined inventivetalent's discord server and try again"
+            })
+        }
+    })
+
 }
 
 function validateSessionAndToken(req: AccountManagerRequest, res: Response): boolean {
@@ -501,324 +666,3 @@ export interface PendingDiscordLink {
     email: string;
 }
 
-
-module.exports = function (app, config) {
-
-    const util = require("../util");
-    const urls = require("../generator/urls");
-    const request = require("request").defaults({
-        headers: {
-            "Accept": "application/json, text/plain, */*",
-            "Accept-Encoding": "gzip, deflate",
-            "Origin": "mojang://launcher",
-            "User-Agent": "MineSkin.org" /*"Minecraft Launcher/2.1.2481 (bcb98e4a63) Windows (10.0; x86_64)"*/,
-            "Content-Type": "application/json;charset=UTF-8"
-        }
-    });
-    const md5 = require("md5");
-    const authentication = require("../generator/Authentication");
-    const { URL } = require("url");
-    const metrics = require("../util/metrics");
-
-    const pendingDiscordLinks = {};
-
-    // Schemas
-    const Account = require("../database/schemas/Account").IAccountDocument;
-    const Skin = require("../database/schemas/Skin").ISkinDocument;
-
-
-    app.get("/accountManager/listAccounts", function (req, res) {
-        Account.find({}, "id lastUsed enabled errorCounter successCounter type", function (err, accounts) {
-            if (err) return console.log(err);
-
-            const accs = [];
-            accounts.forEach(function (acc) {
-                if (!acc.successCounter) acc.successCounter = 0;
-                if (!acc.errorCounter) acc.errorCounter = 0;
-                const total = acc.successCounter + acc.errorCounter;
-                accs.push({
-                    id: acc.id,
-                    lastUsed: acc.lastUsed,
-                    enabled: acc.enabled,
-                    type: acc.type,
-                    successRate: Number((acc.successCounter / total).toFixed(3))
-                })
-            });
-            res.json(accs)
-        })
-    });
-
-    app.get("/accountManager/discord/oauth/start", function (req, res) {
-        if (!req.query.token) {
-            res.status(400).json({ error: "Missing token" })
-            return;
-        }
-        if (!req.query.username) {
-            res.status(400).json({ error: "Missing username" })
-            return;
-        }
-        if (!req.query.uuid) {
-            res.status(400).json({ error: "Missing UUID" })
-            return;
-        }
-
-        getProfile(req.query.token, function (response, profileBody) {
-            if (profileBody.error) {
-                res.status(response.statusCode).json({ error: profileBody.error, msg: profileBody.errorMessage })
-            } else {
-                if (profileBody.id !== req.query.uuid) {
-                    res.status(400).json({ error: "uuid mismatch" })
-                    return;
-                }
-
-                Account.findOne({ username: req.query.username, uuid: req.query.uuid }, "id username uuid", function (err, account) {
-                    if (err) return console.log(err);
-                    if (!account) {
-                        res.status(404).json({ error: "Account not found" })
-                        return;
-                    }
-
-                    let clientId = config.discord.oauth.id;
-                    let redirect = encodeURIComponent("https://" + (config.server ? config.server + "." : "") + "api.mineskin.org/accountManager/discord/oauth/callback");
-
-                    let state = md5(account.uuid + "_" + account.username + "_magic_discord_string_" + Date.now() + "_" + account.id);
-
-                    pendingDiscordLinks[state] = {
-                        account: account.id,
-                        uuid: account.uuid
-                    };
-
-                    res.redirect('https://discordapp.com/api/oauth2/authorize?client_id=' + clientId + '&scope=identify&response_type=code&state=' + state + '&redirect_uri=' + redirect);
-                })
-            }
-        })
-    });
-
-    app.get("/accountManager/discord/oauth/callback", function (req, res) {
-        if (!req.query.code) {
-            res.status(400).json({
-                error: "Missing code"
-            });
-            return;
-        }
-        const redirect = "https://" + (config.server ? config.server + "." : "") + "api.mineskin.org/accountManager/discord/oauth/callback";
-        request({
-            url: "https://discordapp.com/api/oauth2/token",
-            method: "POST",
-            form: {
-                client_id: config.discord.oauth.id,
-                client_secret: config.discord.oauth.secret,
-                grant_type: "authorization_code",
-                code: req.query.code,
-                redirect_uri: redirect,
-                scope: "identify"
-            },
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded"
-            },
-            gzip: true,
-            json: true
-        }, function (err, tokenResponse, tokenBody) {
-            if (err) {
-                console.warn(err);
-                res.status(500).json({
-                    error: "Discord API error",
-                    state: "oauth_token"
-                });
-                return;
-            }
-
-            console.log(tokenBody);
-            if (!tokenBody.access_token) {
-                res.status(500).json({
-                    error: "Discord API error",
-                    state: "oauth_access_token"
-                });
-                return;
-            }
-
-            request({
-                url: "https://discordapp.com/api/users/@me",
-                method: "GET",
-                auth: {
-                    bearer: tokenBody.access_token
-                },
-                gzip: true,
-                json: true
-            }, function (err, profileResponse, profileBody) {
-                if (err) {
-                    console.warn(err);
-                    res.status(500).json({
-                        error: "Discord API error",
-                        state: "profile"
-                    });
-                    return;
-                }
-
-                if (!req.query.state) {
-                    res.status(400).json({
-                        error: "Missing state"
-                    });
-                    return;
-                }
-                if (!pendingDiscordLinks.hasOwnProperty(req.query.state)) {
-                    console.warn("Got a discord OAuth callback but the API wasn't expecting that linking request");
-                    res.status(400).json({
-                        error: "API not waiting for this link"
-                    });
-                    return;
-                }
-                const linkInfo = pendingDiscordLinks[req.query.state];
-                delete pendingDiscordLinks[req.query.state];
-
-                console.log(profileBody);
-
-                if (!profileBody.id) {
-                    res.status(404).json({ error: "Missing profile id in discord response" })
-                    return;
-                }
-
-                Account.findOne({ id: linkInfo.account, uuid: linkInfo.uuid }, function (err, account) {
-                    if (err) return console.log(err);
-                    if (!account) {
-                        res.status(404).json({ error: "Account not found" })
-                        return;
-                    }
-
-                    if (account.discordUser) {
-                        console.warn("Account #" + account.id + " already has a linked discord user (#" + account.discordUser + "), changing to " + profileBody.id);
-                    }
-
-                    account.discordUser = profileBody.id;
-                    account.save(function (err, acc) {
-                        if (err) {
-                            console.warn(err);
-                            res.status(500).json({ error: "Unexpected error" })
-                            return;
-                        }
-
-                        console.log("Linking Discord User " + profileBody.username + "#" + profileBody.discriminator + " to Mineskin account #" + linkInfo.account + "/" + linkInfo.uuid);
-                        addDiscordRole(profileBody.id, function (b) {
-                            if (b) {
-                                res.json({
-                                    success: true,
-                                    msg: "Successfully linked Mineskin Account " + account.uuid + " to Discord User " + profileBody.username + "#" + profileBody.discriminator + ", yay! You can close this window now :)"
-                                });
-                                util.sendDiscordDirectMessage("Thanks for linking your Discord account to Mineskin! :)", profileBody.id);
-                            } else {
-                                res.json({
-                                    success: false,
-                                    msg: "Uh oh! Looks like there was an issue linking your discord account! Make sure you've joined inventivetalent's discord server and try again"
-                                })
-                            }
-                        });
-                    })
-                });
-            })
-        })
-    });
-
-    app.post("/accountManager/authInterceptor/reportGameLaunch", function (req, res) {
-        console.log("authInterceptor/reportGameLaunch");
-
-        if (typeof req.body !== "object" || !req.body.hasOwnProperty("a")) {
-            res.stats(400).json({
-                success: false,
-                msg: "invalid request"
-            });
-            return;
-        }
-
-        const buffer = Buffer.from(req.body.a, "base64");
-        if (buffer.length !== 416) {
-            res.stats(400).json({
-                success: false,
-                msg: "invalid request"
-            });
-            return;
-        }
-
-        const nameLength = buffer[0];
-        console.log("Name Length: " + nameLength);
-        if (nameLength > 16) {
-            res.stats(400).json({
-                success: false,
-                msg: "invalid request"
-            });
-            return;
-        }
-        let name = "";
-        for (let i = 0; i < nameLength; i++) {
-            name += String.fromCharCode(buffer[4 + i] ^ 4);
-        }
-        console.log("Name: " + name);
-
-        const uuidLength = buffer[1];
-        console.log("UUID Length: " + uuidLength);
-        if (uuidLength !== 32) {
-            res.stats(400).json({
-                success: false,
-                msg: "invalid request"
-            });
-            return;
-        }
-        let uuid = "";
-        for (let i = 0; i < uuidLength; i++) {
-            uuid += String.fromCharCode(buffer[4 + 16 + i] ^ 8);
-        }
-        console.log("UUID: " + uuid);
-
-        const tokenLength = buffer[2] + buffer[3];
-        console.log("Token Length: " + tokenLength);
-        if (tokenLength !== 357) {
-            res.stats(400).json({
-                success: false,
-                msg: "invalid request"
-            });
-            return;
-        }
-        let token = "";
-        for (let i = 0; i < tokenLength; i++) {
-            token += String.fromCharCode(buffer[4 + 16 + 32 + i] ^ 16);
-        }
-        console.log("Token: [redacted]");
-
-        Account.findOne({ uuid: uuid, playername: name, authInterceptorEnabled: true }, function (err, account) {
-            if (err) return console.log(err);
-            if (!account) {
-                res.status(404).json({ error: "Account not found" })
-                return;
-            }
-
-            account.accessToken = token;
-
-            account.save(function (err, acc) {
-                if (err) {
-                    console.warn(err);
-                    res.status(500).json({ error: "Unexpected error" })
-                    return;
-                }
-
-                console.log("Access Token updated for Account #" + acc.id + " via AuthInterceptor");
-                res.status(200).json({ success: true })
-            })
-        })
-
-    });
-
-
-    function validateMultiSecurityAnswers(answers, req, res) {
-        if (typeof answers !== "object" || answers.length < 3) {
-            res.status(400).json({ error: "invalid security answers object (not an object / empty)" });
-            return false;
-        }
-        for (let i = 0; i < answers.length; i++) {
-            if ((!answers[i].hasOwnProperty("id") || !answers[i].hasOwnProperty("answer")) || (typeof answers[i].id !== "number" || typeof answers[i].answer !== "string")) {
-                res.status(400).json({ error: "invalid security answers object (missing id / answer)" });
-                return false;
-            }
-        }
-        return true;
-    }
-
-};

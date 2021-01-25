@@ -32,6 +32,12 @@ interface DiscordConfig {
     channel?: string;
     guild?: string;
     role?: string;
+    oauth?: DiscordOAUthConfig;
+}
+
+interface DiscordOAUthConfig {
+    id: string;
+    secret: string;
 }
 
 interface PullerConfig extends GitPullerOptions {
