@@ -88,8 +88,30 @@ export const register = (app: Application) => {
         res.json(skin.toResponseJson());
     })
 
+    // TODO: remove at some point
     app.get("/generate/user/:uuid", async (req: Request, res: Response) => {
-        //TODO: map to the post request
+        const uuidStr = req.params["uuid"];
+        if (!uuidStr) {
+            res.status(400).json({ error: "missing uuid" });
+            return;
+        }
+        const uuids = longAndShortUuid(uuidStr);
+        if (!uuids) {
+            res.status(400).json({ error: "invalid uuid" });
+            return;
+        }
+        console.log(debug(`USER:        ${ uuidStr }`));
+        const options = getAndValidateOptions(req);
+        const client = getClientInfo(req);
+
+        const requestAllowed = await checkTraffic(req, res);
+        if (!requestAllowed) {
+            return;
+        }
+        await updateTraffic(req);
+
+        const skin = await Generator.generateFromUserAndSave(uuids.long, options, client);
+        res.json(skin.toResponseJson());
     })
 
     ///
