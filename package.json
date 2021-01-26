@@ -5,14 +5,15 @@
     "node": ">=12.20.0"
   },
   "scripts": {
-    "start": "node index.ts"
+    "clean": "rm -rf dist",
+    "compile": "tsc",
+    "build": "npm run clean && npm run compile",
+    "start": "node dist/index.js"
   },
   "dependencies": {
     "@inventivetalent/loading-cache": "^0.4.0",
     "@sentry/node": "^5.29.1",
     "@sentry/tracing": "^5.29.1",
-    "@types/image-size": "^0.8.0",
-    "@types/uuid": "^8.3.0",
     "@xboxreplay/xboxlive-auth": "^3.3.0",
     "axios": "^0.21.1",
     "body-parser": "^1.19.0",
@@ -62,10 +63,11 @@
     "@types/express-fileupload": "^1.1.6",
     "@types/express-rate-limit": "^5.1.0",
     "@types/express-session": "^1.17.3",
-    "@types/mongoose": "^5.10.3",
+    "@types/image-size": "^0.8.0",
     "@types/morgan": "^1.9.2",
     "@types/node": "^14.14.16",
     "@types/tmp": "^0.2.0",
-    "@types/tunnel-ssh": "^4.1.0"
+    "@types/tunnel-ssh": "^4.1.0",
+    "@types/uuid": "^8.3.0"
   }
 }

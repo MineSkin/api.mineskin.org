@@ -2,7 +2,7 @@ import { model, Schema } from "mongoose";
 import { ISkinDocument } from "../../types";
 import { ISkinModel, SkinModel, SkinVisibility } from "../../types/ISkinDocument";
 import { SkinInfo } from "../../types/SkinInfo";
-import { modelToVariant } from "../../util";
+import { Maybe, modelToVariant } from "../../util";
 
 export const SkinSchema: Schema = new Schema({
     id: {
@@ -100,11 +100,11 @@ SkinSchema.methods.toResponseJson = function (this: ISkinDocument, delay?: numbe
 
 /// STATICS
 
-SkinSchema.statics.findForId = function (this: ISkinModel, id: number): Promise<ISkinDocument> {
+SkinSchema.statics.findForId = function (this: ISkinModel, id: number): Promise<ISkinDocument | null> {
     return this.findOne({ id: id }).exec();
 };
 
-SkinSchema.statics.findExistingForHash = function (this: ISkinModel, hash: string, name: string, model: SkinModel, visibility: SkinVisibility): Promise<ISkinDocument> {
+SkinSchema.statics.findExistingForHash = function (this: ISkinModel, hash: string, name: string, model: SkinModel, visibility: SkinVisibility): Promise<Maybe<ISkinDocument>> {
     return this.findOne({ hash: hash, name: name, model: model, visibility: visibility }).exec()
         .then((skin: ISkinDocument) => {
             if (skin) {
@@ -115,7 +115,7 @@ SkinSchema.statics.findExistingForHash = function (this: ISkinModel, hash: strin
             return skin;
         });
 };
-SkinSchema.statics.findExistingForTextureUrl = function (this: ISkinModel, url: string, name: string, model: SkinModel, visibility: SkinVisibility): Promise<ISkinDocument> {
+SkinSchema.statics.findExistingForTextureUrl = function (this: ISkinModel, url: string, name: string, model: SkinModel, visibility: SkinVisibility): Promise<Maybe<ISkinDocument>> {
     return this.findOne({ url: url, name: name, model: model, visibility: visibility }).exec()
         .then((skin: ISkinDocument) => {
             if (skin) {
@@ -127,8 +127,8 @@ SkinSchema.statics.findExistingForTextureUrl = function (this: ISkinModel, url: 
         });
 };
 
-SkinSchema.statics.attachTesterResult = function (this: ISkinModel, id: number, server: string, mismatchCount: number): Promise<ISkinDocument> {
-    return this.findOneAndUpdate({ id: id, server: server }, { testerRequest: true, testerMismatchCounter: mismatchCount });
+SkinSchema.statics.attachTesterResult = function (this: ISkinModel, id: number, server: string, mismatchCount: number): Promise<ISkinDocument | null> {
+    return this.findOneAndUpdate({ id: id, server: server }, { testerRequest: true, testerMismatchCounter: mismatchCount }).exec();
 };
 
 export const Skin: ISkinModel = model<ISkinDocument, ISkinModel>("Skin", SkinSchema);

@@ -1,6 +1,7 @@
-import { Model, model, Schema } from "mongoose";
+import { LeanDocumentOrArray, Model, model, Schema } from "mongoose";
 import { ITrafficDocument } from "../../types";
 import { ITrafficModel } from "../../types/ITrafficDocument";
+import { Maybe } from "../../util";
 
 export const schema: Schema = new Schema(
     {
@@ -14,7 +15,7 @@ export const schema: Schema = new Schema(
         collection: "traffic"
     });
 
-schema.statics.findForIp = function (this: ITrafficModel, ip: string): Promise<ITrafficDocument> {
+schema.statics.findForIp = function (this: ITrafficModel, ip: string): Promise<LeanDocumentOrArray<ITrafficDocument | null>> {
     return this.findOne({ ip: ip }).lean().exec();
 };
 

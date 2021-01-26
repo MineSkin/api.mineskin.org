@@ -1,6 +1,7 @@
 import { Model, model, Schema } from "mongoose";
 import { IStatDocument } from "../../types";
 import { IStatModel } from "../../types/IStatDocument";
+import { Maybe } from "../../util";
 
 const schema: Schema = new Schema(
     {
@@ -11,7 +12,7 @@ const schema: Schema = new Schema(
         collection: "stats"
     });
 
-schema.statics.inc = function (this: IStatModel, key: string, amount = 1): Promise<void> {
+schema.statics.inc = function (this: IStatModel, key: string, amount = 1): Promise<Maybe<IStatDocument>> {
     return this.findOne({ key: key }).exec().then((stat: IStatDocument) => {
         if (!stat) {
             console.warn("Invalid stat key " + key);
@@ -19,7 +20,7 @@ schema.statics.inc = function (this: IStatModel, key: string, amount = 1): Promi
         }
         stat.value += amount;
         return stat.save();
-    })
+    });
 };
 
 export const Stat: IStatModel = model<IStatDocument, IStatModel>("Stat", schema);

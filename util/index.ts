@@ -213,4 +213,4 @@ export function hasOwnProperty<X extends {}, Y extends PropertyKey>(obj: X, prop
 }
 
 // https://github.com/microsoft/TypeScript/issues/13321#issuecomment-637120710
-export type Maybe<T> = T | undefined;
+export type Maybe<T> = T | undefined ;
