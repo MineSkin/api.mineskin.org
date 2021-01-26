@@ -3,7 +3,7 @@ import { ITrafficDocument } from "../../types";
 import { ITrafficModel } from "../../types/ITrafficDocument";
 import { Maybe } from "../../util";
 
-export const schema: Schema = new Schema(
+export const schema: Schema<ITrafficDocument, ITrafficModel> = new Schema(
     {
         ip: String,
         lastRequest: {

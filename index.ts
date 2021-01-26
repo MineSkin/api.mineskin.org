@@ -4,7 +4,7 @@ import * as path from "path";
 import * as fs from "fs";
 import { Config } from "./types/Config";
 import * as express from "express";
-import { ErrorRequestHandler, Express, NextFunction } from "express";
+import { ErrorRequestHandler, Express, NextFunction, Request, Response } from "express";
 import { Puller } from "express-git-puller";
 import connectToMongo from "./database/database";
 import RotatingFileStream from "rotating-file-stream";
@@ -12,12 +12,8 @@ import * as morgan from "morgan";
 import * as bodyParser from "body-parser";
 import * as fileUpload from "express-fileupload";
 import * as session from "express-session";
-import { RateLimit } from "express-rate-limit";
-import Optimus from "optimus-js";
 import { apiRequestsMiddleware, info, metrics } from "./util";
-import * as rateLimit from "express-rate-limit";
 import { generateRoute, getRoute, renderRoute, testerRoute, utilRoute, accountManagerRoute } from "./routes";
-import { generateLimiter } from "./util/rateLimiters";
 import { MOJ_DIR, Temp, UPL_DIR, URL_DIR } from "./generator/Temp";
 import { MineSkinError } from "./types";
 import { Time } from "@inventivetalent/loading-cache";
@@ -125,10 +121,10 @@ async function init() {
         console.log("Setting up git puller");
 
         const puller = new Puller(config.puller);
-        puller.on("before", (req, res) => {
+        puller.on("before", (req: Request, res: Response) => {
             updatingApp = true;
         });
-        app.use(function (req, res, next) {
+        app.use(function (req: Request, res: Response, next: NextFunction) {
             if (updatingApp) {
                 res.status(503).send({ err: "app is updating" });
                 return;

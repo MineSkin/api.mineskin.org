@@ -1,5 +1,5 @@
 import { Account, Skin, Stat } from "../database/schemas";
-import { MemoizeExpiring } from "typescript-memoize";
+import { MemoizeExpiring } from "@inventivetalent/typescript-memoize";
 import { base64decode, debug, DUPLICATES_METRIC, durationMetric, error, getHashFromMojangTextureUrl, hasOwnProperty, imageHash, info, longAndShortUuid, Maybe, metrics, NEW_METRIC, random32BitNumber, stripUuid, warn } from "../util";
 import { IAccountDocument, ISkinDocument, IStatDocument, MineSkinError } from "../types";
 import { Caching } from "./Caching";
@@ -25,7 +25,6 @@ import { ISizeCalculationResult } from "image-size/dist/types/interface";
 import { v4 as uuid } from "uuid";
 import { AccountStats, CountDuplicateViewStats, DurationStats, Stats, SuccessRateStats, TimeFrameStats } from "../types/Stats";
 import * as Jimp from "jimp";
-import { Schema } from "mongoose";
 
 const config: Config = require("../config");
 

@@ -3,7 +3,7 @@ import { IStatDocument } from "../../types";
 import { IStatModel } from "../../types/IStatDocument";
 import { Maybe } from "../../util";
 
-const schema: Schema = new Schema(
+const schema: Schema<IStatDocument, IStatModel> = new Schema(
     {
         key: String,
         value: Number

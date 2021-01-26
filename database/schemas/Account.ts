@@ -8,7 +8,7 @@ import { v4 as uuid } from "uuid";
 const config: Config = require("../../config");
 
 const Int32 = require("mongoose-int32");
-export const AccountSchema: Schema = new Schema({
+export const AccountSchema: Schema<IAccountDocument, IAccountModel> = new Schema({
     id: {
         type: Number,
         index: true
@@ -113,7 +113,7 @@ AccountSchema.methods.toSimplifiedString = function (this: IAccountDocument): st
 
 /// STATICS
 
-AccountSchema.statics.findUsable = function (this: IAccountModel): Promise<IAccountDocument | undefined> {
+AccountSchema.statics.findUsable = function (this: IAccountModel): Promise<Maybe<IAccountDocument>> {
     const time = Math.floor(Date.now() / 1000);
     return this.findOne({
         enabled: true,

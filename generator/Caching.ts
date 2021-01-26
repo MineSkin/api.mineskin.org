@@ -1,5 +1,5 @@
 import { Requests } from "./Requests";
-import { AsyncLoadingCache, Caches, LoadingCache, SimpleCache, Time } from "@inventivetalent/loading-cache";
+import { AsyncLoadingCache, Caches, SimpleCache, Time } from "@inventivetalent/loading-cache";
 import { SkinData } from "../types/SkinData";
 import { ProfileResponse } from "../types/ProfileResponse";
 import { User } from "../types/User";
@@ -8,9 +8,8 @@ import { Severity } from "@sentry/node";
 import { Maybe, metrics, stripUuid } from "../util";
 import { IPoint } from "influx";
 import { Config } from "../types/Config";
-import { ISkinDocument, ITrafficDocument } from "../types";
+import { ISkinDocument } from "../types";
 import { Skin, Traffic } from "../database/schemas";
-import { MemoizeExpiring } from "typescript-memoize";
 import { BasicMojangProfile } from "./Authentication";
 import { PendingDiscordLink } from "../routes/accountManager";
 

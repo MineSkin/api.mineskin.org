@@ -4,7 +4,7 @@ import { ISkinModel, SkinModel, SkinVisibility } from "../../types/ISkinDocument
 import { SkinInfo } from "../../types/SkinInfo";
 import { Maybe, modelToVariant } from "../../util";
 
-export const SkinSchema: Schema = new Schema({
+export const SkinSchema: Schema<ISkinDocument, ISkinModel> = new Schema({
     id: {
         type: Number,
         index: true,
@@ -100,12 +100,12 @@ SkinSchema.methods.toResponseJson = function (this: ISkinDocument, delay?: numbe
 
 /// STATICS
 
-SkinSchema.statics.findForId = function (this: ISkinModel, id: number): Promise<ISkinDocument | null> {
-    return this.findOne({ id: id }).exec();
+SkinSchema.statics.findForId = function ( id: number): Promise<ISkinDocument | null> {
+    return Skin.findOne({ id: id }).exec();
 };
 
-SkinSchema.statics.findExistingForHash = function (this: ISkinModel, hash: string, name: string, model: SkinModel, visibility: SkinVisibility): Promise<Maybe<ISkinDocument>> {
-    return this.findOne({ hash: hash, name: name, model: model, visibility: visibility }).exec()
+SkinSchema.statics.findExistingForHash = function ( hash: string, name: string, model: SkinModel, visibility: SkinVisibility): Promise<Maybe<ISkinDocument>> {
+    return Skin.findOne({ hash: hash, name: name, model: model, visibility: visibility }).exec()
         .then((skin: ISkinDocument) => {
             if (skin) {
                 console.log("Found existing skin with same imageHash");
@@ -115,8 +115,8 @@ SkinSchema.statics.findExistingForHash = function (this: ISkinModel, hash: strin
             return skin;
         });
 };
-SkinSchema.statics.findExistingForTextureUrl = function (this: ISkinModel, url: string, name: string, model: SkinModel, visibility: SkinVisibility): Promise<Maybe<ISkinDocument>> {
-    return this.findOne({ url: url, name: name, model: model, visibility: visibility }).exec()
+SkinSchema.statics.findExistingForTextureUrl = function ( url: string, name: string, model: SkinModel, visibility: SkinVisibility): Promise<Maybe<ISkinDocument>> {
+    return Skin.findOne({ url: url, name: name, model: model, visibility: visibility }).exec()
         .then((skin: ISkinDocument) => {
             if (skin) {
                 console.log("Found existing skin with same texture url");
@@ -127,8 +127,8 @@ SkinSchema.statics.findExistingForTextureUrl = function (this: ISkinModel, url: 
         });
 };
 
-SkinSchema.statics.attachTesterResult = function (this: ISkinModel, id: number, server: string, mismatchCount: number): Promise<ISkinDocument | null> {
-    return this.findOneAndUpdate({ id: id, server: server }, { testerRequest: true, testerMismatchCounter: mismatchCount }).exec();
+SkinSchema.statics.attachTesterResult = function ( id: number, server: string, mismatchCount: number): Promise<ISkinDocument | null> {
+    return Skin.findOneAndUpdate({ id: id, server: server }, { testerRequest: true, testerMismatchCounter: mismatchCount }).exec();
 };
 
 export const Skin: ISkinModel = model<ISkinDocument, ISkinModel>("Skin", SkinSchema);
