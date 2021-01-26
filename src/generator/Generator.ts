@@ -337,6 +337,7 @@ export class Generator {
             url: result.data!.decodedValue!.textures!.SKIN!.url!,
             minecraftTextureHash: getHashFromMojangTextureUrl(result.data!.decodedValue!.textures.SKIN!.url!),
             textureHash: result.meta?.mojangHash,
+            minecraftSkinId: result.meta?.minecraftSkinId,
 
             time: (Date.now() / 1000),
             generateDuration: (Date.now() - start),
@@ -578,7 +579,9 @@ export class Generator {
                     throw new GeneratorError(GenError.SKIN_CHANGE_FAILED, "Failed to change skin", 500, account, err);
                 }
                 throw err;
-            })
+            });
+            const skinResponseBody = skinResponse.data;
+            const minecraftSkinId = skinResponseBody["skins"][0]["id"];
 
             const data = await this.getSkinData(account);
             const mojangHash = await this.getMojangHash(data.decodedValue!.textures!.SKIN!.url);
@@ -591,7 +594,8 @@ export class Generator {
                 meta: {
                     uuid: uuid(),
                     imageHash: tempFileValidation.hash!,
-                    mojangHash: mojangHash!.hash!
+                    mojangHash: mojangHash!.hash!,
+                    minecraftSkinId: minecraftSkinId
                 }
             };
         } catch (e) {
@@ -683,6 +687,8 @@ export class Generator {
                 }
                 throw err;
             });
+            const skinResponseBody = skinResponse.data;
+            const minecraftSkinId = skinResponseBody["skins"][0]["id"];
 
             const data = await this.getSkinData(account);
             const mojangHash = await this.getMojangHash(data.decodedValue!.textures!.SKIN!.url);
@@ -695,7 +701,8 @@ export class Generator {
                 meta: {
                     uuid: uuid(),
                     imageHash: tempFileValidation.hash!,
-                    mojangHash: mojangHash!.hash!
+                    mojangHash: mojangHash!.hash!,
+                    minecraftSkinId: minecraftSkinId
                 }
             };
         } catch (e) {

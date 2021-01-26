@@ -43,6 +43,7 @@ export const SkinSchema: Schema<ISkinDocument, ISkinModel> = new Schema({
     },
     skinId: String,
     skinTextureId: String,
+    minecraftSkinId: String,
     textureHash: String,
     capeUrl: {
         type: String

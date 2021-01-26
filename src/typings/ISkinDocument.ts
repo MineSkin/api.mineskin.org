@@ -51,6 +51,8 @@ export interface ISkinDocument extends Document {
     url: string;
     /** Hash part of the minecraft texture url **/
     minecraftTextureHash?: string;
+    /** UUID of the skin info returned by mojang **/
+    minecraftSkinId?: string;
     /** @deprecated **/
     skinId: string;
     /** @deprecated **/

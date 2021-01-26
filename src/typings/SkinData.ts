@@ -8,6 +8,7 @@ export interface SkinMeta {
     uuid: string;
     imageHash: string;
     mojangHash: string;
+    minecraftSkinId?: string;
 }
 
 export interface TextureMetadata {
