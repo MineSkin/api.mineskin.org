@@ -3,6 +3,7 @@ import * as Tracing from "@sentry/tracing";
 import * as path from "path";
 import * as fs from "fs";
 import * as express from "express";
+import "express-async-errors";
 import { ErrorRequestHandler, Express, NextFunction, Request, Response } from "express";
 import { Puller } from "express-git-puller";
 import connectToMongo from "./database/database";
@@ -158,6 +159,11 @@ async function init() {
 
     app.use(Sentry.Handlers.errorHandler());
     const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
+        Sentry.captureException(err);
+        console.warn("Error in a route");
+        console.log(typeof err);
+        console.log(err instanceof MineSkinError)
+        console.warn(err);
         if (err instanceof MineSkinError) {
             if (err.httpCode) {
                 res.status(err.httpCode);
