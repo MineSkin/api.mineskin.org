@@ -53,7 +53,7 @@ export const register = (app: Application) => {
             return;
         }
 
-        console.log(debug(`UPLOAD:      ${ file }`));
+        console.log(debug(`UPLOAD:      ${ file.name } ${ file.md5 }`));
         const options = getAndValidateOptions(req);
         const client = getClientInfo(req);
 

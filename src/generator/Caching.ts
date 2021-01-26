@@ -179,9 +179,10 @@ export class Caching {
         const points: IPoint[] = [];
         caches.forEach((cache, name) => {
             points.push({
-                measurement: "cache." + name,
+                measurement: "cache_sizes",
                 tags: {
-                    server: config.server
+                    server: config.server,
+                    cache: name
                 },
                 fields: {
                     size: cache.keys().length

@@ -580,24 +580,7 @@ export class Generator {
                 }
                 throw err;
             });
-            const skinResponseBody = skinResponse.data;
-            const minecraftSkinId = skinResponseBody["skins"][0]["id"];
-
-            const data = await this.getSkinData(account);
-            const mojangHash = await this.getMojangHash(data.decodedValue!.textures!.SKIN!.url);
-
-            await this.handleGenerateSuccess(account);
-
-            return {
-                data: data,
-                account: account,
-                meta: {
-                    uuid: uuid(),
-                    imageHash: tempFileValidation.hash!,
-                    mojangHash: mojangHash!.hash!,
-                    minecraftSkinId: minecraftSkinId
-                }
-            };
+            return this.handleSkinChangeResponse(skinResponse, account, tempFileValidation);
         } catch (e) {
             await this.handleGenerateError(e, account);
             throw e;
@@ -687,24 +670,7 @@ export class Generator {
                 }
                 throw err;
             });
-            const skinResponseBody = skinResponse.data;
-            const minecraftSkinId = skinResponseBody["skins"][0]["id"];
-
-            const data = await this.getSkinData(account);
-            const mojangHash = await this.getMojangHash(data.decodedValue!.textures!.SKIN!.url);
-
-            await this.handleGenerateSuccess(account);
-
-            return {
-                data: data,
-                account: account,
-                meta: {
-                    uuid: uuid(),
-                    imageHash: tempFileValidation.hash!,
-                    mojangHash: mojangHash!.hash!,
-                    minecraftSkinId: minecraftSkinId
-                }
-            };
+            return this.handleSkinChangeResponse(skinResponse, account, tempFileValidation);
         } catch (e) {
             await this.handleGenerateError(e, account);
             throw e;
@@ -713,6 +679,33 @@ export class Generator {
                 tempFile.remove();
             }
         }
+    }
+
+    static async handleSkinChangeResponse(skinResponse: AxiosResponse, account: IAccountDocument, tempFileValidation: TempFileValidationResult): Promise<GenerateResult> {
+        const skinChangeResponse = skinResponse.data as SkinChangeResponse;
+        const minecraftSkinId = skinChangeResponse?.skins[0]?.id;
+
+        const data = await this.getSkinData(account);
+        if (skinChangeResponse && skinChangeResponse.skins && skinChangeResponse.skins.length > 0) {
+            if (skinChangeResponse.skins[0].url !== data.decodedValue!.textures!.SKIN!.url) {
+                console.warn(warn("Skin url returned by skin change does not match url returned by data query (" + skinChangeResponse.skins[0].url + " != " + data.decodedValue!.textures!.SKIN!.url + ")"));
+                throw new MineSkinError("skin_url_mismatch", "Skin url returned by skin change does not match url returned by data query", 500);
+            }
+        }
+        const mojangHash = await this.getMojangHash(data.decodedValue!.textures!.SKIN!.url);
+
+        await this.handleGenerateSuccess(account);
+
+        return {
+            data: data,
+            account: account,
+            meta: {
+                uuid: uuid(),
+                imageHash: tempFileValidation.hash!,
+                mojangHash: mojangHash!.hash!,
+                minecraftSkinId: minecraftSkinId
+            }
+        };
     }
 
     /// GENERATE USER
@@ -950,6 +943,19 @@ interface MojangHashInfo {
 
 interface ImageDataValidationResult {
     model: SkinModel;
+}
+
+interface SkinChangeResponse {
+    id: string;
+    name: string;
+    skins: SkinChangeSkin[];
+    capes: any[];
+}
+
+interface SkinChangeSkin {
+    id: string;
+    state: string;
+    url: string;
 }
 
 export enum GenError {

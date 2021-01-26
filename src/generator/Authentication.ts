@@ -30,23 +30,23 @@ export class Mojang {
 
         if (!account.accessToken) { // Needs login
             console.log(warn("[Auth] Account #" + account.id + " doesn't have access token"));
-            return await this.login(account);
+            return await Mojang.login(account);
         }
 
         // Check token expiration
         if (account.accessTokenExpiration && account.accessTokenExpiration - Math.round(Date.now() / 1000) < ACCESS_TOKEN_EXPIRATION_THRESHOLD) {
             console.log(debug("[Auth] (#" + account.id + ") Force-refreshing accessToken, since it will expire in less than 30 minutes"));
-            return await this.refreshAccessTokenOrLogin(account);
+            return await Mojang.refreshAccessTokenOrLogin(account);
         }
 
         // Validate token which shouldn't be expired yet
-        if (await this.validateAccessToken(account)) {
+        if (await Mojang.validateAccessToken(account)) {
             // Still valid!
             return account;
         }
 
         // Fallback to refresh / login
-        return await this.refreshAccessTokenOrLogin(account);
+        return await Mojang.refreshAccessTokenOrLogin(account);
     }
 
     /// LOGIN
@@ -82,7 +82,7 @@ export class Mojang {
         }
 
         console.log(debug("[Auth] Logging in " + account.toSimplifiedString()));
-        const authBody = await this.loginWithCredentials(account.username, Encryption.decrypt(account.passwordNew), account.getOrCreateClientToken()).catch(err => {
+        const authBody = await Mojang.loginWithCredentials(account.username, Encryption.decrypt(account.passwordNew), account.getOrCreateClientToken()).catch(err => {
             if (err.response) {
                 throw new AuthenticationError(AuthError.MOJANG_AUTH_FAILED, "Failed to authenticate via mojang", account, err);
             }
@@ -128,12 +128,12 @@ export class Mojang {
 
     static async refreshAccessTokenOrLogin(account: IAccountDocument): Promise<IAccountDocument> {
         try {
-            return await this.refreshAccessToken(account);
+            return await Mojang.refreshAccessToken(account);
         } catch (e) {
             if (e instanceof AuthenticationError) {
                 if (e.code === AuthError.MOJANG_REFRESH_FAILED) {
                     // Couldn't refresh, attempt to login
-                    return await this.login(account);
+                    return await Mojang.login(account);
                 }
             }
             throw e;
@@ -242,7 +242,7 @@ export class Mojang {
             return account;
         }
 
-        const challenges = await this.getChallenges(account.accessToken)
+        const challenges = await Mojang.getChallenges(account.accessToken)
             .catch(err => {
                 if (err.response) {
                     throw new AuthenticationError(AuthError.MOJANG_CHALLENGES_FAILED, "Failed to complete security challenges", account, err);
@@ -273,7 +273,7 @@ export class Mojang {
             });
         }
 
-        const answerPostResponse = await this.submitChallengeAnswers(account.accessToken, answers)
+        const answerPostResponse = await Mojang.submitChallengeAnswers(account.accessToken, answers)
             .catch(err => {
                 if (err.response) {
                     throw new AuthenticationError(AuthError.MOJANG_CHALLENGES_FAILED, "Failed to complete security challenges", account, err);
@@ -294,18 +294,18 @@ export class Microsoft {
         }
 
         if (!account.accessToken) { // Needs login
-            return await this.login(account);
+            return await Microsoft.login(account);
         }
 
         // Check token expiration
         if (account.accessTokenExpiration && account.accessTokenExpiration - Math.round(Date.now() / 1000) < ACCESS_TOKEN_EXPIRATION_THRESHOLD) {
             console.log(debug("[Auth] (#" + account.id + ") Force-refreshing accessToken, since it will expire in less than 30 minutes"));
-            return await this.refreshAccessTokenOrLogin(account);
+            return await Microsoft.refreshAccessTokenOrLogin(account);
         }
 
         try {
             // Try to use the access token
-            if (await this.checkGameOwnership(account.accessToken)) {
+            if (await Microsoft.checkGameOwnership(account.accessToken)) {
                 // Still valid!
                 return account;
             }
@@ -314,7 +314,7 @@ export class Microsoft {
         }
 
         // Fallback to refresh / login
-        return await this.refreshAccessTokenOrLogin(account);
+        return await Microsoft.refreshAccessTokenOrLogin(account);
     }
 
     static async login(account: IAccountDocument): Promise<IAccountDocument> {
@@ -328,7 +328,7 @@ export class Microsoft {
 
 
         console.log(debug("[Auth] Logging in " + account.toSimplifiedString()));
-        const minecraftAccessToken = await this.loginWithEmailAndPassword(account.username, Encryption.decrypt(account.passwordNew), xboxInfo => {
+        const minecraftAccessToken = await Microsoft.loginWithEmailAndPassword(account.username, Encryption.decrypt(account.passwordNew), xboxInfo => {
             account.microsoftAccessToken = xboxInfo.accessToken;
             account.microsoftRefreshToken = xboxInfo.refreshToken;
             account.microsoftUserId = xboxInfo.userId;
@@ -339,7 +339,7 @@ export class Microsoft {
             }
             throw err;
         })
-        const ownsMinecraft = await this.checkGameOwnership(minecraftAccessToken);
+        const ownsMinecraft = await Microsoft.checkGameOwnership(minecraftAccessToken);
         if (!ownsMinecraft) {
             throw new AuthenticationError(AuthError.DOES_NOT_OWN_MINECRAFT, "User does not own minecraft", account);
         }
@@ -356,12 +356,12 @@ export class Microsoft {
 
     static async refreshAccessTokenOrLogin(account: IAccountDocument): Promise<IAccountDocument> {
         try {
-            return await this.refreshAccessToken(account);
+            return await Microsoft.refreshAccessToken(account);
         } catch (e) {
             if (e instanceof AuthenticationError) {
                 if (e.code === AuthError.MICROSOFT_REFRESH_FAILED) {
                     // Couldn't refresh, attempt to login
-                    return await this.login(account);
+                    return await Microsoft.login(account);
                 }
             }
             throw e;
@@ -376,7 +376,7 @@ export class Microsoft {
             throw new AuthenticationError(AuthError.MICROSOFT_REFRESH_FAILED, "Account has no refresh token", account);
         }
 
-        const newMinecraftAccessToken = await this.refreshXboxAccessToken(account.microsoftRefreshToken, xboxInfo => {
+        const newMinecraftAccessToken = await Microsoft.refreshXboxAccessToken(account.microsoftRefreshToken, xboxInfo => {
             account.microsoftAccessToken = xboxInfo.accessToken;
             account.microsoftRefreshToken = xboxInfo.refreshToken;
             account.minecraftXboxUsername = xboxInfo.username;
@@ -405,11 +405,11 @@ export class Microsoft {
         const xboxAccessToken = loginResponse.access_token;
         const xboxRefreshToken = loginResponse.refresh_token;
 
-        const identityResponse = await this.exchangeRpsTicketForIdentity(xboxAccessToken);
+        const identityResponse = await Microsoft.exchangeRpsTicketForIdentity(xboxAccessToken);
 
         const userHash = identityResponse.userHash;
 
-        const xboxLoginResponse = await this.loginToMinecraftWithXbox(identityResponse.userHash, identityResponse.XSTSToken);
+        const xboxLoginResponse = await Microsoft.loginToMinecraftWithXbox(identityResponse.userHash, identityResponse.XSTSToken);
         const minecraftXboxUsername = xboxLoginResponse.username;
 
         if (xboxInfoConsumer) {
@@ -481,7 +481,7 @@ export class Microsoft {
             "redirect_uri": "https://login.live.com/oauth20_desktop.srf",
             "scope": "service::user.auth.xboxlive.com::MBI_SSL"
         }
-        return this.authenticateXboxWithFormData(form, xboxInfoConsumer);
+        return Microsoft.authenticateXboxWithFormData(form, xboxInfoConsumer);
     }
 
     static async refreshXboxAccessToken(xboxRefreshToken: string, xboxInfoConsumer?: (info: XboxInfo) => void): Promise<string> {
@@ -492,7 +492,7 @@ export class Microsoft {
             "redirect_uri": "https://login.live.com/oauth20_desktop.srf",
             "scope": "service::user.auth.xboxlive.com::MBI_SSL"
         }
-        return await this.authenticateXboxWithFormData(form, xboxInfoConsumer);
+        return await Microsoft.authenticateXboxWithFormData(form, xboxInfoConsumer);
     }
 
     static async authenticateXboxWithFormData(form: any, xboxInfoConsumer?: (info: XboxInfo) => void): Promise<string> {
@@ -513,9 +513,9 @@ export class Microsoft {
         const xboxAccessToken = refreshBody["access_token"];
         const xboxRefreshToken = refreshBody["refresh_token"];
 
-        const identityResponse = await this.exchangeRpsTicketForIdentity(xboxAccessToken);
+        const identityResponse = await Microsoft.exchangeRpsTicketForIdentity(xboxAccessToken);
 
-        const xboxLoginResponse = await this.loginToMinecraftWithXbox(identityResponse.userHash, identityResponse.XSTSToken);
+        const xboxLoginResponse = await Microsoft.loginToMinecraftWithXbox(identityResponse.userHash, identityResponse.XSTSToken);
         const minecraftXboxUsername = xboxLoginResponse.username;
 
         if (xboxInfoConsumer) {
