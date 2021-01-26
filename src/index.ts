@@ -1,3 +1,4 @@
+import * as sourceMapSupport from "source-map-support";
 import * as Sentry from "@sentry/node";
 import * as Tracing from "@sentry/tracing";
 import * as path from "path";
@@ -20,6 +21,7 @@ import { MineSkinError } from "./typings";
 import { apiRequestsMiddleware } from "./util/metrics";
 import { info } from "./util/colors";
 
+sourceMapSupport.install();
 
 const config = getConfig();
 const port = process.env.PORT || config.port || 3014;
@@ -60,7 +62,8 @@ async function init() {
                 new Tracing.Integrations.Express({ app })
             ],
             serverName: config.server,
-            tracesSampleRate: 0.05
+            tracesSampleRate: 0.05,
+
         });
 
         app.use(Sentry.Handlers.requestHandler());

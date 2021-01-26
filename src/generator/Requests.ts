@@ -89,14 +89,13 @@ export class Requests {
             .then(response => {
                 try {
                     console.log(axios.getUri(request));
-                    console.log(request.url);
-                    console.log(response.config.url)
                     const m = REQUESTS_METRIC
                         .tag("server", config.server);
                     if (request) {
-                        const url = new URL(axios.getUri(request));
+                        const url = new URL(axios.getUri(request), instance.defaults.baseURL);
                         m.tag("method", request.method || "GET")
-                            .tag("endpoint", url.host + "" + url.pathname)
+                            .tag("host", url.hostname)
+                            .tag("endpoint", url.hostname + "" + url.pathname);
                     }
                     if (response) {
                         m.tag("statusCode", "" + response.status)

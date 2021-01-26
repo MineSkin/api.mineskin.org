@@ -1,5 +1,5 @@
 import { Application, Request, Response } from "express";
-import { checkTraffic,  getVia, longAndShortUuid, updateTraffic, validateUrl } from "../util";
+import { checkTraffic, getVia, longAndShortUuid, updateTraffic, validateUrl } from "../util";
 import { UploadedFile } from "express-fileupload";
 import { Generator } from "../generator/Generator";
 import { generateLimiter } from "../util/rateLimiters";
@@ -20,14 +20,15 @@ export const register = (app: Application) => {
             res.status(400).json({ error: "invalid url" });
             return;
         }
-        console.log(debug(`URL:         ${ url }`));
-        const options = getAndValidateOptions(req);
-        const client = getClientInfo(req);
-
         const requestAllowed = await checkTraffic(req, res);
         if (!requestAllowed) {
             return;
         }
+
+        console.log(debug(`URL:         ${ url }`));
+        const options = getAndValidateOptions(req);
+        const client = getClientInfo(req);
+
         await updateTraffic(req);
 
         const skin = await Generator.generateFromUrlAndSave(url, options, client);
@@ -47,14 +48,15 @@ export const register = (app: Application) => {
             res.status(400).json({ error: "missing file" });
             return;
         }
-        console.log(debug(`UPLOAD:      ${ file }`));
-        const options = getAndValidateOptions(req);
-        const client = getClientInfo(req);
-
         const requestAllowed = await checkTraffic(req, res);
         if (!requestAllowed) {
             return;
         }
+
+        console.log(debug(`UPLOAD:      ${ file }`));
+        const options = getAndValidateOptions(req);
+        const client = getClientInfo(req);
+
         await updateTraffic(req);
 
         const skin = await Generator.generateFromUploadAndSave(file, options, client);
@@ -75,14 +77,15 @@ export const register = (app: Application) => {
             res.status(400).json({ error: "invalid uuid" });
             return;
         }
-        console.log(debug(`USER:        ${ uuidStr }`));
-        const options = getAndValidateOptions(req);
-        const client = getClientInfo(req);
-
         const requestAllowed = await checkTraffic(req, res);
         if (!requestAllowed) {
             return;
         }
+
+        console.log(debug(`USER:        ${ uuidStr }`));
+        const options = getAndValidateOptions(req);
+        const client = getClientInfo(req);
+
         await updateTraffic(req);
 
         const skin = await Generator.generateFromUserAndSave(uuids.long, options, client);
@@ -96,6 +99,11 @@ export const register = (app: Application) => {
             res.status(400).json({ error: "missing uuid" });
             return;
         }
+        const requestAllowed = await checkTraffic(req, res);
+        if (!requestAllowed) {
+            return;
+        }
+
         const uuids = longAndShortUuid(uuidStr);
         if (!uuids) {
             res.status(400).json({ error: "invalid uuid" });
@@ -105,10 +113,6 @@ export const register = (app: Application) => {
         const options = getAndValidateOptions(req);
         const client = getClientInfo(req);
 
-        const requestAllowed = await checkTraffic(req, res);
-        if (!requestAllowed) {
-            return;
-        }
         await updateTraffic(req);
 
         const skin = await Generator.generateFromUserAndSave(uuids.long, options, client);

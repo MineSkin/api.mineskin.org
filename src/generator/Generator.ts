@@ -1,16 +1,17 @@
 import { Account, Skin, Stat } from "../database/schemas";
 import { MemoizeExpiring } from "@inventivetalent/typescript-memoize";
-import { base64decode,  getHashFromMojangTextureUrl, hasOwnProperty, imageHash,  longAndShortUuid, Maybe, random32BitNumber, stripUuid } from "../util";
+import { base64decode, getHashFromMojangTextureUrl, hasOwnProperty, imageHash, longAndShortUuid, Maybe, modelToVariant, random32BitNumber, stripUuid } from "../util";
 import { Caching } from "./Caching";
 import { Authentication, AuthenticationError } from "./Authentication";
 import * as Sentry from "@sentry/node";
 import { Requests } from "./Requests";
 import * as FormData from "form-data";
-import * as URL from "url";
+import { URL } from "url";
 import { MOJ_DIR, Temp, TempFile, UPL_DIR, URL_DIR } from "./Temp";
-import { AxiosResponse } from "axios";
+import axios, { AxiosResponse } from "axios";
 import imageSize from "image-size";
 import { promises as fs } from "fs";
+import * as syncFs from "fs";
 import * as fileType from "file-type";
 import { FileTypeResult } from "file-type";
 import { UploadedFile } from "express-fileupload";
@@ -37,7 +38,8 @@ const MINECRAFT_TEXTURE_REGEX = /https?:\/\/textures\.minecraft\.net\/texture\/(
 
 const URL_FOLLOW_WHITELIST = [
     "novask.in",
-    "imgur.com"
+    "imgur.com",
+    "i.imgur.com"
 ];
 const MAX_FOLLOW_REDIRECTS = 5;
 
@@ -341,6 +343,7 @@ export class Generator {
 
             account: result.account?.id,
             type: type,
+            server: config.server,
 
             via: client.via,
             ua: client.userAgent,
@@ -380,10 +383,9 @@ export class Generator {
         const mineskinUrlResult = MINESKIN_URL_REGEX.exec(url);
         if (!!mineskinUrlResult && mineskinUrlResult.length >= 3) {
             const mineskinId = parseInt(mineskinUrlResult[2]);
-            const existingSkin = await Skin.findOne({
-                id: mineskinId,
-                name: options.name, model: options.model, visibility: options.visibility
-            }).exec();
+            const query = { id: mineskinId };
+            this.appendOptionsToDuplicateQuery(options, query);
+            const existingSkin = await Skin.findOne(query).exec();
             if (existingSkin) {
                 existingSkin.duplicate++;
                 try {
@@ -405,13 +407,14 @@ export class Generator {
         if (!!minecraftTextureResult && minecraftTextureResult.length >= 2) {
             const textureUrl = minecraftTextureResult[0];
             const textureHash = minecraftTextureResult[1];
-            const existingSkin = await Skin.findOne({
+            const query = {
                 $or: [
                     { url: textureUrl },
                     { minecraftTextureHash: textureHash }
-                ],
-                name: options.name, model: options.model, visibility: options.visibility
-            });
+                ]
+            };
+            this.appendOptionsToDuplicateQuery(options, query);
+            const existingSkin = await Skin.findOne(query);
             if (existingSkin) {
                 existingSkin.duplicate++;
                 try {
@@ -437,10 +440,11 @@ export class Generator {
             return undefined;
         }
 
-        const existingSkin = await Skin.findOne({
-            hash: hash,
-            name: options.name, model: options.name, visibility: options.visibility
-        }).exec();
+        const query = {
+            hash: hash
+        };
+        this.appendOptionsToDuplicateQuery(options, query);
+        const existingSkin = await Skin.findOne(query).exec();
         if (existingSkin) {
             existingSkin.duplicate++;
             try {
@@ -514,7 +518,7 @@ export class Generator {
                 throw new GeneratorError(GenError.INVALID_IMAGE_URL, "Failed to find image from url");
             }
             // Validate response headers
-            const url = this.getUrlFromResponse(followResponse);
+            const url = this.getUrlFromResponse(followResponse, originalUrl);
             if (!url) {
                 throw new GeneratorError(GenError.INVALID_IMAGE_URL, "Failed to follow url");
             }
@@ -604,18 +608,18 @@ export class Generator {
     protected static async followUrl(urlStr: string): Promise<Maybe<AxiosResponse>> {
         if (!urlStr) return undefined;
         try {
-            const url = URL.parse(urlStr, false);
-            if (URL_FOLLOW_WHITELIST.includes(url.host!)) {
-                return await Requests.axiosInstance.request({
-                    method: "HEAD",
-                    url: url.href,
-                    maxRedirects: MAX_FOLLOW_REDIRECTS,
-                    headers: {
-                        "User-Agent": "MineSkin"
-                    }
-                });
-            }
+            const url = new URL(urlStr);
+            const follow = URL_FOLLOW_WHITELIST.includes(url.host!);
+            return await Requests.axiosInstance.request({
+                method: "HEAD",
+                url: url.href,
+                maxRedirects: follow ? MAX_FOLLOW_REDIRECTS : 0,
+                headers: {
+                    "User-Agent": "MineSkin"
+                }
+            });
         } catch (e) {
+            console.warn(e);
             Sentry.captureException(e);
         }
         return undefined;
@@ -661,8 +665,8 @@ export class Generator {
             account = await this.getAndAuthenticateAccount();
 
             const body = new FormData();
-            body.append("variant", options.model);
-            body.append("file", new Blob([tempFileValidation.buffer!], { type: "image/png" }), {
+            body.append("variant", modelToVariant(options.model));
+            body.append("file", tempFileValidation.buffer!, {
                 filename: "skin.png",
                 contentType: "image/png"
             });
@@ -670,7 +674,6 @@ export class Generator {
                 method: "POST",
                 url: "/minecraft/profile/skins",
                 headers: body.getHeaders({
-                    "Content-Type": "multipart/form-data",
                     "Authorization": account.authenticationHeader()
                 }),
                 data: body
@@ -761,6 +764,7 @@ export class Generator {
     /// SUCCESS / ERROR HANDLERS
 
     protected static async handleGenerateSuccess(account: IAccountDocument): Promise<void> {
+        console.log(info("  ==> SUCCESS"));
         if (!account) return;
         try {
             account.errorCounter = 0;
@@ -773,6 +777,7 @@ export class Generator {
     }
 
     protected static async handleGenerateError(e: any, account?: IAccountDocument): Promise<void> {
+        console.log(error("  ==> FAIL"));
         if (!account) return;
         try {
             account.successCounter = 0;
@@ -792,8 +797,8 @@ export class Generator {
 
     /// VALIDATION
 
-    protected static getUrlFromResponse(response: AxiosResponse): string {
-        return response.request.res.responseUrl;
+    protected static getUrlFromResponse(response: AxiosResponse, originalUrl: string): string {
+        return response.request.res.responseUrl || originalUrl; // the axios one may be null if the request was never redirected
     }
 
     protected static getSizeFromResponse(response: AxiosResponse): number {
@@ -820,12 +825,6 @@ export class Generator {
             throw new GeneratorError(GenError.INVALID_IMAGE, "Invalid file type: " + fType, 400);
         }
 
-        const dataValidation = await this.validateImageData(imageBuffer);
-        if (options.model === SkinModel.UNKNOWN && dataValidation.model !== SkinModel.UNKNOWN) {
-            console.log(debug("Switching unknown skin model to " + dataValidation.model + " from detection"));
-            options.model = dataValidation.model;
-        }
-
         // Get the imageHash
         const imgHash = await imageHash(imageBuffer);
         // Check duplicate from imageHash
@@ -834,6 +833,12 @@ export class Generator {
             return {
                 duplicate: hashDuplicate
             };
+        }
+
+        const dataValidation = await this.validateImageData(imageBuffer);
+        if (options.model === SkinModel.UNKNOWN && dataValidation.model !== SkinModel.UNKNOWN) {
+            console.log(debug("Switching unknown skin model to " + dataValidation.model + " from detection"));
+            options.model = dataValidation.model;
         }
 
         return {
@@ -900,6 +905,17 @@ export class Generator {
                 model: SkinModel.CLASSIC
             }
         }
+    }
+
+    static appendOptionsToDuplicateQuery(options: GenerateOptions, query: any): any {
+        if (options) {
+            query.name = options.name || "";
+            query.visibility = options.visibility || 0;
+            if (options.model && options.model !== SkinModel.UNKNOWN) {
+                query.model = options.model;
+            }
+        }
+        return query;
     }
 
 

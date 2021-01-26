@@ -69,7 +69,7 @@ export async function validateImage(req: Request, res: Response, file: string): 
     return true;
 }
 
-export function modelToVariant(model: string): SkinVariant {
+export function modelToVariant(model?: string): SkinVariant {
     if (!model) {
         return SkinVariant.CLASSIC;
     }
