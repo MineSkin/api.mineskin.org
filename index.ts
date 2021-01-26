@@ -26,6 +26,8 @@ import { Time } from "@inventivetalent/loading-cache";
 const config: Config = require("./config");
 const port = process.env.PORT || config.port || 3014;
 
+let updatingApp = true;
+
 console.log("\n" +
     "  ==== STARTING UP ==== " +
     "\n");
@@ -111,7 +113,7 @@ async function init() {
         app.use(bodyParser.json({ limit: '20kb' }));
         app.use(fileUpload());
         app.use((req, res, next) => {
-            res.header("X-Mineskin-Server", config.server || "default");
+            res.header("X-MineSkin-Server", config.server || "default");
             next();
         });
         app.use(apiRequestsMiddleware);
@@ -123,12 +125,8 @@ async function init() {
         console.log("Setting up git puller");
 
         const puller = new Puller(config.puller);
-        let updatingApp = false;
         puller.on("before", (req, res) => {
             updatingApp = true;
-        });
-        puller.on("after", (req, res) => {
-            updatingApp = false;
         });
         app.use(function (req, res, next) {
             if (updatingApp) {
@@ -190,8 +188,12 @@ init().then(() => {
         console.log("Starting app");
         app.listen(port, function () {
             console.log(info(" ==> listening on *:" + port + "\n"));
+            setTimeout(() => {
+                updatingApp = false;
+                console.log(info("Accepting connections."));
+            }, 1000);
         });
-    }, 2000);
+    }, 1000);
 });
 
 

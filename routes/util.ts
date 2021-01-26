@@ -40,7 +40,10 @@ export const register = (app: Application) => {
 
     app.get("/preferredAccountServer", (req: Request, res: Response) => {
         Generator.getPreferredAccountServer().then(server => {
-            res.json({ preferredServer: server });
+            res.json({
+                preferredServer: server,
+                host: `${ server }.api.mineskin.org`
+            });
         }).catch(err => {
             Sentry.captureException(err);
             res.status(404).json({ error: "failed to get server" });
