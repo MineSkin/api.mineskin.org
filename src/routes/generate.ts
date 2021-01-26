@@ -1,11 +1,12 @@
 import { Application, Request, Response } from "express";
-import { GenerateOptions } from "../types/GenerateOptions";
-import { GenerateType, SkinModel, SkinVisibility } from "../types/ISkinDocument";
-import { checkTraffic, debug, getVia, longAndShortUuid, updateTraffic, validateUrl } from "../util";
+import { checkTraffic,  getVia, longAndShortUuid, updateTraffic, validateUrl } from "../util";
 import { UploadedFile } from "express-fileupload";
-import { ClientInfo } from "../types/ClientInfo";
-import { generateLimiter } from "../util/rateLimiters";
 import { Generator } from "../generator/Generator";
+import { generateLimiter } from "../util/rateLimiters";
+import { ClientInfo } from "../typings/ClientInfo";
+import { GenerateOptions } from "../typings/GenerateOptions";
+import { SkinModel, SkinVisibility } from "../typings/ISkinDocument";
+import { debug } from "../util/colors";
 
 export const register = (app: Application) => {
 

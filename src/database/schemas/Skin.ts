@@ -1,8 +1,8 @@
 import { model, Schema } from "mongoose";
-import { ISkinDocument } from "../../types";
-import { ISkinModel, SkinModel, SkinVisibility } from "../../types/ISkinDocument";
-import { SkinInfo } from "../../types/SkinInfo";
 import { Maybe, modelToVariant } from "../../util";
+import { ISkinDocument } from "../../typings";
+import { ISkinModel, SkinModel, SkinVisibility } from "../../typings/ISkinDocument";
+import { SkinInfo } from "../../typings/SkinInfo";
 
 export const SkinSchema: Schema<ISkinDocument, ISkinModel> = new Schema({
     id: {

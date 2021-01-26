@@ -2,7 +2,6 @@ import * as Sentry from "@sentry/node";
 import * as Tracing from "@sentry/tracing";
 import * as path from "path";
 import * as fs from "fs";
-import { Config } from "./types/Config";
 import * as express from "express";
 import { ErrorRequestHandler, Express, NextFunction, Request, Response } from "express";
 import { Puller } from "express-git-puller";
@@ -12,14 +11,16 @@ import * as morgan from "morgan";
 import * as bodyParser from "body-parser";
 import * as fileUpload from "express-fileupload";
 import * as session from "express-session";
-import { apiRequestsMiddleware, info, metrics } from "./util";
 import { generateRoute, getRoute, renderRoute, testerRoute, utilRoute, accountManagerRoute } from "./routes";
 import { MOJ_DIR, Temp, UPL_DIR, URL_DIR } from "./generator/Temp";
-import { MineSkinError } from "./types";
 import { Time } from "@inventivetalent/loading-cache";
+import { getConfig } from "./typings/Configs";
+import { MineSkinError } from "./typings";
+import { apiRequestsMiddleware } from "./util/metrics";
+import { info } from "./util/colors";
 
 
-const config: Config = require("./config");
+const config = getConfig();
 const port = process.env.PORT || config.port || 3014;
 
 let updatingApp = true;

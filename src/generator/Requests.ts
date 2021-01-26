@@ -1,17 +1,14 @@
 import { JobQueue } from "jobqu";
 import axios, { AxiosRequestConfig, AxiosResponse, AxiosInstance } from "axios";
 import { Time } from "@inventivetalent/loading-cache";
-import { metrics } from "../util";
-import { Config } from "../types/Config";
+import { metrics } from "../util/metrics";
 import { URL } from "url";
 import { setInterval } from "timers";
 import { IPoint } from "influx";
 import * as Sentry from "@sentry/node";
-import { Temp, TempFile } from "./Temp";
-import * as fs from "fs";
-import { Stream } from "stream";
+import { getConfig } from "../typings/Configs";
 
-const config: Config = require("../config");
+const config = getConfig();
 
 axios.defaults.headers["User-Agent"] = "MineSkin";
 axios.defaults.headers["Content-Type"] = "application/json";

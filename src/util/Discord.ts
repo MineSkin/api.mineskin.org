@@ -1,9 +1,9 @@
-import { Config } from "../types/Config";
 import { Requests } from "../generator/Requests";
 import * as Sentry from "@sentry/node";
-import { IAccountDocument } from "../types";
+import { getConfig } from "../typings/Configs";
+import { IAccountDocument } from "../typings";
 
-const config: Config = require("../config");
+const config = getConfig();
 
 const OWNER_CHANNEL = "636632020985839619";
 const SUPPORT_CHANNEL = "482181024445497354";

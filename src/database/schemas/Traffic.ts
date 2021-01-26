@@ -1,7 +1,6 @@
 import { LeanDocumentOrArray, Model, model, Schema } from "mongoose";
-import { ITrafficDocument } from "../../types";
-import { ITrafficModel } from "../../types/ITrafficDocument";
-import { Maybe } from "../../util";
+import { ITrafficDocument } from "../../typings";
+import { ITrafficModel } from "../../typings/ITrafficDocument";
 
 export const schema: Schema<ITrafficDocument, ITrafficModel> = new Schema(
     {

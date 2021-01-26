@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@inventivetalent/loading-cache": "^0.4.0",
+    "@inventivetalent/optimus-ts": "^0.2.1",
     "@inventivetalent/typescript-memoize": "^1.0.0-alpha.5",
     "@sentry/node": "^5.29.1",
     "@sentry/tracing": "^5.29.1",
@@ -44,7 +45,6 @@
     "mongoose-int32": "^0.3.1",
     "mongoose-paginate": "^5.0.3",
     "morgan": "^1.9.1",
-    "optimus-js": "^0.1.2",
     "querystring": "^0.2.0",
     "random-ip": "0.0.1",
     "randomstring": "^1.1.5",

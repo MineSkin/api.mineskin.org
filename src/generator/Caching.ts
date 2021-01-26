@@ -1,19 +1,20 @@
 import { Requests } from "./Requests";
 import { AsyncLoadingCache, Caches, SimpleCache, Time } from "@inventivetalent/loading-cache";
-import { SkinData } from "../types/SkinData";
-import { ProfileResponse } from "../types/ProfileResponse";
-import { User } from "../types/User";
 import * as Sentry from "@sentry/node";
 import { Severity } from "@sentry/node";
-import { Maybe, metrics, stripUuid } from "../util";
+import { Maybe, stripUuid } from "../util";
 import { IPoint } from "influx";
-import { Config } from "../types/Config";
-import { ISkinDocument } from "../types";
 import { Skin, Traffic } from "../database/schemas";
 import { BasicMojangProfile } from "./Authentication";
 import { PendingDiscordLink } from "../routes/accountManager";
+import { getConfig } from "../typings/Configs";
+import { SkinData } from "../typings/SkinData";
+import { User } from "../typings/User";
+import { ISkinDocument } from "../typings";
+import { ProfileResponse } from "../typings/ProfileResponse";
+import { metrics } from "../util/metrics";
 
-const config: Config = require("../config");
+const config = getConfig();
 
 export class Caching {
 

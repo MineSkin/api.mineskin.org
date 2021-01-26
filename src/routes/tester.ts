@@ -1,11 +1,11 @@
 import { Application, Request, Response } from "express";
 import * as Sentry from "@sentry/node";
-import { Config } from "../types/Config";
-import { metrics } from "../util";
 import { Skin, Stat } from "../database/schemas";
 import { Discord } from "../util/Discord";
+import { getConfig } from "../typings/Configs";
+import { metrics } from "../util/metrics";
 
-const config: Config = require("../config");
+const config = getConfig();
 const TESTER_METRIC = metrics.metric('mineskin', 'tester');
 
 export const register = (app: Application) => {

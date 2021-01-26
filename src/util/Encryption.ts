@@ -1,7 +1,7 @@
 import * as crypto from "crypto";
-import { Config } from "../types/Config";
+import { getConfig } from "../typings/Configs";
 
-const config: Config = require("../config");
+const config = getConfig();
 
 // https://gist.github.com/vlucas/2bd40f62d20c1d49237a109d491974eb
 

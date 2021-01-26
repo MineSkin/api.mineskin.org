@@ -51,7 +51,7 @@ interface SentryConfig {
 interface MetricsConfig extends ISingleHostConfig {
 }
 
-export interface Config {
+export interface MineSkinConfig {
     port: number;
     server: string;
     master: boolean;
@@ -69,4 +69,8 @@ export interface Config {
     puller: PullerConfig;
     sentry: SentryConfig;
     metrics: MetricsConfig;
+}
+
+export function getConfig(): MineSkinConfig {
+    return require("../../config.js") as MineSkinConfig;
 }

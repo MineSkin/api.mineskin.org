@@ -1,16 +1,18 @@
-import { Config } from "../types/Config";
-import { IAccountDocument, MineSkinError } from "../types";
 import { Requests } from "./Requests";
-import { AUTHENTICATION_METRIC, debug, Encryption, warn } from "../util";
 import * as Sentry from "@sentry/node";
-import { AccessTokenSource, AccountType } from "../types/IAccountDocument";
 import * as XboxLiveAuth from "@xboxreplay/xboxlive-auth";
 import { AuthenticateResponse } from "@xboxreplay/xboxlive-auth";
 import * as qs from "querystring";
 import { Discord } from "../util/Discord";
 import { AxiosResponse } from "axios";
+import { getConfig } from "../typings/Configs";
+import { IAccountDocument, MineSkinError } from "../typings";
+import { AccessTokenSource, AccountType } from "../typings/IAccountDocument";
+import { debug, warn } from "../util/colors";
+import { Encryption } from "../util/Encryption";
+import { AUTHENTICATION_METRIC } from "../util/metrics";
 
-const config: Config = require("../config");
+const config = getConfig();
 
 const ACCESS_TOKEN_EXPIRATION_MOJANG = 86360;
 const ACCESS_TOKEN_EXPIRATION_MICROSOFT = 86360;

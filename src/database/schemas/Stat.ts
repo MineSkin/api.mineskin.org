@@ -1,7 +1,6 @@
 import { Model, model, Schema } from "mongoose";
-import { IStatDocument } from "../../types";
-import { IStatModel } from "../../types/IStatDocument";
 import { Maybe } from "../../util";
+import { IStatDocument, IStatModel } from "../../typings/IStatDocument";
 
 const schema: Schema<IStatDocument, IStatModel> = new Schema(
     {

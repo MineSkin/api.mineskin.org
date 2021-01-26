@@ -1,18 +1,20 @@
 import { Application, Request, Response } from "express";
 import { AuthenticationError, AuthError, BasicMojangProfile, Microsoft, Mojang, MojangSecurityAnswer, XboxInfo } from "../generator/Authentication";
-import { base64decode, debug, Encryption, getIp, info, Maybe, md5, sha256, sha512, stripUuid, warn } from "../util";
-import { IAccountDocument, MineSkinError } from "../types";
+import { base64decode, getIp, Maybe, md5, sha256, sha512, stripUuid } from "../util";
 import * as session from "express-session";
 import { Generator } from "../generator/Generator";
-import { Config } from "../types/Config";
 import { Account } from "../database/schemas";
-import { AccessTokenSource, AccountType } from "../types/IAccountDocument";
 import { Caching } from "../generator/Caching";
 import { Requests } from "../generator/Requests";
 import * as qs from "querystring";
 import { Discord } from "../util/Discord";
+import { getConfig } from "../typings/Configs";
+import { AccessTokenSource, AccountType, IAccountDocument } from "../typings/IAccountDocument";
+import { MineSkinError } from "../typings";
+import { Encryption } from "../util/Encryption";
+import { info, warn } from "../util/colors";
 
-const config: Config = require("../config");
+const config = getConfig();
 
 export const register = (app: Application) => {
 

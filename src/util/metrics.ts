@@ -1,14 +1,12 @@
 import { IntervalFlusher, Metrics } from "metrics-node";
-import { URL } from "url";
 import { Request, Response, NextFunction } from "express";
 import * as Sentry from "@sentry/node";
-import { AxiosRequestConfig, AxiosResponse } from "axios";
-import { GenerateOptions } from "../types/GenerateOptions";
-import { IAccountDocument } from "../types";
-import { GenerateType } from "../types/ISkinDocument";
-import exp = require("constants");
+import { getConfig } from "../typings/Configs";
+import { GenerateType } from "../typings/ISkinDocument";
+import { GenerateOptions } from "../typings/GenerateOptions";
+import { IAccountDocument } from "../typings";
 
-const config = require("../config");
+const config = getConfig();
 
 export const metrics = new Metrics(config.metrics);
 const flusher = new IntervalFlusher(metrics, 10000);

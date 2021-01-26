@@ -2,7 +2,6 @@ import * as hasha from "hasha";
 import * as colors from "./colors";
 import * as fs from "fs";
 import { Request, Response } from "express";
-import { Config } from "../types/Config";
 import * as Sentry from "@sentry/node";
 import { Generator } from "../generator/Generator";
 import { imageSize } from "image-size";
@@ -10,14 +9,7 @@ import * as fileType from "file-type";
 import * as readChunk from "read-chunk";
 import * as crypto from "crypto";
 import { Caching } from "../generator/Caching";
-import { SkinVariant } from "../types/ISkinDocument";
-
-export * from "./colors";
-export * from "./metrics";
-export * from "./Encryption";
-
-
-const config: Config = require("../config");
+import { SkinVariant } from "../typings/ISkinDocument";
 
 export function getIp(req: Request): string {
     return req.get('cf-connecting-ip') || req.get('x-forwarded-for') || req.get("x-real-ip") || req.connection.remoteAddress || req.ip;

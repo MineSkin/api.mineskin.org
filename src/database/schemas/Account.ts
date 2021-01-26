@@ -1,11 +1,12 @@
 import { Model, model, Schema } from "mongoose";
-import { IAccountDocument } from "../../types";
-import { IAccountModel } from "../../types/IAccountDocument";
-import { Config } from "../../types/Config";
-import { warn, error, md5, Maybe } from "../../util";
+import {  md5, Maybe } from "../../util";
 import { v4 as uuid } from "uuid";
+import { getConfig } from "../../typings/Configs";
+import { IAccountDocument } from "../../typings";
+import { IAccountModel } from "../../typings/IAccountDocument";
+import { error } from "../../util/colors";
 
-const config: Config = require("../../config");
+const config = getConfig();
 
 const Int32 = require("mongoose-int32");
 export const AccountSchema: Schema<IAccountDocument, IAccountModel> = new Schema({

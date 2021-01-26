@@ -1,8 +1,8 @@
 import { Application, Request, Response } from "express";
 import { Skin } from "../database/schemas";
-import { ISkinDocument } from "../types";
 import { Requests } from "../generator/Requests";
 import * as Sentry from "@sentry/node";
+import { ISkinDocument } from "../typings";
 
 export const register = (app: Application) => {
 

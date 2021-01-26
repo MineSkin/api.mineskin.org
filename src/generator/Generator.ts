@@ -1,18 +1,11 @@
 import { Account, Skin, Stat } from "../database/schemas";
 import { MemoizeExpiring } from "@inventivetalent/typescript-memoize";
-import { base64decode, debug, DUPLICATES_METRIC, durationMetric, error, getHashFromMojangTextureUrl, hasOwnProperty, imageHash, info, longAndShortUuid, Maybe, metrics, NEW_METRIC, random32BitNumber, stripUuid, warn } from "../util";
-import { IAccountDocument, ISkinDocument, IStatDocument, MineSkinError } from "../types";
+import { base64decode,  getHashFromMojangTextureUrl, hasOwnProperty, imageHash,  longAndShortUuid, Maybe, random32BitNumber, stripUuid } from "../util";
 import { Caching } from "./Caching";
-import { SkinData, SkinMeta, SkinValue } from "../types/SkinData";
-import { Config } from "../types/Config";
-import { GenerateType, SkinModel } from "../types/ISkinDocument";
-import Optimus from "optimus-js";
 import { Authentication, AuthenticationError } from "./Authentication";
 import * as Sentry from "@sentry/node";
 import { Requests } from "./Requests";
 import * as FormData from "form-data";
-import { GenerateOptions } from "../types/GenerateOptions";
-import { ClientInfo } from "../types/ClientInfo";
 import * as URL from "url";
 import { MOJ_DIR, Temp, TempFile, UPL_DIR, URL_DIR } from "./Temp";
 import { AxiosResponse } from "axios";
@@ -23,10 +16,19 @@ import { FileTypeResult } from "file-type";
 import { UploadedFile } from "express-fileupload";
 import { ISizeCalculationResult } from "image-size/dist/types/interface";
 import { v4 as uuid } from "uuid";
-import { AccountStats, CountDuplicateViewStats, DurationStats, Stats, SuccessRateStats, TimeFrameStats } from "../types/Stats";
 import * as Jimp from "jimp";
+import { getConfig } from "../typings/Configs";
+import { IAccountDocument, ISkinDocument, IStatDocument, MineSkinError } from "../typings";
+import { SkinData, SkinMeta, SkinValue } from "../typings/SkinData";
+import { GenerateOptions } from "../typings/GenerateOptions";
+import { GenerateType, SkinModel } from "../typings/ISkinDocument";
+import { AccountStats, CountDuplicateViewStats, DurationStats, Stats, SuccessRateStats, TimeFrameStats } from "../typings/Stats";
+import { ClientInfo } from "../typings/ClientInfo";
+import { DUPLICATES_METRIC, durationMetric, metrics, NEW_METRIC } from "../util/metrics";
+import { debug, error, info, warn } from "../util/colors";
+import { Optimus } from "@inventivetalent/optimus-ts";
 
-const config: Config = require("../config");
+const config = getConfig();
 
 const MAX_ID_TRIES = 10;
 
