@@ -322,6 +322,8 @@ export class Generator {
 
     protected static async saveSkin(result: GenerateResult, options: GenerateOptions, client: ClientInfo, type: GenerateType, start: number): Promise<ISkinDocument> {
         const id = await this.makeNewSkinId();
+        const time = Date.now();
+        const duration = time - start;
         const skin: ISkinDocument = new Skin(<ISkinDocument>{
             id: id,
 
@@ -339,8 +341,8 @@ export class Generator {
             textureHash: result.meta?.mojangHash,
             minecraftSkinId: result.meta?.minecraftSkinId,
 
-            time: (Date.now() / 1000),
-            generateDuration: (Date.now() - start),
+            time: (time / 1000),
+            generateDuration: duration,
 
             account: result.account?.id,
             type: type,
@@ -352,7 +354,10 @@ export class Generator {
             duplicate: 0,
             views: 0
         })
-        return skin.save();
+        return skin.save().then(skin => {
+            console.log(info("New skin saved #" + skin.id + " - generated in " + duration + "ms by " + result.account?.type + " account #" + result.account?.id));
+            return skin;
+        })
     }
 
     protected static async getDuplicateOrSaved(result: GenerateResult, options: GenerateOptions, client: ClientInfo, type: GenerateType, start: number): Promise<ISkinDocument> {
