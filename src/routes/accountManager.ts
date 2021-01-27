@@ -57,7 +57,7 @@ export const register = (app: Application) => {
     app.post("/accountManager/mojang/getChallenges", async (req: AccountManagerRequest, res: Response) => {
         if (!validateSessionAndToken(req, res)) return;
 
-        const challengeResponse = await Mojang.getChallenges(req.body["token"]).catch(err => {
+        const challengeResponse = await Mojang.getChallenges(req.session.account!.token!).catch(err => {
             if (err.response) {
                 throw new AuthenticationError(AuthError.MOJANG_CHALLENGES_FAILED, "Failed to get security challenges", undefined, err);
             }
@@ -80,7 +80,7 @@ export const register = (app: Application) => {
         if (!validateMultiSecurityAnswers(req.body["securityAnswers"], req, res)) return;
         const answers = req.body["securityAnswers"] as MojangSecurityAnswer[];
 
-        const solveResponse = await Mojang.submitChallengeAnswers(req.body["token"], answers).catch(err => {
+        const solveResponse = await Mojang.submitChallengeAnswers(req.session.account!.token!, answers).catch(err => {
             if (err.response) {
                 throw new AuthenticationError(AuthError.MOJANG_CHALLENGES_FAILED, "Failed to complete security challenges", undefined, err);
             }
@@ -146,7 +146,7 @@ export const register = (app: Application) => {
             return;
         }
 
-        const profileValidation = await getAndValidateMojangProfile(req.body["token"], req.body["uuid"]);
+        const profileValidation = await getAndValidateMojangProfile(req.session.account!.token!, req.body["uuid"]);
         if (profileValidation.valid && profileValidation.profile) {
             if (req.session && req.session.account) {
                 req.session.account.uuid = profileValidation.profile.id;
@@ -166,7 +166,7 @@ export const register = (app: Application) => {
             return;
         }
 
-        const profileValidation = await getAndValidateMojangProfile(req.body["token"], req.body["uuid"]);
+        const profileValidation = await getAndValidateMojangProfile(req.session.account!.token!, req.body["uuid"]);
         if (!profileValidation.valid || !profileValidation.profile) return;
 
         const account = await Account.findOne({
@@ -246,7 +246,7 @@ export const register = (app: Application) => {
             res.status(400).json({ error: "invalid session" });
             return;
         }
-        const profileValidation = await getAndValidateMojangProfile(req.body["token"], req.body["uuid"]);
+        const profileValidation = await getAndValidateMojangProfile(req.session.account!.token!, req.body["uuid"]);
         if (!profileValidation.valid || !profileValidation.profile) return;
 
         let updater: (account: IAccountDocument) => void;
@@ -315,7 +315,7 @@ export const register = (app: Application) => {
             res.status(400).json({ error: "invalid session" });
             return;
         }
-        const profileValidation = await getAndValidateMojangProfile(req.body["token"], req.body["uuid"]);
+        const profileValidation = await getAndValidateMojangProfile(req.session.account!.token!, req.body["uuid"]);
         if (!profileValidation.valid || !profileValidation.profile) return;
 
         const ip = getIp(req);
@@ -342,7 +342,7 @@ export const register = (app: Application) => {
             uuid: req.session.account.uuid,
             playername: profileValidation.profile.name,
 
-            accessToken: req.body["token"],
+            accessToken: req.session.account!.token!,
             accessTokenExpiration: Math.round(Date.now() / 1000) + 86360,
             accessTokenSource: req.session.account.type === AccountType.MICROSOFT ? AccessTokenSource.USER_LOGIN_MICROSOFT : AccessTokenSource.USER_LOGIN_MOJANG,
             clientToken: md5(req.session.account.email + "_" + ip),
@@ -386,7 +386,7 @@ export const register = (app: Application) => {
             res.status(400).json({ error: "invalid session" });
             return;
         }
-        const profileValidation = await getAndValidateMojangProfile(req.body["token"], req.body["uuid"]);
+        const profileValidation = await getAndValidateMojangProfile(req.session.account!.token!, req.body["uuid"]);
         if (!profileValidation.valid || !profileValidation.profile) return;
 
         const account = await Account.findOne({
@@ -431,7 +431,7 @@ export const register = (app: Application) => {
             res.status(400).json({ error: "invalid session" });
             return;
         }
-        const profileValidation = await getAndValidateMojangProfile(req.body["token"], req.body["uuid"]);
+        const profileValidation = await getAndValidateMojangProfile(req.session.account!.token!, req.body["uuid"]);
         if (!profileValidation.valid || !profileValidation.profile) return;
 
         const account = await Account.findOne({
@@ -579,15 +579,16 @@ export const register = (app: Application) => {
 }
 
 function validateSessionAndToken(req: AccountManagerRequest, res: Response): boolean {
-    if (!req.body["token"]) {
+    if (!req.headers.authorization || !req.headers.authorization.startsWith("Bearer ")) {
         res.status(400).json({ error: "missing token" });
         return false;
     }
+    const headerToken = req.headers.authorization.replace("Bearer ", "");
     if (!req.session || !req.session.account) {
         res.status(400).json({ error: "invalid session" });
         return false;
     }
-    if (req.body["token"] !== req.session.account.token) {
+    if (headerToken !== req.session.account.token) {
         res.status(400).json({ error: "invalid session" });
         return false;
     }
