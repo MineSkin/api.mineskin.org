@@ -68,8 +68,9 @@ export class Requests {
         const points: IPoint[] = [];
         queues.forEach((queue, name) => {
             points.push({
-                measurement: "queue." + name,
+                measurement: "queues",
                 tags: {
+                    queue: name,
                     server: config.server
                 },
                 fields: {

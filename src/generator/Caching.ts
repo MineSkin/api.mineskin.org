@@ -1,5 +1,5 @@
 import { Requests } from "./Requests";
-import { AsyncLoadingCache, Caches, SimpleCache, Time } from "@inventivetalent/loading-cache";
+import { AsyncLoadingCache, Caches, CacheStats, SimpleCache, Time } from "@inventivetalent/loading-cache";
 import * as Sentry from "@sentry/node";
 import { Severity } from "@sentry/node";
 import { Maybe, stripUuid } from "../util";
@@ -21,7 +21,7 @@ export class Caching {
     //// REQUESTS
 
     protected static readonly skinDataCache: AsyncLoadingCache<string, SkinData> = Caches.builder()
-        .expireAfterWrite(Time.minutes(2))
+        .expireAfterWrite(Time.minutes(1))
         .expirationInterval(Time.seconds(30))
         .buildAsync<string, SkinData>(uuid => {
             return Requests.mojangSessionRequest({
@@ -179,13 +179,18 @@ export class Caching {
         const points: IPoint[] = [];
         caches.forEach((cache, name) => {
             points.push({
-                measurement: "cache_sizes",
+                measurement: "caches",
                 tags: {
-                    server: config.server,
-                    cache: name
+                    cache: name,
+                    server: config.server
                 },
                 fields: {
-                    size: cache.keys().length
+                    size: cache.keys().length,
+                    hit: cache.stats.get(CacheStats.HIT),
+                    miss: cache.stats.get(CacheStats.MISS),
+                    loadSuccess: cache.stats.get(CacheStats.LOAD_SUCCESS),
+                    loadFail: cache.stats.get(CacheStats.LOAD_FAIL),
+                    expire: cache.stats.get(CacheStats.EXPIRE)
                 }
             });
         });
