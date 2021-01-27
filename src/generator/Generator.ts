@@ -25,7 +25,7 @@ import { GenerateOptions } from "../typings/GenerateOptions";
 import { GenerateType, SkinModel } from "../typings/ISkinDocument";
 import { AccountStats, CountDuplicateViewStats, DurationStats, Stats, SuccessRateStats, TimeFrameStats } from "../typings/Stats";
 import { ClientInfo } from "../typings/ClientInfo";
-import { DUPLICATES_METRIC, durationMetric, metrics, NEW_METRIC } from "../util/metrics";
+import { DUPLICATES_METRIC, durationMetric, metrics, NEW_METRIC, NO_ACCOUNTS_METRIC } from "../util/metrics";
 import { debug, error, info, warn } from "../util/colors";
 import { Optimus } from "@inventivetalent/optimus-ts";
 
@@ -761,6 +761,9 @@ export class Generator {
         let account = await Account.findUsable();
         if (!account) {
             console.warn(error("[Generator] No account available!"));
+            NO_ACCOUNTS_METRIC
+                .tag('server', config.server)
+                .inc();
             throw new GeneratorError(GenError.NO_ACCOUNT_AVAILABLE, "No account available");
         }
         account = await Authentication.authenticate(account);
