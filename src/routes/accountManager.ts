@@ -580,7 +580,7 @@ export const register = (app: Application) => {
 
 function validateSessionAndToken(req: AccountManagerRequest, res: Response): boolean {
     if (!req.headers.authorization || !req.headers.authorization.startsWith("Bearer ")) {
-        res.status(400).json({ error: "missing token" });
+        res.status(400).json({ error: "invalid session" });
         return false;
     }
     const headerToken = req.headers.authorization.replace("Bearer ", "");
