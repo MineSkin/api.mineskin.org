@@ -41,7 +41,7 @@ export const register = (app: Application) => {
     app.get("/preferredAccountServer", (req: Request, res: Response) => {
         Generator.getPreferredAccountServer().then(server => {
             res.json({
-                preferredServer: server,
+                server: server,
                 host: `${ server }.api.mineskin.org`
             });
         }).catch(err => {

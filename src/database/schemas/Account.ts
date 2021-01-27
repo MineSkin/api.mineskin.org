@@ -4,7 +4,7 @@ import { v4 as uuid } from "uuid";
 import { getConfig } from "../../typings/Configs";
 import { IAccountDocument } from "../../typings";
 import { IAccountModel } from "../../typings/IAccountDocument";
-import { error } from "../../util/colors";
+import { debug, error } from "../../util/colors";
 
 const config = getConfig();
 
@@ -133,7 +133,7 @@ AccountSchema.statics.findUsable = function (this: IAccountModel): Promise<Maybe
                 console.warn(error("There are no accounts available!"));
                 return undefined;
             }
-            console.log("Account #" + account.id + " last used " + Math.round(time - (account.lastUsed || 0)) + "s ago, last selected " + Math.round(time - (account.lastSelected || 0)) + "s ago");
+            console.log(debug("Account #" + account.id + " last used " + Math.round(time - (account.lastUsed || 0)) + "s ago, last selected " + Math.round(time - (account.lastSelected || 0)) + "s ago"));
             account.lastSelected = time;
             if (!account.successCounter) account.successCounter = 0;
             if (!account.errorCounter) account.errorCounter = 0;
