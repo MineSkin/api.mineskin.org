@@ -39,6 +39,7 @@ export const DUPLICATES_METRIC = metrics.metric('mineskin', 'gen_duplicate');
 export const NEW_METRIC = metrics.metric('mineskin', 'gen_new');
 
 export const NO_ACCOUNTS_METRIC = metrics.metric('mineskin', 'no_accounts');
+export const HASH_MISMATCH_METRIC = metrics.metric('mineskin', 'hash_mismatch');
 
 export const durationMetric = (duration: number, type: GenerateType, options?: GenerateOptions, account?: IAccountDocument) => {
     try {

@@ -25,7 +25,7 @@ import { GenerateOptions } from "../typings/GenerateOptions";
 import { GenerateType, SkinModel } from "../typings/ISkinDocument";
 import { AccountStats, CountDuplicateViewStats, DurationStats, Stats, SuccessRateStats, TimeFrameStats } from "../typings/Stats";
 import { ClientInfo } from "../typings/ClientInfo";
-import { DUPLICATES_METRIC, durationMetric, metrics, NEW_METRIC, NO_ACCOUNTS_METRIC } from "../util/metrics";
+import { DUPLICATES_METRIC, durationMetric, HASH_MISMATCH_METRIC, metrics, NEW_METRIC, NO_ACCOUNTS_METRIC } from "../util/metrics";
 import { debug, error, info, warn } from "../util/colors";
 import { Optimus } from "@inventivetalent/optimus-ts";
 
@@ -590,7 +590,7 @@ export class Generator {
                 }
                 throw err;
             });
-            return this.handleSkinChangeResponse(skinResponse, account, tempFileValidation);
+            return this.handleSkinChangeResponse(skinResponse, GenerateType.URL, options, account, tempFileValidation);
         } catch (e) {
             await this.handleGenerateError(e, account);
             throw e;
@@ -680,7 +680,7 @@ export class Generator {
                 }
                 throw err;
             });
-            return this.handleSkinChangeResponse(skinResponse, account, tempFileValidation);
+            return this.handleSkinChangeResponse(skinResponse, GenerateType.UPLOAD, options, account, tempFileValidation);
         } catch (e) {
             await this.handleGenerateError(e, account);
             throw e;
@@ -691,7 +691,7 @@ export class Generator {
         }
     }
 
-    static async handleSkinChangeResponse(skinResponse: AxiosResponse, account: IAccountDocument, tempFileValidation: TempFileValidationResult): Promise<GenerateResult> {
+    static async handleSkinChangeResponse(skinResponse: AxiosResponse, type: GenerateType, options: GenerateOptions, account: IAccountDocument, tempFileValidation: TempFileValidationResult): Promise<GenerateResult> {
         const skinChangeResponse = skinResponse.data as SkinChangeResponse;
         const minecraftSkinId = skinChangeResponse?.skins[0]?.id;
 
@@ -703,6 +703,8 @@ export class Generator {
             }
         }
         const mojangHash = await this.getMojangHash(data.decodedValue!.textures!.SKIN!.url);
+
+        this.compareImageAndMojangHash(tempFileValidation.hash!, mojangHash!.hash!, type, options, account);
 
         await this.handleGenerateSuccess(account);
 
@@ -886,6 +888,19 @@ export class Generator {
                 tempFile.remove();
             }
         }
+    }
+
+    protected static compareImageAndMojangHash(imageHash: string, mojangHash: string, type: GenerateType, options: GenerateOptions, account: IAccountDocument): boolean {
+        if (imageHash === mojangHash) {
+            return true;
+        }
+        console.warn(warn("image hash does not match mojang hash (" + imageHash + " != " + mojangHash + ")"));
+        HASH_MISMATCH_METRIC
+            .tag('server', config.server)
+            .tag('type', type)
+            .tag('account', account.id)
+            .inc();
+        return false;
     }
 
     protected static async validateImageData(buffer: Buffer): Promise<ImageDataValidationResult> {
