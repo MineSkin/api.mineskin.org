@@ -388,6 +388,7 @@ export class Generator {
             this.appendOptionsToDuplicateQuery(options, query);
             const existingSkin = await Skin.findOne(query).exec();
             if (existingSkin) {
+                console.log(debug("Found existing skin from mineskin url"));
                 existingSkin.duplicate++;
                 try {
                     DUPLICATES_METRIC
@@ -417,6 +418,7 @@ export class Generator {
             this.appendOptionsToDuplicateQuery(options, query);
             const existingSkin = await Skin.findOne(query);
             if (existingSkin) {
+                console.log(debug("Found existing skin with same minecraft texture url/hash"));
                 existingSkin.duplicate++;
                 try {
                     DUPLICATES_METRIC
@@ -447,6 +449,7 @@ export class Generator {
         this.appendOptionsToDuplicateQuery(options, query);
         const existingSkin = await Skin.findOne(query).exec();
         if (existingSkin) {
+            console.log(debug("Found existing skin with same image hash"));
             existingSkin.duplicate++;
             try {
                 DUPLICATES_METRIC
@@ -468,9 +471,11 @@ export class Generator {
             return undefined;
         }
 
+        const time = Math.floor(Date.now() / 1000);
         const existingSkin = await Skin.findOne({
             uuid: uuid,
-            name: options.name, model: options.name, visibility: options.visibility
+            name: options.name, visibility: options.visibility,
+            time: { $lt: (time - 1800) } // Wait 30 minutes before generating again
         }).exec();
         if (existingSkin) {
             existingSkin.duplicate++;
