@@ -6,12 +6,12 @@ import { Generator } from "../generator/Generator";
 
 export const register = (app: Application) => {
 
-    app.get("/validate/user/:path", (req: Request, res: Response) => {
-        if (req.params["path"].length < 1 || req.params["path"].length > 16) {
-            res.status(400).json({ error: "invalid path" });
+    app.get("/validate/user/:name", (req: Request, res: Response) => {
+        if (req.params["name"].length < 1 || req.params["name"].length > 16) {
+            res.status(400).json({ error: "invalid name" });
             return;
         }
-        Caching.getUserByName(req.params["path"]).then(user => {
+        Caching.getUserByName(req.params["name"]).then(user => {
             if (!user || !user.valid) {
                 res.status(404);
             }
