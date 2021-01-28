@@ -6,7 +6,6 @@ export interface Bread {
 }
 
 export const BREAD_COLORS: Chalk[] = [
-    chalk.blue,
     chalk.magenta,
     chalk.cyan,
     chalk.redBright,

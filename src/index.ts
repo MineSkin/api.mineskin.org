@@ -165,7 +165,7 @@ async function init() {
     }
 
     app.use(Sentry.Handlers.errorHandler());
-    const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
+    const errorHandler: ErrorRequestHandler = (err, req: Request, res: Response, next: NextFunction) => {
         console.warn("Error in a route");
         console.log(typeof err);
         console.log(err instanceof MineSkinError)

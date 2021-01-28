@@ -616,6 +616,12 @@ export class Generator {
         if (!urlStr) return undefined;
         try {
             const url = new URL(urlStr);
+            if (!url.host || !url.pathname) {
+                return undefined;
+            }
+            if (!url.protocol || (url.protocol !== "http:" && url.protocol !== "https:")) {
+                return undefined;
+            }
             const follow = URL_FOLLOW_WHITELIST.includes(url.host!);
             return await Requests.axiosInstance.request({
                 method: "HEAD",
