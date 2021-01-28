@@ -13,6 +13,7 @@ import { User } from "../typings/User";
 import { ISkinDocument } from "../typings";
 import { ProfileResponse } from "../typings/ProfileResponse";
 import { metrics } from "../util/metrics";
+import { Bread } from "../typings/Bread";
 
 const config = getConfig();
 
@@ -164,6 +165,11 @@ export class Caching {
         .expirationInterval(Time.seconds(30))
         .build();
 
+    protected static readonly recentAccountsLock: SimpleCache<number, string> = Caches.builder()
+        .expireAfterWrite(Time.minutes(1))
+        .expirationInterval(Time.seconds(20))
+        .build();
+
     ////
 
     protected static metricsCollector = setInterval(() => {
@@ -246,6 +252,18 @@ export class Caching {
 
     public static invalidatePendingDiscordLink(state: string): void {
         this.pendingDiscordLinkByStateCache.invalidate(state);
+    }
+
+    public static lockSelectedAccount(accountId: number, bread?: Bread): void {
+        this.recentAccountsLock.put(accountId, bread?.breadcrumb ?? `${ accountId }`);
+    }
+
+    public static getLockedAccounts(): number[] {
+        return this.recentAccountsLock.keys();
+    }
+
+    public static isAccountLocked(accountId: number): boolean {
+        return !!this.recentAccountsLock.getIfPresent(accountId);
     }
 
     ///

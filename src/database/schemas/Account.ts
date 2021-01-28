@@ -6,6 +6,7 @@ import { IAccountDocument } from "../../typings";
 import { AccountType, IAccountModel } from "../../typings/IAccountDocument";
 import { debug, error } from "../../util/colors";
 import { Bread } from "../../typings/Bread";
+import { Caching } from "../../generator/Caching";
 
 const config = getConfig();
 
@@ -135,7 +136,7 @@ AccountSchema.methods.authenticationHeader = function (this: IAccountDocument): 
 };
 
 AccountSchema.methods.toSimplifiedString = function (this: IAccountDocument): string {
-    return `Account{ id=${ this.id }, uuid=${ this.uuid }, type=${ this.microsoftAccount ? 'microsoft' : 'mojang' } }`
+    return `Account{ id=${ this.id }, uuid=${ this.uuid }, type=${ this.getAccountType() } }`
 };
 
 /// STATICS
@@ -144,7 +145,9 @@ AccountSchema.statics.findUsable = function (this: IAccountModel, bread?: Bread)
     const time = Math.floor(Date.now() / 1000);
     return this.findOne({
         enabled: true,
+        id: { $nin: Caching.getLockedAccounts() },
         requestServer: { $in: [undefined, "default", config.server] },
+        lastSelected: { $lt: (time - 50) },
         lastUsed: { $lt: (time - 100) },
         forcedTimeoutAt: { $lt: (time - 500) },
         errorCounter: { $lt: (config.errorThreshold || 10) },
@@ -159,6 +162,7 @@ AccountSchema.statics.findUsable = function (this: IAccountModel, bread?: Bread)
                 console.warn(error(bread?.breadcrumb + " There are no accounts available!"));
                 return undefined;
             }
+            Caching.lockSelectedAccount(account.id, bread);
             console.log(debug(bread?.breadcrumb + " Account #" + account.id + " last used " + Math.round(time - (account.lastUsed || 0)) + "s ago, last selected " + Math.round(time - (account.lastSelected || 0)) + "s ago"));
             account.lastSelected = time;
             if (!account.successCounter) account.successCounter = 0;
