@@ -1,7 +1,8 @@
-import { SkinModel, SkinVisibility } from "./ISkinDocument";
+import { SkinModel, SkinVariant, SkinVisibility } from "./ISkinDocument";
 
 export interface GenerateOptions {
-    model?: SkinModel;
-    name?: string;
-    visibility?: SkinVisibility;
+    model: SkinModel;
+    variant: SkinVariant;
+    name: string;
+    visibility: SkinVisibility;
 }

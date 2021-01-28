@@ -1,11 +1,11 @@
 import { Application, Request, Response } from "express";
-import { checkTraffic, getVia, longAndShortUuid, updateTraffic, validateUrl } from "../util";
+import { checkTraffic, getVia, longAndShortUuid, modelToVariant, updateTraffic, validateUrl, variantToModel } from "../util";
 import { UploadedFile } from "express-fileupload";
 import { Generator } from "../generator/Generator";
 import { generateLimiter } from "../util/rateLimiters";
 import { ClientInfo } from "../typings/ClientInfo";
 import { GenerateOptions } from "../typings/GenerateOptions";
-import { SkinModel, SkinVisibility } from "../typings/ISkinDocument";
+import { SkinModel, SkinVariant, SkinVisibility } from "../typings/ISkinDocument";
 import { debug } from "../util/colors";
 
 export const register = (app: Application) => {
@@ -134,23 +134,32 @@ export const register = (app: Application) => {
     }
 
     function getAndValidateOptions(req: Request): GenerateOptions {
-        const model = validateModel(req.body["model"] || req.query["model"]);
+        let model = validateModel(req.body["model"] || req.query["model"]);
+        let variant = validateVariant(req.body["variant"] || req.query["variant"]);
+        // Convert & make sure both are set
+        if (variant === SkinVariant.UNKNOWN && model !== SkinModel.UNKNOWN) {
+            variant = modelToVariant(model);
+        }else if (model === SkinModel.UNKNOWN && variant !== SkinVariant.UNKNOWN) {
+            model = variantToModel(variant);
+        }
+
         const visibility = validateVisibility(req.body["visibility"] || req.query["visibility"]);
         const name = validateName(req.body["name"] || req.query["name"]);
 
-        console.log(debug(`Model:       ${ model }`));
+        console.log(debug(`Variant:     ${ variant }`));
         console.log(debug(`Visibility:  ${ visibility }`));
         console.log(debug(`Name:        ${ name }`));
 
         return {
             model,
+            variant,
             visibility,
             name
         };
     }
 
     function validateModel(model?: string): SkinModel {
-        if (!model) {
+        if (!model || model.length < 3) {
             return SkinModel.UNKNOWN;
         }
         model = model.toLowerCase();
@@ -163,6 +172,22 @@ export const register = (app: Application) => {
         }
 
         return SkinModel.UNKNOWN;
+    }
+
+    function validateVariant(variant?: string): SkinVariant {
+        if (!variant || variant.length < 3) {
+            return SkinVariant.UNKNOWN;
+        }
+        variant = variant.toLowerCase();
+
+        if (variant === "classic" || variant === "default" || variant === "steve") {
+            return SkinVariant.CLASSIC;
+        }
+        if (variant === "slim" || variant === "alex") {
+            return SkinVariant.SLIM;
+        }
+
+        return SkinVariant.UNKNOWN;
     }
 
     function validateVisibility(visibility?: number): SkinVisibility {

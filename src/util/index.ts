@@ -9,7 +9,7 @@ import * as fileType from "file-type";
 import * as readChunk from "read-chunk";
 import * as crypto from "crypto";
 import { Caching } from "../generator/Caching";
-import { SkinVariant } from "../typings/ISkinDocument";
+import { SkinModel, SkinVariant } from "../typings/ISkinDocument";
 
 export function getIp(req: Request): string {
     return req.get('cf-connecting-ip') || req.get('x-forwarded-for') || req.get("x-real-ip") || req.connection.remoteAddress || req.ip;
@@ -77,6 +77,16 @@ export function modelToVariant(model?: string): SkinVariant {
         return SkinVariant.SLIM;
     }
     return SkinVariant.CLASSIC;
+}
+
+export function variantToModel(variant?: string): SkinModel {
+    if (!variant) {
+        return SkinModel.CLASSIC;
+    }
+    if (variant === "slim" || variant === "alex") {
+        return SkinModel.SLIM;
+    }
+    return SkinModel.CLASSIC;
 }
 
 // https://coderwall.com/p/_g3x9q/how-to-check-if-javascript-object-is-empty
@@ -205,4 +215,4 @@ export function hasOwnProperty<X extends {}, Y extends PropertyKey>(obj: X, prop
 }
 
 // https://github.com/microsoft/TypeScript/issues/13321#issuecomment-637120710
-export type Maybe<T> = T | undefined ;
+export type Maybe<T> = T | undefined;

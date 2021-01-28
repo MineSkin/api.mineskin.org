@@ -40,6 +40,7 @@ export interface ISkinDocument extends Document {
     name?: string;
     /** Model of the skin **/
     model: SkinModel | any;
+    variant: SkinVariant;
     /** Selected visibility **/
     visibility: SkinVisibility;
 

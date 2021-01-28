@@ -27,6 +27,10 @@ export const SkinSchema: Schema<ISkinDocument, ISkinModel> = new Schema({
         enum: ["steve", "slim", "unknown"],
         index: true
     },
+    variant: {
+        type: String,
+        enum: ["classic", "slim", "unknown"]
+    },
     visibility: {
         type: Number,
         index: true

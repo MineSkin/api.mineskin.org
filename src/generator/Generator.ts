@@ -332,6 +332,7 @@ export class Generator {
 
             name: options.name,
             model: options.model,
+            variant: options.variant,
             visibility: options.visibility,
 
             value: result.data!.value,
