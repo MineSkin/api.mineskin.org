@@ -707,7 +707,7 @@ export class Generator {
         const data = await this.getSkinData(account);
         if (skinChangeResponse && skinChangeResponse.skins && skinChangeResponse.skins.length > 0) {
             if (skinChangeResponse.skins[0].url !== data.decodedValue!.textures!.SKIN!.url) {
-                console.warn(warn("Skin url returned by skin change does not match url returned by data query (" + skinChangeResponse.skins[0].url + " != " + data.decodedValue!.textures!.SKIN!.url + ")"));
+                console.warn(warn(options.breadcrumb + " Skin url returned by skin change does not match url returned by data query (" + skinChangeResponse.skins[0].url + " != " + data.decodedValue!.textures!.SKIN!.url + ")"));
                 //TODO: figure out why this happens
 
                 // throw new MineSkinError("skin_url_mismatch", "Skin url returned by skin change does not match url returned by data query", 500);
@@ -833,7 +833,7 @@ export class Generator {
             account.lastErrorCode = e.code;
             if (e instanceof AuthenticationError) {
                 account.forcedTimeoutAt = Math.floor(Date.now() / 1000);
-                console.warn(warn("[Generator] Account #" + account.id + " forced timeout"));
+                console.warn(warn(options.breadcrumb + " [Generator] Account #" + account.id + " forced timeout"));
                 account.updateRequestServer(undefined);
             }
 
@@ -932,7 +932,7 @@ export class Generator {
         if (imageHash === mojangHash) {
             return true;
         }
-        console.warn(warn("image hash does not match mojang hash (" + imageHash + " != " + mojangHash + ")"));
+        console.warn(warn(options.breadcrumb + " image hash does not match mojang hash (" + imageHash + " != " + mojangHash + ")"));
         HASH_MISMATCH_METRIC
             .tag('server', config.server)
             .tag('type', type)
