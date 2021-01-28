@@ -28,6 +28,7 @@ import { ClientInfo } from "../typings/ClientInfo";
 import { DUPLICATES_METRIC, durationMetric, HASH_MISMATCH_METRIC, metrics, NEW_METRIC, NO_ACCOUNTS_METRIC } from "../util/metrics";
 import { debug, error, info, warn } from "../util/colors";
 import { Optimus } from "@inventivetalent/optimus-ts";
+import { SkinInfo } from "../typings/SkinInfo";
 
 const config = getConfig();
 
@@ -361,9 +362,9 @@ export class Generator {
         })
     }
 
-    protected static async getDuplicateOrSaved(result: GenerateResult, options: GenerateOptions, client: ClientInfo, type: GenerateType, start: number): Promise<ISkinDocument> {
+    protected static async getDuplicateOrSaved(result: GenerateResult, options: GenerateOptions, client: ClientInfo, type: GenerateType, start: number): Promise<SavedSkin> {
         if (result.duplicate) {
-            return result.duplicate;
+            return new SavedSkin(result.duplicate, true);
         }
         if (result.data) {
             try {
@@ -374,7 +375,8 @@ export class Generator {
             } catch (e) {
                 Sentry.captureException(e);
             }
-            return await this.saveSkin(result, options, client, type, start);
+            const doc = await this.saveSkin(result, options, client, type, start)
+            return new SavedSkin(doc, false);
         }
         // shouldn't ever get here
         throw new MineSkinError('unknown', "Something went wrong while generating");
@@ -502,13 +504,13 @@ export class Generator {
 
     /// GENERATE URL
 
-    public static async generateFromUrlAndSave(url: string, options: GenerateOptions, client: ClientInfo): Promise<ISkinDocument> {
+    public static async generateFromUrlAndSave(url: string, options: GenerateOptions, client: ClientInfo): Promise<SavedSkin> {
         const start = Date.now();
         const data = await this.generateFromUrl(url, options);
-        const doc = await this.getDuplicateOrSaved(data, options, client, GenerateType.URL, start);
+        const skin = await this.getDuplicateOrSaved(data, options, client, GenerateType.URL, start);
         const end = Date.now();
         durationMetric(end - start, GenerateType.URL, options, data.account);
-        return doc;
+        return skin;
     }
 
     protected static async generateFromUrl(originalUrl: string, options: GenerateOptions): Promise<GenerateResult> {
@@ -626,13 +628,13 @@ export class Generator {
 
     /// GENERATE UPLOAD
 
-    public static async generateFromUploadAndSave(file: UploadedFile, options: GenerateOptions, client: ClientInfo): Promise<ISkinDocument> {
+    public static async generateFromUploadAndSave(file: UploadedFile, options: GenerateOptions, client: ClientInfo): Promise<SavedSkin> {
         const start = Date.now();
         const data = await this.generateFromUpload(file, options);
-        const doc = await this.getDuplicateOrSaved(data, options, client, GenerateType.UPLOAD, start);
+        const skin = await this.getDuplicateOrSaved(data, options, client, GenerateType.UPLOAD, start);
         const end = Date.now();
         durationMetric(end - start, GenerateType.UPLOAD, options, data.account);
-        return doc;
+        return skin;
     }
 
     protected static async generateFromUpload(file: UploadedFile, options: GenerateOptions): Promise<GenerateResult> {
@@ -723,13 +725,13 @@ export class Generator {
 
     /// GENERATE USER
 
-    public static async generateFromUserAndSave(user: string, options: GenerateOptions, client: ClientInfo): Promise<ISkinDocument> {
+    public static async generateFromUserAndSave(user: string, options: GenerateOptions, client: ClientInfo): Promise<SavedSkin> {
         const start = Date.now();
         const data = await this.generateFromUser(user, options);
-        const doc = await this.getDuplicateOrSaved(data, options, client, GenerateType.USER, start);
+        const skin = await this.getDuplicateOrSaved(data, options, client, GenerateType.USER, start);
         const end = Date.now();
         durationMetric(end - start, GenerateType.USER, options, data.account);
-        return doc;
+        return skin;
     }
 
     protected static async generateFromUser(uuid: string, options: GenerateOptions): Promise<GenerateResult> {
@@ -948,6 +950,17 @@ export class Generator {
     }
 
 
+}
+
+class SavedSkin {
+    constructor(public readonly skin: ISkinDocument, public readonly duplicate: boolean) {
+    }
+
+    toResponseJson(): SkinInfo {
+        const info = this.skin.toResponseJson();
+        info.duplicate = this.duplicate;
+        return info;
+    }
 }
 
 interface GenerateResult {

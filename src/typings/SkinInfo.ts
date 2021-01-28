@@ -29,5 +29,6 @@ export interface SkinInfo {
     server: string;
     private: boolean;
     views: number;
+    duplicate?: boolean;
     nextRequest?: number;
 }
