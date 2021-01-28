@@ -1,5 +1,5 @@
 import { Application, Request, Response } from "express";
-import { checkTraffic, getVia, longAndShortUuid, modelToVariant, updateTraffic, validateUrl, variantToModel } from "../util";
+import { checkTraffic, getIp, getVia, longAndShortUuid, md5, modelToVariant, updateTraffic, validateUrl, variantToModel } from "../util";
 import { UploadedFile } from "express-fileupload";
 import { Generator } from "../generator/Generator";
 import { generateLimiter } from "../util/rateLimiters";
@@ -25,10 +25,8 @@ export const register = (app: Application) => {
         if (!requestAllowed) {
             return;
         }
-        Sentry.setTag("generate_type", GenerateType.URL);
 
-        console.log(debug(`URL:         ${ url }`));
-        const options = getAndValidateOptions(req);
+        const options = getAndValidateOptions(GenerateType.URL, req);
         const client = getClientInfo(req);
 
         await updateTraffic(req);
@@ -54,10 +52,8 @@ export const register = (app: Application) => {
         if (!requestAllowed) {
             return;
         }
-        Sentry.setTag("generate_type", GenerateType.UPLOAD);
 
-        console.log(debug(`UPLOAD:      "${ file.name }" ${ file.md5 }`));
-        const options = getAndValidateOptions(req);
+        const options = getAndValidateOptions(GenerateType.UPLOAD, req);
         const client = getClientInfo(req);
 
         await updateTraffic(req);
@@ -84,10 +80,8 @@ export const register = (app: Application) => {
         if (!requestAllowed) {
             return;
         }
-        Sentry.setTag("generate_type", GenerateType.USER);
 
-        console.log(debug(`USER:        ${ uuidStr }`));
-        const options = getAndValidateOptions(req);
+        const options = getAndValidateOptions(GenerateType.USER, req);
         const client = getClientInfo(req);
 
         await updateTraffic(req);
@@ -114,8 +108,8 @@ export const register = (app: Application) => {
             res.status(400).json({ error: "invalid uuid" });
             return;
         }
-        console.log(debug(`USER:        ${ uuidStr }`));
-        const options = getAndValidateOptions(req);
+
+        const options = getAndValidateOptions(GenerateType.USER, req);
         const client = getClientInfo(req);
 
         await updateTraffic(req);
@@ -140,7 +134,7 @@ export const register = (app: Application) => {
         };
     }
 
-    function getAndValidateOptions(req: Request): GenerateOptions {
+    function getAndValidateOptions(type: GenerateType, req: Request): GenerateOptions {
         let model = validateModel(req.body["model"] || req.query["model"]);
         let variant = validateVariant(req.body["variant"] || req.query["variant"]);
         // Convert & make sure both are set
@@ -153,20 +147,26 @@ export const register = (app: Application) => {
         const visibility = validateVisibility(req.body["visibility"] || req.query["visibility"]);
         const name = validateName(req.body["name"] || req.query["name"]);
 
-        console.log(debug(`Variant:     ${ variant }`));
-        console.log(debug(`Visibility:  ${ visibility }`));
-        console.log(debug(`Name:        ${ name }`));
+        const breadcrumb = md5(`${ getIp(req) }${ Date.now() }${ variant }${ visibility }${ Math.random() }${ name }`).substr(0, 8);
+
+        console.log(debug(`${breadcrumb} Type:        ${ type }`))
+        console.log(debug(`${breadcrumb} Variant:     ${ variant }`));
+        console.log(debug(`${breadcrumb} Visibility:  ${ visibility }`));
+        console.log(debug(`${breadcrumb} Name:        ${ name }`));
 
         Sentry.setTags({
+            "generate_type": type,
             "generate_variant": variant,
-            "generate_visibility": visibility
+            "generate_visibility": visibility,
+            "generate_breadcrumb": breadcrumb
         });
 
         return {
             model,
             variant,
             visibility,
-            name
+            name,
+            breadcrumb
         };
     }
 

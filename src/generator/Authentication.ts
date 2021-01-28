@@ -51,13 +51,13 @@ export class Mojang {
 
     /// LOGIN
 
-    static async loginWithCredentials(username: string, password: string, clientToken: string): Promise<MojangLoginResponse> {
+    static async loginWithCredentials(email: string, password: string, clientToken: string): Promise<MojangLoginResponse> {
         const body = {
             agent: {
                 name: "Minecraft",
                 version: 1
             },
-            username: username,
+            username: email,
             password: password,
             clientToken: clientToken,
             requestUser: true,
@@ -82,7 +82,7 @@ export class Mojang {
         }
 
         console.log(debug("[Auth] Logging in " + account.toSimplifiedString()));
-        const authBody = await Mojang.loginWithCredentials(account.username, Encryption.decrypt(account.passwordNew), account.getOrCreateClientToken()).catch(err => {
+        const authBody = await Mojang.loginWithCredentials(account.getEmail(), Encryption.decrypt(account.passwordNew), account.getOrCreateClientToken()).catch(err => {
             if (err.response) {
                 throw new AuthenticationError(AuthError.MOJANG_AUTH_FAILED, "Failed to authenticate via mojang", account, err);
             }
@@ -328,7 +328,7 @@ export class Microsoft {
 
 
         console.log(debug("[Auth] Logging in " + account.toSimplifiedString()));
-        const minecraftAccessToken = await Microsoft.loginWithEmailAndPassword(account.username, Encryption.decrypt(account.passwordNew), xboxInfo => {
+        const minecraftAccessToken = await Microsoft.loginWithEmailAndPassword(account.getEmail(), Encryption.decrypt(account.passwordNew), xboxInfo => {
             account.microsoftAccessToken = xboxInfo.accessToken;
             account.microsoftRefreshToken = xboxInfo.refreshToken;
             account.microsoftUserId = xboxInfo.userId;

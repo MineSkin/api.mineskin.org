@@ -1,5 +1,5 @@
 import { Model, model, Schema } from "mongoose";
-import {  md5, Maybe } from "../../util";
+import { md5, Maybe } from "../../util";
 import { v4 as uuid } from "uuid";
 import { getConfig } from "../../typings/Configs";
 import { IAccountDocument } from "../../typings";
@@ -15,6 +15,10 @@ export const AccountSchema: Schema<IAccountDocument, IAccountModel> = new Schema
         index: true
     },
     username: {
+        type: String,
+        index: true
+    },
+    email: {
         type: String,
         index: true
     },
@@ -102,6 +106,15 @@ AccountSchema.methods.updateRequestServer = function (this: IAccountDocument, ne
         this.lastRequestServer = this.requestServer;
     }
     this.requestServer = newRequestServer;
+};
+
+AccountSchema.methods.getEmail = function (this: IAccountDocument): string {
+    if (this.email) {
+        return this.email;
+    } else {
+        this.email = this.username;
+        return this.username;
+    }
 };
 
 AccountSchema.methods.authenticationHeader = function (this: IAccountDocument): string {

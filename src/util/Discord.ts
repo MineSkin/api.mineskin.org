@@ -125,7 +125,7 @@ export class Discord {
         if (account.discordUser) {
             this.sendDiscordDirectMessage("Hi there!\n" +
                 "This is an automated notification that a MineSkin lost access to an account you linked to your Discord profile and has been disabled\n" +
-                "  Affected Account: " + (account.playername || account.uuid) + " (" + (account.email || account.username).substr(0, 4) + "****)\n" +
+                "  Affected Account: " + (account.playername || account.uuid) + " (" + account.getEmail().substr(0, 4) + "****)\n" +
                 "  Account Type: " + (account.microsoftAccount ? "microsoft" : "mojang") + "\n" +
                 "  Last Error Code:  " + account.lastErrorCode + "\n" +
                 "\n" +
@@ -158,7 +158,7 @@ export class Discord {
         if (account.discordUser) {
             Discord.sendDiscordDirectMessage("Hi there!\n" +
                 "This is an automated notification that a MineSkin account you linked to your Discord profile has been disabled since it failed to properly generate skin data recently.\n" +
-                "  Affected Account: " + (account.playername || account.uuid) + " (" + (account.email || account.username).substr(0, 4) + "****)\n" +
+                "  Affected Account: " + (account.playername || account.uuid) + " (" + account.getEmail().substr(0, 4) + "****)\n" +
                 "  Account Type: " + (account.microsoftAccount ? "microsoft" : "mojang") + "\n" +
                 "  Last Error Code:  " + account.lastErrorCode + "\n" +
                 "\n" +

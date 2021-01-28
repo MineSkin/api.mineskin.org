@@ -357,7 +357,7 @@ export class Generator {
             views: 0
         })
         return skin.save().then(skin => {
-            console.log(info("New skin saved #" + skin.id + " - generated in " + duration + "ms by " + result.account?.accountType + " account #" + result.account?.id));
+            console.log(info(options.breadcrumb + " New skin saved #" + skin.id + " - generated in " + duration + "ms by " + result.account?.accountType + " account #" + result.account?.id));
             return skin;
         })
     }
@@ -397,7 +397,7 @@ export class Generator {
             this.appendOptionsToDuplicateQuery(options, query);
             const existingSkin = await Skin.findOne(query).exec();
             if (existingSkin) {
-                console.log(debug("Found existing skin from mineskin url"));
+                console.log(debug(options.breadcrumb + " Found existing skin from mineskin url"));
                 existingSkin.duplicate++;
                 try {
                     NEW_DUPLICATES_METRIC
@@ -428,7 +428,7 @@ export class Generator {
             this.appendOptionsToDuplicateQuery(options, query);
             const existingSkin = await Skin.findOne(query);
             if (existingSkin) {
-                console.log(debug("Found existing skin with same minecraft texture url/hash"));
+                console.log(debug(options.breadcrumb + " Found existing skin with same minecraft texture url/hash"));
                 existingSkin.duplicate++;
                 try {
                     NEW_DUPLICATES_METRIC
@@ -460,7 +460,7 @@ export class Generator {
         this.appendOptionsToDuplicateQuery(options, query);
         const existingSkin = await Skin.findOne(query).exec();
         if (existingSkin) {
-            console.log(debug("Found existing skin with same image hash"));
+            console.log(debug(options.breadcrumb + " Found existing skin with same image hash"));
             existingSkin.duplicate++;
             try {
                 NEW_DUPLICATES_METRIC
@@ -519,7 +519,7 @@ export class Generator {
     }
 
     protected static async generateFromUrl(originalUrl: string, options: GenerateOptions): Promise<GenerateResult> {
-        console.log(info("[Generator] Generating from url"));
+        console.log(info(options.breadcrumb + " [Generator] Generating from url"));
 
         let account: Maybe<IAccountDocument> = undefined;
         let tempFile: Maybe<TempFile> = undefined;
@@ -600,7 +600,7 @@ export class Generator {
             });
             return this.handleSkinChangeResponse(skinResponse, GenerateType.URL, options, account, tempFileValidation);
         } catch (e) {
-            await this.handleGenerateError(e, GenerateType.URL, account);
+            await this.handleGenerateError(e, GenerateType.URL, options, account);
             throw e;
         } finally {
             if (tempFile) {
@@ -643,7 +643,7 @@ export class Generator {
     }
 
     protected static async generateFromUpload(file: UploadedFile, options: GenerateOptions): Promise<GenerateResult> {
-        console.log(info("[Generator] Generating from upload"));
+        console.log(info(options.breadcrumb + " [Generator] Generating from upload"));
 
         let account: Maybe<IAccountDocument> = undefined;
         let tempFile: Maybe<TempFile> = undefined;
@@ -690,7 +690,7 @@ export class Generator {
             });
             return this.handleSkinChangeResponse(skinResponse, GenerateType.UPLOAD, options, account, tempFileValidation);
         } catch (e) {
-            await this.handleGenerateError(e, GenerateType.UPLOAD, account);
+            await this.handleGenerateError(e, GenerateType.UPLOAD, options, account);
             throw e;
         } finally {
             if (tempFile) {
@@ -716,7 +716,7 @@ export class Generator {
 
         this.compareImageAndMojangHash(tempFileValidation.hash!, mojangHash!.hash!, type, options, account);
 
-        await this.handleGenerateSuccess(type, account);
+        await this.handleGenerateSuccess(type, options, account);
 
         account.lastTextureUrl = data.decodedValue!.textures!.SKIN!.url;
 
@@ -744,7 +744,7 @@ export class Generator {
     }
 
     protected static async generateFromUser(uuid: string, options: GenerateOptions): Promise<GenerateResult> {
-        console.log(info("[Generator] Generating from user"));
+        console.log(info(options.breadcrumb + " [Generator] Generating from user"));
 
         const uuids = longAndShortUuid(uuid)!;
         const uuidDuplicate = await this.findDuplicateFromUuid(uuids.long, options, GenerateType.USER);
@@ -792,8 +792,8 @@ export class Generator {
 
     /// SUCCESS / ERROR HANDLERS
 
-    protected static async handleGenerateSuccess(type: GenerateType, account: IAccountDocument): Promise<void> {
-        console.log(info("  ==> SUCCESS"));
+    protected static async handleGenerateSuccess(type: GenerateType, options: GenerateOptions, account: IAccountDocument): Promise<void> {
+        console.log(info(options.breadcrumb + "   ==> SUCCESS"));
         SUCCESS_FAIL_METRIC
             .tag("state", "success")
             .tag("server", config.server)
@@ -811,8 +811,8 @@ export class Generator {
         }
     }
 
-    protected static async handleGenerateError(e: any, type: GenerateType, account?: IAccountDocument): Promise<void> {
-        console.log(error("  ==> FAIL"));
+    protected static async handleGenerateError(e: any, type: GenerateType, options: GenerateOptions, account?: IAccountDocument): Promise<void> {
+        console.log(error(options.breadcrumb+"   ==> FAIL"));
         let m = SUCCESS_FAIL_METRIC
             .tag("state", "fail")
             .tag("server", config.server)
@@ -889,7 +889,7 @@ export class Generator {
 
         const dataValidation = await this.validateImageData(imageBuffer);
         if (options.model === SkinModel.UNKNOWN && dataValidation.model !== SkinModel.UNKNOWN) {
-            console.log(debug("Switching unknown skin model to " + dataValidation.model + " from detection"));
+            console.log(debug(options.breadcrumb+" Switching unknown skin model to " + dataValidation.model + " from detection"));
             options.model = dataValidation.model;
         }
 

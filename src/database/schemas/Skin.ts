@@ -109,29 +109,6 @@ SkinSchema.statics.findForId = function ( id: number): Promise<ISkinDocument | n
     return Skin.findOne({ id: id }).exec();
 };
 
-SkinSchema.statics.findExistingForHash = function ( hash: string, name: string, model: SkinModel, visibility: SkinVisibility): Promise<Maybe<ISkinDocument>> {
-    return Skin.findOne({ hash: hash, name: name, model: model, visibility: visibility }).exec()
-        .then((skin: ISkinDocument) => {
-            if (skin) {
-                console.log("Found existing skin with same imageHash");
-                skin.duplicate += 1;
-                return skin.save();
-            }
-            return skin;
-        });
-};
-SkinSchema.statics.findExistingForTextureUrl = function ( url: string, name: string, model: SkinModel, visibility: SkinVisibility): Promise<Maybe<ISkinDocument>> {
-    return Skin.findOne({ url: url, name: name, model: model, visibility: visibility }).exec()
-        .then((skin: ISkinDocument) => {
-            if (skin) {
-                console.log("Found existing skin with same texture url");
-                skin.duplicate += 1;
-                return skin.save();
-            }
-            return skin;
-        });
-};
-
 SkinSchema.statics.attachTesterResult = function ( id: number, server: string, mismatchCount: number): Promise<ISkinDocument | null> {
     return Skin.findOneAndUpdate({ id: id, server: server }, { testerRequest: true, testerMismatchCounter: mismatchCount }).exec();
 };

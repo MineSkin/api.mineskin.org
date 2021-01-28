@@ -24,7 +24,7 @@ export enum AccessTokenSource {
 
 export interface IAccountDocument extends Document {
     id: number | any;
-    /** email **/
+    /**@deprecated legacy email **/
     username: string;
     email?: string;
     /** player uuid **/
@@ -73,6 +73,8 @@ export interface IAccountDocument extends Document {
     getOrCreateClientToken(): string;
 
     updateRequestServer(newRequestServer?: string): void;
+
+    getEmail(): string;
 
     authenticationHeader(): string;
 
