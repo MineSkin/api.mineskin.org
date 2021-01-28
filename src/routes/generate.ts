@@ -56,7 +56,7 @@ export const register = (app: Application) => {
         }
         Sentry.setTag("generate_type", GenerateType.UPLOAD);
 
-        console.log(debug(`UPLOAD:      ${ file.name } ${ file.md5 }`));
+        console.log(debug(`UPLOAD:      "${ file.name }" ${ file.md5 }`));
         const options = getAndValidateOptions(req);
         const client = getClientInfo(req);
 

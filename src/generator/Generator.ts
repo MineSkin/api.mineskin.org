@@ -782,7 +782,7 @@ export class Generator {
         account.lastUsed = Math.floor(Date.now() / 1000);
         account.updateRequestServer(config.server);
 
-        Sentry.setExtra("account", account.id);
+        Sentry.setTag("account", account.id);
 
         return account;
     }
