@@ -139,13 +139,12 @@ export class Discord {
                         "  Please log back in at https://mineskin.org/account\n", OWNER_CHANNEL);
                 });
             account.discordMessageSent = true;
+            account.save();
         }
-        account.save();
     }
 
 
     static notifyHighErrorCount(account: IAccountDocument, lastType: GenerateType, err: any): void {
-        if (account.discordMessageSent) return;
         this.postDiscordMessage("⚠️ Account #" + account.id + " has " + account.errorCounter + " errors!\n" +
             "  Current Server: " + account.lastRequestServer + "/" + account.requestServer + "\n" +
             "  Account Type: " + (account.microsoftAccount ? "microsoft" : "mojang") + "\n" +
@@ -155,6 +154,7 @@ export class Discord {
             "  Account Added: " + new Date((account.timeAdded || 0) * 1000).toUTCString() + "\n" +
             "  Linked to <@" + account.discordUser + ">");
 
+        if (account.discordMessageSent) return;
         if (account.discordUser) {
             Discord.sendDiscordDirectMessage("Hi there!\n" +
                 "This is an automated notification that a MineSkin account you linked to your Discord profile has been disabled since it failed to properly generate skin data recently.\n" +
@@ -172,8 +172,8 @@ export class Discord {
                         "  Please log back in at https://mineskin.org/account\n", OWNER_CHANNEL);
                 });
             account.discordMessageSent = true;
+            // account.save(); - should be saved by the caller
         }
-        account.save();
     }
 
 }
