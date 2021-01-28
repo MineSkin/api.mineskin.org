@@ -110,7 +110,8 @@ async function init() {
         app.use(session({
             secret: config.sessionSecret,
             cookie: {
-                maxAge: Time.minutes(10)
+                maxAge: Time.minutes(10),
+                domain: ".mineskin.org"
             }
         }))
         app.use(bodyParser.urlencoded({ extended: true, limit: '50kb' }));

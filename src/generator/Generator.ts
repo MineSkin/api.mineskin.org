@@ -491,6 +491,7 @@ export class Generator {
             time: { $lt: (time - 1800) } // Wait 30 minutes before generating again
         }).exec();
         if (existingSkin) {
+            console.log(debug(options.breadcrumb + " Found existing skin for user"));
             existingSkin.duplicate++;
             try {
                 NEW_DUPLICATES_METRIC

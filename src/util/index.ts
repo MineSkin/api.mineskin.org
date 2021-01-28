@@ -10,6 +10,7 @@ import * as readChunk from "read-chunk";
 import * as crypto from "crypto";
 import { Caching } from "../generator/Caching";
 import { SkinModel, SkinVariant } from "../typings/ISkinDocument";
+import { debug } from "./colors";
 
 export function getIp(req: Request): string {
     return req.get('cf-connecting-ip') || req.get('x-forwarded-for') || req.get("x-real-ip") || req.connection.remoteAddress || req.ip;
@@ -17,7 +18,7 @@ export function getIp(req: Request): string {
 
 export async function checkTraffic(req: Request, res: Response): Promise<boolean> {
     const ip = getIp(req);
-    console.log(colors.debug("IP: " + ip));
+    console.log(debug("IP: " + ip));
 
     Sentry.setUser({
         ip_address: ip
@@ -31,6 +32,7 @@ export async function checkTraffic(req: Request, res: Response): Promise<boolean
     const delay = await Generator.getDelay();
     if ((lastRequest.getTime() / 1000) > time - delay) {
         res.status(429).json({ error: "Too many requests", nextRequest: time + delay + 10, delay: delay });
+        console.log(debug("Request too soon"));
         return false;
     }
     return true;
