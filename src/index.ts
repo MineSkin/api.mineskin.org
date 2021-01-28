@@ -121,7 +121,20 @@ async function init() {
         const puller = new Puller({
             ...{
                 events: ["push"],
-                branches: ["master"]
+                branches: ["master"],
+                commands: {
+                    git: [
+                        "git fetch --all",
+                        "git reset --hard origin/master"
+                    ],
+                    install: [
+                        "npm install",
+                        "npm run build"
+                    ],
+                    post: [
+                        "pm2 restart $appName$"
+                    ]
+                }
             },
             ...config.puller
         });
