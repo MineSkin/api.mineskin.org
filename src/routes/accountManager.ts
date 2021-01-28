@@ -141,18 +141,15 @@ export const register = (app: Application) => {
     app.post("/accountManager/userProfile", async (req: AccountManagerRequest, res: Response) => {
         if (!validateSessionAndToken(req, res)) return;
 
-        if (!req.body["uuid"]) {
-            res.status(400).json({ error: "missing uuid" });
+        const profile = await getMojangProfile(req.session.account!.token!);
+        if (!profile) {
+            res.status(400).json({ error: "invalid session" });
             return;
         }
-
-        const profileValidation = await getAndValidateMojangProfile(req.session.account!.token!, req.body["uuid"]);
-        if (profileValidation.valid && profileValidation.profile) {
-            if (req.session && req.session.account) {
-                req.session.account.uuid = profileValidation.profile.id;
-            }
-            res.json(profileValidation.profile);
+        if (req.session && req.session.account) {
+            req.session.account.uuid = profile.id;
         }
+        res.json(profile);
     });
 
     app.post("/accountManager/myAccount", async (req: AccountManagerRequest, res: Response) => {
@@ -318,6 +315,11 @@ export const register = (app: Application) => {
         const profileValidation = await getAndValidateMojangProfile(req.session.account!.token!, req.body["uuid"]);
         if (!profileValidation.valid || !profileValidation.profile) return;
 
+        if (!req.body["readTerms"] || !req.body["acceptSkins"] || !req.body["acceptPassword"]) {
+            res.status(400).json({ error: "invalid checks" });
+            return;
+        }
+
         const ip = getIp(req);
 
         const preferredServer = await Generator.getPreferredAccountServer();
@@ -412,6 +414,10 @@ export const register = (app: Application) => {
             success: true,
             msg: "account removed"
         });
+
+        if (account.discordUser) {
+            Discord.sendDiscordDirectMessage("Your MineSkin account " + account.uuid + " has been deleted.", account.discordUser);
+        }
     })
 
 
@@ -423,7 +429,7 @@ export const register = (app: Application) => {
             return;
         }
         if (!validateSessionAndToken(req, res)) return;
-        if (!req.body["email"]) {
+        if (!req.query["email"]) {
             res.status(400).json({ error: "missing credentials" });
             return;
         }
@@ -431,7 +437,7 @@ export const register = (app: Application) => {
             res.status(400).json({ error: "invalid session" });
             return;
         }
-        const profileValidation = await getAndValidateMojangProfile(req.session.account!.token!, req.body["uuid"]);
+        const profileValidation = await getAndValidateMojangProfile(req.session.account!.token!, req.query["uuid"] as string);
         if (!profileValidation.valid || !profileValidation.profile) return;
 
         const account = await Account.findOne({
