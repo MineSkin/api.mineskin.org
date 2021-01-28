@@ -5,8 +5,9 @@ import { Generator } from "../generator/Generator";
 import { generateLimiter } from "../util/rateLimiters";
 import { ClientInfo } from "../typings/ClientInfo";
 import { GenerateOptions } from "../typings/GenerateOptions";
-import { SkinModel, SkinVariant, SkinVisibility } from "../typings/ISkinDocument";
+import { GenerateType, SkinModel, SkinVariant, SkinVisibility } from "../typings/ISkinDocument";
 import { debug } from "../util/colors";
+import * as Sentry from "@sentry/node";
 
 export const register = (app: Application) => {
 
@@ -24,6 +25,7 @@ export const register = (app: Application) => {
         if (!requestAllowed) {
             return;
         }
+        Sentry.setTag("generate_type", GenerateType.URL);
 
         console.log(debug(`URL:         ${ url }`));
         const options = getAndValidateOptions(req);
@@ -52,6 +54,7 @@ export const register = (app: Application) => {
         if (!requestAllowed) {
             return;
         }
+        Sentry.setTag("generate_type", GenerateType.UPLOAD);
 
         console.log(debug(`UPLOAD:      ${ file.name } ${ file.md5 }`));
         const options = getAndValidateOptions(req);
@@ -81,6 +84,7 @@ export const register = (app: Application) => {
         if (!requestAllowed) {
             return;
         }
+        Sentry.setTag("generate_type", GenerateType.USER);
 
         console.log(debug(`USER:        ${ uuidStr }`));
         const options = getAndValidateOptions(req);
@@ -103,6 +107,7 @@ export const register = (app: Application) => {
         if (!requestAllowed) {
             return;
         }
+        Sentry.setTag("generate_type", GenerateType.USER);
 
         const uuids = longAndShortUuid(uuidStr);
         if (!uuids) {
@@ -126,6 +131,8 @@ export const register = (app: Application) => {
         const origin = req.header("origin");
         const via = getVia(req);
 
+        Sentry.setTag("generate_via", via);
+
         return {
             userAgent,
             origin,
@@ -139,7 +146,7 @@ export const register = (app: Application) => {
         // Convert & make sure both are set
         if (variant === SkinVariant.UNKNOWN && model !== SkinModel.UNKNOWN) {
             variant = modelToVariant(model);
-        }else if (model === SkinModel.UNKNOWN && variant !== SkinVariant.UNKNOWN) {
+        } else if (model === SkinModel.UNKNOWN && variant !== SkinVariant.UNKNOWN) {
             model = variantToModel(variant);
         }
 
@@ -149,6 +156,11 @@ export const register = (app: Application) => {
         console.log(debug(`Variant:     ${ variant }`));
         console.log(debug(`Visibility:  ${ visibility }`));
         console.log(debug(`Name:        ${ name }`));
+
+        Sentry.setTags({
+            "generate_variant": variant,
+            "generate_visibility": visibility
+        });
 
         return {
             model,
