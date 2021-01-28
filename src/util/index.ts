@@ -151,11 +151,11 @@ export function sha512(str: string): string {
 }
 
 export function base64encode(str: string): string {
-    return new Buffer(str).toString("base64");
+    return Buffer.from(str).toString("base64");
 }
 
 export function base64decode(str: string): string {
-    return new Buffer(str, "base64").toString("ascii");
+    return Buffer.from(str, "base64").toString("ascii");
 }
 
 export function getHashFromMojangTextureUrl(url: string): Maybe<string> {
