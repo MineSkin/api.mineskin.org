@@ -118,7 +118,13 @@ async function init() {
     {// Git Puller
         console.log("Setting up git puller");
 
-        const puller = new Puller(config.puller);
+        const puller = new Puller({
+            ...{
+                events: ["push"],
+                branches: ["master"]
+            },
+            ...config.puller
+        });
         puller.on("before", (req: Request, res: Response) => {
             updatingApp = true;
         });
