@@ -542,11 +542,11 @@ export class Authentication {
     public static async authenticate(account: IAccountDocument): Promise<IAccountDocument> {
         const metric = AUTHENTICATION_METRIC
             .tag("server", config.server)
-            .tag("type", account.microsoftAccount ? "microsoft" : "mojang")
+            .tag("type", account.getAccountType())
             .tag("account", account.id);
         try {
             let result: IAccountDocument;
-            if (account.accountType === AccountType.MICROSOFT || account.microsoftAccount) {
+            if (account.getAccountType() === AccountType.MICROSOFT || account.microsoftAccount) {
                 result = await Microsoft.authenticate(account);
             } else {
                 result = await Mojang.authenticate(account)

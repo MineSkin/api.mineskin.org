@@ -456,7 +456,7 @@ export const register = (app: Application) => {
 
         const clientId = config.discord.oauth.id;
         const redirect = encodeURIComponent(`https://${ config.server }.api.mineskin.org/accountManager/discord/oauth/callback`);
-        const state = sha256(`${ account.accountType }${ account.uuid }${ Math.random() }${ req.session.account.email! }${ Date.now() }${ account.id }`);
+        const state = sha256(`${ account.getAccountType() }${ account.uuid }${ Math.random() }${ req.session.account.email! }${ Date.now() }${ account.id }`);
 
         Caching.storePendingDiscordLink({
             state: state,

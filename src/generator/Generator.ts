@@ -358,7 +358,7 @@ export class Generator {
             views: 0
         })
         return skin.save().then(skin => {
-            console.log(info(options.breadcrumb + " New skin saved #" + skin.id + " - generated in " + duration + "ms by " + result.account?.accountType + " account #" + result.account?.id));
+            console.log(info(options.breadcrumb + " New skin saved #" + skin.id + " - generated in " + duration + "ms by " + result.account?.getAccountType() + " account #" + result.account?.id));
             return skin;
         })
     }

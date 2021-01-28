@@ -42,6 +42,7 @@ export interface IAccountDocument extends Document {
     security?: string;
     multiSecurity?: SecurityQuestion[];
     accountType?: AccountType;
+    /**@deprecated**/
     microsoftAccount?: boolean;
     microsoftUserId?: string;
     microsoftAccessToken?: string;
@@ -76,6 +77,8 @@ export interface IAccountDocument extends Document {
     updateRequestServer(newRequestServer?: string): void;
 
     getEmail(): string;
+
+    getAccountType(): AccountType;
 
     authenticationHeader(): string;
 

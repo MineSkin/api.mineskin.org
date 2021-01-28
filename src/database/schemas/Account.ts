@@ -1,9 +1,9 @@
-import { Model, model, Schema } from "mongoose";
-import { md5, Maybe } from "../../util";
+import { model, Schema } from "mongoose";
+import { Maybe, md5 } from "../../util";
 import { v4 as uuid } from "uuid";
 import { getConfig } from "../../typings/Configs";
 import { IAccountDocument } from "../../typings";
-import { IAccountModel } from "../../typings/IAccountDocument";
+import { AccountType, IAccountModel } from "../../typings/IAccountDocument";
 import { debug, error } from "../../util/colors";
 import { Bread } from "../../typings/Bread";
 
@@ -114,8 +114,20 @@ AccountSchema.methods.getEmail = function (this: IAccountDocument): string {
         return this.email;
     } else {
         this.email = this.username;
-        return this.username;
     }
+    return this.email;
+};
+
+AccountSchema.methods.getAccountType = function (this: IAccountDocument): AccountType {
+    if (this.accountType) {
+        return this.accountType;
+    }
+    if (this.microsoftAccount) {
+        this.accountType = AccountType.MICROSOFT;
+    } else {
+        this.accountType = AccountType.MOJANG;
+    }
+    return this.accountType;
 };
 
 AccountSchema.methods.authenticationHeader = function (this: IAccountDocument): string {
