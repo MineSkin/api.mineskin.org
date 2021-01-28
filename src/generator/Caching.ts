@@ -22,7 +22,7 @@ export class Caching {
 
     protected static readonly skinDataCache: AsyncLoadingCache<string, SkinData> = Caches.builder()
         .expireAfterWrite(Time.minutes(1))
-        .expirationInterval(Time.seconds(30))
+        .expirationInterval(Time.seconds(10))
         .buildAsync<string, SkinData>(uuid => {
             return Requests.mojangSessionRequest({
                 url: "/session/minecraft/profile/" + uuid + "?unsigned=false"

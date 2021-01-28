@@ -20,6 +20,9 @@ import { getConfig } from "./typings/Configs";
 import { MineSkinError } from "./typings";
 import { apiRequestsMiddleware } from "./util/metrics";
 import { info } from "./util/colors";
+import { hasOwnProperty } from "./util";
+import { AuthenticationError } from "./generator/Authentication";
+import { GeneratorError } from "./generator/Generator";
 
 sourceMapSupport.install();
 
@@ -162,7 +165,6 @@ async function init() {
 
     app.use(Sentry.Handlers.errorHandler());
     const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
-        Sentry.captureException(err);
         console.warn("Error in a route");
         console.log(typeof err);
         console.log(err instanceof MineSkinError)
@@ -178,6 +180,19 @@ async function init() {
                 errorCode: err.code,
                 error: err.msg
             });
+
+            if (err instanceof AuthenticationError) {
+                console.warn(err.details);
+                if (err.details?.response) {
+                    console.warn(err.details.response);
+                }
+            }
+            if (err instanceof GeneratorError) {
+                console.warn(err.details);
+                if (err.details?.response) {
+                    console.warn(err.details.response);
+                }
+            }
         } else {
             res.status(500).json({
                 success: false,

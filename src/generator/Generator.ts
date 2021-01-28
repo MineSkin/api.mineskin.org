@@ -357,7 +357,7 @@ export class Generator {
             views: 0
         })
         return skin.save().then(skin => {
-            console.log(info("New skin saved #" + skin.id + " - generated in " + duration + "ms by " + result.account?.type + " account #" + result.account?.id));
+            console.log(info("New skin saved #" + skin.id + " - generated in " + duration + "ms by " + result.account?.accountType + " account #" + result.account?.id));
             return skin;
         })
     }
@@ -576,7 +576,7 @@ export class Generator {
             account = await this.getAndAuthenticateAccount();
 
             const body = {
-                variant: options.model,
+                variant: modelToVariant(options.model),
                 url: url
             };
             const skinResponse = await Requests.minecraftServicesRequest({
@@ -702,7 +702,9 @@ export class Generator {
         if (skinChangeResponse && skinChangeResponse.skins && skinChangeResponse.skins.length > 0) {
             if (skinChangeResponse.skins[0].url !== data.decodedValue!.textures!.SKIN!.url) {
                 console.warn(warn("Skin url returned by skin change does not match url returned by data query (" + skinChangeResponse.skins[0].url + " != " + data.decodedValue!.textures!.SKIN!.url + ")"));
-                throw new MineSkinError("skin_url_mismatch", "Skin url returned by skin change does not match url returned by data query", 500);
+                //TODO: figure out why this happens
+                
+                // throw new MineSkinError("skin_url_mismatch", "Skin url returned by skin change does not match url returned by data query", 500);
             }
         }
         const mojangHash = await this.getMojangHash(data.decodedValue!.textures!.SKIN!.url);
@@ -1013,6 +1015,7 @@ export enum GenError {
 export class GeneratorError extends MineSkinError {
     constructor(code: GenError, msg: string, httpCode: number = 500, public account?: IAccountDocument, public details?: any) {
         super(code, msg, httpCode);
+        Object.setPrototypeOf(this, GeneratorError.prototype);
     }
 
     get name(): string {
