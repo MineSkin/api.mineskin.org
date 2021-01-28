@@ -27,6 +27,7 @@ export const register = (app: Application) => {
         }
 
         const options = getAndValidateOptions(GenerateType.URL, req);
+        console.log(debug(`${ options.breadcrumb } URL:         ${ url }`))
         const client = getClientInfo(req);
 
         await updateTraffic(req);
@@ -54,6 +55,7 @@ export const register = (app: Application) => {
         }
 
         const options = getAndValidateOptions(GenerateType.UPLOAD, req);
+        console.log(debug(`${ options.breadcrumb } FILE:        "${ file.name }" ${ file.md5 }`))
         const client = getClientInfo(req);
 
         await updateTraffic(req);
@@ -82,6 +84,7 @@ export const register = (app: Application) => {
         }
 
         const options = getAndValidateOptions(GenerateType.USER, req);
+        console.log(debug(`${ options.breadcrumb } USER:        ${ uuids.long }`))
         const client = getClientInfo(req);
 
         await updateTraffic(req);
@@ -110,6 +113,7 @@ export const register = (app: Application) => {
         }
 
         const options = getAndValidateOptions(GenerateType.USER, req);
+        console.log(debug(`${ options.breadcrumb } USER:        ${ uuids.long }`))
         const client = getClientInfo(req);
 
         await updateTraffic(req);
@@ -149,10 +153,10 @@ export const register = (app: Application) => {
 
         const breadcrumb = md5(`${ getIp(req) }${ Date.now() }${ variant }${ visibility }${ Math.random() }${ name }`).substr(0, 8);
 
-        console.log(debug(`${breadcrumb} Type:        ${ type }`))
-        console.log(debug(`${breadcrumb} Variant:     ${ variant }`));
-        console.log(debug(`${breadcrumb} Visibility:  ${ visibility }`));
-        console.log(debug(`${breadcrumb} Name:        ${ name }`));
+        console.log(debug(`${ breadcrumb } Type:        ${ type }`))
+        console.log(debug(`${ breadcrumb } Variant:     ${ variant }`));
+        console.log(debug(`${ breadcrumb } Visibility:  ${ visibility }`));
+        console.log(debug(`${ breadcrumb } Name:        ${ name }`));
 
         Sentry.setTags({
             "generate_type": type,
