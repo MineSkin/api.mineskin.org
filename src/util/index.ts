@@ -19,6 +19,10 @@ export async function checkTraffic(req: Request, res: Response): Promise<boolean
     const ip = getIp(req);
     console.log(colors.debug("IP: " + ip));
 
+    Sentry.setUser({
+        ip_address: ip
+    });
+
     const lastRequest = await Caching.getTrafficRequestTimeByIp(ip);
     if (!lastRequest) { // First request
         return true;
