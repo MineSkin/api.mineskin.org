@@ -718,6 +718,8 @@ export class Generator {
 
         await this.handleGenerateSuccess(type, account);
 
+        account.lastTextureUrl = data.decodedValue!.textures!.SKIN!.url;
+
         return {
             data: data,
             account: account,
