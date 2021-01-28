@@ -775,13 +775,13 @@ export class Generator {
     protected static async getAndAuthenticateAccount(bread?: Bread): Promise<IAccountDocument> {
         let account = await Account.findUsable(bread);
         if (!account) {
-            console.warn(error(bread?.breadcrumb+" [Generator] No account available!"));
+            console.warn(error(bread?.breadcrumb + " [Generator] No account available!"));
             NO_ACCOUNTS_METRIC
                 .tag('server', config.server)
                 .inc();
             throw new GeneratorError(GenError.NO_ACCOUNT_AVAILABLE, "No account available");
         }
-        account = await Authentication.authenticate(account);
+        account = await Authentication.authenticate(account, bread);
 
         account.lastUsed = Math.floor(Date.now() / 1000);
         account.updateRequestServer(config.server);
@@ -813,7 +813,7 @@ export class Generator {
     }
 
     protected static async handleGenerateError(e: any, type: GenerateType, options: GenerateOptions, account?: IAccountDocument): Promise<void> {
-        console.log(error(options.breadcrumb+"   ==> FAIL"));
+        console.log(error(options.breadcrumb + "   ==> FAIL"));
         let m = SUCCESS_FAIL_METRIC
             .tag("state", "fail")
             .tag("server", config.server)
@@ -890,7 +890,7 @@ export class Generator {
 
         const dataValidation = await this.validateImageData(imageBuffer);
         if (options.model === SkinModel.UNKNOWN && dataValidation.model !== SkinModel.UNKNOWN) {
-            console.log(debug(options.breadcrumb+" Switching unknown skin model to " + dataValidation.model + " from detection"));
+            console.log(debug(options.breadcrumb + " Switching unknown skin model to " + dataValidation.model + " from detection"));
             options.model = dataValidation.model;
         }
 
