@@ -1,7 +1,7 @@
 import * as hasha from "hasha";
 import * as colors from "./colors";
 import * as fs from "fs";
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import * as Sentry from "@sentry/node";
 import { Generator } from "../generator/Generator";
 import { imageSize } from "image-size";
@@ -11,6 +11,7 @@ import * as crypto from "crypto";
 import { Caching } from "../generator/Caching";
 import { SkinModel, SkinVariant } from "../typings/ISkinDocument";
 import { debug } from "./colors";
+import exp = require("constants");
 
 export function getIp(req: Request): string {
     return req.get('cf-connecting-ip') || req.get('x-forwarded-for') || req.get("x-real-ip") || req.connection.remoteAddress || req.ip;
@@ -222,3 +223,28 @@ export function hasOwnProperty<X extends {}, Y extends PropertyKey>(obj: X, prop
 
 // https://github.com/microsoft/TypeScript/issues/13321#issuecomment-637120710
 export type Maybe<T> = T | undefined;
+
+
+export const corsMiddleware = (req: Request, res: Response, next: NextFunction) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    if (req.method === 'OPTIONS') {
+        res.header("Access-Control-Allow-Methods", "POST, GET, OPTIONS, DELETE, PUT");
+        res.header("Access-Control-Allow-Headers", "X-Requested-With, Accept, Content-Type, Origin");
+        res.header("Access-Control-Request-Headers", "X-Requested-With, Accept, Content-Type, Origin");
+        return res.sendStatus(200);
+    } else {
+        return next();
+    }
+};
+export const corsWithCredentialsMiddleware = (req: Request, res: Response, next: NextFunction) => {
+    res.header('Access-Control-Allow-Origin', 'https://mineskin.org');
+    res.header("Access-Control-Allow-Credentials", "true");
+    if (req.method === 'OPTIONS') {
+        res.header("Access-Control-Allow-Methods", "POST, GET, OPTIONS, DELETE, PUT");
+        res.header("Access-Control-Allow-Headers", "X-Requested-With, Accept, Content-Type, Origin, Authorization, Cookie");
+        res.header("Access-Control-Request-Headers", "X-Requested-With, Accept, Content-Type, Origin, Authorization, Cookie");
+        return res.sendStatus(200);
+    } else {
+        return next();
+    }
+};

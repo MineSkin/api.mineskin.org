@@ -1,6 +1,6 @@
-import { Application, Request, Response } from "express";
+import { Application, NextFunction, Request, Response } from "express";
 import { AuthenticationError, AuthError, BasicMojangProfile, Microsoft, Mojang, MojangSecurityAnswer, XboxInfo } from "../generator/Authentication";
-import { base64decode, getIp, Maybe, md5, sha256, sha512, stripUuid } from "../util";
+import { base64decode, corsWithCredentialsMiddleware, getIp, Maybe, md5, sha256, sha512, stripUuid } from "../util";
 import * as session from "express-session";
 import { Generator } from "../generator/Generator";
 import { Account } from "../database/schemas";
@@ -12,15 +12,19 @@ import { getConfig } from "../typings/Configs";
 import { AccessTokenSource, AccountType, IAccountDocument } from "../typings/IAccountDocument";
 import { MineSkinError } from "../typings";
 import { Encryption } from "../util/Encryption";
-import { info, warn } from "../util/colors";
+import { debug, info, warn } from "../util/colors";
+import * as Sentry from "@sentry/node";
 
 const config = getConfig();
 
 export const register = (app: Application) => {
 
+    app.use("/accountManager", corsWithCredentialsMiddleware);
+
     /// MOJANG
 
     app.post("/accountManager/mojang/login", async (req: AccountManagerRequest, res: Response) => {
+        await regenerateSession(req);
         if (!req.body["email"] || !req.body["password"]) {
             res.status(400).json({ error: "missing login data" });
             return;
@@ -96,6 +100,7 @@ export const register = (app: Application) => {
     /// MICROSOFT
 
     app.post("/accountManager/microsoft/login", async (req: AccountManagerRequest, res: Response) => {
+        await regenerateSession(req);
         if (!req.body["email"] || !req.body["password"]) {
             res.status(400).json({ error: "missing login data" });
             return;
@@ -134,6 +139,18 @@ export const register = (app: Application) => {
 
     app.post("/accountManager/logout", async (req: AccountManagerRequest, res: Response) => {
         req.session.destroy(() => res.status(200).end());
+    })
+
+    app.get("/accountManager/preferredAccountServer", (req: Request, res: Response) => {
+        Generator.getPreferredAccountServer().then(server => {
+            res.json({
+                server: server,
+                host: `${ server }.api.mineskin.org`
+            });
+        }).catch(err => {
+            Sentry.captureException(err);
+            res.status(404).json({ error: "failed to get server" });
+        })
     })
 
     // Stuff that requires being logged in
@@ -585,10 +602,12 @@ export const register = (app: Application) => {
 }
 
 function validateSessionAndToken(req: AccountManagerRequest, res: Response): boolean {
+    console.log(debug(req.headers.authorization))
     if (!req.headers.authorization || !req.headers.authorization.startsWith("Bearer ")) {
         res.status(400).json({ error: "invalid session" });
         return false;
     }
+    console.log(debug(req.session))
     const headerToken = req.headers.authorization.replace("Bearer ", "");
     if (!req.session || !req.session.account) {
         res.status(400).json({ error: "invalid session" });
@@ -630,6 +649,26 @@ async function getAndValidateMojangProfile(accessToken: string, uuid: string): P
         profile: profile,
         valid: shortUuid === profile.id
     }
+}
+
+function regenerateSession(req: AccountManagerRequest): Promise<void> {
+    return new Promise<void>(resolve => {
+        if (req.session) {
+            req.session.regenerate(resolve);
+        } else {
+            resolve();
+        }
+    })
+}
+
+function destroySession(req: AccountManagerRequest): Promise<void> {
+    return new Promise<void>(resolve => {
+        if (req.session) {
+            req.session.destroy(resolve);
+        } else {
+            resolve();
+        }
+    })
 }
 
 // session stuff

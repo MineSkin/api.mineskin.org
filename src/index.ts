@@ -96,22 +96,11 @@ async function init() {
     {
         console.log("Setting up express middleware")
 
-        app.use((req, res, next) => {
-            res.header('Access-Control-Allow-Origin', '*');
-            if (req.method === 'OPTIONS') {
-                res.header("Access-Control-Allow-Methods", "POST, GET, OPTIONS, DELETE, PUT");
-                res.header("Access-Control-Allow-Headers", "X-Requested-With, Accept, Content-Type, Origin");
-                res.header("Access-Control-Request-Headers", "X-Requested-With, Accept, Content-Type, Origin");
-                return res.sendStatus(200);
-            } else {
-                return next();
-            }
-        });
         app.use(session({
             secret: config.sessionSecret,
             cookie: {
                 maxAge: Time.minutes(10),
-                domain: ".mineskin.org"
+                domain: "api.mineskin.org"
             }
         }))
         app.use(bodyParser.urlencoded({ extended: true, limit: '50kb' }));

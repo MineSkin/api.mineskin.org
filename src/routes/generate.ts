@@ -1,5 +1,5 @@
 import { Application, Request, Response } from "express";
-import { checkTraffic, getIp, getVia, longAndShortUuid, md5, modelToVariant, updateTraffic, validateUrl, variantToModel } from "../util";
+import { checkTraffic, corsMiddleware, getIp, getVia, longAndShortUuid, md5, modelToVariant, updateTraffic, validateUrl, variantToModel } from "../util";
 import { UploadedFile } from "express-fileupload";
 import { Generator } from "../generator/Generator";
 import { generateLimiter } from "../util/rateLimiters";
@@ -12,6 +12,7 @@ import { nextBreadColor } from "../typings/Bread";
 
 export const register = (app: Application) => {
 
+    app.use("/generate", corsMiddleware);
     app.use("/generate", generateLimiter);
 
     //// URL
