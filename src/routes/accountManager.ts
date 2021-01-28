@@ -445,7 +445,14 @@ export const register = (app: Application) => {
             res.status(400).json({ error: "server can't handle discord auth" });
             return;
         }
-        if (!validateSessionAndToken(req, res)) return;
+        if (!req.session || !req.session.account) {
+            res.status(400).json({ error: "invalid session" });
+            return;
+        }
+        if (!req.session.account.token) {
+            res.status(400).json({ error: "invalid session" });
+            return;
+        }
         if (!req.query["email"]) {
             res.status(400).json({ error: "missing credentials" });
             return;
@@ -584,17 +591,17 @@ export const register = (app: Application) => {
 
         console.log(info("Discord User " + userBody["username"] + "#" + userBody["discriminator"] + " linked to Mineskin account #" + account.id + "/" + account.uuid + " - adding roles!"));
         const roleAdded = await Discord.addDiscordAccountOwnerRole(discordId);
+        Discord.sendDiscordDirectMessage("Thanks for linking your Discord account to Mineskin! :)", discordId);
+        Discord.postDiscordMessage(userBody.username + "#" + userBody.discriminator + " linked to account #" + account.id + "/" + account.uuid);
         if (roleAdded) {
             res.json({
                 success: true,
                 msg: "Successfully linked Mineskin Account " + account.uuid + " to Discord User " + userBody.username + "#" + userBody.discriminator + ", yay! You can close this window now :)"
             });
-            Discord.sendDiscordDirectMessage("Thanks for linking your Discord account to Mineskin! :)", discordId);
-            Discord.postDiscordMessage(userBody.username + "#" + userBody.discriminator + " linked to account #" + account.id + "/" + account.uuid);
         } else {
             res.json({
                 success: false,
-                msg: "Uh oh! Looks like there was an issue linking your discord account! Make sure you've joined inventivetalent's discord server and try again"
+                msg: "Uh oh! Looks like there was an issue linking your discord account! Make sure you've joined inventivetalent's discord server and try again (this may also happen if you've linked multiple accounts)"
             })
         }
     })
