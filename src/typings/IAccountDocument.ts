@@ -2,6 +2,7 @@ import { Document, Model } from "mongoose";
 import { access } from "fs";
 import { Maybe } from "../util";
 import { MojangSecurityAnswer } from "../generator/Authentication";
+import { Bread } from "./Bread";
 
 export interface SecurityQuestion extends MojangSecurityAnswer {
 }
@@ -82,7 +83,7 @@ export interface IAccountDocument extends Document {
 }
 
 export interface IAccountModel extends Model<IAccountDocument> {
-    findUsable(): Promise<IAccountDocument | undefined>;
+    findUsable(bread?: Bread): Promise<IAccountDocument | undefined>;
 
     countGlobalUsable(): Promise<number>;
 

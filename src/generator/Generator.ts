@@ -29,6 +29,7 @@ import { debug, error, info, warn } from "../util/colors";
 import { Optimus } from "@inventivetalent/optimus-ts";
 import { SkinInfo } from "../typings/SkinInfo";
 import { Discord } from "../util/Discord";
+import { Bread } from "../typings/Bread";
 
 const config = getConfig();
 
@@ -578,7 +579,7 @@ export class Generator {
 
             /// Run generation for new skin
 
-            account = await this.getAndAuthenticateAccount();
+            account = await this.getAndAuthenticateAccount(options);
 
             const body = {
                 variant: modelToVariant(options.model),
@@ -667,7 +668,7 @@ export class Generator {
 
             /// Run generation for new skin
 
-            account = await this.getAndAuthenticateAccount();
+            account = await this.getAndAuthenticateAccount(options);
 
             const body = new FormData();
             body.append("variant", modelToVariant(options.model));
@@ -771,10 +772,10 @@ export class Generator {
 
     /// AUTH
 
-    protected static async getAndAuthenticateAccount(): Promise<IAccountDocument> {
-        let account = await Account.findUsable();
+    protected static async getAndAuthenticateAccount(bread?: Bread): Promise<IAccountDocument> {
+        let account = await Account.findUsable(bread);
         if (!account) {
-            console.warn(error("[Generator] No account available!"));
+            console.warn(error(bread?.breadcrumb+" [Generator] No account available!"));
             NO_ACCOUNTS_METRIC
                 .tag('server', config.server)
                 .inc();

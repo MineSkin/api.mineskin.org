@@ -5,6 +5,7 @@ import { getConfig } from "../../typings/Configs";
 import { IAccountDocument } from "../../typings";
 import { IAccountModel } from "../../typings/IAccountDocument";
 import { debug, error } from "../../util/colors";
+import { Bread } from "../../typings/Bread";
 
 const config = getConfig();
 
@@ -127,7 +128,7 @@ AccountSchema.methods.toSimplifiedString = function (this: IAccountDocument): st
 
 /// STATICS
 
-AccountSchema.statics.findUsable = function (this: IAccountModel): Promise<Maybe<IAccountDocument>> {
+AccountSchema.statics.findUsable = function (this: IAccountModel, bread?: Bread): Promise<Maybe<IAccountDocument>> {
     const time = Math.floor(Date.now() / 1000);
     return this.findOne({
         enabled: true,
@@ -143,10 +144,10 @@ AccountSchema.statics.findUsable = function (this: IAccountModel): Promise<Maybe
     } as IAccountDocument).exec()
         .then((account: IAccountDocument) => {
             if (!account) {
-                console.warn(error("There are no accounts available!"));
+                console.warn(error(bread?.breadcrumb + " There are no accounts available!"));
                 return undefined;
             }
-            console.log(debug("Account #" + account.id + " last used " + Math.round(time - (account.lastUsed || 0)) + "s ago, last selected " + Math.round(time - (account.lastSelected || 0)) + "s ago"));
+            console.log(debug(bread?.breadcrumb + " Account #" + account.id + " last used " + Math.round(time - (account.lastUsed || 0)) + "s ago, last selected " + Math.round(time - (account.lastSelected || 0)) + "s ago"));
             account.lastSelected = time;
             if (!account.successCounter) account.successCounter = 0;
             if (!account.errorCounter) account.errorCounter = 0;
