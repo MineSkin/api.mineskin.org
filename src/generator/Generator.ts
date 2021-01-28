@@ -28,6 +28,7 @@ import { durationMetric, HASH_MISMATCH_METRIC, metrics, NEW_DUPLICATES_METRIC, N
 import { debug, error, info, warn } from "../util/colors";
 import { Optimus } from "@inventivetalent/optimus-ts";
 import { SkinInfo } from "../typings/SkinInfo";
+import { Discord } from "../util/Discord";
 
 const config = getConfig();
 
@@ -831,6 +832,11 @@ export class Generator {
                 console.warn(warn("[Generator] Account #" + account.id + " forced timeout"));
                 account.updateRequestServer(undefined);
             }
+
+            if (account.errorCounter > 0 && account.errorCounter % 10 === 0) {
+                Discord.notifyHighErrorCount(account, type, e);
+            }
+
             await account.save();
         } catch (e1) {
             Sentry.captureException(e1);
