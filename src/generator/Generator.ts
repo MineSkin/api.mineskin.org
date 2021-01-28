@@ -8,10 +8,9 @@ import { Requests } from "./Requests";
 import * as FormData from "form-data";
 import { URL } from "url";
 import { MOJ_DIR, Temp, TempFile, UPL_DIR, URL_DIR } from "./Temp";
-import axios, { AxiosResponse } from "axios";
+import { AxiosResponse } from "axios";
 import imageSize from "image-size";
 import { promises as fs } from "fs";
-import * as syncFs from "fs";
 import * as fileType from "file-type";
 import { FileTypeResult } from "file-type";
 import { UploadedFile } from "express-fileupload";
@@ -25,7 +24,7 @@ import { GenerateOptions } from "../typings/GenerateOptions";
 import { GenerateType, SkinModel } from "../typings/ISkinDocument";
 import { AccountStats, CountDuplicateViewStats, DurationStats, Stats, SuccessRateStats, TimeFrameStats } from "../typings/Stats";
 import { ClientInfo } from "../typings/ClientInfo";
-import { DUPLICATES_METRIC, durationMetric, HASH_MISMATCH_METRIC, metrics, NEW_METRIC, NO_ACCOUNTS_METRIC } from "../util/metrics";
+import { durationMetric, HASH_MISMATCH_METRIC, metrics, NEW_DUPLICATES_METRIC, NO_ACCOUNTS_METRIC, SUCCESS_FAIL_METRIC } from "../util/metrics";
 import { debug, error, info, warn } from "../util/colors";
 import { Optimus } from "@inventivetalent/optimus-ts";
 import { SkinInfo } from "../typings/SkinInfo";
@@ -368,7 +367,8 @@ export class Generator {
         }
         if (result.data) {
             try {
-                NEW_METRIC
+                NEW_DUPLICATES_METRIC
+                    .tag("newOrDuplicate", "new")
                     .tag("server", config.server)
                     .tag("type", type)
                     .inc();
@@ -399,7 +399,8 @@ export class Generator {
                 console.log(debug("Found existing skin from mineskin url"));
                 existingSkin.duplicate++;
                 try {
-                    DUPLICATES_METRIC
+                    NEW_DUPLICATES_METRIC
+                        .tag("newOrDuplicate", "duplicate")
                         .tag("server", config.server)
                         .tag("source", DuplicateSource.MINESKIN_URL)
                         .tag("type", type)
@@ -429,7 +430,8 @@ export class Generator {
                 console.log(debug("Found existing skin with same minecraft texture url/hash"));
                 existingSkin.duplicate++;
                 try {
-                    DUPLICATES_METRIC
+                    NEW_DUPLICATES_METRIC
+                        .tag("newOrDuplicate", "duplicate")
                         .tag("server", config.server)
                         .tag("source", DuplicateSource.TEXTURE_URL)
                         .tag("type", type)
@@ -460,7 +462,8 @@ export class Generator {
             console.log(debug("Found existing skin with same image hash"));
             existingSkin.duplicate++;
             try {
-                DUPLICATES_METRIC
+                NEW_DUPLICATES_METRIC
+                    .tag("newOrDuplicate", "duplicate")
                     .tag("server", config.server)
                     .tag("source", DuplicateSource.IMAGE_HASH)
                     .tag("type", type)
@@ -488,7 +491,8 @@ export class Generator {
         if (existingSkin) {
             existingSkin.duplicate++;
             try {
-                DUPLICATES_METRIC
+                NEW_DUPLICATES_METRIC
+                    .tag("newOrDuplicate", "duplicate")
                     .tag("server", config.server)
                     .tag("source", DuplicateSource.USER_UUID)
                     .tag("type", type)
@@ -595,7 +599,7 @@ export class Generator {
             });
             return this.handleSkinChangeResponse(skinResponse, GenerateType.URL, options, account, tempFileValidation);
         } catch (e) {
-            await this.handleGenerateError(e, account);
+            await this.handleGenerateError(e, GenerateType.URL, account);
             throw e;
         } finally {
             if (tempFile) {
@@ -685,7 +689,7 @@ export class Generator {
             });
             return this.handleSkinChangeResponse(skinResponse, GenerateType.UPLOAD, options, account, tempFileValidation);
         } catch (e) {
-            await this.handleGenerateError(e, account);
+            await this.handleGenerateError(e, GenerateType.UPLOAD, account);
             throw e;
         } finally {
             if (tempFile) {
@@ -703,7 +707,7 @@ export class Generator {
             if (skinChangeResponse.skins[0].url !== data.decodedValue!.textures!.SKIN!.url) {
                 console.warn(warn("Skin url returned by skin change does not match url returned by data query (" + skinChangeResponse.skins[0].url + " != " + data.decodedValue!.textures!.SKIN!.url + ")"));
                 //TODO: figure out why this happens
-                
+
                 // throw new MineSkinError("skin_url_mismatch", "Skin url returned by skin change does not match url returned by data query", 500);
             }
         }
@@ -711,7 +715,7 @@ export class Generator {
 
         this.compareImageAndMojangHash(tempFileValidation.hash!, mojangHash!.hash!, type, options, account);
 
-        await this.handleGenerateSuccess(account);
+        await this.handleGenerateSuccess(type, account);
 
         return {
             data: data,
@@ -783,8 +787,14 @@ export class Generator {
 
     /// SUCCESS / ERROR HANDLERS
 
-    protected static async handleGenerateSuccess(account: IAccountDocument): Promise<void> {
+    protected static async handleGenerateSuccess(type: GenerateType, account: IAccountDocument): Promise<void> {
         console.log(info("  ==> SUCCESS"));
+        SUCCESS_FAIL_METRIC
+            .tag("state", "success")
+            .tag("server", config.server)
+            .tag("type", type)
+            .tag("account", account.id)
+            .inc();
         if (!account) return;
         try {
             account.errorCounter = 0;
@@ -796,8 +806,19 @@ export class Generator {
         }
     }
 
-    protected static async handleGenerateError(e: any, account?: IAccountDocument): Promise<void> {
+    protected static async handleGenerateError(e: any, type: GenerateType, account?: IAccountDocument): Promise<void> {
         console.log(error("  ==> FAIL"));
+        let m = SUCCESS_FAIL_METRIC
+            .tag("state", "fail")
+            .tag("server", config.server)
+            .tag("type", type);
+        if (account) {
+            m.tag("account", account.id);
+        }
+        if (e instanceof MineSkinError) {
+            m.tag("error", e.code);
+        }
+        m.inc();
         if (!account) return;
         try {
             account.successCounter = 0;

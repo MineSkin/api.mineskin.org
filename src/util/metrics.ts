@@ -35,8 +35,8 @@ export const apiRequestsMiddleware = (req: Request, res: Response, next: NextFun
 
 export const AUTHENTICATION_METRIC = metrics.metric('mineskin', 'authentication');
 
-export const DUPLICATES_METRIC = metrics.metric('mineskin', 'gen_duplicate');
-export const NEW_METRIC = metrics.metric('mineskin', 'gen_new');
+export const NEW_DUPLICATES_METRIC = metrics.metric('mineskin', 'generate_new_duplicate');
+export const SUCCESS_FAIL_METRIC = metrics.metric('mineskin', 'generate_success_fail');
 
 export const NO_ACCOUNTS_METRIC = metrics.metric('mineskin', 'no_accounts');
 export const HASH_MISMATCH_METRIC = metrics.metric('mineskin', 'hash_mismatch');
