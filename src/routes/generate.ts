@@ -8,6 +8,7 @@ import { GenerateOptions } from "../typings/GenerateOptions";
 import { GenerateType, SkinModel, SkinVariant, SkinVisibility } from "../typings/ISkinDocument";
 import { debug } from "../util/colors";
 import * as Sentry from "@sentry/node";
+import { nextBreadColor } from "../typings/Bread";
 
 export const register = (app: Application) => {
 
@@ -151,7 +152,7 @@ export const register = (app: Application) => {
         const visibility = validateVisibility(req.body["visibility"] || req.query["visibility"]);
         const name = validateName(req.body["name"] || req.query["name"]);
 
-        const breadcrumb = md5(`${ getIp(req) }${ Date.now() }${ variant }${ visibility }${ Math.random() }${ name }`).substr(0, 8);
+        const breadcrumb = nextBreadColor()(md5(`${ getIp(req) }${ Date.now() }${ variant }${ visibility }${ Math.random() }${ name }`).substr(0, 8));
 
         console.log(debug(`${ breadcrumb } Type:        ${ type }`))
         console.log(debug(`${ breadcrumb } Variant:     ${ variant }`));
@@ -161,9 +162,9 @@ export const register = (app: Application) => {
         Sentry.setTags({
             "generate_type": type,
             "generate_variant": variant,
-            "generate_visibility": visibility,
-            "generate_breadcrumb": breadcrumb
+            "generate_visibility": visibility
         });
+        Sentry.setExtra("generate_breadcrumb", breadcrumb);
 
         return {
             model,

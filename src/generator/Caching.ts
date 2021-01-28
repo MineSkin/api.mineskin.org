@@ -1,5 +1,5 @@
 import { Requests } from "./Requests";
-import { AsyncLoadingCache, Caches, CacheStats, SimpleCache, Time } from "@inventivetalent/loading-cache";
+import { AsyncLoadingCache, Caches, CacheStats, ICacheBase, SimpleCache, Time } from "@inventivetalent/loading-cache";
 import * as Sentry from "@sentry/node";
 import { Severity } from "@sentry/node";
 import { Maybe, stripUuid } from "../util";
@@ -173,14 +173,17 @@ export class Caching {
     ////
 
     protected static metricsCollector = setInterval(() => {
-        const caches = new Map<string, AsyncLoadingCache<any, any>>([
+        const caches = new Map<string, ICacheBase<any, any>>([
             ["skinData", Caching.skinDataCache],
             ["userByName", Caching.userByNameCache],
             ["userByUuid", Caching.userByUuidCache],
             ["profileByAccessToken", Caching.profileByAccessTokenCache],
 
             ["trafficById", Caching.trafficByIpCache],
-            ["skinById", Caching.skinByIdCache]
+            ["skinById", Caching.skinByIdCache],
+
+            ["pendingDiscordLinks", Caching.pendingDiscordLinkByStateCache],
+            ["accountLock", Caching.recentAccountsLock]
         ]);
         const points: IPoint[] = [];
         caches.forEach((cache, name) => {
@@ -199,13 +202,15 @@ export class Caching {
                     expire: cache.stats.get(CacheStats.EXPIRE)
                 }
             });
+
+            cache.stats.reset();
         });
         try {
             metrics.influx.writePoints(points);
         } catch (e) {
             Sentry.captureException(e);
         }
-    }, 10000);
+    }, 20000);
 
     /// REQUESTS
 
