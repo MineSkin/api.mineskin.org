@@ -1,0 +1,131 @@
+openapi: 3.0.3
+info:
+  title: MineSkin API
+  version: 0.0.0
+  contact:
+    name: inventivetalent
+    url: https://discord.gg/nzAdvPc
+    email: info@mineskin.org
+  license:
+    name: MIT
+    url: https://github.com/MineSkin/api.mineskin.org/blob/master/LICENSE
+servers:
+  - url: https://api.mineskin.org
+tags:
+  - name: generate
+  - name: account
+  - name: get
+components:
+  schemas:
+    SkinInfo:
+      type: object
+      required: [ id, model, data ]
+      properties:
+        id:
+          type: integer
+        idStr:
+          type: string
+        name:
+          type: string
+        model:
+          type: string
+          deprecated: true
+          enum: [ "slim", "steve", "unknown" ]
+        variant:
+          type: string
+          enum: [ "classic", "slim" ]
+        data:
+          $ref: '#/components/schemas/SkinData'
+        timestamp:
+          type: number
+        duration:
+          type: number
+        accountId:
+          type: integer
+        server:
+          type: string
+        private:
+          type: boolean
+        views:
+          type: number
+    SkinData:
+      type: object
+      properties:
+        uuid:
+          type: string
+        texture:
+          $ref: '#/components/schemas/TextureInfo'
+    TextureInfo:
+      type: object
+      properties:
+        value:
+          type: string
+        signature:
+          type: string
+        url:
+          type: string
+    Stats:
+      type: object
+      properties:
+        server:
+          type: string
+        delay:
+          type: number
+    GenerateOptions:
+      type: object
+      properties:
+        model:
+          type: string
+          enum: [ "classic", "slim" ]
+          default: "classic"
+        name:
+          type: string
+        visibility:
+          description: "Visibility of the generated skin. 0 for public, 1 for private"
+          type: integer
+          enum: [ 0, 1 ]
+          default: 0
+  responses:
+    GeneratedSkin:
+      description: Successfully generated skin info
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SkinInfo'
+paths:
+  /generate/url:
+    post:
+      tags:
+        - generate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/GenerateOptions'
+                - properties:
+                    url:
+                      type: string
+      responses:
+        200:
+          $ref: '#/components/responses/GeneratedSkin'
+  /generate/upload:
+    post:
+      tags:
+        - generate
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/GenerateOptions'
+                - properties:
+                    file:
+                      type: string
+                      format: binary
+      responses:
+        200:
+          $ref: '#/components/responses/GeneratedSkin'
+
