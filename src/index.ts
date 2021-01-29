@@ -19,7 +19,7 @@ import { Time } from "@inventivetalent/loading-cache";
 import { getConfig } from "./typings/Configs";
 import { MineSkinError, MineSkinRequest, GenerateRequest, isBreadRequest } from "./typings";
 import { apiRequestsMiddleware } from "./util/metrics";
-import { info } from "./util/colors";
+import { info, warn } from "./util/colors";
 import { hasOwnProperty } from "./util";
 import { AuthenticationError } from "./generator/Authentication";
 import { GeneratorError } from "./generator/Generator";
@@ -177,7 +177,7 @@ async function init() {
 
     app.use(Sentry.Handlers.errorHandler());
     const errorHandler: ErrorRequestHandler = (err, req: Request, res: Response, next: NextFunction) => {
-        console.warn((isBreadRequest(req) ? req.breadcrumb + " " : "") + "Error in a route " + err.message);
+        console.warn(warn((isBreadRequest(req) ? req.breadcrumb + " " : "") + "Error in a route " + err.message));
         if (err instanceof MineSkinError) {
             if (err.httpCode) {
                 res.status(err.httpCode);
