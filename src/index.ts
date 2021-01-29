@@ -135,7 +135,7 @@ async function init() {
                 },
                 delays: {
                     install: Math.ceil(Math.random() * 200),
-                    post: 5000 + Math.ceil(Math.random() * 5000)
+                    post: 5000 + Math.ceil(Math.random() * 10000)
                 }
             },
             ...config.puller
