@@ -788,12 +788,11 @@ export class Generator {
                 .inc();
             throw new GeneratorError(GenError.NO_ACCOUNT_AVAILABLE, "No account available");
         }
+        Sentry.setTag("account", account.id);
         account = await Authentication.authenticate(account, bread);
 
         account.lastUsed = Math.floor(Date.now() / 1000);
         account.updateRequestServer(config.server);
-
-        Sentry.setTag("account", account.id);
 
         return account;
     }
