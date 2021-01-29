@@ -131,7 +131,13 @@ export const register = (app: Application) => {
             microsoftInfo: microsoftInfo
         };
 
-        const ownsMinecraft = await Microsoft.checkGameOwnership(minecraftAccessToken);
+        const ownsMinecraft = await Microsoft.checkGameOwnership(minecraftAccessToken)
+            .catch(err => {
+                if (err.response) {
+                    throw new AuthenticationError(AuthError.DOES_NOT_OWN_MINECRAFT, "Failed to check game ownership", undefined, err);
+                }
+                throw err;
+            })
         if (!ownsMinecraft) {
             throw new AuthenticationError(AuthError.DOES_NOT_OWN_MINECRAFT, "User does not own minecraft", undefined);
         }
