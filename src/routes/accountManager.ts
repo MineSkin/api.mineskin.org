@@ -608,7 +608,7 @@ export const register = (app: Application) => {
         console.log(info("Discord User " + userBody["username"] + "#" + userBody["discriminator"] + " linked to Mineskin account #" + account.id + "/" + account.uuid + " - adding roles!"));
         const roleAdded = await Discord.addDiscordAccountOwnerRole(discordId);
         Discord.sendDiscordDirectMessage("Thanks for linking your Discord account to Mineskin! :)", discordId);
-        Discord.postDiscordMessage(userBody.username + "#" + userBody.discriminator + " linked to account #" + account.id + "/" + account.uuid);
+        Discord.postDiscordMessage(userBody.username + "#" + userBody.discriminator + " <@" + discordId + "> linked to account #" + account.id + "/" + account.uuid);
         if (roleAdded) {
             res.json({
                 success: true,
