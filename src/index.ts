@@ -140,6 +140,7 @@ async function init() {
         });
         puller.on("before", (req: Request, res: Response) => {
             updatingApp = true;
+            console.log(process.cwd());
         });
         app.use(function (req: Request, res: Response, next: NextFunction) {
             if (updatingApp) {
