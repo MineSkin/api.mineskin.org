@@ -617,7 +617,7 @@ export const register = (app: Application) => {
         } else {
             res.json({
                 success: false,
-                msg: "Uh oh! Looks like there was an issue linking your discord account! Make sure you've joined inventivetalent's discord server and try again (this may also happen if you've linked multiple accounts)"
+                msg: "Account " + account.uuid + " was linked to " + userBody.username + "#" + userBody.discriminator + ", but there was an issue updating your server roles :( - Make sure you've joined inventivetalent's discord server! (this may also happen if you've linked multiple accounts)"
             })
         }
     })
