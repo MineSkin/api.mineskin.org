@@ -189,19 +189,6 @@ async function init() {
                 errorCode: err.code,
                 error: err.msg
             });
-
-            if (err instanceof AuthenticationError) {
-                console.warn(err.details);
-                if (err.details?.response) {
-                    console.warn(err.details.response);
-                }
-            }
-            if (err instanceof GeneratorError) {
-                console.warn(err.details);
-                if (err.details?.response) {
-                    console.warn(err.details.response);
-                }
-            }
         } else {
             res.status(500).json({
                 success: false,
