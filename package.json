@@ -2,7 +2,7 @@
   "name": "api.mineskin.org",
   "version": "0.0.0",
   "engines": {
-    "node": ">=12.20.0"
+    "node": ">=14.10.0"
   },
   "scripts": {
     "clean": "rm -rf dist",
