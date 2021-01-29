@@ -513,14 +513,14 @@ export class Generator {
 
     public static async generateFromUrlAndSave(url: string, options: GenerateOptions, client: ClientInfo): Promise<SavedSkin> {
         const start = Date.now();
-        const data = await this.generateFromUrl(url, options);
+        const data = await this.generateFromUrl(url, options, client);
         const skin = await this.getDuplicateOrSaved(data, options, client, GenerateType.URL, start);
         const end = Date.now();
         durationMetric(end - start, GenerateType.URL, options, data.account);
         return skin;
     }
 
-    protected static async generateFromUrl(originalUrl: string, options: GenerateOptions): Promise<GenerateResult> {
+    protected static async generateFromUrl(originalUrl: string, options: GenerateOptions, client: ClientInfo): Promise<GenerateResult> {
         console.log(info(options.breadcrumb + " [Generator] Generating from url"));
 
         let account: Maybe<IAccountDocument> = undefined;
@@ -600,9 +600,9 @@ export class Generator {
                 }
                 throw err;
             });
-            return this.handleSkinChangeResponse(skinResponse, GenerateType.URL, options, account, tempFileValidation);
+            return this.handleSkinChangeResponse(skinResponse, GenerateType.URL, options, client,  account, tempFileValidation);
         } catch (e) {
-            await this.handleGenerateError(e, GenerateType.URL, options, account);
+            await this.handleGenerateError(e, GenerateType.URL, options, client, account);
             throw e;
         } finally {
             if (tempFile) {
@@ -643,14 +643,14 @@ export class Generator {
 
     public static async generateFromUploadAndSave(file: UploadedFile, options: GenerateOptions, client: ClientInfo): Promise<SavedSkin> {
         const start = Date.now();
-        const data = await this.generateFromUpload(file, options);
+        const data = await this.generateFromUpload(file, options, client);
         const skin = await this.getDuplicateOrSaved(data, options, client, GenerateType.UPLOAD, start);
         const end = Date.now();
         durationMetric(end - start, GenerateType.UPLOAD, options, data.account);
         return skin;
     }
 
-    protected static async generateFromUpload(file: UploadedFile, options: GenerateOptions): Promise<GenerateResult> {
+    protected static async generateFromUpload(file: UploadedFile, options: GenerateOptions, client: ClientInfo): Promise<GenerateResult> {
         console.log(info(options.breadcrumb + " [Generator] Generating from upload"));
 
         let account: Maybe<IAccountDocument> = undefined;
@@ -696,9 +696,9 @@ export class Generator {
                 }
                 throw err;
             });
-            return this.handleSkinChangeResponse(skinResponse, GenerateType.UPLOAD, options, account, tempFileValidation);
+            return this.handleSkinChangeResponse(skinResponse, GenerateType.UPLOAD, options, client, account, tempFileValidation);
         } catch (e) {
-            await this.handleGenerateError(e, GenerateType.UPLOAD, options, account);
+            await this.handleGenerateError(e, GenerateType.UPLOAD, options, client, account);
             throw e;
         } finally {
             if (tempFile) {
@@ -707,7 +707,7 @@ export class Generator {
         }
     }
 
-    static async handleSkinChangeResponse(skinResponse: AxiosResponse, type: GenerateType, options: GenerateOptions, account: IAccountDocument, tempFileValidation: TempFileValidationResult): Promise<GenerateResult> {
+    static async handleSkinChangeResponse(skinResponse: AxiosResponse, type: GenerateType, options: GenerateOptions, client: ClientInfo, account: IAccountDocument, tempFileValidation: TempFileValidationResult): Promise<GenerateResult> {
         const skinChangeResponse = skinResponse.data as SkinChangeResponse;
         const minecraftSkinId = skinChangeResponse?.skins[0]?.id;
 
@@ -724,7 +724,7 @@ export class Generator {
 
         this.compareImageAndMojangHash(tempFileValidation.hash!, mojangHash!.hash!, type, options, account);
 
-        await this.handleGenerateSuccess(type, options, account);
+        await this.handleGenerateSuccess(type, options, client, account);
 
         account.lastTextureUrl = data.decodedValue!.textures!.SKIN!.url;
 
@@ -800,12 +800,13 @@ export class Generator {
 
     /// SUCCESS / ERROR HANDLERS
 
-    protected static async handleGenerateSuccess(type: GenerateType, options: GenerateOptions, account: IAccountDocument): Promise<void> {
+    protected static async handleGenerateSuccess(type: GenerateType, options: GenerateOptions, client: ClientInfo, account: IAccountDocument): Promise<void> {
         console.log(info(options.breadcrumb + "   ==> SUCCESS"));
         SUCCESS_FAIL_METRIC
             .tag("state", "success")
             .tag("server", config.server)
             .tag("type", type)
+            .tag("via", client.via)
             .tag("account", account.id)
             .inc();
         if (!account) return;
@@ -819,12 +820,13 @@ export class Generator {
         }
     }
 
-    protected static async handleGenerateError(e: any, type: GenerateType, options: GenerateOptions, account?: IAccountDocument): Promise<void> {
+    protected static async handleGenerateError(e: any, type: GenerateType, options: GenerateOptions, client: ClientInfo, account?: IAccountDocument): Promise<void> {
         console.log(error(options.breadcrumb + "   ==> FAIL"));
         let m = SUCCESS_FAIL_METRIC
             .tag("state", "fail")
             .tag("server", config.server)
-            .tag("type", type);
+            .tag("type", type)
+            .tag("via", client.via);
         if (account) {
             m.tag("account", account.id);
         }
