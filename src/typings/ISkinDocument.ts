@@ -31,6 +31,7 @@ export enum GenerateType {
 export interface ISkinDocument extends Document {
     /** Unique numeric ID for this skin **/
     id: number | any;
+    skinUuid?: string;
 
     /** Hash of the texture image **/
     hash: string;
@@ -86,6 +87,8 @@ export interface ISkinDocument extends Document {
 
     testerRequest?: boolean;
     testerMismatchCounter?: number;
+
+    getUuid(): string;
 
     toResponseJson(): SkinInfo;
 }

@@ -1,14 +1,19 @@
 import { model, Schema } from "mongoose";
-import { Maybe, modelToVariant } from "../../util";
+import { Maybe, modelToVariant, stripUuid } from "../../util";
 import { ISkinDocument } from "../../typings";
 import { ISkinModel, SkinModel, SkinVisibility } from "../../typings/ISkinDocument";
 import { SkinInfo } from "../../typings/SkinInfo";
+import { v4 as randomUuid } from "uuid";
 
 export const SkinSchema: Schema<ISkinDocument, ISkinModel> = new Schema({
     id: {
         type: Number,
         index: true,
         unique: true
+    },
+    skinUuid: {
+        type: String,
+        index: true
     },
     hash: {
         type: String,
@@ -71,10 +76,19 @@ export const SkinSchema: Schema<ISkinDocument, ISkinModel> = new Schema({
 
 /// METHODS
 
+SkinSchema.methods.getUuid = function (this: ISkinDocument): string {
+    if (this.skinUuid) {
+        return this.skinUuid;
+    }
+    this.skinUuid = stripUuid(randomUuid());
+    return this.skinUuid;
+}
+
 SkinSchema.methods.toResponseJson = function (this: ISkinDocument, delay?: number): SkinInfo {
     const info: SkinInfo = {
         id: this.id,
         idStr: "" + this.id,
+        uuid: this.getUuid(),
         name: this.name || "",
         model: this.model,
         variant: modelToVariant(this.model),

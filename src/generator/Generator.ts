@@ -15,7 +15,7 @@ import * as fileType from "file-type";
 import { FileTypeResult } from "file-type";
 import { UploadedFile } from "express-fileupload";
 import { ISizeCalculationResult } from "image-size/dist/types/interface";
-import { v4 as uuid } from "uuid";
+import { v4 as randomUuid } from "uuid";
 import * as Jimp from "jimp";
 import { getConfig } from "../typings/Configs";
 import { IAccountDocument, ISkinDocument, IStatDocument, MineSkinError } from "../typings";
@@ -324,10 +324,12 @@ export class Generator {
 
     protected static async saveSkin(result: GenerateResult, options: GenerateOptions, client: ClientInfo, type: GenerateType, start: number): Promise<ISkinDocument> {
         const id = await this.makeNewSkinId();
+        const skinUuid = stripUuid(randomUuid());
         const time = Date.now();
         const duration = time - start;
         const skin: ISkinDocument = new Skin(<ISkinDocument>{
             id: id,
+            skinUuid: skinUuid,
 
             hash: result.meta?.imageHash,
             uuid: result.meta?.uuid,
@@ -736,7 +738,7 @@ export class Generator {
             data: data,
             account: account,
             meta: {
-                uuid: uuid(),
+                uuid: randomUuid(),
                 imageHash: tempFileValidation.hash!,
                 mojangHash: mojangHash!.hash!,
                 minecraftSkinId: minecraftSkinId
