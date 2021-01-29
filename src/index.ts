@@ -66,7 +66,7 @@ async function init() {
                 new Tracing.Integrations.Express({ app })
             ],
             serverName: config.server,
-            tracesSampleRate: 0.05,
+            tracesSampleRate: 0.02,
 
         });
 
