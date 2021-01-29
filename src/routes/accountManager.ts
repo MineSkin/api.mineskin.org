@@ -14,12 +14,20 @@ import { MineSkinError } from "../typings";
 import { Encryption } from "../util/Encryption";
 import { debug, info, warn } from "../util/colors";
 import * as Sentry from "@sentry/node";
+import { Time } from "@inventivetalent/loading-cache";
 
 const config = getConfig();
 
 export const register = (app: Application) => {
 
     app.use("/accountManager", corsWithCredentialsMiddleware);
+    app.use("/accountManager", session({
+        secret: config.sessionSecret,
+        cookie: {
+            maxAge: Time.minutes(10),
+            domain: "api.mineskin.org"
+        }
+    }))
 
     /// MOJANG
 

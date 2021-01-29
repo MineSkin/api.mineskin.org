@@ -97,13 +97,6 @@ async function init() {
     {
         console.log("Setting up express middleware")
 
-        app.use(session({
-            secret: config.sessionSecret,
-            cookie: {
-                maxAge: Time.minutes(10),
-                domain: "api.mineskin.org"
-            }
-        }))
         app.use(bodyParser.urlencoded({ extended: true, limit: '50kb' }));
         app.use(bodyParser.json({ limit: '20kb' }));
         app.use(fileUpload());
