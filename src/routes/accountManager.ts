@@ -10,7 +10,7 @@ import * as qs from "querystring";
 import { Discord } from "../util/Discord";
 import { getConfig } from "../typings/Configs";
 import { AccessTokenSource, AccountType, IAccountDocument } from "../typings/IAccountDocument";
-import { MineSkinError } from "../typings";
+import { MineSkinError, MineSkinRequest } from "../typings";
 import { Encryption } from "../util/Encryption";
 import { debug, info, warn } from "../util/colors";
 import * as Sentry from "@sentry/node";
@@ -688,7 +688,7 @@ function destroySession(req: AccountManagerRequest): Promise<void> {
 
 // session stuff
 
-type AccountManagerRequest = Request & {
+type AccountManagerRequest = MineSkinRequest & {
     session: AccountManagerSession;
 }
 

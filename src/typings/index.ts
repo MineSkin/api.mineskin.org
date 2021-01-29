@@ -1,3 +1,6 @@
+import { Bread } from "./Bread";
+import { Request } from "express";
+
 export { IAccountDocument } from "./IAccountDocument";
 export { ISkinDocument } from "./ISkinDocument";
 export { ITrafficDocument } from "./ITrafficDocument";
@@ -15,3 +18,4 @@ export class MineSkinError extends Error {
     }
 }
 
+export type MineSkinRequest = Request & Bread;
