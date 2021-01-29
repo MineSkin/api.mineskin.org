@@ -18,4 +18,10 @@ export class MineSkinError extends Error {
     }
 }
 
-export type MineSkinRequest = Request & Bread;
+export type MineSkinRequest = Request;
+export type BreadRequest = MineSkinRequest & Bread;
+export type GenerateRequest = BreadRequest;
+
+export function isBreadRequest(request: Request): request is BreadRequest {
+    return (<BreadRequest>request).breadcrumb !== undefined;
+}

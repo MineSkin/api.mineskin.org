@@ -8,7 +8,8 @@ import { GenerateOptions } from "../typings/GenerateOptions";
 import { GenerateType, SkinModel, SkinVariant, SkinVisibility } from "../typings/ISkinDocument";
 import { debug } from "../util/colors";
 import * as Sentry from "@sentry/node";
-import { nextBreadColor } from "../typings/Bread";
+import { Bread, nextBreadColor } from "../typings/Bread";
+import { GenerateRequest, MineSkinRequest } from "../typings";
 
 export const register = (app: Application) => {
 
@@ -17,7 +18,7 @@ export const register = (app: Application) => {
 
     //// URL
 
-    app.post("/generate/url", async (req: Request, res: Response) => {
+    app.post("/generate/url", async (req: GenerateRequest, res: Response) => {
         const url = validateUrl(req.body["url"] || req.query["url"]);
         if (!url) {
             res.status(400).json({ error: "invalid url" });
@@ -41,7 +42,7 @@ export const register = (app: Application) => {
 
     //// UPLOAD
 
-    app.post("/generate/upload", async (req: Request, res: Response) => {
+    app.post("/generate/upload", async (req: GenerateRequest, res: Response) => {
         if (!req.files) {
             res.status(400).json({ error: "missing files" });
             return;
@@ -69,7 +70,7 @@ export const register = (app: Application) => {
 
     //// USER
 
-    app.post("/generate/user", async (req: Request, res: Response) => {
+    app.post("/generate/user", async (req: GenerateRequest, res: Response) => {
         const uuidStr = req.body["uuid"] || req.query["uuid"];
         if (!uuidStr) {
             res.status(400).json({ error: "missing uuid" });
@@ -96,7 +97,7 @@ export const register = (app: Application) => {
     })
 
     // TODO: remove at some point
-    app.get("/generate/user/:uuid", async (req: Request, res: Response) => {
+    app.get("/generate/user/:uuid", async (req: GenerateRequest, res: Response) => {
         const uuidStr = req.params["uuid"];
         if (!uuidStr) {
             res.status(400).json({ error: "missing uuid" });
@@ -126,7 +127,7 @@ export const register = (app: Application) => {
 
     ///
 
-    function getClientInfo(req: Request): ClientInfo {
+    function getClientInfo(req: GenerateRequest): ClientInfo {
         const userAgent = req.header("user-agent") || "n/a";
         const origin = req.header("origin");
         const via = getVia(req);
@@ -140,7 +141,7 @@ export const register = (app: Application) => {
         };
     }
 
-    function getAndValidateOptions(type: GenerateType, req: Request): GenerateOptions {
+    function getAndValidateOptions(type: GenerateType, req: GenerateRequest): GenerateOptions {
         let model = validateModel(req.body["model"] || req.query["model"]);
         let variant = validateVariant(req.body["variant"] || req.query["variant"]);
         // Convert & make sure both are set
@@ -153,7 +154,9 @@ export const register = (app: Application) => {
         const visibility = validateVisibility(req.body["visibility"] || req.query["visibility"]);
         const name = validateName(req.body["name"] || req.query["name"]);
 
-        const breadcrumb = nextBreadColor()(md5(`${ getIp(req) }${ Date.now() }${ variant }${ visibility }${ Math.random() }${ name }`).substr(0, 8));
+        const breadcrumbId = md5(`${ getIp(req) }${ Date.now() }${ variant }${ visibility }${ Math.random() }${ name }`).substr(0, 8);
+        const breadcrumb = nextBreadColor()(breadcrumbId);
+        req.breadcrumb = breadcrumb;
 
         console.log(debug(`${ breadcrumb } Type:        ${ type }`))
         console.log(debug(`${ breadcrumb } Variant:     ${ variant }`));
@@ -165,7 +168,7 @@ export const register = (app: Application) => {
             "generate_variant": variant,
             "generate_visibility": visibility
         });
-        Sentry.setExtra("generate_breadcrumb", breadcrumb);
+        Sentry.setExtra("generate_breadcrumb", breadcrumbId);
 
         return {
             model,
@@ -220,3 +223,5 @@ export const register = (app: Application) => {
     }
 
 }
+
+
