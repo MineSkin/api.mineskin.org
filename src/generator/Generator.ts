@@ -813,6 +813,7 @@ export class Generator {
             .tag("type", type)
             .tag("via", client.via)
             .tag("account", account.id)
+            .tag("accountType", account.accountType || "unknown")
             .inc();
         if (!account) return;
         try {
@@ -833,7 +834,8 @@ export class Generator {
             .tag("type", type)
             .tag("via", client.via);
         if (account) {
-            m.tag("account", account.id);
+            m.tag("account", account.id)
+                .tag("accountType", account.accountType || "unknown")
         }
         if (e instanceof MineSkinError) {
             m.tag("error", e.code);
