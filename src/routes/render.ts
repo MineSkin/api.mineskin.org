@@ -7,7 +7,7 @@ import { corsMiddleware } from "../util";
 
 export const register = (app: Application) => {
 
-    app.get("/render", corsMiddleware);
+    app.use("/render", corsMiddleware);
 
     app.get("/render/:type(head|skin)", (req: Request, res: Response) => {
         const url = req.query["url"] as string;

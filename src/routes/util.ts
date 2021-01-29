@@ -7,7 +7,7 @@ import { corsMiddleware } from "../util";
 
 export const register = (app: Application) => {
 
-    app.get("/validate", corsMiddleware);
+    app.use("/validate", corsMiddleware);
 
     app.get("/validate/user/:name", (req: Request, res: Response) => {
         if (req.params["name"].length < 1 || req.params["name"].length > 16) {
