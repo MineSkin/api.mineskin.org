@@ -794,6 +794,7 @@ export class Generator {
             throw new GeneratorError(GenError.NO_ACCOUNT_AVAILABLE, "No account available");
         }
         Sentry.setTag("account", account.id);
+        Sentry.setTag("account_type", account.getAccountType());
         account = await Authentication.authenticate(account, bread);
 
         account.lastUsed = Math.floor(Date.now() / 1000);
