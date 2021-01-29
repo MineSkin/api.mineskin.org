@@ -39,6 +39,7 @@ const app: Express = express();
 
 
 async function init() {
+    console.log("Node Version " + process.version);
 
     {
         console.log("Creating temp directories");
