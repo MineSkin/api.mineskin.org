@@ -113,6 +113,12 @@ export class Discord {
         })
     }
 
+    static notifyNewAccount(account: IAccountDocument): void {
+        this.postDiscordMessage("ℹ A new Account #" + account.id + " has just been added!\n" +
+            "  Account Type: " + account.getAccountType() + "\n" +
+            "  Server: " + account.requestServer);
+    }
+
     static notifyMissingCredentials(account: IAccountDocument): void {
         this.postDiscordMessage("⚠️ Account #" + account.id + " just lost its access token\n" +
             "  Current Server: " + account.lastRequestServer + "/" + account.requestServer + "\n" +

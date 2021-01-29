@@ -407,6 +407,8 @@ export const register = (app: Application) => {
             success: true,
             msg: "Account saved. Thanks for your contribution!"
         })
+
+        Discord.notifyNewAccount(account);
     })
 
     app.delete("/accountManager/deleteAccount", async (req: AccountManagerRequest, res: Response) => {
