@@ -537,12 +537,12 @@ export class Generator {
             // Try to find the source image
             const followResponse = await this.followUrl(originalUrl);
             if (!followResponse) {
-                throw new GeneratorError(GenError.INVALID_IMAGE_URL, "Failed to find image from url");
+                throw new GeneratorError(GenError.INVALID_IMAGE_URL, "Failed to find image from url", 400, undefined, originalUrl);
             }
             // Validate response headers
             const url = this.getUrlFromResponse(followResponse, originalUrl);
             if (!url) {
-                throw new GeneratorError(GenError.INVALID_IMAGE_URL, "Failed to follow url");
+                throw new GeneratorError(GenError.INVALID_IMAGE_URL, "Failed to follow url", 400, undefined, originalUrl);
             }
             // Check for duplicate from url again, if the followed url is different
             if (url !== originalUrl) {
@@ -556,12 +556,12 @@ export class Generator {
             const contentType = this.getContentTypeFromResponse(followResponse);
             Sentry.setExtra("generate_contentType", contentType);
             if (!contentType || !contentType.startsWith("image") || !ALLOWED_IMAGE_TYPES.includes(contentType)) {
-                throw new GeneratorError(GenError.INVALID_IMAGE, "Invalid image content type: " + contentType, 400);
+                throw new GeneratorError(GenError.INVALID_IMAGE, "Invalid image content type: " + contentType, 400, undefined, originalUrl);
             }
             const size = this.getSizeFromResponse(followResponse);
             Sentry.setExtra("generate_contentLength", size);
             if (!size || size < 100 || size > MAX_IMAGE_SIZE) {
-                throw new GeneratorError(GenError.INVALID_IMAGE, "Invalid image file size", 400);
+                throw new GeneratorError(GenError.INVALID_IMAGE, "Invalid image file size", 400, undefined, originalUrl);
             }
 
             // Download the image temporarily
