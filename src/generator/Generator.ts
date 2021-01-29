@@ -156,15 +156,15 @@ export class Generator {
     protected static async queryAccountStats(): Promise<AccountStats> {
         const time = Date.now() / 1000;
 
-        const enabledAccounts = await Account.count({
+        const enabledAccounts = await Account.countDocuments({
             enabled: true
         }).exec();
-        const serverAccounts = await Account.count({
+        const serverAccounts = await Account.countDocuments({
             enabled: true,
             requestServer: config.server
         }).exec();
         const healthyAccounts = await Account.countGlobalUsable();
-        const useableAccounts = await Account.count({
+        const useableAccounts = await Account.countDocuments({
             enabled: true,
             requestServer: { $in: [undefined, "default", config.server] },
             lastUsed: { '$lt': (time - 100) },

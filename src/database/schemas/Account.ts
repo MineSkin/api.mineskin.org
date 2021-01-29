@@ -174,7 +174,7 @@ AccountSchema.statics.findUsable = function (this: IAccountModel, bread?: Bread)
 };
 
 AccountSchema.statics.countGlobalUsable = function (this: IAccountModel): Promise<number> {
-    return this.count({
+    return this.countDocuments({
         enabled: true,
         errorCounter: { $lt: (config.errorThreshold || 10) }
     }).exec();
