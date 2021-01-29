@@ -21,7 +21,7 @@ import { getConfig } from "../typings/Configs";
 import { IAccountDocument, ISkinDocument, IStatDocument, MineSkinError } from "../typings";
 import { SkinData, SkinMeta, SkinValue } from "../typings/SkinData";
 import { GenerateOptions } from "../typings/GenerateOptions";
-import { GenerateType, SkinModel } from "../typings/ISkinDocument";
+import { GenerateType, SkinModel, SkinVariant } from "../typings/ISkinDocument";
 import { AccountStats, CountDuplicateViewStats, DurationStats, Stats, SuccessRateStats, TimeFrameStats } from "../typings/Stats";
 import { ClientInfo } from "../typings/ClientInfo";
 import { durationMetric, HASH_MISMATCH_METRIC, metrics, NEW_DUPLICATES_METRIC, NO_ACCOUNTS_METRIC, SUCCESS_FAIL_METRIC } from "../util/metrics";
@@ -522,6 +522,7 @@ export class Generator {
 
     protected static async generateFromUrl(originalUrl: string, options: GenerateOptions, client: ClientInfo): Promise<GenerateResult> {
         console.log(info(options.breadcrumb + " [Generator] Generating from url"));
+        Sentry.setExtra("generate_url", originalUrl);
 
         let account: Maybe<IAccountDocument> = undefined;
         let tempFile: Maybe<TempFile> = undefined;
@@ -553,10 +554,12 @@ export class Generator {
                 }
             }
             const contentType = this.getContentTypeFromResponse(followResponse);
+            Sentry.setExtra("generate_contentType", contentType);
             if (!contentType || !contentType.startsWith("image") || !ALLOWED_IMAGE_TYPES.includes(contentType)) {
                 throw new GeneratorError(GenError.INVALID_IMAGE, "Invalid image content type: " + contentType, 400);
             }
             const size = this.getSizeFromResponse(followResponse);
+            Sentry.setExtra("generate_contentLength", size);
             if (!size || size < 100 || size > MAX_IMAGE_SIZE) {
                 throw new GeneratorError(GenError.INVALID_IMAGE, "Invalid image file size", 400);
             }
@@ -652,6 +655,7 @@ export class Generator {
 
     protected static async generateFromUpload(file: UploadedFile, options: GenerateOptions, client: ClientInfo): Promise<GenerateResult> {
         console.log(info(options.breadcrumb + " [Generator] Generating from upload"));
+        Sentry.setExtra("generate_file", file.md5);
 
         let account: Maybe<IAccountDocument> = undefined;
         let tempFile: Maybe<TempFile> = undefined;
@@ -753,6 +757,7 @@ export class Generator {
 
     protected static async generateFromUser(uuid: string, options: GenerateOptions): Promise<GenerateResult> {
         console.log(info(options.breadcrumb + " [Generator] Generating from user"));
+        Sentry.setExtra("generate_user", uuid);
 
         const uuids = longAndShortUuid(uuid)!;
         const uuidDuplicate = await this.findDuplicateFromUuid(uuids.long, options, GenerateType.USER);
@@ -874,14 +879,17 @@ export class Generator {
         // Validate downloaded image file
         const imageBuffer = await fs.readFile(tempFile.path);
         const size = imageBuffer.byteLength;
+        Sentry.setExtra("generate_filesize", size);
         if (!size || size < 100 || size > MAX_IMAGE_SIZE) {
             throw new GeneratorError(GenError.INVALID_IMAGE, "Invalid file size", 400);
         }
         const dimensions = imageSize(imageBuffer);
+        Sentry.setExtra("generate_dimensions", `${ dimensions.width }x${ dimensions.height }`);
         if ((dimensions.width !== 64) || (dimensions.height !== 64 && dimensions.height !== 32)) {
             throw new GeneratorError(GenError.INVALID_IMAGE, "Invalid image dimensions. Must be 64x32 or 64x64 (Were " + dimensions.width + "x" + dimensions.height + ")", 400);
         }
         const fType = await fileType.fromBuffer(imageBuffer);
+        Sentry.setExtra("generate_mime", fType?.mime)
         if (!fType || !fType.mime.startsWith("image") || !ALLOWED_IMAGE_TYPES.includes(fType.mime)) {
             throw new GeneratorError(GenError.INVALID_IMAGE, "Invalid file type: " + fType, 400);
         }
@@ -897,9 +905,11 @@ export class Generator {
         }
 
         const dataValidation = await this.validateImageData(imageBuffer);
-        if (options.model === SkinModel.UNKNOWN && dataValidation.model !== SkinModel.UNKNOWN) {
-            console.log(debug(options.breadcrumb + " Switching unknown skin model to " + dataValidation.model + " from detection"));
+        if (options.variant === SkinVariant.UNKNOWN && dataValidation.variant !== SkinVariant.UNKNOWN) {
+            console.log(debug(options.breadcrumb + " Switching unknown skin variant to " + dataValidation.variant + " from detection"));
+            options.variant = dataValidation.variant;
             options.model = dataValidation.model;
+            Sentry.setExtra("generate_detected_variant", dataValidation.variant);
         }
 
         return {
@@ -958,7 +968,8 @@ export class Generator {
         }
         if (height < 64) {
             return {
-                model: SkinModel.CLASSIC
+                model: SkinModel.CLASSIC,
+                variant: SkinVariant.CLASSIC
             };
         }
         // https://github.com/InventivetalentDev/MineRender/blob/master/src/skin/index.js#L146
@@ -972,11 +983,13 @@ export class Generator {
 
         if (allTransparent) {
             return {
-                model: SkinModel.SLIM
+                model: SkinModel.SLIM,
+                variant: SkinVariant.SLIM
             };
         } else {
             return {
-                model: SkinModel.CLASSIC
+                model: SkinModel.CLASSIC,
+                variant: SkinVariant.CLASSIC
             }
         }
     }
@@ -985,6 +998,7 @@ export class Generator {
         if (options) {
             query.name = options.name || "";
             query.visibility = options.visibility || 0;
+            //TODO: variant
             if (options.model && options.model !== SkinModel.UNKNOWN) {
                 query.model = options.model;
             }
@@ -1028,6 +1042,7 @@ interface MojangHashInfo {
 
 interface ImageDataValidationResult {
     model: SkinModel;
+    variant: SkinVariant;
 }
 
 interface SkinChangeResponse {

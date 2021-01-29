@@ -3,6 +3,7 @@ import { SkinInfo } from "./SkinInfo";
 import { Maybe } from "../util";
 import exp = require("constants");
 
+/**@deprecated**/
 export enum SkinModel {
     UNKNOWN = "unknown",
     CLASSIC = "steve",
