@@ -396,9 +396,9 @@ export class Generator {
         const mineskinUrlResult = MINESKIN_URL_REGEX.exec(url);
         if (!!mineskinUrlResult && mineskinUrlResult.length >= 3) {
             const mineskinId = parseInt(mineskinUrlResult[2]);
-            const query = { id: mineskinId };
-            this.appendOptionsToDuplicateQuery(options, query);
-            const existingSkin = await Skin.findOne(query).exec();
+            const existingSkin = await Skin.findOne({
+                id: mineskinId
+            }).exec();
             if (existingSkin) {
                 console.log(debug(options.breadcrumb + " Found existing skin from mineskin url"));
                 existingSkin.duplicate++;
@@ -422,14 +422,12 @@ export class Generator {
         if (!!minecraftTextureResult && minecraftTextureResult.length >= 2) {
             const textureUrl = minecraftTextureResult[0];
             const textureHash = minecraftTextureResult[1];
-            const query = {
+            const existingSkin = await Skin.findOne({
                 $or: [
                     { url: textureUrl },
                     { minecraftTextureHash: textureHash }
                 ]
-            };
-            this.appendOptionsToDuplicateQuery(options, query);
-            const existingSkin = await Skin.findOne(query);
+            });
             if (existingSkin) {
                 console.log(debug(options.breadcrumb + " Found existing skin with same minecraft texture url/hash"));
                 existingSkin.duplicate++;
