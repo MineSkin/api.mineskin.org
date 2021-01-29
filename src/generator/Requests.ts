@@ -94,8 +94,7 @@ export class Requests {
                     if (request) {
                         const url = new URL(axios.getUri(request), instance.defaults.baseURL);
                         m.tag("method", request.method || "GET")
-                            .tag("host", url.hostname)
-                            .tag("endpoint", url.hostname + "" + url.pathname);
+                            .tag("host", url.hostname);
                     }
                     if (response) {
                         m.tag("statusCode", "" + response.status)

@@ -49,7 +49,8 @@ export class Caching {
         .expirationInterval(Time.minutes(1))
         .buildAsync<string, User>(name => {
             return Requests.mojangApiRequest({
-                url: "/users/profiles/minecraft/" + name
+                url: "/users/profiles/minecraft/" + name,
+
             }).then(response => {
                 let d = {
                     valid: false,
