@@ -488,7 +488,7 @@ export class Generator {
         const existingSkin = await Skin.findOne({
             uuid: uuid,
             name: options.name, visibility: options.visibility,
-            time: { $lt: (time - 1800) } // Wait 30 minutes before generating again
+            time: { $gt: (time - 1800) } // Wait 30 minutes before generating again
         }).exec();
         if (existingSkin) {
             console.log(debug(options.breadcrumb + " Found existing skin for user"));
