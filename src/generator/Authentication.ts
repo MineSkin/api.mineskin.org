@@ -463,6 +463,7 @@ export class Microsoft {
     }
 
     static async checkGameOwnership(accessToken: string): Promise<boolean> {
+        console.log("checkGameOwnership")
         const entitlementsResponse = await Requests.minecraftServicesRequest({
             method: "POST",
             url: "/entitlements/mcstore",
@@ -471,6 +472,7 @@ export class Microsoft {
             }
         });
         const entitlementsBody = entitlementsResponse.data;
+        console.log(JSON.stringify(entitlementsBody));
         return entitlementsBody.hasOwnProperty("items") && entitlementsBody["items"].length > 0;
     }
 
