@@ -93,6 +93,7 @@ SkinSchema.methods.toResponseJson = function (this: ISkinDocument, delay?: numbe
         timestamp: Math.round(this.time) || 0,
         duration: this.generateDuration || 0,
         accountId: this.account || 0,
+        account: this.account || 0,
         server: this.server || "unknown",
         private: this.visibility == SkinVisibility.PRIVATE,
         views: this.views

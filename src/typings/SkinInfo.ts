@@ -20,12 +20,15 @@ export interface SkinInfo {
     id: number;
     idStr: string;
     name: string;
+    /**@deprecated**/
     model: SkinModel;
     variant: SkinVariant;
     data: SkinInfoData;
     timestamp: number;
     duration: number;
+    /**@deprecated**/
     accountId: number;
+    account: number;
     server: string;
     private: boolean;
     views: number;
