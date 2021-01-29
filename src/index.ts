@@ -116,6 +116,10 @@ async function init() {
             ...{
                 events: ["push"],
                 branches: ["master"],
+                vars: {
+                    appName: "mineskin"
+                },
+                commandOrder: ["pre", "git", "install", "post"],
                 commands: {
                     git: [
                         "git fetch --all",
@@ -128,6 +132,10 @@ async function init() {
                     post: [
                         "pm2 restart $appName$"
                     ]
+                },
+                delays: {
+                    install: Math.ceil(Math.random() * 200),
+                    post: 5000 + Math.ceil(Math.random() * 5000)
                 }
             },
             ...config.puller
