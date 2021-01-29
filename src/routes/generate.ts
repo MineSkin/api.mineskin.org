@@ -10,6 +10,7 @@ import { debug } from "../util/colors";
 import * as Sentry from "@sentry/node";
 import { Bread, nextBreadColor } from "../typings/Bread";
 import { GenerateRequest, MineSkinRequest } from "../typings";
+import { Caching } from "../generator/Caching";
 
 export const register = (app: Application) => {
 
@@ -76,13 +77,20 @@ export const register = (app: Application) => {
             res.status(400).json({ error: "missing uuid" });
             return;
         }
+        const requestAllowed = await checkTraffic(req, res);
+        if (!requestAllowed) {
+            return;
+        }
+        Sentry.setTag("generate_type", GenerateType.USER);
+
         const uuids = longAndShortUuid(uuidStr);
         if (!uuids) {
             res.status(400).json({ error: "invalid uuid" });
             return;
         }
-        const requestAllowed = await checkTraffic(req, res);
-        if (!requestAllowed) {
+        const userValidation = await Caching.getUserByUuid(uuids.short);
+        if (!userValidation || !userValidation.valid) {
+            res.status(400).json({ error: "invalid user" });
             return;
         }
 
@@ -112,6 +120,11 @@ export const register = (app: Application) => {
         const uuids = longAndShortUuid(uuidStr);
         if (!uuids) {
             res.status(400).json({ error: "invalid uuid" });
+            return;
+        }
+        const userValidation = await Caching.getUserByUuid(uuids.short);
+        if (!userValidation || !userValidation.valid) {
+            res.status(400).json({ error: "invalid user" });
             return;
         }
 
