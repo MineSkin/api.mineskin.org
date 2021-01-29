@@ -89,7 +89,6 @@ export class Requests {
         return instance.request(request)
             .then(response => {
                 try {
-                    console.log(axios.getUri(request));
                     const m = REQUESTS_METRIC
                         .tag("server", config.server);
                     if (request) {
