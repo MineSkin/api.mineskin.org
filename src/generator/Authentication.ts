@@ -465,7 +465,7 @@ export class Microsoft {
     static async checkGameOwnership(accessToken: string): Promise<boolean> {
         console.log("checkGameOwnership")
         const entitlementsResponse = await Requests.minecraftServicesRequest({
-            method: "POST",
+            method: "GET",
             url: "/entitlements/mcstore",
             headers: {
                 Authorization: `Bearer ${ accessToken }`
