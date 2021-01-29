@@ -434,7 +434,7 @@ export const register = (app: Application) => {
             return;
         }
 
-        await account.remove();
+        await account.deleteOne();
         res.json({
             success: true,
             msg: "account removed"
