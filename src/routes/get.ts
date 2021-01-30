@@ -26,7 +26,7 @@ export const register = (app: Application) => {
         }
     });
 
-    app.get("/get/stats", async (req: Request, res: Response) => {
+    app.get("/get/stats/:details?", async (req: Request, res: Response) => {
         const stats = await Generator.getStats();
         res.json(stats);
     })
