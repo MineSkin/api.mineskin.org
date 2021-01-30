@@ -384,6 +384,7 @@ export const register = (app: Application) => {
             requestServer: config.server,
             timeAdded: Math.round(Date.now() / 1000),
 
+            type: "external",
             enabled: true,
             lastUsed: 0,
             forcedTimeoutAt: 0,
