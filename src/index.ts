@@ -213,7 +213,7 @@ function addErrorDetailsToSentry(err: AuthenticationError | GeneratorError): voi
     Sentry.setExtra("error_account", err.account?.id);
     Sentry.setExtra("error_details", err.details)
     if (err.details instanceof Error) {
-        console.warn(err.details.message);
+        console.warn(warn(err.details.message));
         Sentry.setExtra("error_details_error", err.details.name);
         Sentry.setExtra("error_details_message", err.details.message);
     }

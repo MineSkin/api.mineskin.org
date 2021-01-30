@@ -831,6 +831,13 @@ export class Generator {
 
     protected static async handleGenerateError(e: any, type: GenerateType, options: GenerateOptions, client: ClientInfo, account?: IAccountDocument): Promise<void> {
         console.log(error(options.breadcrumb + "   ==> FAIL"));
+
+        if (!account) {
+            if (e instanceof AuthenticationError || e instanceof GeneratorError) {
+                account = e.account;
+            }
+        }
+
         let m = SUCCESS_FAIL_METRIC
             .tag("state", "fail")
             .tag("server", config.server)
@@ -846,25 +853,26 @@ export class Generator {
             m.tag("error", e.code);
         }
         m.inc();
-        if (!account) return;
-        try {
-            account.successCounter = 0;
-            account.errorCounter++;
-            account.totalErrorCounter++;
-            account.lastErrorCode = e.code;
-            if (e instanceof AuthenticationError) {
-                account.forcedTimeoutAt = Math.floor(Date.now() / 1000);
-                console.warn(warn(options.breadcrumb + " [Generator] Account #" + account.id + " forced timeout"));
-                account.updateRequestServer(undefined);
-            }
+        if (account) {
+            try {
+                account.successCounter = 0;
+                account.errorCounter++;
+                account.totalErrorCounter++;
+                account.lastErrorCode = e.code;
+                if (e instanceof AuthenticationError) {
+                    account.forcedTimeoutAt = Math.floor(Date.now() / 1000);
+                    console.warn(warn(options.breadcrumb + " [Generator] Account #" + account.id + " forced timeout"));
+                    account.updateRequestServer(undefined);
+                }
 
-            if (account.errorCounter > 0 && account.errorCounter % 10 === 0) {
-                Discord.notifyHighErrorCount(account, type, e);
-            }
+                if (account.errorCounter > 0 && account.errorCounter % 10 === 0) {
+                    Discord.notifyHighErrorCount(account, type, e);
+                }
 
-            await account.save();
-        } catch (e1) {
-            Sentry.captureException(e1);
+                await account.save();
+            } catch (e1) {
+                Sentry.captureException(e1);
+            }
         }
     }
 
