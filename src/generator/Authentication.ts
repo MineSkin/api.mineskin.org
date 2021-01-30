@@ -134,7 +134,7 @@ export class Mojang {
             if (e instanceof AuthenticationError) {
                 if (e.code === AuthError.MOJANG_REFRESH_FAILED) {
                     // Couldn't refresh, attempt to login
-                    return await Mojang.login(account);
+                    return await Mojang.login(account, bread);
                 }
             }
             throw e;
