@@ -166,7 +166,7 @@ export class Generator {
         const healthyAccounts = await Account.countGlobalUsable();
         const useableAccounts = await Account.countDocuments({
             enabled: true,
-            requestServer: { $in: [undefined, "default", config.server] },
+            requestServer: { $in: ["default", config.server] },
             lastUsed: { '$lt': (time - 100) },
             forcedTimeoutAt: { '$lt': (time - 500) },
             errorCounter: { '$lt': (config.errorThreshold || 10) },
