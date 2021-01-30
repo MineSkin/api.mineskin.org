@@ -107,6 +107,9 @@ export class Requests {
         } catch (e) {
             Sentry.captureException(e);
         }
+        if (err) {
+            throw err;
+        }
         return responseOrError;
     }
 
