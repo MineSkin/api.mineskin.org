@@ -83,12 +83,13 @@ export class Mojang {
         }
 
         console.log(debug(bread?.breadcrumb + " [Auth] Logging in " + account.toSimplifiedString()));
-        const authBody = await Mojang.loginWithCredentials(account.getEmail(), Encryption.decrypt(account.passwordNew), account.getOrCreateClientToken()).catch(err => {
-            if (err.response) {
-                throw new AuthenticationError(AuthError.MOJANG_AUTH_FAILED, "Failed to authenticate via mojang", account, err);
-            }
-            throw err;
-        })
+        const authBody = await Mojang.loginWithCredentials(account.getEmail(), Encryption.decrypt(account.passwordNew), account.getOrCreateClientToken())
+            .catch(err => {
+                if (err.response) {
+                    throw new AuthenticationError(AuthError.MOJANG_AUTH_FAILED, "Failed to authenticate via mojang", account, err);
+                }
+                throw err;
+            })
         if (authBody.selectedProfile) {
             account.playername = authBody.selectedProfile.name
         }
