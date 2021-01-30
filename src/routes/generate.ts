@@ -37,7 +37,7 @@ export const register = (app: Application) => {
         await updateTraffic(req);
 
         const skin = await Generator.generateFromUrlAndSave(url, options, client);
-        res.json(skin.toResponseJson());
+        res.json(skin.toResponseJson(await Generator.getDelay()));
     })
 
 
@@ -65,7 +65,7 @@ export const register = (app: Application) => {
         await updateTraffic(req);
 
         const skin = await Generator.generateFromUploadAndSave(file, options, client);
-        res.json(skin.toResponseJson());
+        res.json(skin.toResponseJson(await Generator.getDelay()));
     })
 
 
@@ -101,7 +101,7 @@ export const register = (app: Application) => {
         await updateTraffic(req);
 
         const skin = await Generator.generateFromUserAndSave(uuids.long, options, client);
-        res.json(skin.toResponseJson());
+        res.json(skin.toResponseJson(await Generator.getDelay()));
     })
 
     // TODO: remove at some point
@@ -135,7 +135,7 @@ export const register = (app: Application) => {
         await updateTraffic(req);
 
         const skin = await Generator.generateFromUserAndSave(uuids.long, options, client);
-        res.json(skin.toResponseJson());
+        res.json(skin.toResponseJson(await Generator.getDelay()));
     })
 
     ///

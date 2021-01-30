@@ -90,7 +90,7 @@ export interface ISkinDocument extends Document {
 
     getUuid(): string;
 
-    toResponseJson(): SkinInfo;
+    toResponseJson(delay?: number): SkinInfo;
 }
 
 export interface ISkinModel extends Model<ISkinDocument> {

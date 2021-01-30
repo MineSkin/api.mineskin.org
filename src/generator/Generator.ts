@@ -1020,8 +1020,8 @@ class SavedSkin {
     constructor(public readonly skin: ISkinDocument, public readonly duplicate: boolean) {
     }
 
-    toResponseJson(): SkinInfo {
-        const info = this.skin.toResponseJson();
+    toResponseJson(delay?: number): SkinInfo {
+        const info = this.skin.toResponseJson(delay);
         info.duplicate = this.duplicate;
         return info;
     }
