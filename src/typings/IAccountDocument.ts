@@ -56,6 +56,7 @@ export interface IAccountDocument extends Document {
     successCounter: number;
     totalErrorCounter: number;
     totalSuccessCounter: number;
+    lastGenerateSuccess: number;
     lastErrorCode: string;
     forcedTimeoutAt: number;
     lastTextureUrl: string;

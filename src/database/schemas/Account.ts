@@ -67,6 +67,7 @@ export const AccountSchema: Schema<IAccountDocument, IAccountModel> = new Schema
     successCounter: Int32,
     totalErrorCounter: Number,
     totalSuccessCounter: Number,
+    lastGenerateSuccess: Number,
     lastErrorCode: String,
     forcedTimeoutAt: Number,
     lastTextureUrl: String,

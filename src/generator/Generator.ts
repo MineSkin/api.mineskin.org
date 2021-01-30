@@ -822,6 +822,7 @@ export class Generator {
             account.errorCounter = 0;
             account.successCounter++;
             account.totalSuccessCounter++;
+            account.lastGenerateSuccess = Math.floor(Date.now() / 1000);
             await account.save();
         } catch (e1) {
             Sentry.captureException(e1);
