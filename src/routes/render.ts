@@ -42,6 +42,7 @@ export const register = (app: Application) => {
                     url: skin.url,
                     responseType: "stream"
                 }).then(response => {
+                    res.header("Content-Type", "image/png");
                     response.data.pipe(res);
                 }).catch((err: any) => {
                     Sentry.captureException(err);
