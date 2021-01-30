@@ -58,6 +58,7 @@ export const register = (app: Application) => {
             url: "https://tools.inventivetalent.org/skinrender/3d.php?headOnly=" + (type === "head") + "&user=" + url + options,
             responseType: "stream"
         }).then(response => {
+            res.header("Content-Type", "image/png");
             response.data.pipe(res);
         }).catch((err: any) => {
             Sentry.captureException(err);
