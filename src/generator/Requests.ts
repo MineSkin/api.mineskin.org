@@ -87,24 +87,27 @@ export class Requests {
 
     protected static runAxiosRequest(request: AxiosRequestConfig, instance = this.axiosInstance): Promise<AxiosResponse> {
         return instance.request(request)
-            .then(response => {
-                try {
-                    const m = REQUESTS_METRIC
-                        .tag("server", config.server);
-                    if (request) {
-                        const url = new URL(axios.getUri(request), instance.defaults.baseURL);
-                        m.tag("method", request.method || "GET")
-                            .tag("host", url.hostname);
-                    }
-                    if (response) {
-                        m.tag("statusCode", "" + response.status)
-                    }
-                    m.inc();
-                } catch (e) {
-                    Sentry.captureException(e);
-                }
-                return response;
-            })
+            .then(response => this.processRequestMetric(response, request, response, instance))
+            .catch(err => this.processRequestMetric(err, request, err.response, instance, err))
+    }
+
+    static processRequestMetric<T>(responseOrError: T, request?: AxiosRequestConfig, response?: AxiosResponse, instance?: AxiosInstance, err?: any): T {
+        try {
+            const m = REQUESTS_METRIC
+                .tag("server", config.server);
+            if (request) {
+                const url = new URL(axios.getUri(request), instance?.defaults.baseURL);
+                m.tag("method", request.method || "GET")
+                    .tag("host", url.hostname);
+            }
+            if (response) {
+                m.tag("statusCode", "" + response.status)
+            }
+            m.inc();
+        } catch (e) {
+            Sentry.captureException(e);
+        }
+        return responseOrError;
     }
 
     /// API REQUESTS
