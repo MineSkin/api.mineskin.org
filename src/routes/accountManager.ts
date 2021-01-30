@@ -630,7 +630,7 @@ function validateSessionAndToken(req: AccountManagerRequest, res: Response): boo
         res.status(400).json({ error: "invalid session" });
         return false;
     }
-    console.log(debug(req.session))
+    console.log(debug(JSON.stringify(req.session)))
     const headerToken = req.headers.authorization.replace("Bearer ", "");
     if (!req.session || !req.session.account) {
         res.status(400).json({ error: "invalid session" });
