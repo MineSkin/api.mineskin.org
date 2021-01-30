@@ -84,8 +84,8 @@ SkinSchema.methods.getUuid = function (this: ISkinDocument): string {
     return this.skinUuid;
 }
 
-SkinSchema.methods.toResponseJson = function (this: ISkinDocument, delay?: number): SkinInfo {
-    const info: SkinInfo = {
+SkinSchema.methods.toResponseJson = function (this: ISkinDocument): SkinInfo {
+    return {
         id: this.id,
         idStr: "" + this.id,
         uuid: this.getUuid(),
@@ -112,10 +112,6 @@ SkinSchema.methods.toResponseJson = function (this: ISkinDocument, delay?: numbe
         private: this.visibility == SkinVisibility.PRIVATE,
         views: this.views
     };
-    if (delay) {
-        info.nextRequest = delay;
-    }
-    return info;
 };
 
 /// STATICS

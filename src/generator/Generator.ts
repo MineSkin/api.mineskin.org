@@ -1021,8 +1021,11 @@ class SavedSkin {
     }
 
     toResponseJson(delay?: number): SkinInfo {
-        const info = this.skin.toResponseJson(delay);
+        const info = this.skin.toResponseJson();
         info.duplicate = this.duplicate;
+        if (delay) {
+            info.nextRequest = delay;
+        }
         return info;
     }
 }
