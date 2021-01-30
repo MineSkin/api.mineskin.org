@@ -179,13 +179,8 @@ async function init() {
         console.warn(warn((isBreadRequest(req) ? req.breadcrumb + " " : "") + "Error in a route " + err.message));
         if (err instanceof MineSkinError) {
             Sentry.setTag("error_code", err.code);
-            if (err instanceof AuthenticationError) {
-                Sentry.setExtra("error_account", err.account?.id);
-                Sentry.setExtra("error_details", err.details)
-            }
-            if (err instanceof GeneratorError) {
-                Sentry.setExtra("error_account", err.account?.id);
-                Sentry.setExtra("error_details", err.details)
+            if (err instanceof AuthenticationError || err instanceof GeneratorError) {
+                addErrorDetailsToSentry(err);
             }
             if (err.httpCode) {
                 res.status(err.httpCode);
@@ -212,6 +207,14 @@ async function init() {
         }
     }
     app.use(errorHandler);
+}
+
+function addErrorDetailsToSentry(err: AuthenticationError | GeneratorError): void {
+    Sentry.setExtra("error_account", err.account?.id);
+    Sentry.setExtra("error_details", err.details)
+    if (err.details && err.details.response) {
+        Sentry.setExtra("error_response", err.details.response);
+    }
 }
 
 
