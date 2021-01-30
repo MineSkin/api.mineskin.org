@@ -19,7 +19,7 @@ import { Time } from "@inventivetalent/loading-cache";
 import { getConfig } from "./typings/Configs";
 import { MineSkinError, MineSkinRequest, GenerateRequest, isBreadRequest } from "./typings";
 import { apiRequestsMiddleware } from "./util/metrics";
-import { info, warn } from "./util/colors";
+import { error, info, warn } from "./util/colors";
 import { hasOwnProperty } from "./util";
 import { AuthenticationError } from "./generator/Authentication";
 import { GeneratorError } from "./generator/Generator";
@@ -67,7 +67,7 @@ async function init() {
             ],
             serverName: config.server,
             tracesSampleRate: 0.02,
-
+            sampleRate: 0.5
         });
 
         app.use(Sentry.Handlers.requestHandler());
@@ -175,15 +175,22 @@ async function init() {
 
     }
 
-    app.use(Sentry.Handlers.errorHandler());
-    const errorHandler: ErrorRequestHandler = (err, req: Request, res: Response, next: NextFunction) => {
+    const preErrorHandler: ErrorRequestHandler = (err, req: Request, res: Response, next: NextFunction) => {
         console.warn(warn((isBreadRequest(req) ? req.breadcrumb + " " : "") + "Error in a route " + err.message));
         if (err instanceof MineSkinError) {
+            Sentry.setTag("error_code", err.code);
             if (err.httpCode) {
                 res.status(err.httpCode);
             } else {
                 res.status(500);
             }
+        }
+        next(err);
+    };
+    app.use(preErrorHandler);
+    app.use(Sentry.Handlers.errorHandler());
+    const errorHandler: ErrorRequestHandler = (err, req: Request, res: Response, next: NextFunction) => {
+        if (err instanceof MineSkinError) {
             res.json({
                 success: false,
                 errorCode: err.code,
