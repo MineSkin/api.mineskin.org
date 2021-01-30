@@ -346,7 +346,7 @@ export const register = (app: Application) => {
         const profileValidation = await getAndValidateMojangProfile(req.session.account!.token!, req.body["uuid"]);
         if (!profileValidation.valid || !profileValidation.profile) return;
 
-        if (!req.body["readTerms"] || !req.body["acceptSkins"] || !req.body["acceptPassword"]) {
+        if (!req.body["checks"] || !req.body["checks"]["readTerms"] || !req.body["checks"]["acceptSkins"] || !req.body["checks"]["acceptPassword"]) {
             res.status(400).json({ error: "invalid checks" });
             return;
         }
