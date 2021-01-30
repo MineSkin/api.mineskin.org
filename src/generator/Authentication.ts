@@ -31,23 +31,23 @@ export class Mojang {
 
         if (!account.accessToken) { // Needs login
             console.log(warn(bread?.breadcrumb + " [Auth] Account #" + account.id + " doesn't have access token"));
-            return await Mojang.login(account);
+            return await Mojang.login(account, bread);
         }
 
         // Check token expiration
         if (account.accessTokenExpiration && account.accessTokenExpiration - Math.round(Date.now() / 1000) < ACCESS_TOKEN_EXPIRATION_THRESHOLD) {
             console.log(debug(bread?.breadcrumb + " [Auth] (#" + account.id + ") Force-refreshing accessToken, since it will expire in less than 30 minutes"));
-            return await Mojang.refreshAccessTokenOrLogin(account);
+            return await Mojang.refreshAccessTokenOrLogin(account, bread);
         }
 
         // Validate token which shouldn't be expired yet
-        if (await Mojang.validateAccessToken(account)) {
+        if (await Mojang.validateAccessToken(account, bread)) {
             // Still valid!
             return account;
         }
 
         // Fallback to refresh / login
-        return await Mojang.refreshAccessTokenOrLogin(account);
+        return await Mojang.refreshAccessTokenOrLogin(account, bread);
     }
 
     /// LOGIN
@@ -105,7 +105,7 @@ export class Mojang {
 
     /// TOKENS
 
-    static async validateAccessToken(account: IAccountDocument): Promise<boolean> {
+    static async validateAccessToken(account: IAccountDocument, bread?: Bread): Promise<boolean> {
         if (account.microsoftAccount && account.accountType !== AccountType.MOJANG) {
             throw new AuthenticationError(AuthError.UNSUPPORTED_ACCOUNT, "Can't validate microsoft account access token via mojang auth", account);
         }
@@ -127,9 +127,9 @@ export class Mojang {
         }
     }
 
-    static async refreshAccessTokenOrLogin(account: IAccountDocument): Promise<IAccountDocument> {
+    static async refreshAccessTokenOrLogin(account: IAccountDocument, bread?: Bread): Promise<IAccountDocument> {
         try {
-            return await Mojang.refreshAccessToken(account);
+            return await Mojang.refreshAccessToken(account, bread);
         } catch (e) {
             if (e instanceof AuthenticationError) {
                 if (e.code === AuthError.MOJANG_REFRESH_FAILED) {
@@ -295,13 +295,13 @@ export class Microsoft {
         }
 
         if (!account.accessToken) { // Needs login
-            return await Microsoft.login(account);
+            return await Microsoft.login(account, bread);
         }
 
         // Check token expiration
         if (account.accessTokenExpiration && account.accessTokenExpiration - Math.round(Date.now() / 1000) < ACCESS_TOKEN_EXPIRATION_THRESHOLD) {
             console.log(debug(bread?.breadcrumb + " [Auth] (#" + account.id + ") Force-refreshing accessToken, since it will expire in less than 30 minutes"));
-            return await Microsoft.refreshAccessTokenOrLogin(account);
+            return await Microsoft.refreshAccessTokenOrLogin(account, bread);
         }
 
         try {
@@ -315,7 +315,7 @@ export class Microsoft {
         }
 
         // Fallback to refresh / login
-        return await Microsoft.refreshAccessTokenOrLogin(account);
+        return await Microsoft.refreshAccessTokenOrLogin(account, bread);
     }
 
     static async login(account: IAccountDocument, bread?: Bread): Promise<IAccountDocument> {
@@ -355,14 +355,14 @@ export class Microsoft {
         return await account.save();
     }
 
-    static async refreshAccessTokenOrLogin(account: IAccountDocument): Promise<IAccountDocument> {
+    static async refreshAccessTokenOrLogin(account: IAccountDocument, bread?: Bread): Promise<IAccountDocument> {
         try {
-            return await Microsoft.refreshAccessToken(account);
+            return await Microsoft.refreshAccessToken(account, bread);
         } catch (e) {
             if (e instanceof AuthenticationError) {
                 if (e.code === AuthError.MICROSOFT_REFRESH_FAILED) {
                     // Couldn't refresh, attempt to login
-                    return await Microsoft.login(account);
+                    return await Microsoft.login(account, bread);
                 }
             }
             throw e;
