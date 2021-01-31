@@ -62,7 +62,20 @@ export class Generator {
 
     @MemoizeExpiring(30000)
     static async getDelay(): Promise<number> {
-        return Account.calculateDelay();
+        const delay = Account.calculateDelay();
+        try {
+            metrics.influx.writePoints([{
+                measurement: 'delay',
+                fields: {
+                    delay: delay
+                }
+            }], {
+                database: 'mineskin'
+            })
+        } catch (e) {
+            Sentry.captureException(e);
+        }
+        return delay;
     }
 
     @MemoizeExpiring(30000)
