@@ -74,7 +74,7 @@ export const register = (app: Application) => {
             .find(query)
             .skip(size * (page - 1))
             .limit(size)
-            .select({ '_id': 0, id: 1, name: 1, url: 1, time: 1 })
+            .select({ '_id': 0, id: 1, uuid: 1, name: 1, url: 1, time: 1 })
             .sort({ time: -1 })
             .lean()
             .exec();
