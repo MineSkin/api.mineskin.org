@@ -35,7 +35,7 @@ export const register = (app: Application) => {
             return;
         }
 
-        const options = getAndValidateOptions(GenerateType.URL, req);
+        const options = getAndValidateOptions(GenerateType.URL, req, res);
         console.log(debug(`${ options.breadcrumb } URL:         ${ url }`))
         const client = getClientInfo(req);
 
@@ -63,7 +63,7 @@ export const register = (app: Application) => {
             return;
         }
 
-        const options = getAndValidateOptions(GenerateType.UPLOAD, req);
+        const options = getAndValidateOptions(GenerateType.UPLOAD, req, res);
         console.log(debug(`${ options.breadcrumb } FILE:        "${ file.name }" ${ file.md5 }`))
         const client = getClientInfo(req);
 
@@ -99,7 +99,7 @@ export const register = (app: Application) => {
             return;
         }
 
-        const options = getAndValidateOptions(GenerateType.USER, req);
+        const options = getAndValidateOptions(GenerateType.USER, req, res);
         console.log(debug(`${ options.breadcrumb } USER:        ${ uuids.long }`))
         const client = getClientInfo(req);
 
@@ -133,7 +133,7 @@ export const register = (app: Application) => {
             return;
         }
 
-        const options = getAndValidateOptions(GenerateType.USER, req);
+        const options = getAndValidateOptions(GenerateType.USER, req, res);
         console.log(debug(`${ options.breadcrumb } USER:        ${ uuids.long }`))
         const client = getClientInfo(req);
 
@@ -159,7 +159,7 @@ export const register = (app: Application) => {
         };
     }
 
-    function getAndValidateOptions(type: GenerateType, req: GenerateRequest): GenerateOptions {
+    function getAndValidateOptions(type: GenerateType, req: GenerateRequest, res: Response): GenerateOptions {
         let model = validateModel(req.body["model"] || req.query["model"]);
         let variant = validateVariant(req.body["variant"] || req.query["variant"]);
         // Convert & make sure both are set
@@ -175,6 +175,7 @@ export const register = (app: Application) => {
         const breadcrumbId = md5(`${ getIp(req) }${ Date.now() }${ variant }${ visibility }${ Math.random() }${ name }`).substr(0, 8);
         const breadcrumb = nextBreadColor()(breadcrumbId);
         req.breadcrumb = breadcrumb;
+        res.header("X-MineSkin-Breadcrumb", breadcrumbId);
 
         console.log(debug(`${ breadcrumb } Type:        ${ type }`))
         console.log(debug(`${ breadcrumb } Variant:     ${ variant }`));
