@@ -16,6 +16,11 @@ export const register = (app: Application) => {
 
     app.use("/generate", corsMiddleware);
     app.use("/generate", generateLimiter);
+    app.use("/generate", async (req, res, next) => {
+        const delay = await Generator.getDelay();
+        res.header("X-MineSkin-Delay", `${ delay || 5 }`);
+        next();
+    })
 
     //// URL
 
