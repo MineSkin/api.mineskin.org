@@ -62,7 +62,7 @@ export class Generator {
 
     @MemoizeExpiring(30000)
     static async getDelay(): Promise<number> {
-        const delay = Account.calculateDelay();
+        const delay = await Account.calculateDelay();
         try {
             metrics.influx.writePoints([{
                 measurement: 'delay',
