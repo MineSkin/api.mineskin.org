@@ -13,10 +13,22 @@ servers:
   - url: https://api.mineskin.org
 tags:
   - name: generate
-  - name: account
   - name: get
+  - name: util
 components:
   schemas:
+    PartialSkinInfo:
+      type: object
+      required: [ id, name, url, time ]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        url:
+          type: string
+        time:
+          type: integer
     SkinInfo:
       type: object
       required: [ id, model, data ]
@@ -24,6 +36,8 @@ components:
         id:
           type: integer
         idStr:
+          type: string
+        uuid:
           type: string
         name:
           type: string
@@ -89,6 +103,16 @@ components:
           type: integer
           enum: [ 0, 1 ]
           default: 0
+    UserValidation:
+      type: object
+      required: [ valid ]
+      properties:
+        valid:
+          type: boolean
+        uuid:
+          type: string
+        name:
+          type: string
   responses:
     GeneratedSkin:
       description: Successfully generated skin info
@@ -187,4 +211,70 @@ paths:
           required: true
       responses:
         200:
-          $ref: '#/components/schemas/SkinInfo'
+          description: Skin Info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkinInfo'
+  /get/list/{page}:
+    get:
+      tags:
+        - get
+      parameters:
+        - name: page
+          in: path
+          required: false
+      responses:
+        200:
+          description: Skin Info List
+          content:
+            application/json:
+              schema:
+                required: [ skins, page ]
+                properties:
+                  skins:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PartialSkinInfo'
+                  page:
+                    type: object
+                    properties:
+                      index:
+                        type: integer
+                      amount:
+                        type: integer
+                      total:
+                        type: integer
+                  filter:
+                    type: string
+
+  /validate/name/{name}:
+    get:
+      tags:
+        - util
+      parameters:
+        - name: name
+          in: path
+          required: true
+      responses:
+        200:
+          description: Validation info about the requested user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserValidation'
+  /validate/uuid/{uuid}:
+    get:
+      tags:
+        - util
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+      responses:
+        200:
+          description: Validation info about the requested user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserValidation'
