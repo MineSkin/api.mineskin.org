@@ -231,7 +231,7 @@ export const register = (app: Application) => {
     }
 
     function validateVisibility(visibility?: number): SkinVisibility {
-        return visibility === 1 ? SkinVisibility.PRIVATE : SkinVisibility.PUBLIC;
+        return visibility == 1 ? SkinVisibility.PRIVATE : SkinVisibility.PUBLIC;
     }
 
     function validateName(name?: string): string {
