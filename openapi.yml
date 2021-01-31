@@ -42,6 +42,9 @@ components:
           type: number
         accountId:
           type: integer
+          deprecated: true
+        account:
+          type: integer
         server:
           type: string
         private:
@@ -80,6 +83,7 @@ components:
           default: "classic"
         name:
           type: string
+          maxLength: 20
         visibility:
           description: "Visibility of the generated skin. 0 for public, 1 for private"
           type: integer
@@ -91,7 +95,25 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/SkinInfo'
+            allOf:
+              - $ref: '#/components/schemas/SkinInfo'
+              - properties:
+                  nextRequest:
+                    type: integer
+                  duplicate:
+                    type: boolean
+    DelayInfo:
+      description: Delay info for the requesting client
+      content:
+        application/json:
+          schema:
+            properties:
+              delay:
+                type: integer
+              next:
+                type: integer
+              nextRelative:
+                type: integer
 paths:
   /generate/url:
     post:
@@ -128,4 +150,41 @@ paths:
       responses:
         200:
           $ref: '#/components/responses/GeneratedSkin'
+  /generate/user:
+    post:
+      tags:
+        - generate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/GenerateOptions'
+                - properties:
+                    uuid:
+                      type: string
+                      minLength: 32
+                      maxLength: 36
+      responses:
+        200:
+          $ref: '#/components/responses/GeneratedSkin'
 
+  /get/delay:
+    get:
+      tags:
+        - get
+      responses:
+        200:
+          $ref: '#/components/responses/DelayInfo'
+  /get/id/{id}:
+    get:
+      tags:
+        - get
+      parameters:
+        - name: id
+          in: path
+          required: true
+      responses:
+        200:
+          $ref: '#/components/schemas/SkinInfo'
