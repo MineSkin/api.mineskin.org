@@ -133,6 +133,22 @@ components:
               error:
                 type: string
                 description: Error message
+    RateLimitResponse:
+      description: Response if the client sent a request too soon
+      content:
+        application/json:
+          schema:
+            required: [ error ]
+            properties:
+              error:
+                type: string
+                description: Error message
+              nextRequest:
+                type: integer
+                description: Unix timestamp when the next request is allowed
+              delay:
+                type: integer
+                description: The API's current delay in seconds
 
     GeneratedSkin:
       description: Successfully generated skin info
@@ -178,6 +194,8 @@ paths:
           $ref: '#/components/responses/GeneratedSkin'
         400:
           $ref: '#/components/responses/ErrorResponse'
+        429:
+          $ref: '#/components/responses/RateLimitResponse'
         500:
           $ref: '#/components/responses/ErrorResponse'
   /generate/upload:
@@ -200,6 +218,8 @@ paths:
           $ref: '#/components/responses/GeneratedSkin'
         400:
           $ref: '#/components/responses/ErrorResponse'
+        429:
+          $ref: '#/components/responses/RateLimitResponse'
         500:
           $ref: '#/components/responses/ErrorResponse'
   /generate/user:
@@ -223,6 +243,8 @@ paths:
           $ref: '#/components/responses/GeneratedSkin'
         400:
           $ref: '#/components/responses/ErrorResponse'
+        429:
+          $ref: '#/components/responses/RateLimitResponse'
         500:
           $ref: '#/components/responses/ErrorResponse'
 
