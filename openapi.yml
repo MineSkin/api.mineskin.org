@@ -92,9 +92,14 @@ components:
       type: object
       properties:
         model:
+          deprecated: true
+          type: string
+          enum: [ "steve", "slim" ]
+          default: "steve"
+        variant:
+          description: Skin variant - automatically determined based on the image if not specified
           type: string
           enum: [ "classic", "slim" ]
-          default: "classic"
         name:
           type: string
           maxLength: 20
