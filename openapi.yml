@@ -113,7 +113,21 @@ components:
           type: string
         name:
           type: string
+
   responses:
+    ErrorResponse:
+      description: Response if an error occured
+      content:
+        application/json:
+          schema:
+            properties:
+              errorCode:
+                type: string
+                description: Consistent error code, see [AuthError](https://github.com/MineSkin/api.mineskin.org/blob/793a926cbe4b90887ed8164c9eccfcb542fdeadb/src/generator/Authentication.ts#L580) & [GenError](https://github.com/MineSkin/api.mineskin.org/blob/47a5f51dc664e0f730b0073f70b2fc295e14ca3b/src/generator/Generator.ts#L1093)
+              error:
+                type: string
+                description: Error message
+
     GeneratedSkin:
       description: Successfully generated skin info
       content:
@@ -156,6 +170,10 @@ paths:
       responses:
         200:
           $ref: '#/components/responses/GeneratedSkin'
+        400:
+          $ref: '#/components/responses/ErrorResponse'
+        500:
+          $ref: '#/components/responses/ErrorResponse'
   /generate/upload:
     post:
       tags:
@@ -174,6 +192,10 @@ paths:
       responses:
         200:
           $ref: '#/components/responses/GeneratedSkin'
+        400:
+          $ref: '#/components/responses/ErrorResponse'
+        500:
+          $ref: '#/components/responses/ErrorResponse'
   /generate/user:
     post:
       tags:
@@ -193,6 +215,10 @@ paths:
       responses:
         200:
           $ref: '#/components/responses/GeneratedSkin'
+        400:
+          $ref: '#/components/responses/ErrorResponse'
+        500:
+          $ref: '#/components/responses/ErrorResponse'
 
   /get/delay:
     get:
