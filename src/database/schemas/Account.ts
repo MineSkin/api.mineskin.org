@@ -7,6 +7,8 @@ import { AccountType, IAccountModel } from "../../typings/IAccountDocument";
 import { debug, error } from "../../util/colors";
 import { Bread } from "../../typings/Bread";
 import { Caching } from "../../generator/Caching";
+import { metrics } from "../../util/metrics";
+import * as Sentry from "@sentry/node";
 
 const config = getConfig();
 
@@ -164,7 +166,28 @@ AccountSchema.statics.findUsable = function (this: IAccountModel, bread?: Bread)
                 return undefined;
             }
             Caching.lockSelectedAccount(account.id, bread);
-            console.log(debug(bread?.breadcrumb + " Account #" + account.id + " last used " + Math.round(time - (account.lastUsed || 0)) + "s ago, last selected " + Math.round(time - (account.lastSelected || 0)) + "s ago"));
+
+            let usedDiff = Math.round(time - (account.lastUsed || 0));
+            let selectedDiff = Math.round(time - (account.lastSelected || 0));
+            console.log(debug(bread?.breadcrumb + " Account #" + account.id + " last used " + usedDiff + "s ago, last selected " + selectedDiff + "s ago"));
+            try {
+                metrics.influx.writePoints([{
+                    measurement: 'account_selection_difference',
+                    tags: {
+                        server: config.server,
+                        account: account.id
+                    },
+                    fields: {
+                        lastSelected: selectedDiff,
+                        lastUsed: usedDiff
+                    }
+                }], {
+                    database: 'mineskin'
+                })
+            } catch (e) {
+                Sentry.captureException(e);
+            }
+
             account.lastSelected = time;
             if (!account.successCounter) account.successCounter = 0;
             if (!account.errorCounter) account.errorCounter = 0;
