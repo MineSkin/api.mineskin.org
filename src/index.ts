@@ -196,6 +196,7 @@ async function init() {
         if (err instanceof MineSkinError) {
             res.json({
                 success: false,
+                errorType: err.name,
                 errorCode: err.code,
                 error: err.msg
             });
