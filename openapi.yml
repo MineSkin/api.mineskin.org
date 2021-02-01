@@ -125,6 +125,7 @@ components:
       content:
         application/json:
           schema:
+            required: [ error ]
             properties:
               errorCode:
                 type: string
