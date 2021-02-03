@@ -20,7 +20,7 @@ import { getConfig } from "./typings/Configs";
 import { MineSkinError, MineSkinRequest, GenerateRequest, isBreadRequest } from "./typings";
 import { apiRequestsMiddleware } from "./util/metrics";
 import { error, info, warn } from "./util/colors";
-import { hasOwnProperty } from "./util";
+import { corsMiddleware, hasOwnProperty } from "./util";
 import { AuthenticationError } from "./generator/Authentication";
 import { GeneratorError } from "./generator/Generator";
 import gitsha from "@inventivetalent/gitsha";
@@ -169,7 +169,7 @@ async function init() {
             res.json({ msg: "Hi!" });
         });
 
-        app.get("/openapi.yml", (req, res) => {
+        app.get("/openapi.yml", corsMiddleware, (req, res) => {
             res.sendFile("/openapi.yml", { root: `${ __dirname }/..` });
         })
 
