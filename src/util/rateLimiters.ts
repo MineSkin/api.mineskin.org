@@ -10,7 +10,7 @@ function keyGenerator(req: Request): string {
 
 export const generateLimiter = rateLimit({
     windowMs: 2 * 60 * 1000, // 2 minutes,
-    max: 6,
+    max: 5,
     message: JSON.stringify({ error: "Too many requests" }),
     keyGenerator: keyGenerator,
     onLimitReached: (req: Request, res: Response) => {
