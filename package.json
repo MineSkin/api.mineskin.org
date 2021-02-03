@@ -38,7 +38,7 @@
     "md5": "^2.2.1",
     "metrics-node": "^1.0.0",
     "mongoose": "^5.11.14",
-    "mongoose-int32": "^0.3.1",
+    "mongoose-int32": "^0.4.1",
     "morgan": "^1.9.1",
     "querystring": "^0.2.0",
     "read-chunk": "^3.2.0",
