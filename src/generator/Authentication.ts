@@ -568,6 +568,12 @@ export class Authentication {
                 if (e.code === AuthError.MISSING_CREDENTIALS) {
                     Discord.notifyMissingCredentials(account);
                 }
+                if (e.details && e.details.response) {
+                    if (e.details.response.status >= 400 && e.details.response.status <= 403) {
+                        console.warn(warn(`${ bread?.breadcrumb } [Auth] Resetting access token for ${ account.toSimplifiedString() }`));
+                        account.accessToken = "";
+                    }
+                }
                 metric
                     .tag("result", "fail")
                     .tag("reason", e.code)
