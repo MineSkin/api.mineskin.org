@@ -570,8 +570,10 @@ export class Authentication {
                 }
                 if (e.details && e.details.response) {
                     if (e.details.response.status >= 400 && e.details.response.status <= 403) {
-                        console.warn(warn(`${ bread?.breadcrumb } [Auth] Resetting access token for ${ account.toSimplifiedString() }`));
-                        account.accessToken = "";
+                        if (account.passwordNew) {
+                            console.warn(warn(`${ bread?.breadcrumb } [Auth] Resetting access token for ${ account.toSimplifiedString() }`));
+                            account.accessToken = "";
+                        }
                     }
                 }
                 metric
