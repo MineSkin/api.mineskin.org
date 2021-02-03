@@ -23,6 +23,7 @@ import { error, info, warn } from "./util/colors";
 import { hasOwnProperty } from "./util";
 import { AuthenticationError } from "./generator/Authentication";
 import { GeneratorError } from "./generator/Generator";
+import gitsha from "@inventivetalent/gitsha";
 
 sourceMapSupport.install();
 
@@ -61,6 +62,7 @@ async function init() {
         console.log("Initializing Sentry")
         Sentry.init({
             dsn: config.sentry.dsn,
+            release: await gitsha(),
             integrations: [
                 new Sentry.Integrations.Http({ tracing: true }),
                 new Tracing.Integrations.Express({ app })
