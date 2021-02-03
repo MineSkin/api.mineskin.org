@@ -34,12 +34,12 @@ export const register = (app: Application) => {
         if (!requestAllowed) {
             return;
         }
+        await updateTraffic(req);
 
         const options = getAndValidateOptions(GenerateType.URL, req, res);
         console.log(debug(`${ options.breadcrumb } URL:         ${ url }`))
         const client = getClientInfo(req);
 
-        await updateTraffic(req);
 
         const skin = await Generator.generateFromUrlAndSave(url, options, client);
         res.json(skin.toResponseJson(await Generator.getDelay()));
@@ -62,12 +62,12 @@ export const register = (app: Application) => {
         if (!requestAllowed) {
             return;
         }
+        await updateTraffic(req);
 
         const options = getAndValidateOptions(GenerateType.UPLOAD, req, res);
         console.log(debug(`${ options.breadcrumb } FILE:        "${ file.name }" ${ file.md5 }`))
         const client = getClientInfo(req);
 
-        await updateTraffic(req);
 
         const skin = await Generator.generateFromUploadAndSave(file, options, client);
         res.json(skin.toResponseJson(await Generator.getDelay()));
@@ -86,6 +86,7 @@ export const register = (app: Application) => {
         if (!requestAllowed) {
             return;
         }
+        await updateTraffic(req);
         Sentry.setTag("generate_type", GenerateType.USER);
 
         const uuids = longAndShortUuid(uuidStr);
@@ -103,7 +104,7 @@ export const register = (app: Application) => {
         console.log(debug(`${ options.breadcrumb } USER:        ${ uuids.long }`))
         const client = getClientInfo(req);
 
-        await updateTraffic(req);
+
 
         const skin = await Generator.generateFromUserAndSave(uuids.long, options, client);
         res.json(skin.toResponseJson(await Generator.getDelay()));
@@ -120,6 +121,7 @@ export const register = (app: Application) => {
         if (!requestAllowed) {
             return;
         }
+        await updateTraffic(req);
         Sentry.setTag("generate_type", GenerateType.USER);
 
         const uuids = longAndShortUuid(uuidStr);
@@ -137,7 +139,7 @@ export const register = (app: Application) => {
         console.log(debug(`${ options.breadcrumb } USER:        ${ uuids.long }`))
         const client = getClientInfo(req);
 
-        await updateTraffic(req);
+
 
         const skin = await Generator.generateFromUserAndSave(uuids.long, options, client);
         res.json(skin.toResponseJson(await Generator.getDelay()));
