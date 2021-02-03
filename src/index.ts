@@ -97,6 +97,7 @@ async function init() {
     {
         console.log("Setting up express middleware")
 
+        app.set("trust proxy", 1);
         app.use(bodyParser.urlencoded({ extended: true, limit: '50kb' }));
         app.use(bodyParser.json({ limit: '20kb' }));
         app.use(fileUpload());
