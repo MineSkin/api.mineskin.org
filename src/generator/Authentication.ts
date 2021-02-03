@@ -563,6 +563,7 @@ export class Authentication {
             return result;
         } catch (e) {
             if (e instanceof AuthenticationError) {
+                console.warn(e);
                 if (e.code === AuthError.MISSING_CREDENTIALS) {
                     Discord.notifyMissingCredentials(account);
                 }
