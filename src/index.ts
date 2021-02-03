@@ -178,6 +178,7 @@ async function init() {
     const preErrorHandler: ErrorRequestHandler = (err, req: Request, res: Response, next: NextFunction) => {
         console.warn(warn((isBreadRequest(req) ? req.breadcrumb + " " : "") + "Error in a route " + err.message));
         if (err instanceof MineSkinError) {
+            Sentry.setTag("error_type", err.name);
             Sentry.setTag("error_code", err.code);
             if (err instanceof AuthenticationError || err instanceof GeneratorError) {
                 addErrorDetailsToSentry(err);
@@ -212,7 +213,7 @@ async function init() {
 
 function addErrorDetailsToSentry(err: AuthenticationError | GeneratorError): void {
     Sentry.setExtra("error_account", err.account?.id);
-    Sentry.setExtra("error_details", err.details)
+    Sentry.setExtra("error_details", err.details);
     if (err.details instanceof Error) {
         console.warn(warn(err.details.message));
         Sentry.setExtra("error_details_error", err.details.name);
