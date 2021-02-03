@@ -220,6 +220,7 @@ function addErrorDetailsToSentry(err: AuthenticationError | GeneratorError): voi
     }
     if (err.details && err.details.response) {
         Sentry.setExtra("error_response", err.details.response);
+        Sentry.setExtra("error_response_data", err.details.response.data);
     }
 }
 
