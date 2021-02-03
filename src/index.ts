@@ -169,6 +169,10 @@ async function init() {
             res.json({ msg: "Hi!" });
         });
 
+        app.get("/openapi.yml", (req, res) => {
+            res.sendFile("../openapi.yml");
+        })
+
         generateRoute.register(app);
         getRoute.register(app);
         renderRoute.register(app);
