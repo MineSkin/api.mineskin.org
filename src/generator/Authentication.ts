@@ -43,6 +43,7 @@ export class Mojang {
         // Validate token which shouldn't be expired yet
         if (await Mojang.validateAccessToken(account, bread)) {
             // Still valid!
+            console.log(debug(bread?.breadcrumb + " [Auth] (#" + account.id + ") Token still valid!"));
             return account;
         }
 
