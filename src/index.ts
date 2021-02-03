@@ -170,7 +170,7 @@ async function init() {
         });
 
         app.get("/openapi.yml", (req, res) => {
-            res.sendFile("../openapi.yml", { root: __dirname });
+            res.sendFile("/openapi.yml", { root: `${ __dirname }/..` });
         })
 
         generateRoute.register(app);
