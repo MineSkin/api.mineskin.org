@@ -33,6 +33,8 @@ export const apiRequestsMiddleware = (req: Request, res: Response, next: NextFun
     next();
 }
 
+export const RATE_LIMIT_METRIC = metrics.metric('mineskin', 'api_rate_limit');
+
 export const AUTHENTICATION_METRIC = metrics.metric('mineskin', 'authentication');
 
 export const NEW_DUPLICATES_METRIC = metrics.metric('mineskin', 'generate_new_duplicate');

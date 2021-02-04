@@ -12,6 +12,10 @@ import { Caching } from "../generator/Caching";
 import { SkinModel, SkinVariant } from "../typings/ISkinDocument";
 import { debug } from "./colors";
 import exp = require("constants");
+import { RATE_LIMIT_METRIC } from "./metrics";
+import { getConfig } from "../typings/Configs";
+
+const config = getConfig();
 
 export function getIp(req: Request): string {
     return req.get('cf-connecting-ip') || req.get('x-forwarded-for') || req.get("x-real-ip") || req.connection.remoteAddress || req.ip;
@@ -34,6 +38,10 @@ export async function checkTraffic(req: Request, res: Response): Promise<boolean
     if ((lastRequest.getTime() / 1000) > time - delay) {
         res.status(429).json({ error: "Too many requests", nextRequest: time + delay + 10, delay: delay });
         console.log(debug("Request too soon"));
+        RATE_LIMIT_METRIC
+            .tag("server", config.server)
+            .tag("limiter", "mongo")
+            .inc();
         return false;
     }
     return true;
