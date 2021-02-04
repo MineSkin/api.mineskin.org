@@ -185,12 +185,15 @@ async function init() {
     const preErrorHandler: ErrorRequestHandler = (err, req: Request, res: Response, next: NextFunction) => {
         console.warn(warn((isBreadRequest(req) ? req.breadcrumb + " " : "") + "Error in a route " + err.message));
         if (err instanceof MineSkinError) {
-            Sentry.setTag("error_type", err.name);
-            Sentry.setTag("error_code", err.code);
+            Sentry.setTags({
+                "error_type": err.name,
+                "error_code": err.code
+            });
             if (err instanceof AuthenticationError || err instanceof GeneratorError) {
                 addErrorDetailsToSentry(err);
             }
             if (err.httpCode) {
+                Sentry.setTag("error_httpcode", `${ err.httpCode }`);
                 res.status(err.httpCode);
             } else {
                 res.status(500);
