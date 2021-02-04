@@ -199,7 +199,14 @@ async function init() {
         next(err);
     };
     app.use(preErrorHandler);
-    app.use(Sentry.Handlers.errorHandler());
+    app.use(Sentry.Handlers.errorHandler({
+        shouldHandleError: (error) => {
+            if (error.status === 400) {
+                return Math.random() < 0.2;
+            }
+            return true;
+        }
+    }));
     const errorHandler: ErrorRequestHandler = (err, req: Request, res: Response, next: NextFunction) => {
         if (err instanceof MineSkinError) {
             res.json({
