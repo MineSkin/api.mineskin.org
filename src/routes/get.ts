@@ -15,7 +15,7 @@ export const register = (app: Application) => {
             res.json({
                 delay: delay,
                 next: (lastRequest.getTime() / 1000) + delay,
-                nextRelative: ((lastRequest.getTime() / 1000) + delay) - (Date.now() / 1000)
+                nextRelative: Math.max(0, ((lastRequest.getTime() / 1000) + delay) - (Date.now() / 1000))
             });
         } else {
             res.json({
