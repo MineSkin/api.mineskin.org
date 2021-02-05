@@ -174,6 +174,8 @@ AccountSchema.statics.findUsable = function (this: IAccountModel, bread?: Bread)
                 "used_diff": usedDiff,
                 "selected_diff": selectedDiff
             });
+            let usedDiffMins = Math.round(usedDiff / 60 / 2) * 2;
+            Sentry.setTag("used_diff_mins", `${ usedDiffMins }`);
             try {
                 metrics.influx.writePoints([{
                     measurement: 'account_selection_difference',
