@@ -387,6 +387,7 @@ export const register = (app: Application) => {
             type: "external",
             enabled: true,
             lastUsed: 0,
+            lastSelected: 0,
             forcedTimeoutAt: 0,
             errorCounter: 0,
             totalErrorCounter: 0,
