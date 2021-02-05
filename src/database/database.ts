@@ -23,6 +23,7 @@ export default function connectToMongo(config: MineSkinConfig): Promise<Mongoose
 async function connectMongo(config: MineSkinConfig) {
     // Connect to DB
     mongoose.set('useNewUrlParser', true);
+    mongoose.set('useFindAndModify', false);
     console.log("Connecting to mongodb://" + ((config.mongo.user || "admin") + ":*****" + "@" + (config.mongo.address || "localhost") + ":" + (config.mongo.port || 27017) + "/" + (config.mongo.database || "database")));
     const m = await mongoose.connect("mongodb://" + ((config.mongo.user || "admin") + ":" + (config.mongo.pass || "admin") + "@" + (config.mongo.address || "localhost") + ":" + (config.mongo.port || 27017) + "/" + (config.mongo.database || "database")));
     console.info("MongoDB connected!");
