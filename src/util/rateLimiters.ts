@@ -17,7 +17,7 @@ export const generateLimiter = rateLimit({
     message: JSON.stringify({ error: "Too many requests" }),
     keyGenerator: keyGenerator,
     onLimitReached: (req: Request, res: Response) => {
-        console.log(debug(`${ getIp(req) } reached their rate limit`));
+        console.log(debug(`${ getIp(req) } (${ req.header("user-agent") }) reached their rate limit`));
         RATE_LIMIT_METRIC
             .tag("server", config.server)
             .tag("limiter", "express")
