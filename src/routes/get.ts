@@ -14,13 +14,13 @@ export const register = (app: Application) => {
         if (lastRequest) {
             res.json({
                 delay: delay,
-                next: (lastRequest.getTime() / 1000) + delay,
-                nextRelative: Math.max(0, ((lastRequest.getTime() / 1000) + delay) - (Date.now() / 1000))
+                next: Math.round((lastRequest.getTime() / 1000) + delay),
+                nextRelative: Math.round(Math.max(0, ((lastRequest.getTime() / 1000) + delay) - (Date.now() / 1000)))
             });
         } else {
             res.json({
                 delay: delay,
-                next: Date.now() / 1000,
+                next: Math.round(Date.now() / 1000),
                 nextRelative: 0
             });
         }
