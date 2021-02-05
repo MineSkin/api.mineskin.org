@@ -170,6 +170,10 @@ AccountSchema.statics.findUsable = function (this: IAccountModel, bread?: Bread)
             let usedDiff = Math.round(time - (account.lastUsed || 0));
             let selectedDiff = Math.round(time - (account.lastSelected || 0));
             console.log(debug(bread?.breadcrumb + " Account #" + account.id + " last used " + usedDiff + "s ago, last selected " + selectedDiff + "s ago"));
+            Sentry.setExtras({
+                "used_diff": usedDiff,
+                "selected_diff": selectedDiff
+            });
             try {
                 metrics.influx.writePoints([{
                     measurement: 'account_selection_difference',
