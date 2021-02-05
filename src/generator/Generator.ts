@@ -599,7 +599,7 @@ export class Generator {
             account = await this.getAndAuthenticateAccount(options);
 
             const body = {
-                variant: modelToVariant(options.model),
+                variant: options.variant,
                 url: url
             };
             const skinResponse = await Requests.minecraftServicesRequest({
@@ -695,7 +695,7 @@ export class Generator {
             account = await this.getAndAuthenticateAccount(options);
 
             const body = new FormData();
-            body.append("variant", modelToVariant(options.model));
+            body.append("variant", options.variant);
             body.append("file", tempFileValidation.buffer!, {
                 filename: "skin.png",
                 contentType: "image/png"
