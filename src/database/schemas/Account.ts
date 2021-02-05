@@ -106,7 +106,7 @@ AccountSchema.methods.getOrCreateClientToken = function (this: IAccountDocument)
     return this.clientToken;
 };
 
-AccountSchema.methods.updateRequestServer = function (this: IAccountDocument, newRequestServer?: string) {
+AccountSchema.methods.updateRequestServer = function (this: IAccountDocument, newRequestServer: string | null) {
     if (this.requestServer && this.requestServer !== newRequestServer) {
         this.lastRequestServer = this.requestServer;
     }
@@ -149,10 +149,33 @@ AccountSchema.statics.findUsable = function (this: IAccountModel, bread?: Bread)
     return this.findOne({
         enabled: true,
         id: { $nin: Caching.getLockedAccounts() },
-        requestServer: { $in: [undefined, "default", config.server] },
-        lastSelected: { $lt: (time - 50) },
-        lastUsed: { $lt: (time - 100) },
-        forcedTimeoutAt: { $lt: (time - 500) },
+        $and: [
+            {
+                $or: [
+                    { requestServer: { $exists: false } },
+                    { requestServer: null },
+                    { requestServer: { $in: ["default", config.server] } }
+                ]
+            },
+            {
+                $or: [
+                    { lastSelected: { $exists: false } },
+                    { lastSelected: { $lt: (time - 50) } }
+                ]
+            },
+            {
+                $or: [
+                    { lastUsed: { $exists: false } },
+                    { lastUsed: { $lt: (time - 100) } }
+                ]
+            },
+            {
+                $or: [
+                    { forcedTimeoutAt: { $exists: false } },
+                    { forcedTimeoutAt: { $lt: (time - 500) } }
+                ]
+            }
+        ],
         errorCounter: { $lt: (config.errorThreshold || 10) },
         timeAdded: { $lt: (time - 60) }
     }).sort({

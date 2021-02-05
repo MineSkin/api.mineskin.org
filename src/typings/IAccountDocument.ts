@@ -66,7 +66,7 @@ export interface IAccountDocument extends Document {
     accessTokenSource: AccessTokenSource;
     clientToken: string;
     requestIp: string;
-    requestServer?: string;
+    requestServer?: string | null;
     lastRequestServer: string;
     type: string;
     discordUser?: string;
@@ -75,7 +75,7 @@ export interface IAccountDocument extends Document {
 
     getOrCreateClientToken(): string;
 
-    updateRequestServer(newRequestServer?: string): void;
+    updateRequestServer(newRequestServer: string | null): void;
 
     getEmail(): string;
 

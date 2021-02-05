@@ -875,7 +875,7 @@ export class Generator {
                 if (e instanceof AuthenticationError) {
                     account.forcedTimeoutAt = Math.floor(Date.now() / 1000);
                     console.warn(warn(options.breadcrumb + " [Generator] Account #" + account.id + " forced timeout"));
-                    account.updateRequestServer(undefined);
+                    account.updateRequestServer(null);
                 }
 
                 if (account.errorCounter > 0 && account.errorCounter % 10 === 0) {
