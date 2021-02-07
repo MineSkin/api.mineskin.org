@@ -239,7 +239,7 @@ AccountSchema.statics.calculateDelay = function (this: IAccountModel): Promise<n
             console.warn(error("Global usable account count is " + usable));
             return 200;
         }
-        return Math.round(config.generateDelay / Math.max(1, usable))
+        return Math.round(300/*min 60*/ / Math.max(1, usable))
     });
 };
 
