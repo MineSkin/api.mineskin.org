@@ -1,9 +1,10 @@
 import { Account, Skin, Stat } from "../database/schemas";
 import { MemoizeExpiring } from "@inventivetalent/typescript-memoize";
-import { base64decode, getHashFromMojangTextureUrl, hasOwnProperty, imageHash, longAndShortUuid, Maybe, modelToVariant, random32BitNumber, stripUuid } from "../util";
+import { base64decode, getHashFromMojangTextureUrl, hasOwnProperty, imageHash, longAndShortUuid, Maybe, random32BitNumber, stripUuid } from "../util";
 import { Caching } from "./Caching";
 import { Authentication, AuthenticationError } from "./Authentication";
 import * as Sentry from "@sentry/node";
+import { Severity } from "@sentry/node";
 import { Requests } from "./Requests";
 import * as FormData from "form-data";
 import { URL } from "url";
@@ -650,8 +651,9 @@ export class Generator {
                 }
             });
         } catch (e) {
-            console.warn(e);
-            Sentry.captureException(e);
+            Sentry.captureException(e, {
+                level: Severity.Warning
+            });
         }
         return undefined;
     }
