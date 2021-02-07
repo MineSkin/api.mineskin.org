@@ -912,7 +912,12 @@ export class Generator {
         if (!size || size < 100 || size > MAX_IMAGE_SIZE) {
             throw new GeneratorError(GenError.INVALID_IMAGE, "Invalid file size", 400);
         }
-        const dimensions = imageSize(imageBuffer);
+        let dimensions;
+        try {
+            dimensions = imageSize(imageBuffer)
+        } catch (e) {
+            throw new GeneratorError(GenError.INVALID_IMAGE, "Failed to determine image dimensions", 400);
+        }
         Sentry.setExtra("generate_dimensions", `${ dimensions.width }x${ dimensions.height }`);
         if ((dimensions.width !== 64) || (dimensions.height !== 64 && dimensions.height !== 32)) {
             throw new GeneratorError(GenError.INVALID_IMAGE, "Invalid image dimensions. Must be 64x32 or 64x64 (Were " + dimensions.width + "x" + dimensions.height + ")", 400);
