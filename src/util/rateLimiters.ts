@@ -4,6 +4,7 @@ import { getIp } from "./index";
 import { debug } from "./colors";
 import { RATE_LIMIT_METRIC } from "./metrics";
 import { getConfig } from "../typings/Configs";
+import { Generator } from "../generator/Generator";
 
 const config = getConfig();
 
@@ -11,9 +12,12 @@ function keyGenerator(req: Request): string {
     return getIp(req);
 }
 
+const GEN_LIMIT_WINDOW = 60;
 export const generateLimiter = rateLimit({
-    windowMs: 2 * 60 * 1000, // 2 minutes,
-    max: 5,
+    windowMs: GEN_LIMIT_WINDOW * 1000,
+    max: async () => {
+        return Math.min(GEN_LIMIT_WINDOW / await Generator.getDelay())
+    },
     message: JSON.stringify({ error: "Too many requests" }),
     keyGenerator: keyGenerator,
     onLimitReached: (req: Request, res: Response) => {

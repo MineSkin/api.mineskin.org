@@ -33,6 +33,8 @@ import { Bread } from "../typings/Bread";
 
 const config = getConfig();
 
+export const MIN_ACCOUNT_DELAY = 300;
+
 const MAX_ID_TRIES = 10;
 
 const MINESKIN_URL_REGEX = /https?:\/\/minesk(\.in|in\.org)\/([0-9]+)/i;
