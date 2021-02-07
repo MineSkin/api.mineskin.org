@@ -165,7 +165,7 @@ async function init() {
     {
         console.log("Registering routes");
 
-        app.get("/", function (req, res) {
+        app.get("/", corsMiddleware, function (req, res) {
             res.json({ msg: "Hi!" });
         });
 
