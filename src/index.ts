@@ -198,6 +198,8 @@ async function init() {
             } else {
                 res.status(500);
             }
+        } else {
+            Sentry.setTag("unhandled_error", err.name)
         }
         next(err);
     };
