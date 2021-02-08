@@ -3,6 +3,7 @@ import * as Sentry from "@sentry/node";
 import { getConfig } from "../typings/Configs";
 import { IAccountDocument, MineSkinError } from "../typings";
 import { GenerateType } from "../typings/ISkinDocument";
+import { AccountType } from "../typings/IAccountDocument";
 
 const config = getConfig();
 
@@ -166,6 +167,7 @@ export class Discord {
                 "\n" +
                 "The account won't be used for skin generation until the issues are resolved.\n" +
                 "Please try to login at https://www.minecraft.net/login and check if there are any issues with your account and then log back in to your account at https://mineskin.org/account\n" +
+                (account.getAccountType() === AccountType.MICROSOFT ? "You should also check https://account.live.com/Activity\n" : "") +
                 "For further assistance feel free to ask in <#" + SUPPORT_CHANNEL + "> 🙂", account.discordUser,
                 () => {
                     this.postDiscordMessage("Hey <@" + account.discordUser + ">! I tried to send a private message but couldn't reach you :(\n" +
