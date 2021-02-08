@@ -336,7 +336,7 @@ export class Microsoft {
             account.microsoftUserId = xboxInfo.userId;
             account.minecraftXboxUsername = xboxInfo.username;
         }).catch(err => {
-            if (err.response) {
+            if (err.response || err.name === "XboxReplayError") {
                 throw new AuthenticationError(AuthError.MICROSOFT_AUTH_FAILED, "Failed to login", account, err);
             }
             throw err;
@@ -384,7 +384,7 @@ export class Microsoft {
             account.microsoftRefreshToken = xboxInfo.refreshToken;
             account.minecraftXboxUsername = xboxInfo.username;
         }).catch(err => {
-            if (err.response) {
+            if (err.response || err.name === "XboxReplayError") {
                 throw new AuthenticationError(AuthError.MICROSOFT_REFRESH_FAILED, "Failed to refresh token via microsoft", account, err);
             }
             throw err;

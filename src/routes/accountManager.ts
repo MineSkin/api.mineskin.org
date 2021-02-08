@@ -118,7 +118,7 @@ export const register = (app: Application) => {
         const minecraftAccessToken = await Microsoft.loginWithEmailAndPassword(req.body["email"], base64decode(req.body["password"]), xboxInfo => {
             microsoftInfo = xboxInfo;
         }).catch(err => {
-            if (err.response) {
+            if (err.name === "XboxReplayError") {
                 throw new AuthenticationError(AuthError.MICROSOFT_AUTH_FAILED, "Failed to login", undefined, err);
             }
             throw err;
