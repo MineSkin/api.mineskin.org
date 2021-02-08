@@ -566,6 +566,7 @@ export class Authentication {
                 .inc();
             return result;
         } catch (e) {
+            metric.tag("result", "fail");
             if (e instanceof AuthenticationError) {
                 console.warn(e);
                 if (e.code === AuthError.MISSING_CREDENTIALS) {
@@ -582,11 +583,11 @@ export class Authentication {
                         }
                     }
                 }
-                metric
-                    .tag("result", "fail")
-                    .tag("reason", e.code)
-                    .inc();
+                metric.tag("reason", e.code);
+            } else {
+                metric.tag("reason", e.name);
             }
+            metric.inc();
             throw e;
         }
     }
