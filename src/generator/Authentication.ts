@@ -329,7 +329,6 @@ export class Microsoft {
             throw new AuthenticationError(AuthError.MISSING_CREDENTIALS, "Account has no password", account);
         }
 
-
         console.log(debug(bread?.breadcrumb + " [Auth] Logging in " + account.toSimplifiedString()));
         const minecraftAccessToken = await Microsoft.loginWithEmailAndPassword(account.getEmail(), Encryption.decrypt(account.passwordNew), xboxInfo => {
             account.microsoftAccessToken = xboxInfo.accessToken;
@@ -379,6 +378,7 @@ export class Microsoft {
             throw new AuthenticationError(AuthError.MICROSOFT_REFRESH_FAILED, "Account has no refresh token", account);
         }
 
+        console.log(debug(bread?.breadcrumb + " [Auth] Refreshing " + account.toSimplifiedString()));
         const newMinecraftAccessToken = await Microsoft.refreshXboxAccessToken(account.microsoftRefreshToken, xboxInfo => {
             account.microsoftAccessToken = xboxInfo.accessToken;
             account.microsoftRefreshToken = xboxInfo.refreshToken;
