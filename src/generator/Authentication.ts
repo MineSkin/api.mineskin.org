@@ -18,7 +18,7 @@ const config = getConfig();
 const ACCESS_TOKEN_EXPIRATION_MOJANG = 86360;
 const ACCESS_TOKEN_EXPIRATION_MICROSOFT = 86360;
 
-const ACCESS_TOKEN_EXPIRATION_THRESHOLD = 1800;
+const ACCESS_TOKEN_EXPIRATION_THRESHOLD = 20 * 60;
 
 const XSTSRelyingParty = 'rp://api.minecraftservices.com/'
 
@@ -36,7 +36,7 @@ export class Mojang {
 
         // Check token expiration
         if (account.accessTokenExpiration && account.accessTokenExpiration - Math.round(Date.now() / 1000) < ACCESS_TOKEN_EXPIRATION_THRESHOLD) {
-            console.log(debug(bread?.breadcrumb + " [Auth] (#" + account.id + ") Force-refreshing accessToken, since it will expire in less than 30 minutes"));
+            console.log(debug(bread?.breadcrumb + " [Auth] (#" + account.id + ") Force-refreshing accessToken, since it will expire in less than 20 minutes"));
             return await Mojang.refreshAccessTokenOrLogin(account, bread);
         }
 
@@ -302,7 +302,7 @@ export class Microsoft {
 
         // Check token expiration
         if (account.accessTokenExpiration && account.accessTokenExpiration - Math.round(Date.now() / 1000) < ACCESS_TOKEN_EXPIRATION_THRESHOLD) {
-            console.log(debug(bread?.breadcrumb + " [Auth] (#" + account.id + ") Force-refreshing accessToken, since it will expire in less than 30 minutes"));
+            console.log(debug(bread?.breadcrumb + " [Auth] (#" + account.id + ") Force-refreshing accessToken, since it will expire in less than 20 minutes"));
             return await Microsoft.refreshAccessTokenOrLogin(account, bread);
         }
 
