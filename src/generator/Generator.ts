@@ -868,6 +868,8 @@ export class Generator {
         }
         if (e instanceof MineSkinError) {
             m.tag("error", e.code);
+        } else {
+            m.tag("error", e.name);
         }
         m.inc();
         if (account) {
