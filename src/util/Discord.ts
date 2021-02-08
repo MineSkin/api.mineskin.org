@@ -1,7 +1,7 @@
 import { Requests } from "../generator/Requests";
 import * as Sentry from "@sentry/node";
 import { getConfig } from "../typings/Configs";
-import { IAccountDocument } from "../typings";
+import { IAccountDocument, MineSkinError } from "../typings";
 import { GenerateType } from "../typings/ISkinDocument";
 
 const config = getConfig();
@@ -122,7 +122,7 @@ export class Discord {
     static notifyMissingCredentials(account: IAccountDocument): void {
         this.postDiscordMessage("⚠️ Account #" + account.id + " just lost its access token\n" +
             "  Current Server: " + account.lastRequestServer + "/" + account.requestServer + "\n" +
-            "  Account Type: " + (account.microsoftAccount ? "microsoft" : "mojang") + "\n" +
+            "  Account Type: " + account.getAccountType() + "\n" +
             "  Total Success/Error: " + account.totalSuccessCounter + "/" + account.totalErrorCounter + "\n" +
             "  Account Added: " + new Date((account.timeAdded || 0) * 1000).toUTCString() + "\n" +
             "  Linked to <@" + account.discordUser + ">");
@@ -131,18 +131,47 @@ export class Discord {
         if (account.discordUser) {
             this.sendDiscordDirectMessage("Hi there!\n" +
                 "This is an automated notification that a MineSkin lost access to an account you linked to your Discord profile and has been disabled\n" +
-                "  Affected Account: " + (account.playername || account.uuid) + " (" + account.getEmail().substr(0, 4) + "****)\n" +
-                "  Account Type: " + (account.microsoftAccount ? "microsoft" : "mojang") + "\n" +
-                "  Last Error Code:  " + account.lastErrorCode + "\n" +
+                "  Affected Account: " + (account.playername || account.uuid) + " (" + account.getEmail() + ")\n" +
+                "  Account Type: " + account.getAccountType() + "\n" +
                 "\n" +
                 "The account won't be used for skin generation until the issues are resolved.\n" +
                 "Please log back in to your account at https://mineskin.org/account\n" +
                 "For further assistance feel free to ask in <#" + SUPPORT_CHANNEL + "> 🙂", account.discordUser,
                 () => {
                     this.postDiscordMessage("Hey <@" + account.discordUser + ">! I tried to send a private message but couldn't reach you :(\n" +
-                        "MineSkin just lost access to one of your accounts (" + (account.microsoftAccount ? "microsoft" : "mojang") + ")\n" +
+                        "MineSkin just lost access to one of your accounts (" + account.getAccountType() + ")\n" +
                         "  Account UUID (trimmed): " + (account.uuid || account.playername || "").substr(0, 5) + "****\n" +
                         "  Please log back in at https://mineskin.org/account\n", OWNER_CHANNEL);
+                });
+            account.discordMessageSent = true;
+            account.save();
+        }
+    }
+
+    static notifyLoginFailed(account: IAccountDocument, err: MineSkinError): void {
+        this.postDiscordMessage("⚠️ Account #" + account.id + " failed to login\n" +
+            "  Error: " + err.msg + "\n" +
+            "  Current Server: " + account.lastRequestServer + "/" + account.requestServer + "\n" +
+            "  Account Type: " + account.getAccountType() + "\n" +
+            "  Total Success/Error: " + account.totalSuccessCounter + "/" + account.totalErrorCounter + "\n" +
+            "  Account Added: " + new Date((account.timeAdded || 0) * 1000).toUTCString() + "\n" +
+            "  Linked to <@" + account.discordUser + ">");
+
+        if (account.discordMessageSent) return;
+        if (account.discordUser) {
+            this.sendDiscordDirectMessage("Hi there!\n" +
+                "This is an automated notification that a MineSkin just failed to login to your account\n" +
+                "  Affected Account: " + (account.playername || account.uuid) + " (" + account.getEmail() + ")\n" +
+                "  Account Type: " + account.getAccountType() + "\n" +
+                "\n" +
+                "The account won't be used for skin generation until the issues are resolved.\n" +
+                "Please try to login at https://www.minecraft.net/login and check if there are any issues with your account and then log back in to your account at https://mineskin.org/account\n" +
+                "For further assistance feel free to ask in <#" + SUPPORT_CHANNEL + "> 🙂", account.discordUser,
+                () => {
+                    this.postDiscordMessage("Hey <@" + account.discordUser + ">! I tried to send a private message but couldn't reach you :(\n" +
+                        "MineSkin just failed to login to one of your accounts (" + account.getAccountType() + ")\n" +
+                        "  Account UUID (trimmed): " + (account.uuid || account.playername || "").substr(0, 5) + "****\n" +
+                        "  Please check your account for issues and log back in at https://mineskin.org/account\n", OWNER_CHANNEL);
                 });
             account.discordMessageSent = true;
             account.save();
@@ -153,7 +182,7 @@ export class Discord {
     static notifyHighErrorCount(account: IAccountDocument, lastType: GenerateType, err: any): void {
         this.postDiscordMessage("⚠️ Account #" + account.id + " has " + account.errorCounter + " errors!\n" +
             "  Current Server: " + account.lastRequestServer + "/" + account.requestServer + "\n" +
-            "  Account Type: " + (account.microsoftAccount ? "microsoft" : "mojang") + "\n" +
+            "  Account Type: " + account.getAccountType() + "\n" +
             "  Latest Type: " + lastType + "\n" +
             "  Latest Cause: " + (err.code || err.msg || "n/a") + "\n" +
             "  Total Success/Error: " + account.totalSuccessCounter + "/" + account.totalErrorCounter + "\n" +
@@ -164,8 +193,8 @@ export class Discord {
         if (account.discordUser) {
             Discord.sendDiscordDirectMessage("Hi there!\n" +
                 "This is an automated notification that a MineSkin account you linked to your Discord profile has been disabled since it failed to properly generate skin data recently.\n" +
-                "  Affected Account: " + (account.playername || account.uuid) + " (" + account.getEmail().substr(0, 4) + "****)\n" +
-                "  Account Type: " + (account.microsoftAccount ? "microsoft" : "mojang") + "\n" +
+                "  Affected Account: " + (account.playername || account.uuid) + " (" + account.getEmail() + ")\n" +
+                "  Account Type: " + account.getAccountType() + "\n" +
                 "  Last Error Code:  " + account.lastErrorCode + "\n" +
                 "\n" +
                 "The account won't be used for skin generation until the issues are resolved.\n" +
@@ -173,7 +202,7 @@ export class Discord {
                 "For further assistance feel free to ask in <#" + SUPPORT_CHANNEL + "> 🙂", account.discordUser,
                 function () {
                     Discord.postDiscordMessage("Hey <@" + account.discordUser + ">! I tried to send a private message but couldn't reach you :(\n" +
-                        "One of your accounts (" + (account.microsoftAccount ? "microsoft" : "mojang") + ") was just disabled since it failed to properly generate skin data recently.\n" +
+                        "One of your accounts (" + account.getAccountType() + ") was just disabled since it failed to properly generate skin data recently.\n" +
                         "  Account UUID (trimmed): " + (account.uuid || account.playername || "").substr(0, 5) + "****\n" +
                         "  Please log back in at https://mineskin.org/account\n", OWNER_CHANNEL);
                 });
