@@ -562,7 +562,7 @@ export class Authentication {
             }
             metric
                 .tag("result", "success")
-                .tag("source", result.accessTokenSource)
+                .tag("source", (account.accessTokenExpiration === result.accessTokenExpiration) ? "reused" : result.accessTokenSource)
                 .inc();
             return result;
         } catch (e) {
