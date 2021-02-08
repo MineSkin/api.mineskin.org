@@ -171,7 +171,10 @@ async function init() {
 
         app.get("/openapi.yml", corsMiddleware, (req, res) => {
             res.sendFile("/openapi.yml", { root: `${ __dirname }/..` });
-        })
+        });
+        app.get("/openapi", (req, res) => {
+            res.redirect("https://openapi.inventivetalent.dev/#https://api.mineskin.org/openapi.yml");
+        });
 
         generateRoute.register(app);
         getRoute.register(app);
