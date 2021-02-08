@@ -553,6 +553,7 @@ export class Authentication {
             .tag("type", account.getAccountType())
             .tag("account", account.id);
         try {
+            let prevAccessTokenExpiration = account.accessTokenExpiration;
             let result: IAccountDocument;
             if (account.getAccountType() === AccountType.MICROSOFT || account.microsoftAccount) {
                 result = await Microsoft.authenticate(account, bread);
@@ -562,7 +563,7 @@ export class Authentication {
             }
             metric
                 .tag("result", "success")
-                .tag("source", (account.accessTokenExpiration === result.accessTokenExpiration) ? "reused" : result.accessTokenSource)
+                .tag("source", (prevAccessTokenExpiration === result.accessTokenExpiration) ? "reused" : result.accessTokenSource)
                 .inc();
             return result;
         } catch (e) {
