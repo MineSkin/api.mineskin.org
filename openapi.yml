@@ -119,6 +119,15 @@ components:
         name:
           type: string
 
+  parameters:
+    userAgent:
+      name: User-Agent
+      description: Custom User-Agent for your application, see [user-agent.dev](https://user-agent.dev/) for implementation examples
+      example: "ExampleApp/v1.0"
+      in: header
+      required: true
+
+
   responses:
     ErrorResponse:
       description: Response if an error occured
@@ -179,6 +188,8 @@ paths:
     post:
       tags:
         - generate
+      parameters:
+        - $ref: '#/components/parameters/userAgent'
       requestBody:
         required: true
         content:
@@ -202,6 +213,8 @@ paths:
     post:
       tags:
         - generate
+      parameters:
+        - $ref: '#/components/parameters/userAgent'
       requestBody:
         required: true
         content:
@@ -226,6 +239,8 @@ paths:
     post:
       tags:
         - generate
+      parameters:
+        - $ref: '#/components/parameters/userAgent'
       requestBody:
         required: true
         content:
@@ -252,6 +267,8 @@ paths:
     get:
       tags:
         - get
+      parameters:
+        - $ref: '#/components/parameters/userAgent'
       responses:
         200:
           $ref: '#/components/responses/DelayInfo'
@@ -263,6 +280,7 @@ paths:
         - name: id
           in: path
           required: true
+        - $ref: '#/components/parameters/userAgent'
       responses:
         200:
           description: Skin Info
@@ -278,6 +296,7 @@ paths:
         - name: page
           in: path
           required: false
+        - $ref: '#/components/parameters/userAgent'
       responses:
         200:
           description: Skin Info List
@@ -310,6 +329,7 @@ paths:
         - name: name
           in: path
           required: true
+        - $ref: '#/components/parameters/userAgent'
       responses:
         200:
           description: Validation info about the requested user
@@ -325,6 +345,7 @@ paths:
         - name: uuid
           in: path
           required: true
+        - $ref: '#/components/parameters/userAgent'
       responses:
         200:
           description: Validation info about the requested user
