@@ -15,21 +15,24 @@ metrics.setFlusher(flusher);
 
 export const API_REQUESTS_METRIC = metrics.metric('mineskin', 'api_requests');
 export const apiRequestsMiddleware = (req: Request, res: Response, next: NextFunction) => {
-    try {
-        const route = req.route;
-        if (route) {
-            const path = route["path"];
-            if (path) {
-                API_REQUESTS_METRIC
-                    .tag("server", config.server)
-                    .tag("method", req.method)
-                    .tag("path", path)
-                    .inc();
+    res.on("finish", () => {
+        try {
+            const route = req.route;
+            if (route) {
+                const path = route["path"];
+                if (path) {
+                    API_REQUESTS_METRIC
+                        .tag("server", config.server)
+                        .tag("method", req.method)
+                        .tag("path", path)
+                        .tag("status", `${res.statusCode}`)
+                        .inc();
+                }
             }
+        } catch (e) {
+            Sentry.captureException(e);
         }
-    } catch (e) {
-        Sentry.captureException(e);
-    }
+    })
     next();
 }
 
