@@ -569,6 +569,7 @@ export class Generator {
             if (!url) {
                 throw new GeneratorError(GenError.INVALID_IMAGE_URL, "Failed to follow url", 400, undefined, originalUrl);
             }
+            Sentry.setExtra("generate_url_followed", url);
             // Check for duplicate from url again, if the followed url is different
             if (url !== originalUrl) {
                 const followedUrlDuplicate = await this.findDuplicateFromUrl(url, options, GenerateType.URL);
