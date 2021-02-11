@@ -643,7 +643,9 @@ export class Generator {
     protected static rewriteUrl(urlStr: string): string {
         for (let [pattern, replacement] of URL_REWRITES.entries()) {
             if (pattern.test(urlStr)) {
-                return urlStr.replace(pattern, replacement);
+                const str = urlStr.replace(pattern, replacement);
+                console.log(debug(`Rewrite ${ urlStr } -> ${ str }`));
+                return str;
             }
         }
         return urlStr;
