@@ -373,6 +373,7 @@ export class Generator {
             generateDuration: duration,
 
             account: result.account?.id,
+            breadcrumb: options.breadcrumb,
             type: type,
             server: config.server,
 

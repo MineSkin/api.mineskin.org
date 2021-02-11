@@ -63,6 +63,7 @@ export const SkinSchema: Schema<ISkinDocument, ISkinModel> = new Schema({
     },
     generateDuration: Number,
     account: Number,
+    breadcrumb: String,
     type: String,
     duplicate: Number,
     views: Number,

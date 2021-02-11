@@ -70,6 +70,7 @@ export interface ISkinDocument extends Document {
     generateDuration: number;
     /** ID of the account that generated the skin (only for url/upload) **/
     account?: number;
+    breadcrumb?: string;
     /** Generation type **/
     type: GenerateType;
     /** Number of times the same skin was requested on this existing entry **/
