@@ -44,8 +44,8 @@ const MINECRAFT_TEXTURE_REGEX = /https?:\/\/textures\.minecraft\.net\/texture\/(
 const URL_REWRITES = new Map<RegExp, string>([
     [/https?:\/\/imgur\.com\/(.+)/, 'https://i.imgur.com/$1.png'],
     [/https?:\/\/.+namemc\.com\/skin\/(.+)/, 'https://namemc.com/texture/$1.png'],
-    [/https?:\/\/.+minecraftskins\.com\/skin\/(.+)\/.+/, 'https://www.minecraftskins.com/skin/download/$1'],
-    [/https?:\/\/minecraft\.novaskin\.me\/skin\/(.+)\/.+/, 'https://minecraft.novaskin.me/skin/$1/download']
+    [/https?:\/\/.+minecraftskins\.com\/skin\/(\d+)\/.+/, 'https://www.minecraftskins.com/skin/download/$1'],
+    [/https?:\/\/minecraft\.novaskin\.me\/skin\/(\d+)\/.+/, 'https://minecraft.novaskin.me/skin/$1/download']
 ]);
 
 const URL_FOLLOW_WHITELIST = [
