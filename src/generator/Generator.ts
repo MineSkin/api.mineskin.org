@@ -558,7 +558,7 @@ export class Generator {
                 };
             }
             // Fix user errors
-            originalUrl = this.rewriteUrl(originalUrl);
+            originalUrl = this.rewriteUrl(originalUrl, options);
             // Try to find the source image
             const followResponse = await this.followUrl(originalUrl);
             if (!followResponse) {
@@ -641,11 +641,11 @@ export class Generator {
 
     }
 
-    protected static rewriteUrl(urlStr: string): string {
+    protected static rewriteUrl(urlStr: string, bread: Bread): string {
         for (let [pattern, replacement] of URL_REWRITES.entries()) {
             if (pattern.test(urlStr)) {
                 const str = urlStr.replace(pattern, replacement);
-                console.log(debug(`Rewrite ${ urlStr } -> ${ str }`));
+                console.log(debug(`${bread.breadcrumb} Rewrite ${ urlStr } -> ${ str }`));
                 return str;
             }
         }
