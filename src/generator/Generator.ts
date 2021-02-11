@@ -41,6 +41,13 @@ const MAX_ID_TRIES = 10;
 const MINESKIN_URL_REGEX = /https?:\/\/minesk(\.in|in\.org)\/([0-9]+)/i;
 const MINECRAFT_TEXTURE_REGEX = /https?:\/\/textures\.minecraft\.net\/texture\/([0-9a-z]+)/i;
 
+const URL_REWRITES = new Map<RegExp, string>([
+    [/https?:\/\/imgur\.com\/(.+)/, 'https://i.imgur.com/$1.png'],
+    [/https?:\/\/.+namemc\.com\/skin\/(.+)/, 'https://namemc.com/texture/$1.png'],
+    [/https?:\/\/.+minecraftskins\.com\/skin\/(.+)\/.+/, 'https://www.minecraftskins.com/skin/download/$1'],
+    [/https?:\/\/minecraft\.novaskin\.me\/skin\/(.+)\/.+/, 'https://minecraft.novaskin.me/skin/$1/download']
+]);
+
 const URL_FOLLOW_WHITELIST = [
     "novask.in",
     "imgur.com",
@@ -550,6 +557,8 @@ export class Generator {
                     duplicate: originalUrlDuplicate
                 };
             }
+            // Fix user errors
+            originalUrl = this.rewriteUrl(originalUrl);
             // Try to find the source image
             const followResponse = await this.followUrl(originalUrl);
             if (!followResponse) {
@@ -629,6 +638,15 @@ export class Generator {
             }
         }
 
+    }
+
+    protected static rewriteUrl(urlStr: string): string {
+        for (let [pattern, replacement] of URL_REWRITES.entries()) {
+            if (pattern.test(urlStr)) {
+                return urlStr.replace(pattern, replacement);
+            }
+        }
+        return urlStr;
     }
 
     protected static async followUrl(urlStr: string): Promise<Maybe<AxiosResponse>> {
