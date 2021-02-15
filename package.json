@@ -39,7 +39,7 @@
     "jobqu": "^2.0.5",
     "md5": "^2.2.1",
     "metrics-node": "^1.0.0",
-    "mongoose": "^5.11.15",
+    "mongoose": "^5.11.16",
     "mongoose-int32": "^0.4.1",
     "morgan": "^1.9.1",
     "querystring": "^0.2.0",
