@@ -29,6 +29,7 @@ jobs:
     - run: npm test
     - name: Sentry Release
       uses: getsentry/action-release@v1.1.5
+      if: ${{ github.event_name == 'push' }}
       env:
         SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
