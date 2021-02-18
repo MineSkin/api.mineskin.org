@@ -24,8 +24,7 @@ export const SkinSchema: Schema<ISkinDocument, ISkinModel> = new Schema({
         index: true
     },
     uuid: {
-        type: String,
-        index: true
+        type: String
     },
     model: {
         type: String,
