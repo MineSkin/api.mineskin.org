@@ -32,7 +32,12 @@ export const register = (app: Application) => {
     })
 
     app.get("/get/id/:id", async (req: Request, res: Response) => {
-        const skin = await Skin.findForId(parseInt(req.params["id"]));
+        const id = parseInt(req.params["id"]);
+        if (isNaN(id)) {
+            res.status(400).json({ error: "invalid number" });
+            return;
+        }
+        const skin = await Skin.findForId(id);
         if (!skin) {
             res.status(404).json({ error: "Skin not found" });
             return;
