@@ -274,6 +274,7 @@ paths:
           $ref: '#/components/responses/DelayInfo'
   /get/id/{id}:
     get:
+      description: This is likely to be deprecated in the future. Use /get/uuid instead.
       tags:
         - get
       parameters:
