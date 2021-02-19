@@ -16,7 +16,7 @@
     "@inventivetalent/loading-cache": "^0.4.0",
     "@inventivetalent/optimus-ts": "^0.2.1",
     "@inventivetalent/typescript-memoize": "^1.0.0-alpha.5",
-    "@sentry/node": "^5.29.1",
+    "@sentry/node": "^6.2.0",
     "@sentry/tracing": "^5.29.1",
     "@xboxreplay/xboxlive-auth": "^3.3.0",
     "axios": "^0.21.1",
