@@ -5,6 +5,6 @@ export interface GenerateOptions extends Bread {
     /**@deprecated**/
     model: SkinModel;
     variant: SkinVariant;
-    name: string;
+    name?: string;
     visibility: SkinVisibility;
 }

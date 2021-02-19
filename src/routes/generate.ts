@@ -1,5 +1,5 @@
 import { Application, Request, Response } from "express";
-import { checkTraffic, corsMiddleware, getIp, getVia, longAndShortUuid, md5, modelToVariant, updateTraffic, validateUrl, variantToModel } from "../util";
+import { checkTraffic, corsMiddleware, getIp, getVia, longAndShortUuid, Maybe, md5, modelToVariant, updateTraffic, validateUrl, variantToModel } from "../util";
 import { UploadedFile } from "express-fileupload";
 import { Generator } from "../generator/Generator";
 import { generateLimiter } from "../util/rateLimiters";
@@ -236,11 +236,13 @@ export const register = (app: Application) => {
         return visibility == 1 ? SkinVisibility.PRIVATE : SkinVisibility.PUBLIC;
     }
 
-    function validateName(name?: string): string {
+    function validateName(name?: string): Maybe<string> {
         if (!name) {
-            return "";
+            return undefined;
         }
-        return `${ name }`.substr(0, 20);
+        name = `${ name }`.substr(0, 20);
+        if (name.length === 0) return undefined;
+        return name;
     }
 
 }
