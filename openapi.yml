@@ -288,6 +288,22 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SkinInfo'
+  /get/uuid/{uuid}:
+    get:
+      tags:
+        - get
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+        - $ref: '#/components/parameters/userAgent'
+      responses:
+        200:
+          description: Skin Info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkinInfo'
   /get/list/{page}:
     get:
       tags:

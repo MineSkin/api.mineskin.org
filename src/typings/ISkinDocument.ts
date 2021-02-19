@@ -97,5 +97,7 @@ export interface ISkinDocument extends Document {
 export interface ISkinModel extends Model<ISkinDocument> {
     findForId(id: number): Promise<Maybe<ISkinDocument>>;
 
+    findForUuid(uuid: string): Promise<Maybe<ISkinDocument>>;
+
     attachTesterResult(id: number, server: string, mismatchCount: number): Promise<ISkinDocument>;
 }

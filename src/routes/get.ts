@@ -2,7 +2,7 @@ import { Application, Request, Response } from "express";
 import { Generator } from "../generator/Generator";
 import { Caching } from "../generator/Caching";
 import { Skin } from "../database/schemas";
-import { corsMiddleware, getIp } from "../util";
+import { corsMiddleware, getIp, stripUuid } from "../util";
 
 export const register = (app: Application) => {
 
@@ -50,7 +50,26 @@ export const register = (app: Application) => {
         res.json(skin.toResponseJson());
     })
 
-    // TODO: add route to get by uuid/hash
+    app.get("/get/uuid/:uuid", async (req: Request, res: Response) => {
+        const uuid = req.params["uuid"];
+        if (uuid.length < 32 || uuid.length > 36) {
+            res.status(400).json({ error: "invalid uuid" });
+            return;
+        }
+        const skin = await Skin.findForUuid(stripUuid(uuid));
+        if (!skin) {
+            res.status(404).json({ error: "Skin not found" });
+            return;
+        }
+        skin.views++;
+        if (skin.model === "alex") {
+            skin.model = "slim";
+        }
+        await skin.save();
+        res.json(skin.toResponseJson());
+    })
+
+    // TODO: add route to get by hash
 
     app.get("/get/forTexture/:value/:signature?", async (req: Request, res: Response) =>{
         const query: any = {value: req.params["value"]};

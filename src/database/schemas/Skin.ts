@@ -13,7 +13,8 @@ export const SkinSchema: Schema<ISkinDocument, ISkinModel> = new Schema({
     },
     skinUuid: {
         type: String,
-        index: true
+        index: true,
+        unique: true
     },
     hash: {
         type: String,
@@ -118,6 +119,10 @@ SkinSchema.methods.toResponseJson = function (this: ISkinDocument): SkinInfo {
 
 SkinSchema.statics.findForId = function ( id: number): Promise<ISkinDocument | null> {
     return Skin.findOne({ id: id }).exec();
+};
+
+SkinSchema.statics.findForUuid = function ( uuid: string): Promise<ISkinDocument | null> {
+    return Skin.findOne({ skinUuid: uuid }).exec();
 };
 
 SkinSchema.statics.attachTesterResult = function ( id: number, server: string, mismatchCount: number): Promise<ISkinDocument | null> {
