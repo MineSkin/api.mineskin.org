@@ -23,6 +23,8 @@ export const register = (app: Application) => {
     app.use("/accountManager", corsWithCredentialsMiddleware);
     app.use("/accountManager", session({
         secret: config.sessionSecret,
+        resave: false,
+        saveUninitialized: true,
         cookie: {
             maxAge: Time.minutes(10),
             domain: "api.mineskin.org"
