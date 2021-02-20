@@ -173,7 +173,7 @@ async function init() {
             res.sendFile("/openapi.yml", { root: `${ __dirname }/..` });
         });
         app.get("/openapi", (req, res) => {
-            res.redirect("https://openapi.inventivetalent.dev/#https://api.mineskin.org/openapi.yml");
+            res.redirect("https://openapi.inventivetalent.dev/?https://api.mineskin.org/openapi.yml");
         });
 
         generateRoute.register(app);
