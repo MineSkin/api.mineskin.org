@@ -626,7 +626,7 @@ export class Generator {
                 data: body
             }).catch(err => {
                 if (err.response) {
-                    throw new GeneratorError(GenError.SKIN_CHANGE_FAILED, "Failed to change skin", 500, account, err);
+                    throw new GeneratorError(GenError.SKIN_CHANGE_FAILED, "Failed to change skin", (err.response as AxiosResponse).status, account, err);
                 }
                 throw err;
             });
@@ -735,7 +735,7 @@ export class Generator {
                 data: body
             }).catch(err => {
                 if (err.response) {
-                    throw new GeneratorError(GenError.SKIN_CHANGE_FAILED, "Failed to change skin", 500, account, err);
+                    throw new GeneratorError(GenError.SKIN_CHANGE_FAILED, "Failed to change skin", (err.response as AxiosResponse).status, account, err);
                 }
                 throw err;
             });
