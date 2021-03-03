@@ -34,7 +34,7 @@ import { Bread } from "../typings/Bread";
 
 const config = getConfig();
 
-export const MIN_ACCOUNT_DELAY = 300;
+export const MIN_ACCOUNT_DELAY = 200;
 
 const MAX_ID_TRIES = 10;
 
