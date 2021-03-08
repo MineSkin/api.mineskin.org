@@ -31,6 +31,7 @@ import { Optimus } from "@inventivetalent/optimus-ts";
 import { SkinInfo } from "../typings/SkinInfo";
 import { Discord } from "../util/Discord";
 import { Bread } from "../typings/Bread";
+import { IPoint } from "influx";
 
 const config = getConfig();
 
@@ -170,6 +171,23 @@ export class Generator {
             ], {
                 database: 'mineskin'
             })
+
+            let accountsPerTypePoints: IPoint[] = [];
+            for (let accountType in this.accountStats.accountTypes) {
+                accountsPerTypePoints.push({
+                    measurement: 'accountTypes',
+                    tags: {
+                        server: config.server,
+                        type: accountType
+                    },
+                    fields: {
+                        count: this.accountStats.accountTypes[accountType]
+                    }
+                })
+            }
+            await metrics.influx.writePoints(accountsPerTypePoints, {
+                database: 'mineskin'
+            })
         } catch (e) {
             console.warn(e);
             Sentry.captureException(e);
@@ -195,12 +213,28 @@ export class Generator {
             errorCounter: { '$lt': (config.errorThreshold || 10) },
             timeAdded: { $lt: (time - 60) }
         }).exec();
+        const accountTypes = await Account.aggregate([
+            {
+                "$group":
+                    {
+                        _id: "$accountType",
+                        count: { $sum: 1 }
+                    }
+            }
+        ]).exec().then((res: any[]) => {
+            let counts: { [type: string]: number; } = {};
+            res.forEach(e => {
+                counts[e["_id"]] = e["count"];
+            })
+            return counts;
+        });
 
         return {
             accounts: enabledAccounts,
             serverAccounts,
             healthyAccounts,
-            useableAccounts
+            useableAccounts,
+            accountTypes
         };
     }
 
@@ -646,7 +680,7 @@ export class Generator {
         for (let [pattern, replacement] of URL_REWRITES.entries()) {
             if (pattern.test(urlStr)) {
                 const str = urlStr.replace(pattern, replacement);
-                console.log(debug(`${bread.breadcrumb} Rewrite ${ urlStr } -> ${ str }`));
+                console.log(debug(`${ bread.breadcrumb } Rewrite ${ urlStr } -> ${ str }`));
                 return str;
             }
         }

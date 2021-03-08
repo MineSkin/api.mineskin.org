@@ -22,6 +22,7 @@ export interface AccountStats {
     serverAccounts?: number;
     healthyAccounts?: number;
     useableAccounts?: number;
+    accountTypes?: { [type: string]: number; };
 }
 
 export interface DurationStats {
