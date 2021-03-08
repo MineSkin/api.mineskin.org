@@ -175,7 +175,7 @@ export class Generator {
             let accountsPerTypePoints: IPoint[] = [];
             for (let accountType in this.accountStats.accountTypes) {
                 accountsPerTypePoints.push({
-                    measurement: 'accountTypes',
+                    measurement: 'account_types',
                     tags: {
                         server: config.server,
                         type: accountType
