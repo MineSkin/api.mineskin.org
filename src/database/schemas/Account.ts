@@ -94,7 +94,8 @@ export const AccountSchema: Schema<IAccountDocument, IAccountModel> = new Schema
     },
     discordUser: String,
     discordMessageSent: Boolean,
-    sendEmails: Boolean
+    sendEmails: Boolean,
+    emailSent: Boolean
 }, { id: false });
 
 

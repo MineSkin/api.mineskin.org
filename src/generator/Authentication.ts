@@ -12,6 +12,7 @@ import { debug, warn } from "../util/colors";
 import { Encryption } from "../util/Encryption";
 import { AUTHENTICATION_METRIC } from "../util/metrics";
 import { Bread } from "../typings/Bread";
+import { Notifications } from "../util/Notifications";
 
 const config = getConfig();
 
@@ -571,10 +572,10 @@ export class Authentication {
             if (e instanceof AuthenticationError) {
                 console.warn(e);
                 if (e.code === AuthError.MISSING_CREDENTIALS) {
-                    Discord.notifyMissingCredentials(account);
+                    Notifications.notifyMissingCredentials(account);
                 }
                 if (e.code === AuthError.MICROSOFT_AUTH_FAILED || e.code === AuthError.MOJANG_AUTH_FAILED) {
-                    Discord.notifyLoginFailed(account, e);
+                    Notifications.notifyLoginFailed(account, e);
                 }
                 if (e.details && e.details.response) {
                     if (e.details.response.status >= 400 && e.details.response.status <= 403) {

@@ -72,6 +72,7 @@ export interface IAccountDocument extends Document {
     discordUser?: string;
     discordMessageSent?: boolean;
     sendEmails?: boolean
+    emailSent?: boolean;
 
     getOrCreateClientToken(): string;
 

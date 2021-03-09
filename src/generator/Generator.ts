@@ -32,6 +32,7 @@ import { SkinInfo } from "../typings/SkinInfo";
 import { Discord } from "../util/Discord";
 import { Bread } from "../typings/Bread";
 import { IPoint } from "influx";
+import { Notifications } from "../util/Notifications";
 
 const config = getConfig();
 
@@ -941,7 +942,7 @@ export class Generator {
                 }
 
                 if (account.errorCounter > 0 && account.errorCounter % 10 === 0) {
-                    Discord.notifyHighErrorCount(account, type, e);
+                    Notifications.notifyHighErrorCount(account, type, e);
                 }
 
                 await account.save();

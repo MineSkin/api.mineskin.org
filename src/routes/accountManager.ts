@@ -243,6 +243,7 @@ export const register = (app: Application) => {
             }
         }
         account.discordMessageSent = false;
+        account.emailSent = false;
 
         console.log(info("Saving updated details of " + (req.session.account.type) + " account #" + account.id + " " + req.body["uuid"]));
         await account.save();

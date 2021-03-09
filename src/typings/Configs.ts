@@ -1,6 +1,8 @@
 import { Options as GitPullerOptions } from "express-git-puller";
 import { ISingleHostConfig } from "influx";
 import { Config as SshTunnelConfig } from "tunnel-ssh";
+import { Options as EmailOptions } from "nodemailer/lib/smtp-transport";
+import { Email } from "../util/Email";
 
 interface OptimusConfig {
     prime: number;
@@ -25,6 +27,9 @@ interface MongoConfig {
 interface CryptoConfig {
     algorithm: string;
     key: string;
+}
+
+interface EmailConfig extends EmailOptions {
 }
 
 interface DiscordConfig {
@@ -65,6 +70,7 @@ export interface MineSkinConfig {
     optimus: OptimusConfig;
     mongo: MongoConfig;
     crypto: CryptoConfig;
+    email: EmailConfig;
     discord: DiscordConfig;
     puller: PullerConfig;
     sentry: SentryConfig;
