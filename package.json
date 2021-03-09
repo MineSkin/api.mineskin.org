@@ -43,7 +43,7 @@
     "mongoose-int32": "^0.4.1",
     "morgan": "^1.9.1",
     "nodemailer": "^6.5.0",
-    "querystring": "^0.2.0",
+    "querystring": "^0.2.1",
     "read-chunk": "^3.2.0",
     "remote-file-size": "^3.0.5",
     "rotating-file-stream": "^1.4.4",
