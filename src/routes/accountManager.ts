@@ -257,6 +257,7 @@ export const register = (app: Application) => {
             uuid: account.uuid,
             lastUsed: account.lastUsed,
             enabled: account.enabled,
+            usable: account.errorCounter < config.errorThreshold,
             successRate: Number((account.totalSuccessCounter / generateTotal).toFixed(3)),
             recentSuccessRate: Number((account.successCounter / recentTotal).toFixed(3)),
             successStreak: Math.round(account.successCounter / 10) * 10,
