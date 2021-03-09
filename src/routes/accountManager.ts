@@ -248,7 +248,8 @@ export const register = (app: Application) => {
         console.log(info("Saving updated details of " + (req.session.account.type) + " account #" + account.id + " " + req.body["uuid"]));
         await account.save();
 
-        const generateTotal = account.successCounter + account.errorCounter;
+        const generateTotal = account.totalSuccessCounter + account.totalErrorCounter;
+        const recentTotal = account.successCounter + account.errorCounter;
         res.json({
             type: account.type || (account.microsoftAccount ? "microsoft" : "mojang"),
             username: account.username,
@@ -256,7 +257,8 @@ export const register = (app: Application) => {
             uuid: account.uuid,
             lastUsed: account.lastUsed,
             enabled: account.enabled,
-            successRate: Number((account.successCounter / generateTotal).toFixed(3)),
+            successRate: Number((account.totalSuccessCounter / generateTotal).toFixed(3)),
+            recentSuccessRate: Number((account.successCounter / recentTotal).toFixed(3)),
             successStreak: Math.round(account.successCounter / 10) * 10,
             discordLinked: !!account.discordUser,
             sendEmails: !!account.sendEmails,
