@@ -1008,12 +1008,16 @@ export class Generator {
             };
         }
 
-        const dataValidation = await this.validateImageData(imageBuffer);
-        if (options.variant === SkinVariant.UNKNOWN && dataValidation.variant !== SkinVariant.UNKNOWN) {
-            console.log(debug(options.breadcrumb + " Switching unknown skin variant to " + dataValidation.variant + " from detection"));
-            options.variant = dataValidation.variant;
-            options.model = dataValidation.model;
-            Sentry.setExtra("generate_detected_variant", dataValidation.variant);
+        try {
+            const dataValidation = await this.validateImageData(imageBuffer);
+            if (options.variant === SkinVariant.UNKNOWN && dataValidation.variant !== SkinVariant.UNKNOWN) {
+                console.log(debug(options.breadcrumb + " Switching unknown skin variant to " + dataValidation.variant + " from detection"));
+                options.variant = dataValidation.variant;
+                options.model = dataValidation.model;
+                Sentry.setExtra("generate_detected_variant", dataValidation.variant);
+            }
+        } catch (e) {
+            throw new GeneratorError(GenError.INVALID_IMAGE, "Failed to validate image data", 400, undefined, e);
         }
 
         return {
