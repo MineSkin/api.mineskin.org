@@ -13,7 +13,7 @@
   "author": "Haylee Schäfer",
   "dependencies": {
     "@inventivetalent/gitsha": "^1.0.0",
-    "@inventivetalent/loading-cache": "^0.4.0",
+    "@inventivetalent/loading-cache": "^0.4.3",
     "@inventivetalent/optimus-ts": "^0.2.1",
     "@inventivetalent/typescript-memoize": "^1.0.0-alpha.5",
     "@sentry/node": "^5.29.1",
