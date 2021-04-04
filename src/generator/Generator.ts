@@ -1,6 +1,6 @@
 import { Account, Skin, Stat } from "../database/schemas";
 import { MemoizeExpiring } from "@inventivetalent/typescript-memoize";
-import { base64decode, getHashFromMojangTextureUrl, hasOwnProperty, imageHash, longAndShortUuid, Maybe, random32BitNumber, stripUuid } from "../util";
+import { base64decode, getHashFromMojangTextureUrl, hasOwnProperty, imageHash, longAndShortUuid, Maybe, random32BitNumber, stripNumbers, stripUuid } from "../util";
 import { Caching } from "./Caching";
 import { Authentication, AuthenticationError } from "./Authentication";
 import * as Sentry from "@sentry/node";
@@ -888,6 +888,7 @@ export class Generator {
             .tag("visibility", options.visibility === SkinVisibility.PRIVATE ? "private" : "public")
             .tag("variant", options.variant)
             .tag("via", client.via)
+            .tag("userAgent", stripNumbers(client.userAgent))
             .tag("account", account.id)
             .tag("accountType", account.accountType || "unknown")
             .inc();
@@ -918,6 +919,7 @@ export class Generator {
             .tag("type", type)
             .tag("visibility", options.visibility === SkinVisibility.PRIVATE ? "private" : "public")
             .tag("variant", options.variant)
+            .tag("userAgent", stripNumbers(client.userAgent))
             .tag("via", client.via);
         if (account) {
             m.tag("account", account.id)

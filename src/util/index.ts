@@ -225,6 +225,10 @@ export async function imageHash(buffer: Buffer) {
     })
 }
 
+export function stripNumbers(str: string): string {
+    return str.replaceAll(/\d/g, "x");
+}
+
 // https://fettblog.eu/typescript-hasownproperty/
 export function hasOwnProperty<X extends {}, Y extends PropertyKey>(obj: X, prop: Y): obj is X & Record<Y, unknown> {
     return obj.hasOwnProperty(prop)
