@@ -227,7 +227,7 @@ export async function imageHash(buffer: Buffer) {
 
 export function stripNumbers(str?: string): string {
     if (!str) return "?";
-    return str.replaceAll(/\d/g, "x");
+    return str.replace(/\d/g, "x");
 }
 
 // https://fettblog.eu/typescript-hasownproperty/
