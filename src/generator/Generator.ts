@@ -36,7 +36,7 @@ import { Notifications } from "../util/Notifications";
 
 const config = getConfig();
 
-export const MIN_ACCOUNT_DELAY = 200;
+export const MIN_ACCOUNT_DELAY = 150;
 
 const MAX_ID_TRIES = 10;
 
