@@ -225,7 +225,8 @@ export async function imageHash(buffer: Buffer) {
     })
 }
 
-export function stripNumbers(str: string): string {
+export function stripNumbers(str?: string): string {
+    if (!str) return "?";
     return str.replaceAll(/\d/g, "x");
 }
 
