@@ -70,7 +70,7 @@ export class Generator {
     protected static countDuplicateViewStats: CountDuplicateViewStats;
     protected static timeFrameStats: TimeFrameStats;
 
-    protected static detailedStatsQueryTimer = setInterval(() => Generator.queryDetailedStats(), 240000);
+    protected static detailedStatsQueryTimer = setInterval(() => Generator.queryDetailedStats(), 120000);
 
     @MemoizeExpiring(30000)
     static async getDelay(): Promise<number> {
