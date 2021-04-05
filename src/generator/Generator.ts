@@ -209,7 +209,7 @@ export class Generator {
         const useableAccounts = await Account.countDocuments({
             enabled: true,
             requestServer: { $in: ["default", config.server] },
-            lastUsed: { '$lt': (time - 100) },
+            lastUsed: { '$lt': (time - MIN_ACCOUNT_DELAY) },
             forcedTimeoutAt: { '$lt': (time - 500) },
             errorCounter: { '$lt': (config.errorThreshold || 10) },
             timeAdded: { $lt: (time - 60) }
