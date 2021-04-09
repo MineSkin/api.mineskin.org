@@ -1,5 +1,5 @@
 import { Application, NextFunction, Request, Response } from "express";
-import { AuthenticationError, AuthError, BasicMojangProfile, Microsoft, Mojang, MojangSecurityAnswer, XboxInfo } from "../generator/Authentication";
+import { Authentication, AuthenticationError, AuthError, BasicMojangProfile, Microsoft, Mojang, MojangSecurityAnswer, XboxInfo } from "../generator/Authentication";
 import { base64decode, corsWithCredentialsMiddleware, getIp, Maybe, md5, sha256, sha512, stripUuid } from "../util";
 import * as session from "express-session";
 import { Generator } from "../generator/Generator";
@@ -39,6 +39,19 @@ export const register = (app: Application) => {
             res.status(400).json({ error: "missing login data" });
             return;
         }
+
+        const existingServer = await Authentication.getExistingAccountServer(req.body["email"]);
+        if (existingServer && existingServer !== config.server) {
+            res.json({
+                success: false,
+                switchToServer: {
+                    server: existingServer,
+                    host: `${ existingServer }.api.mineskin.org`
+                }
+            })
+            return;
+        }
+
         const ip = getIp(req);
 
         const loginResponse = await Mojang.loginWithCredentials(req.body["email"], base64decode(req.body["password"]), md5(req.body["email"] + "_" + ip)).catch(err => {
@@ -116,10 +129,23 @@ export const register = (app: Application) => {
             return;
         }
 
+        const existingServer = await Authentication.getExistingAccountServer(req.body["email"]);
+        if (existingServer && existingServer !== config.server) {
+            res.json({
+                success: false,
+                switchToServer: {
+                    server: existingServer,
+                    host: `${ existingServer }.api.mineskin.org`
+                }
+            })
+            return;
+        }
+
         let microsoftInfo = undefined;
         const minecraftAccessToken = await Microsoft.loginWithEmailAndPassword(req.body["email"], base64decode(req.body["password"]), xboxInfo => {
             microsoftInfo = xboxInfo;
         }).catch(err => {
+            console.log(err);
             if (err.name === "XboxReplayError") {
                 throw new AuthenticationError(AuthError.MICROSOFT_AUTH_FAILED, "Failed to login", undefined, err);
             }

@@ -13,6 +13,8 @@ import { Encryption } from "../util/Encryption";
 import { AUTHENTICATION_METRIC } from "../util/metrics";
 import { Bread } from "../typings/Bread";
 import { Notifications } from "../util/Notifications";
+import { Account } from "../database/schemas";
+import { Maybe } from "../util";
 
 const config = getConfig();
 
@@ -592,6 +594,15 @@ export class Authentication {
             metric.inc();
             throw e;
         }
+    }
+
+    public static async getExistingAccountServer(email: string): Promise<Maybe<string>> {
+        return Account.findOne({ email: email }, "_id email requestServer").then(account => {
+            if (!account) {
+                return undefined;
+            }
+            return account.requestServer || undefined;
+        })
     }
 
 }
