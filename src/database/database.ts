@@ -1,9 +1,10 @@
 import * as mongoose from "mongoose";
 import { Mongoose } from "mongoose";
+import * as Sentry from "@sentry/node";
 import { MineSkinConfig } from "../typings/Configs";
 import tunnel = require("tunnel-ssh");
 
-export default function connectToMongo(config: MineSkinConfig): Promise<Mongoose> {
+export function connectToMongo(config: MineSkinConfig): Promise<Mongoose> {
     return new Promise<Mongoose>((resolve, reject) => {
         if (config.mongo.useTunnel) {
             console.log("Establishing SSH Tunnel to " + config.mongo.tunnel.host + "...");
@@ -18,14 +19,24 @@ export default function connectToMongo(config: MineSkinConfig): Promise<Mongoose
             connectMongo(config).then(resolve).catch(reject);
         }
     })
-};
+}
 
 async function connectMongo(config: MineSkinConfig) {
     // Connect to DB
     mongoose.set('useNewUrlParser', true);
     mongoose.set('useFindAndModify', false);
+
     console.log("Connecting to mongodb://" + ((config.mongo.user || "admin") + ":*****" + "@" + (config.mongo.address || "localhost") + ":" + (config.mongo.port || 27017) + "/" + (config.mongo.database || "database")));
     const m = await mongoose.connect("mongodb://" + ((config.mongo.user || "admin") + ":" + (config.mongo.pass || "admin") + "@" + (config.mongo.address || "localhost") + ":" + (config.mongo.port || 27017) + "/" + (config.mongo.database || "database")));
     console.info("MongoDB connected!");
+
+    mongoose.connection.on("error", err => {
+        Sentry.captureException(err);
+        console.warn("Mongo connection error, restarting app");
+        setTimeout(() => {
+            process.exit(1);
+        }, 10000);
+    })
+
     return m;
 }
