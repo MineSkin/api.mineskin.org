@@ -1,5 +1,6 @@
 import { Bread } from "./Bread";
 import { Request } from "express";
+import { ApiKeyRequest } from "./ApiKeyRequest";
 
 export { IAccountDocument } from "./db/IAccountDocument";
 export { ISkinDocument } from "./db/ISkinDocument";
@@ -18,7 +19,7 @@ export class MineSkinError extends Error {
     }
 }
 
-export type MineSkinRequest = Request;
+export type MineSkinRequest = Request & ApiKeyRequest;
 export type BreadRequest = MineSkinRequest & Bread;
 export type GenerateRequest = BreadRequest;
 

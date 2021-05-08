@@ -216,7 +216,6 @@ async function init() {
         }
     }));
     const errorHandler: ErrorRequestHandler = (err, req: Request, res: Response, next: NextFunction) => {
-        console.log("postErrorHandler");
         if (err instanceof MineSkinError) {
             getAndValidateRequestApiKey(req)
                 .catch(e => {

@@ -37,7 +37,9 @@ export const register = (app: Application) => {
         await updateTraffic(req);
 
         const options = getAndValidateOptions(GenerateType.URL, req, res);
-        console.log(debug(`${ options.breadcrumb } URL:         ${ url }`))
+        console.log(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`));
+        console.log(debug(`${ options.breadcrumb } Key:         ${ req.apiKey?.name ?? "none" }`));
+        console.log(debug(`${ options.breadcrumb } URL:         ${ url }`));
         const client = getClientInfo(req);
 
 
@@ -65,6 +67,8 @@ export const register = (app: Application) => {
         await updateTraffic(req);
 
         const options = getAndValidateOptions(GenerateType.UPLOAD, req, res);
+        console.log(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`));
+        console.log(debug(`${ options.breadcrumb } Key:         ${ req.apiKey?.name ?? "none" }`));
         console.log(debug(`${ options.breadcrumb } FILE:        "${ file.name }" ${ file.md5 }`))
         const client = getClientInfo(req);
 
@@ -101,9 +105,10 @@ export const register = (app: Application) => {
         }
 
         const options = getAndValidateOptions(GenerateType.USER, req, res);
+        console.log(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`));
+        console.log(debug(`${ options.breadcrumb } Key:         ${ req.apiKey?.name ?? "none" }`));
         console.log(debug(`${ options.breadcrumb } USER:        ${ uuids.long }`))
         const client = getClientInfo(req);
-
 
 
         const skin = await Generator.generateFromUserAndSave(uuids.long, options, client);
@@ -136,6 +141,8 @@ export const register = (app: Application) => {
         }
 
         const options = getAndValidateOptions(GenerateType.USER, req, res);
+        console.log(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`));
+        console.log(debug(`${ options.breadcrumb } Key:         ${ req.apiKey?.name ?? "none" }`));
         console.log(debug(`${ options.breadcrumb } USER:        ${ uuids.long }`))
         const client = getClientInfo(req);
 

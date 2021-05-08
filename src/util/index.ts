@@ -15,7 +15,8 @@ import exp = require("constants");
 import { RATE_LIMIT_METRIC } from "./metrics";
 import { getConfig } from "../typings/Configs";
 import { IApiKeyDocument } from "../typings/db/IApiKeyDocument";
-import { MineSkinError } from "../typings";
+import { MineSkinError, MineSkinRequest } from "../typings";
+import { ApiKeyRequest } from "../typings/ApiKeyRequest";
 
 const config = getConfig();
 
@@ -38,6 +39,12 @@ export async function checkTraffic(req: Request, res: Response): Promise<boolean
     const time = Date.now() / 1000;
 
     const apiKey = await getAndValidateRequestApiKey(req);
+    if (apiKey) {
+        Sentry.setUser({
+            username: apiKey.name,
+            ip_address: ip
+        });
+    }
 
     const delay = await Generator.getDelay(apiKey);
 
@@ -59,7 +66,7 @@ export async function updateTraffic(req: Request): Promise<void> {
     return await Caching.updateTrafficRequestTime(ip, new Date());
 }
 
-export async function getAndValidateRequestApiKey(req: Request): Promise<Maybe<IApiKeyDocument>> {
+export async function getAndValidateRequestApiKey(req: MineSkinRequest): Promise<Maybe<IApiKeyDocument>> {
     let keyStr;
 
     const authHeader = req.headers.authorization;
@@ -72,10 +79,14 @@ export async function getAndValidateRequestApiKey(req: Request): Promise<Maybe<I
     }
 
     if (keyStr) {
+        req.apiKeyStr = keyStr;
+
         const key = await Caching.getApiKey(keyStr);
         if (!key) {
             throw new MineSkinError("invalid_api_key", "Invalid API Key", 403);
         }
+
+        req.apiKey = key;
 
         // Either a server IP or a client origin, not both
         if (key.allowedIps && key.allowedIps.length > 0) {
