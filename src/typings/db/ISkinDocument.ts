@@ -1,6 +1,6 @@
 import { Document, Model, model } from "mongoose";
-import { SkinInfo } from "./SkinInfo";
-import { Maybe } from "../util";
+import { SkinInfo } from "../SkinInfo";
+import { Maybe } from "../../util";
 import exp = require("constants");
 
 /**@deprecated**/

@@ -9,7 +9,7 @@ import * as fileType from "file-type";
 import * as readChunk from "read-chunk";
 import * as crypto from "crypto";
 import { Caching } from "../generator/Caching";
-import { SkinModel, SkinVariant } from "../typings/ISkinDocument";
+import { SkinModel, SkinVariant } from "../typings/db/ISkinDocument";
 import { debug } from "./colors";
 import exp = require("constants");
 import { RATE_LIMIT_METRIC } from "./metrics";

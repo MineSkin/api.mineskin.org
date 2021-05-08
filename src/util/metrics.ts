@@ -2,7 +2,7 @@ import { IntervalFlusher, Metrics } from "metrics-node";
 import { Request, Response, NextFunction } from "express";
 import * as Sentry from "@sentry/node";
 import { getConfig } from "../typings/Configs";
-import { GenerateType } from "../typings/ISkinDocument";
+import { GenerateType } from "../typings/db/ISkinDocument";
 import { GenerateOptions } from "../typings/GenerateOptions";
 import { IAccountDocument } from "../typings";
 

@@ -1,7 +1,7 @@
 import * as Sentry from "@sentry/node";
 import { IAccountDocument, MineSkinError } from "../typings";
-import { AccountType } from "../typings/IAccountDocument";
-import { GenerateType } from "../typings/ISkinDocument";
+import { AccountType } from "../typings/db/IAccountDocument";
+import { GenerateType } from "../typings/db/ISkinDocument";
 import { Discord, OWNER_CHANNEL, SUPPORT_CHANNEL } from "./Discord";
 import { Email } from "./Email";
 

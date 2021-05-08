@@ -9,7 +9,7 @@ import { Requests } from "../generator/Requests";
 import * as qs from "querystring";
 import { Discord } from "../util/Discord";
 import { getConfig } from "../typings/Configs";
-import { AccessTokenSource, AccountType, IAccountDocument } from "../typings/IAccountDocument";
+import { AccessTokenSource, AccountType, IAccountDocument } from "../typings/db/IAccountDocument";
 import { MineSkinError, MineSkinRequest } from "../typings";
 import { Encryption } from "../util/Encryption";
 import { debug, info, warn } from "../util/colors";

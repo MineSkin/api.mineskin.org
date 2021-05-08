@@ -2,8 +2,8 @@ import { Requests } from "../generator/Requests";
 import * as Sentry from "@sentry/node";
 import { getConfig } from "../typings/Configs";
 import { IAccountDocument, MineSkinError } from "../typings";
-import { GenerateType } from "../typings/ISkinDocument";
-import { AccountType } from "../typings/IAccountDocument";
+import { GenerateType } from "../typings/db/ISkinDocument";
+import { AccountType } from "../typings/db/IAccountDocument";
 
 const config = getConfig();
 

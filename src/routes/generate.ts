@@ -5,7 +5,7 @@ import { Generator } from "../generator/Generator";
 import { generateLimiter } from "../util/rateLimiters";
 import { ClientInfo } from "../typings/ClientInfo";
 import { GenerateOptions } from "../typings/GenerateOptions";
-import { GenerateType, SkinModel, SkinVariant, SkinVisibility } from "../typings/ISkinDocument";
+import { GenerateType, SkinModel, SkinVariant, SkinVisibility } from "../typings/db/ISkinDocument";
 import { debug } from "../util/colors";
 import * as Sentry from "@sentry/node";
 import { Bread, nextBreadColor } from "../typings/Bread";

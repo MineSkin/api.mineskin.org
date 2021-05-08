@@ -1,4 +1,4 @@
-import { SkinModel, SkinVariant, SkinVisibility } from "./ISkinDocument";
+import { SkinModel, SkinVariant, SkinVisibility } from "./db/ISkinDocument";
 import { Bread } from "./Bread";
 
 export interface GenerateOptions extends Bread {

@@ -1,5 +1,5 @@
 import { Document, Model } from "mongoose";
-import { Maybe } from "../util";
+import { Maybe } from "../../util";
 
 export interface ITrafficDocument extends Document {
     ip: string;

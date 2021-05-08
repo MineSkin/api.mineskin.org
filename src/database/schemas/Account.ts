@@ -3,7 +3,7 @@ import { Maybe, md5 } from "../../util";
 import { v4 as uuid } from "uuid";
 import { getConfig } from "../../typings/Configs";
 import { IAccountDocument } from "../../typings";
-import { AccountType, IAccountModel } from "../../typings/IAccountDocument";
+import { AccountType, IAccountModel } from "../../typings/db/IAccountDocument";
 import { debug, error } from "../../util/colors";
 import { Bread } from "../../typings/Bread";
 import { Caching } from "../../generator/Caching";
