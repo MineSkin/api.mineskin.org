@@ -88,7 +88,7 @@ export class Generator {
         } catch (e) {
             Sentry.captureException(e);
         }
-        return delay;
+        return Math.round(delay);
     }
 
     @MemoizeExpiring(30000)
