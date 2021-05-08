@@ -20,7 +20,7 @@ import { getConfig } from "./typings/Configs";
 import { MineSkinError, MineSkinRequest, GenerateRequest, isBreadRequest } from "./typings";
 import { apiRequestsMiddleware } from "./util/metrics";
 import { error, info, warn } from "./util/colors";
-import { corsMiddleware, hasOwnProperty } from "./util";
+import { corsMiddleware, getAndValidateRequestApiKey, hasOwnProperty } from "./util";
 import { AuthenticationError } from "./generator/Authentication";
 import { Generator, GeneratorError } from "./generator/Generator";
 import gitsha from "@inventivetalent/gitsha";
@@ -217,14 +217,16 @@ async function init() {
     }));
     const errorHandler: ErrorRequestHandler = (err, req: Request, res: Response, next: NextFunction) => {
         if (err instanceof MineSkinError) {
-            Generator.getMinDelay().then(delay => {
-                res.json({
-                    success: false,
-                    errorType: err.name,
-                    errorCode: err.code,
-                    error: err.msg,
-                    nextRequest: (Date.now() / 1000) + delay
-                });
+            getAndValidateRequestApiKey(req).then(key => {
+                Generator.getDelay().then(delay => {
+                    res.json({
+                        success: false,
+                        errorType: err.name,
+                        errorCode: err.code,
+                        error: err.msg,
+                        nextRequest: (Date.now() / 1000) + delay
+                    });
+                }).catch(e => Sentry.captureException(e));
             }).catch(e => Sentry.captureException(e));
         } else {
             res.status(500).json({

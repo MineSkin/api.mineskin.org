@@ -2,14 +2,14 @@ import { Application, Request, Response } from "express";
 import { Generator } from "../generator/Generator";
 import { Caching } from "../generator/Caching";
 import { Skin } from "../database/schemas";
-import { corsMiddleware, getIp, stripUuid } from "../util";
+import { corsMiddleware, getAndValidateRequestApiKey, getIp, stripUuid } from "../util";
 
 export const register = (app: Application) => {
 
     app.use("/get", corsMiddleware);
 
     app.get("/get/delay", async (req: Request, res: Response) => {
-        const delay = await Generator.getMinDelay();
+        const delay = await Generator.getDelay(await getAndValidateRequestApiKey(req));
         const lastRequest = await Caching.getTrafficRequestTimeByIp(getIp(req));
         if (lastRequest) {
             res.json({

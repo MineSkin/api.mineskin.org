@@ -1,5 +1,5 @@
 import { Application, Request, Response } from "express";
-import { checkTraffic, corsMiddleware, getIp, getVia, longAndShortUuid, Maybe, md5, modelToVariant, updateTraffic, validateUrl, variantToModel } from "../util";
+import { checkTraffic, corsMiddleware, getAndValidateRequestApiKey, getIp, getVia, longAndShortUuid, Maybe, md5, modelToVariant, updateTraffic, validateUrl, variantToModel } from "../util";
 import { UploadedFile } from "express-fileupload";
 import { Generator } from "../generator/Generator";
 import { generateLimiter } from "../util/rateLimiters";
@@ -17,7 +17,7 @@ export const register = (app: Application) => {
     app.use("/generate", corsMiddleware);
     app.use("/generate", generateLimiter);
     app.use("/generate", async (req, res, next) => {
-        const delay = await Generator.getMinDelay();
+        const delay = await Generator.getDelay(await getAndValidateRequestApiKey(req));
         res.header("X-MineSkin-Delay", `${ delay || 5 }`);
         next();
     })
@@ -42,7 +42,7 @@ export const register = (app: Application) => {
 
 
         const skin = await Generator.generateFromUrlAndSave(url, options, client);
-        res.json(skin.toResponseJson(await Generator.getMinDelay()));
+        res.json(skin.toResponseJson(await Generator.getDelay(await getAndValidateRequestApiKey(req))));
     })
 
 
@@ -70,7 +70,7 @@ export const register = (app: Application) => {
 
 
         const skin = await Generator.generateFromUploadAndSave(file, options, client);
-        res.json(skin.toResponseJson(await Generator.getMinDelay()));
+        res.json(skin.toResponseJson(await Generator.getDelay(await getAndValidateRequestApiKey(req))));
     })
 
 
@@ -107,7 +107,7 @@ export const register = (app: Application) => {
 
 
         const skin = await Generator.generateFromUserAndSave(uuids.long, options, client);
-        res.json(skin.toResponseJson(await Generator.getMinDelay()));
+        res.json(skin.toResponseJson(await Generator.getDelay(await getAndValidateRequestApiKey(req))));
     })
 
     // TODO: remove at some point
@@ -142,7 +142,7 @@ export const register = (app: Application) => {
 
 
         const skin = await Generator.generateFromUserAndSave(uuids.long, options, client);
-        res.json(skin.toResponseJson(await Generator.getMinDelay()));
+        res.json(skin.toResponseJson(await Generator.getDelay(await getAndValidateRequestApiKey(req))));
     })
 
     ///
