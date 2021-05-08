@@ -216,18 +216,25 @@ async function init() {
         }
     }));
     const errorHandler: ErrorRequestHandler = (err, req: Request, res: Response, next: NextFunction) => {
+        console.log("postErrorHandler");
         if (err instanceof MineSkinError) {
-            getAndValidateRequestApiKey(req).then(key => {
-                Generator.getDelay().then(delay => {
-                    res.json({
-                        success: false,
-                        errorType: err.name,
-                        errorCode: err.code,
-                        error: err.msg,
-                        nextRequest: (Date.now() / 1000) + delay
-                    });
-                }).catch(e => Sentry.captureException(e));
-            }).catch(e => Sentry.captureException(e));
+            getAndValidateRequestApiKey(req)
+                .catch(e => {
+                    Sentry.captureException(e);
+                    // Original error might be invalid api key, so don't trigger it again here
+                    return undefined;
+                })
+                .then(key => {
+                    Generator.getDelay(key).then(delay => {
+                        res.json({
+                            success: false,
+                            errorType: err.name,
+                            errorCode: err.code,
+                            error: err.msg,
+                            nextRequest: (Date.now() / 1000) + delay
+                        });
+                    }).catch(e => Sentry.captureException(e));
+                });
         } else {
             res.status(500).json({
                 success: false,
