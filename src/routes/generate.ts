@@ -17,7 +17,7 @@ export const register = (app: Application) => {
     app.use("/generate", corsMiddleware);
     app.use("/generate", generateLimiter);
     app.use("/generate", async (req, res, next) => {
-        const delay = await Generator.getDelay();
+        const delay = await Generator.getMinDelay();
         res.header("X-MineSkin-Delay", `${ delay || 5 }`);
         next();
     })
@@ -42,7 +42,7 @@ export const register = (app: Application) => {
 
 
         const skin = await Generator.generateFromUrlAndSave(url, options, client);
-        res.json(skin.toResponseJson(await Generator.getDelay()));
+        res.json(skin.toResponseJson(await Generator.getMinDelay()));
     })
 
 
@@ -70,7 +70,7 @@ export const register = (app: Application) => {
 
 
         const skin = await Generator.generateFromUploadAndSave(file, options, client);
-        res.json(skin.toResponseJson(await Generator.getDelay()));
+        res.json(skin.toResponseJson(await Generator.getMinDelay()));
     })
 
 
@@ -107,7 +107,7 @@ export const register = (app: Application) => {
 
 
         const skin = await Generator.generateFromUserAndSave(uuids.long, options, client);
-        res.json(skin.toResponseJson(await Generator.getDelay()));
+        res.json(skin.toResponseJson(await Generator.getMinDelay()));
     })
 
     // TODO: remove at some point
@@ -142,7 +142,7 @@ export const register = (app: Application) => {
 
 
         const skin = await Generator.generateFromUserAndSave(uuids.long, options, client);
-        res.json(skin.toResponseJson(await Generator.getDelay()));
+        res.json(skin.toResponseJson(await Generator.getMinDelay()));
     })
 
     ///

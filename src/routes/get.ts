@@ -9,7 +9,7 @@ export const register = (app: Application) => {
     app.use("/get", corsMiddleware);
 
     app.get("/get/delay", async (req: Request, res: Response) => {
-        const delay = await Generator.getDelay();
+        const delay = await Generator.getMinDelay();
         const lastRequest = await Caching.getTrafficRequestTimeByIp(getIp(req));
         if (lastRequest) {
             res.json({

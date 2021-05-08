@@ -92,7 +92,7 @@ export interface IAccountModel extends Model<IAccountDocument> {
 
     countGlobalUsable(): Promise<number>;
 
-    calculateDelay(): Promise<number>;
+    calculateMinDelay(): Promise<number>;
 
     getAccountsPerServer(): Promise<{ server: string, count: number }[]>;
 

@@ -217,7 +217,7 @@ async function init() {
     }));
     const errorHandler: ErrorRequestHandler = (err, req: Request, res: Response, next: NextFunction) => {
         if (err instanceof MineSkinError) {
-            Generator.getDelay().then(delay => {
+            Generator.getMinDelay().then(delay => {
                 res.json({
                     success: false,
                     errorType: err.name,

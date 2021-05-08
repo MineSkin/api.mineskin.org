@@ -14,6 +14,8 @@ import { debug } from "./colors";
 import exp = require("constants");
 import { RATE_LIMIT_METRIC } from "./metrics";
 import { getConfig } from "../typings/Configs";
+import { IApiKeyDocument } from "../typings/db/IApiKeyDocument";
+import { MineSkinError } from "../typings";
 
 const config = getConfig();
 
@@ -34,7 +36,11 @@ export async function checkTraffic(req: Request, res: Response): Promise<boolean
         return true;
     }
     const time = Date.now() / 1000;
-    const delay = await Generator.getDelay();
+
+    const apiKey = await getAndValidateRequestApiKey(req);
+
+    const delay = await Generator.getDelay(apiKey);
+
     if ((lastRequest.getTime() / 1000) > time - delay) {
         res.status(429).json({ error: "Too many requests", nextRequest: time + delay + 10, delay: delay });
         console.log(debug("Request too soon"));
@@ -51,6 +57,50 @@ export async function checkTraffic(req: Request, res: Response): Promise<boolean
 export async function updateTraffic(req: Request): Promise<void> {
     const ip = getIp(req);
     return await Caching.updateTrafficRequestTime(ip, new Date());
+}
+
+export async function getAndValidateRequestApiKey(req: Request): Promise<Maybe<IApiKeyDocument>> {
+    let keyStr;
+
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+        keyStr = authHeader.substr("Bearer ".length);
+    }
+    const authQuery = req.query["key"];
+    if (authQuery) {
+        keyStr = authQuery as string
+    }
+
+    if (keyStr) {
+        const key = await Caching.getApiKey(keyStr);
+        if (!key) {
+            throw new MineSkinError("invalid_api_key", "Invalid API Key", 403);
+        }
+
+        // Either a server IP or a client origin, not both
+        if (key.allowedIps && key.allowedIps.length > 0) {
+            const ip = getIp(req);
+            if (!(ip in key.allowedIps)) {
+                throw new MineSkinError("invalid_api_key", "Client not allowed", 403);
+            }
+        } else if (key.allowedOrigins && key.allowedOrigins.length > 0) {
+            const origin = req.headers.origin;
+            if (!origin || !(origin.toLowerCase() in key.allowedOrigins)) {
+                throw new MineSkinError("invalid_api_key", "Origin not allowed", 403);
+            }
+        }
+
+        if (key.allowedAgents && key.allowedAgents.length > 0) {
+            const agent = req.headers["user-agent"];
+            if (!agent || !(agent.toLowerCase() in key.allowedAgents)) {
+                throw new MineSkinError("invalid_api_key", "Agent not allowed", 403);
+            }
+        }
+
+        return key;
+    }
+
+    return undefined;
 }
 
 export async function validateImage(req: Request, res: Response, file: string): Promise<boolean> {
