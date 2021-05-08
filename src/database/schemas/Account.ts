@@ -9,7 +9,7 @@ import { Bread } from "../../typings/Bread";
 import { Caching } from "../../generator/Caching";
 import { metrics } from "../../util/metrics";
 import * as Sentry from "@sentry/node";
-import { MIN_ACCOUNT_DELAY } from "../../generator/Generator";
+import { ACCOUNT_DELAY } from "../../generator/Generator";
 
 const config = getConfig();
 
@@ -229,9 +229,14 @@ AccountSchema.statics.findUsable = function (this: IAccountModel, bread?: Bread)
 };
 
 AccountSchema.statics.countGlobalUsable = function (this: IAccountModel): Promise<number> {
+    const time = Math.floor(Date.now() / 1000);
     return this.countDocuments({
         enabled: true,
-        errorCounter: { $lt: (config.errorThreshold || 10) }
+        errorCounter: { $lt: (config.errorThreshold || 10) },
+        $or: [
+            { lastSelected: { $exists: false } },
+            { lastSelected: { $lt: (time - 50) } }
+        ]
     }).exec();
 };
 
@@ -241,7 +246,7 @@ AccountSchema.statics.calculateDelay = function (this: IAccountModel): Promise<n
             console.warn(error("Global usable account count is " + usable));
             return 200;
         }
-        return Math.round(MIN_ACCOUNT_DELAY / Math.max(1, usable))
+        return Math.round(ACCOUNT_DELAY / Math.max(1, usable))
     });
 };
 

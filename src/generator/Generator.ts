@@ -36,7 +36,8 @@ import { Notifications } from "../util/Notifications";
 
 const config = getConfig();
 
-export const MIN_ACCOUNT_DELAY = 150;
+export const MIN_ACCOUNT_DELAY = 60;
+export const ACCOUNT_DELAY = 150;
 
 const MAX_ID_TRIES = 10;
 
@@ -209,7 +210,7 @@ export class Generator {
         const useableAccounts = await Account.countDocuments({
             enabled: true,
             requestServer: { $in: ["default", config.server] },
-            lastUsed: { '$lt': (time - MIN_ACCOUNT_DELAY) },
+            lastUsed: { '$lt': (time - ACCOUNT_DELAY) },
             forcedTimeoutAt: { '$lt': (time - 500) },
             errorCounter: { '$lt': (config.errorThreshold || 10) },
             timeAdded: { $lt: (time - 60) }

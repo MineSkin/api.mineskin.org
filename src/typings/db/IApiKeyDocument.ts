@@ -1,5 +1,7 @@
 import { Document, Model } from "mongoose";
 import { ITrafficDocument } from "./ITrafficDocument";
+import { Maybe } from "../../util";
+import { ISkinDocument } from "./ISkinDocument";
 
 export interface IApiKeyDocument extends Document {
     name: string;
@@ -14,5 +16,6 @@ export interface IApiKeyDocument extends Document {
 }
 
 export interface IApiKeyModel extends Model<IApiKeyDocument> {
+    findKey(key: string): Promise<Maybe<IApiKeyDocument>>;
 }
 
