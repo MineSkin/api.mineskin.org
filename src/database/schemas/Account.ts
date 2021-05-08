@@ -229,9 +229,14 @@ AccountSchema.statics.findUsable = function (this: IAccountModel, bread?: Bread)
 };
 
 AccountSchema.statics.countGlobalUsable = function (this: IAccountModel): Promise<number> {
+    const time = Math.floor(Date.now() / 1000);
     return this.countDocuments({
         enabled: true,
-        errorCounter: { $lt: (config.errorThreshold || 10) }
+        errorCounter: { $lt: (config.errorThreshold || 10) },
+        $or: [
+            { lastSelected: { $exists: false } },
+            { lastSelected: { $lt: (time - 50) } }
+        ]
     }).exec();
 };
 
