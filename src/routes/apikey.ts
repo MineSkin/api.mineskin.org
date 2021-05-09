@@ -64,9 +64,9 @@ export const register = (app: Application) => {
         }
         Caching.invalidatePendingDiscordLink(ownerState);
 
-        const allowedOrigins: string[] = (req.body["origins"] || []).map((s: string) => s.trim().toLowerCase()).filter((s: string) => s.length > 2);
-        const allowedIps: string[] = (req.body["ips"] || []).map((s: string) => s.trim()).filter((s: string) => s.length > 2);
-        const allowedAgents: string[] = (req.body["agents"] || []).map((s: string) => s.trim().toLowerCase()).filter((s: string) => s.length > 2);
+        const allowedOrigins: string[] = (req.body["origins"] || []).map((s: string) => s.trim().toLowerCase()).filter((s: string) => s.length > 7 && s.length < 30);
+        const allowedIps: string[] = (req.body["ips"] || []).map((s: string) => s.trim()).filter((s: string) => s.length > 7 && s.length < 40);
+        const allowedAgents: string[] = (req.body["agents"] || []).map((s: string) => s.trim().toLowerCase()).filter((s: string) => s.length > 5 && s.length < 30);
 
         console.log(info(`Generating new API Key "${ name }" for ${ owner }`));
         console.log(debug(`Origins: ${ allowedOrigins }`));
@@ -86,7 +86,7 @@ export const register = (app: Application) => {
         //TODO: grant lower delay to owners with linked MC accounts
 
         const apiKey: IApiKeyDocument = new ApiKey(<IApiKeyDocument>{
-            name: name,
+            name: name.substr(0, 64),
             owner: owner,
             key: keyHash,
             secret: secretHash,
@@ -141,19 +141,19 @@ export const register = (app: Application) => {
 
         const name: string = req.body["name"];
         if (name) {
-            apiKey.name = name;
+            apiKey.name = name.substr(0, 64);
         }
         const allowedOrigins: string[] = req.body["origins"];
         if (allowedOrigins) {
-            apiKey.allowedOrigins = allowedOrigins.map(s => s.trim().toLowerCase()).filter(s => s.length > 2);
+            apiKey.allowedOrigins = allowedOrigins.map(s => s.trim().toLowerCase()).filter(s => s.length > 7 && s.length < 30);
         }
         const allowedIps: string[] = req.body["ips"];
         if (allowedIps) {
-            apiKey.allowedIps = allowedIps.map(s => s.trim()).filter(s => s.length > 2);
+            apiKey.allowedIps = allowedIps.map(s => s.trim()).filter(s => s.length > 7 && s.length < 40);
         }
         const allowedAgents: string[] = req.body["agents"];
         if (allowedAgents) {
-            apiKey.allowedAgents = allowedAgents.map(s => s.trim().toLowerCase()).filter(s => s.length > 2);
+            apiKey.allowedAgents = allowedAgents.map(s => s.trim().toLowerCase()).filter(s => s.length > 5 && s.length < 30);
         }
 
         apiKey.updatedAt = new Date();
