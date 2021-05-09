@@ -13,7 +13,7 @@ import * as morgan from "morgan";
 import * as bodyParser from "body-parser";
 import * as fileUpload from "express-fileupload";
 import * as session from "express-session";
-import { generateRoute, getRoute, renderRoute, testerRoute, utilRoute, accountManagerRoute } from "./routes";
+import { generateRoute, getRoute, renderRoute, testerRoute, utilRoute, accountManagerRoute, apiKeyRoute } from "./routes";
 import { MOJ_DIR, Temp, UPL_DIR, URL_DIR } from "./generator/Temp";
 import { Time } from "@inventivetalent/loading-cache";
 import { getConfig } from "./typings/Configs";
@@ -182,6 +182,7 @@ async function init() {
         accountManagerRoute.register(app);
         testerRoute.register(app);
         utilRoute.register(app);
+        apiKeyRoute.register(app);
 
     }
 

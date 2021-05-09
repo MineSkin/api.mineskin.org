@@ -5,6 +5,7 @@ import { getConfig } from "../typings/Configs";
 import { GenerateType } from "../typings/db/ISkinDocument";
 import { GenerateOptions } from "../typings/GenerateOptions";
 import { IAccountDocument } from "../typings";
+import { isApiKeyRequest } from "../typings/ApiKeyRequest";
 
 const config = getConfig();
 
@@ -21,12 +22,15 @@ export const apiRequestsMiddleware = (req: Request, res: Response, next: NextFun
             if (route) {
                 const path = route["path"];
                 if (path) {
-                    API_REQUESTS_METRIC
+                    const m = API_REQUESTS_METRIC
                         .tag("server", config.server)
                         .tag("method", req.method)
                         .tag("path", path)
-                        .tag("status", `${res.statusCode}`)
-                        .inc();
+                        .tag("status", `${res.statusCode}`);
+                    if (isApiKeyRequest(req) && req.apiKey?.name) {
+                        m.tag("apikey", req.apiKey?.name);
+                    }
+                    m.inc();
                 }
             }
         } catch (e) {

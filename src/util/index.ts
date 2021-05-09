@@ -81,7 +81,7 @@ export async function getAndValidateRequestApiKey(req: MineSkinRequest): Promise
     if (keyStr) {
         req.apiKeyStr = keyStr;
 
-        const key = await Caching.getApiKey(keyStr);
+        const key = await Caching.getApiKey(Caching.cachedSha512(keyStr));
         if (!key) {
             throw new MineSkinError("invalid_api_key", "Invalid API Key", 403);
         }
