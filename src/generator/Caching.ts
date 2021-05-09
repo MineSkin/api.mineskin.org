@@ -162,6 +162,7 @@ export class Caching {
         .buildAsync<number, ISkinDocument>(id => Skin.findForId(id));
 
     protected static readonly apiKeyCache: AsyncLoadingCache<string, IApiKeyDocument> = Caches.builder()
+        .expireAfterWrite(Time.minutes(5))
         .expireAfterAccess(Time.minutes(1))
         .expirationInterval(Time.seconds(20))
         .buildAsync<string, IApiKeyDocument>(key => ApiKey.findKey(key));
