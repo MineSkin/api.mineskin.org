@@ -6,7 +6,6 @@ import { Maybe, sha256, sha512, stripUuid } from "../util";
 import { IPoint } from "influx";
 import { Skin, Traffic } from "../database/schemas";
 import { BasicMojangProfile } from "./Authentication";
-import { PendingDiscordLink } from "../routes/accountManager";
 import { getConfig } from "../typings/Configs";
 import { SkinData } from "../typings/SkinData";
 import { User } from "../typings/User";
@@ -16,6 +15,7 @@ import { metrics } from "../util/metrics";
 import { Bread } from "../typings/Bread";
 import { IApiKeyDocument } from "../typings/db/IApiKeyDocument";
 import { ApiKey } from "../database/schemas/ApiKey";
+import { IPendingDiscordLink } from "../typings/DiscordAccountLink";
 
 const config = getConfig();
 
@@ -168,7 +168,7 @@ export class Caching {
 
     //// OTHER
 
-    protected static readonly pendingDiscordLinkByStateCache: SimpleCache<string, PendingDiscordLink> = Caches.builder()
+    protected static readonly pendingDiscordLinkByStateCache: SimpleCache<string, IPendingDiscordLink> = Caches.builder()
         .expireAfterWrite(Time.minutes(5))
         .expirationInterval(Time.seconds(30))
         .build();
@@ -266,12 +266,12 @@ export class Caching {
 
     /// OTHER
 
-    public static storePendingDiscordLink(pendingLink: PendingDiscordLink): void {
+    public static storePendingDiscordLink(pendingLink: IPendingDiscordLink): void {
         this.pendingDiscordLinkByStateCache.put(pendingLink.state, pendingLink);
     }
 
-    public static getPendingDiscordLink(state: string): Maybe<PendingDiscordLink> {
-        return this.pendingDiscordLinkByStateCache.getIfPresent(state);
+    public static getPendingDiscordLink<T extends IPendingDiscordLink>(state: string): Maybe<T> {
+        return this.pendingDiscordLinkByStateCache.getIfPresent(state) as T;
     }
 
     public static invalidatePendingDiscordLink(state: string): void {

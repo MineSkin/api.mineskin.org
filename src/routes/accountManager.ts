@@ -15,6 +15,7 @@ import { Encryption } from "../util/Encryption";
 import { debug, info, warn } from "../util/colors";
 import * as Sentry from "@sentry/node";
 import { Time } from "@inventivetalent/loading-cache";
+import { PendingDiscordAccountLink } from "../typings/DiscordAccountLink";
 
 const config = getConfig();
 
@@ -491,7 +492,7 @@ export const register = (app: Application) => {
     /// ACCOUNT LINKING
 
     app.get("/accountManager/discord/oauth/start", async (req: AccountManagerRequest, res: Response) => {
-        if (!config.discord || !config.discord.oauth) {
+        if (!config.discordAccount || !config.discordAccount.oauth) {
             res.status(400).json({ error: "server can't handle discord auth" });
             return;
         }
@@ -528,11 +529,11 @@ export const register = (app: Application) => {
             return;
         }
 
-        const clientId = config.discord.oauth.id;
+        const clientId = config.discordAccount.oauth.id;
         const redirect = encodeURIComponent(`https://${ config.server }.api.mineskin.org/accountManager/discord/oauth/callback`);
         const state = sha256(`${ account.getAccountType() }${ account.uuid }${ Math.random() }${ req.session.account.email! }${ Date.now() }${ account.id }`);
 
-        Caching.storePendingDiscordLink({
+        Caching.storePendingDiscordLink(<PendingDiscordAccountLink>{
             state: state,
             account: account.id,
             uuid: account.uuid,
@@ -547,12 +548,12 @@ export const register = (app: Application) => {
             res.status(400).end();
             return;
         }
-        if (!config.discord || !config.discord.oauth) {
+        if (!config.discordAccount || !config.discordAccount.oauth) {
             res.status(400).json({ error: "server can't handle discord auth" });
             return;
         }
 
-        const pendingLink = Caching.getPendingDiscordLink(req.query["state"] as string);
+        const pendingLink: Maybe<PendingDiscordAccountLink> = Caching.getPendingDiscordLink(req.query["state"] as string);
         if (!pendingLink) {
             console.warn("Got a discord OAuth callback but the API wasn't expecting that linking request");
             res.status(400).json({ error: "invalid state" });
@@ -569,8 +570,8 @@ export const register = (app: Application) => {
         const profileValidation = await getAndValidateMojangProfile(req.session.account.token!, pendingLink.uuid);
         if (!profileValidation.valid || !profileValidation.profile) return;
 
-        const clientId = config.discord.oauth.id;
-        const clientSecret = config.discord.oauth.secret;
+        const clientId = config.discordAccount.oauth.id;
+        const clientSecret = config.discordAccount.oauth.secret;
         const redirect = `https://${ config.server }.api.mineskin.org/accountManager/discord/oauth/callback`;
 
         // Exchange code for token
@@ -764,10 +765,5 @@ interface MojangProfileValidation {
     valid: boolean;
 }
 
-export interface PendingDiscordLink {
-    state: string;
-    account: number;
-    uuid: string;
-    email: string;
-}
+
 

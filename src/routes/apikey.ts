@@ -1,26 +1,67 @@
 import { Application, Request, Response } from "express";
-import { base64encode, random32BitNumber, sha256, sha512 } from "../util";
-import { debug, info } from "../util/colors";
+import { base64encode, Maybe, random32BitNumber, sha256, sha512 } from "../util";
+import { debug, info, warn } from "../util/colors";
 import { Caching } from "../generator/Caching";
 import { IApiKeyDocument } from "../typings/db/IApiKeyDocument";
 import { ApiKey } from "../database/schemas/ApiKey";
 import { DEFAULT_DELAY } from "../generator/Generator";
+import { Account } from "../database/schemas";
+import { Requests } from "../generator/Requests";
+import { Discord } from "../util/Discord";
+import { getConfig } from "../typings/Configs";
+import { PendingDiscordApiKeyLink } from "../typings/DiscordAccountLink";
+import * as qs from "querystring";
+
+const config = getConfig();
 
 export const register = (app: Application) => {
 
     // no cors middleware here, want to restrict it to mineskin.org only
 
-    app.post("/apikey/create", async (req: Request, res: Response) => {
+    app.get("/apikey", async (req: Request, res: Response)=>{
+        const key: string = req.query["key"] as string;
+        if (!key) {
+            res.status(400).json({ error: "missing key" });
+            return;
+        }
+
+        const apiKey = await ApiKey.findKey(Caching.cachedSha512(key));
+        if (!apiKey) {
+            res.status(400).json({ error: "invalid key" });
+            return;
+        }
+
+        res.json({
+            success: true,
+            name: apiKey.name,
+            owner: apiKey.owner,
+            key: key,
+            createdAt: apiKey.createdAt,
+            origins: apiKey.allowedOrigins,
+            ips: apiKey.allowedIps,
+            agents: apiKey.allowedAgents,
+            minDelay: apiKey.minDelay
+        })
+    })
+
+    app.post("/apikey", async (req: Request, res: Response) => {
         const name: string = req.body["name"];
         if (!name) {
             res.status(400).json({ error: "missing name" });
             return;
         }
-        const owner: string = req.body["owner"];
-        if (!owner) {
+        const ownerState: string = req.body["owner"];
+        if (!ownerState) {
             res.status(400).json({ error: "missing owner" });
             return;
         }
+
+        const owner = (Caching.getPendingDiscordLink(ownerState) as Maybe<PendingDiscordApiKeyLink>)?.user;
+        if (!owner) {
+            res.status(400).json({ error: "invalid owner" });
+            return;
+        }
+        Caching.invalidatePendingDiscordLink(ownerState);
 
         const allowedOrigins: string[] = (req.body["origins"] || []).map((s: string) => s.trim().toLowerCase());
         const allowedIps: string[] = (req.body["ips"] || []).map((s: string) => s.trim());
@@ -40,6 +81,8 @@ export const register = (app: Application) => {
         const secretHash: string = Caching.cachedSha512(secret);
 
         console.log(debug(`Key:     ${ keyHash }`));
+
+        //TODO: grant lower delay to owners with linked MC accounts
 
         const apiKey: IApiKeyDocument = new ApiKey(<IApiKeyDocument>{
             name: name,
@@ -71,7 +114,7 @@ export const register = (app: Application) => {
     });
 
 
-    app.put("/apikey/update", async (req: Request, res: Response) => {
+    app.put("/apikey", async (req: Request, res: Response) => {
         const key: string = req.body["key"];
         if (!key) {
             res.status(400).json({ error: "missing key" });
@@ -121,7 +164,7 @@ export const register = (app: Application) => {
     });
 
 
-    app.delete("/apikey/delete", async (req: Request, res: Response) => {
+    app.delete("/apikey", async (req: Request, res: Response) => {
         const key: string = req.body["key"];
         if (!key) {
             res.status(400).json({ error: "missing key" });
@@ -151,6 +194,103 @@ export const register = (app: Application) => {
             msg: "key deleted"
         })
     });
+
+
+    app.get("/apikey/discord/oauth/start", async (req: Request, res: Response) => {
+        if (!config.discordApiKey || !config.discordApiKey.oauth) {
+            res.status(400).json({ error: "server can't handle discord auth" });
+            return;
+        }
+
+        const clientId = config.discordApiKey.oauth.id;
+        const redirect = encodeURIComponent(`https://${ config.server }.api.mineskin.org/apikey/discord/oauth/callback`);
+        const state = sha256(`${Date.now()}${config.server}${Math.random()}`);
+
+        Caching.storePendingDiscordLink(<PendingDiscordApiKeyLink>{
+            state: state
+        });
+
+        res.redirect(`https://discordapp.com/api/oauth2/authorize?client_id=${ clientId }&scope=identify&response_type=code&state=${ state }&redirect_uri=${ redirect }`);
+    })
+
+    app.get("/apikey/discord/oauth/callback", async (req: Request, res: Response) => {
+        if (!req.query["code"] || !req.query["state"]) {
+            res.status(400).end();
+            return;
+        }
+        if (!config.discordApiKey || !config.discordApiKey.oauth) {
+            res.status(400).json({ error: "server can't handle discord auth" });
+            return;
+        }
+
+        const pendingLink: Maybe<PendingDiscordApiKeyLink> = Caching.getPendingDiscordLink(req.query["state"] as string);
+        if (!pendingLink) {
+            console.warn("Got a discord OAuth callback but the API wasn't expecting that linking request");
+            res.status(400).json({ error: "invalid state" });
+            return;
+        }
+        Caching.invalidatePendingDiscordLink(req.query["state"] as string);
+
+        const clientId = config.discordApiKey.oauth.id;
+        const clientSecret = config.discordApiKey.oauth.secret;
+        const redirect = `https://${ config.server }.api.mineskin.org/apikey/discord/oauth/callback`;
+
+        // Exchange code for token
+        const form: any = {
+            client_id: clientId,
+            client_secret: clientSecret,
+            grant_type: "authorization_code",
+            code: req.query["code"],
+            redirect_uri: redirect,
+            scope: "identify"
+        };
+        const tokenResponse = await Requests.axiosInstance.request({
+            method: "POST",
+            url: "https://discordapp.com/api/oauth2/token",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Accept": "application/json",
+                "Accept-Encoding": "gzip"
+            },
+            data: qs.stringify(form)
+        });
+        const tokenBody = tokenResponse.data;
+        const accessToken = tokenBody["access_token"];
+        if (!accessToken) {
+            console.warn("Failed to get access token from discord");
+            res.status(500).json({ error: "Discord API error" });
+            return;
+        }
+
+        // Get user profile
+        const userResponse = await Requests.axiosInstance.request({
+            method: "GET",
+            url: "https://discordapp.com/api/users/@me",
+            headers: {
+                "Authorization": `Bearer ${ accessToken }`,
+                "Accept": "application/json",
+                "Accept-Encoding": "gzip"
+            }
+        });
+        const userBody = userResponse.data;
+
+        const discordId = userBody["id"];
+        if (!discordId) {
+            console.warn("Discord response did not have an id field")
+            res.status(404).json({ error: "Discord API error" });
+            return;
+        }
+
+        const state = sha256(`${req.query["state"]}${Date.now()}`);
+
+        // use this as a temporary storage for the user id
+        Caching.storePendingDiscordLink(<PendingDiscordApiKeyLink>{
+            state: state,
+            user: discordId
+        });
+
+        res.redirect("https://mineskin.org/apikey#" + base64encode(state));
+    })
 
 
 }

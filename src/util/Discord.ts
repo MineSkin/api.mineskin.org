@@ -13,13 +13,13 @@ export const SUPPORT_CHANNEL = "482181024445497354";
 export class Discord {
 
     static postDiscordMessage(content: string, channel?: string, fallback?: () => void): void {
-        if (!config.discord || !config.discord.token) return;
-        if (!channel) channel = config.discord.channel;
+        if (!config.discordAccount || !config.discordAccount.token) return;
+        if (!channel) channel = config.discordAccount.channel;
         Requests.axiosInstance.request({
             method: "POST",
             url: "https://discordapp.com/api/channels/" + channel + "/messages",
             headers: {
-                "Authorization": "Bot " + config.discord.token,
+                "Authorization": "Bot " + config.discordAccount.token,
                 "User-Agent": "MineSkin",
                 "Content-Type": "application/json"
             },
@@ -40,12 +40,12 @@ export class Discord {
 
 
     static sendDiscordDirectMessage(content: string, receiver: string, fallback?: () => void): void {
-        if (!config.discord || !config.discord.token) return;
+        if (!config.discordAccount || !config.discordAccount.token) return;
         Requests.axiosInstance.request({
             method: "POST",
             url: "https://discordapp.com/api/users/@me/channels",
             headers: {
-                "Authorization": "Bot " + config.discord.token,
+                "Authorization": "Bot " + config.discordAccount.token,
                 "User-Agent": "MineSkin",
                 "Content-Type": "application/json"
             },
@@ -67,12 +67,12 @@ export class Discord {
     }
 
     static async addDiscordAccountOwnerRole(userId: string): Promise<boolean> {
-        if (!config.discord || !config.discord.token || !config.discord.guild) return false;
+        if (!config.discordAccount || !config.discordAccount.token || !config.discordAccount.guild) return false;
         return Requests.axiosInstance.request({
             method: "PUT",
-            url: "https://discordapp.com/api/guilds/" + config.discord.guild + "/members/" + userId + "/roles/" + config.discord.role,
+            url: "https://discordapp.com/api/guilds/" + config.discordAccount.guild + "/members/" + userId + "/roles/" + config.discordAccount.role,
             headers: {
-                "Authorization": "Bot " + config.discord.token
+                "Authorization": "Bot " + config.discordAccount.token
             }
         }).then(response => {
             if (response.status !== 200) {
@@ -91,12 +91,12 @@ export class Discord {
     }
 
     static async removeDiscordAccountOwnerRole(userId: string): Promise<boolean> {
-        if (!config.discord || !config.discord.token || !config.discord.guild) return false;
+        if (!config.discordAccount || !config.discordAccount.token || !config.discordAccount.guild) return false;
         return Requests.axiosInstance.request({
             method: "DELETE",
-            url: "https://discordapp.com/api/guilds/" + config.discord.guild + "/members/" + userId + "/roles/" + config.discord.role,
+            url: "https://discordapp.com/api/guilds/" + config.discordAccount.guild + "/members/" + userId + "/roles/" + config.discordAccount.role,
             headers: {
-                "Authorization": "Bot " + config.discord.token
+                "Authorization": "Bot " + config.discordAccount.token
             }
         }).then(response => {
             if (response.status !== 200) {

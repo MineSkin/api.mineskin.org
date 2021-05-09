@@ -71,7 +71,8 @@ export interface MineSkinConfig {
     mongo: MongoConfig;
     crypto: CryptoConfig;
     email: EmailConfig;
-    discord: DiscordConfig;
+    discordAccount: DiscordConfig;
+    discordApiKey: DiscordConfig;
     puller: PullerConfig;
     sentry: SentryConfig;
     metrics: MetricsConfig;
