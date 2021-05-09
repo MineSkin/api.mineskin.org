@@ -26,9 +26,9 @@ export const apiRequestsMiddleware = (req: Request, res: Response, next: NextFun
                         .tag("server", config.server)
                         .tag("method", req.method)
                         .tag("path", path)
-                        .tag("status", `${res.statusCode}`);
-                    if (isApiKeyRequest(req) && req.apiKey?.name) {
-                        m.tag("apikey", req.apiKey?.name);
+                        .tag("status", `${ res.statusCode }`);
+                    if (isApiKeyRequest(req) && req.apiKey) {
+                        m.tag("apikey", `${ req.apiKey.key.substr(0, 8) } ${ req.apiKey?.name }`);
                     }
                     m.inc();
                 }
