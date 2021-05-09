@@ -2,11 +2,11 @@ import { Application, Request, Response } from "express";
 import { Generator } from "../generator/Generator";
 import { Caching } from "../generator/Caching";
 import { Skin } from "../database/schemas";
-import { corsMiddleware, corsWithCredentialsMiddleware, getAndValidateRequestApiKey, getIp, stripUuid } from "../util";
+import { corsMiddleware, corsWithAuthMiddleware, corsWithCredentialsMiddleware, getAndValidateRequestApiKey, getIp, stripUuid } from "../util";
 
 export const register = (app: Application) => {
 
-    app.use("/get", corsWithCredentialsMiddleware);
+    app.use("/get", corsWithAuthMiddleware);
 
     app.get("/get/delay", async (req: Request, res: Response) => {
         const delay = await Generator.getDelay(await getAndValidateRequestApiKey(req));

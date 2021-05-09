@@ -1,5 +1,5 @@
 import { Application, Request, Response } from "express";
-import { base64encode, corsMiddleware, corsWithCredentialsMiddleware, Maybe, random32BitNumber, sha256, sha512 } from "../util";
+import { base64encode, corsMiddleware, corsWithAuthMiddleware, corsWithCredentialsMiddleware, Maybe, random32BitNumber, sha256, sha512 } from "../util";
 import { debug, info, warn } from "../util/colors";
 import { Caching } from "../generator/Caching";
 import { IApiKeyDocument } from "../typings/db/IApiKeyDocument";

@@ -314,6 +314,18 @@ export const corsMiddleware = (req: Request, res: Response, next: NextFunction) 
         return next();
     }
 };
+export const corsWithAuthMiddleware = (req: Request, res: Response, next: NextFunction) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header("Access-Control-Allow-Credentials", "true");
+    if (req.method === 'OPTIONS') {
+        res.header("Access-Control-Allow-Methods", "POST, GET, OPTIONS, DELETE, PUT");
+        res.header("Access-Control-Allow-Headers", "X-Requested-With, Accept, Content-Type, Origin, Authorization, Cookie");
+        res.header("Access-Control-Request-Headers", "X-Requested-With, Accept, Content-Type, Origin, Authorization, Cookie");
+        return res.sendStatus(200);
+    } else {
+        return next();
+    }
+};
 export const corsWithCredentialsMiddleware = (req: Request, res: Response, next: NextFunction) => {
     res.header('Access-Control-Allow-Origin', 'https://mineskin.org');
     res.header("Access-Control-Allow-Credentials", "true");
