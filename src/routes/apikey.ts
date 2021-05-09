@@ -197,12 +197,12 @@ export const register = (app: Application) => {
 
 
     app.get("/apikey/discord/oauth/start", async (req: Request, res: Response) => {
-        if (!config.discordApiKey || !config.discordApiKey.oauth) {
+        if (!config.discordApiKey) {
             res.status(400).json({ error: "server can't handle discord auth" });
             return;
         }
 
-        const clientId = config.discordApiKey.oauth.id;
+        const clientId = config.discordApiKey.id;
         const redirect = encodeURIComponent(`https://${ config.server }.api.mineskin.org/apikey/discord/oauth/callback`);
         const state = sha256(`${Date.now()}${config.server}${Math.random()}`);
 
@@ -218,7 +218,7 @@ export const register = (app: Application) => {
             res.status(400).end();
             return;
         }
-        if (!config.discordApiKey || !config.discordApiKey.oauth) {
+        if (!config.discordApiKey) {
             res.status(400).json({ error: "server can't handle discord auth" });
             return;
         }
@@ -231,8 +231,8 @@ export const register = (app: Application) => {
         }
         Caching.invalidatePendingDiscordLink(req.query["state"] as string);
 
-        const clientId = config.discordApiKey.oauth.id;
-        const clientSecret = config.discordApiKey.oauth.secret;
+        const clientId = config.discordApiKey.id;
+        const clientSecret = config.discordApiKey.secret;
         const redirect = `https://${ config.server }.api.mineskin.org/apikey/discord/oauth/callback`;
 
         // Exchange code for token

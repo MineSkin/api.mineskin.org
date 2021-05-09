@@ -492,7 +492,7 @@ export const register = (app: Application) => {
     /// ACCOUNT LINKING
 
     app.get("/accountManager/discord/oauth/start", async (req: AccountManagerRequest, res: Response) => {
-        if (!config.discordAccount || !config.discordAccount.oauth) {
+        if (!config.discordAccount) {
             res.status(400).json({ error: "server can't handle discord auth" });
             return;
         }
@@ -529,7 +529,7 @@ export const register = (app: Application) => {
             return;
         }
 
-        const clientId = config.discordAccount.oauth.id;
+        const clientId = config.discordAccount.id;
         const redirect = encodeURIComponent(`https://${ config.server }.api.mineskin.org/accountManager/discord/oauth/callback`);
         const state = sha256(`${ account.getAccountType() }${ account.uuid }${ Math.random() }${ req.session.account.email! }${ Date.now() }${ account.id }`);
 
@@ -548,7 +548,7 @@ export const register = (app: Application) => {
             res.status(400).end();
             return;
         }
-        if (!config.discordAccount || !config.discordAccount.oauth) {
+        if (!config.discordAccount) {
             res.status(400).json({ error: "server can't handle discord auth" });
             return;
         }
@@ -570,8 +570,8 @@ export const register = (app: Application) => {
         const profileValidation = await getAndValidateMojangProfile(req.session.account.token!, pendingLink.uuid);
         if (!profileValidation.valid || !profileValidation.profile) return;
 
-        const clientId = config.discordAccount.oauth.id;
-        const clientSecret = config.discordAccount.oauth.secret;
+        const clientId = config.discordAccount.id;
+        const clientSecret = config.discordAccount.secret;
         const redirect = `https://${ config.server }.api.mineskin.org/accountManager/discord/oauth/callback`;
 
         // Exchange code for token
