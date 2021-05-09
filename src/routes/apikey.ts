@@ -95,7 +95,7 @@ export const register = (app: Application) => {
             allowedOrigins: allowedOrigins,
             allowedIps: allowedIps,
             allowedAgents: allowedAgents,
-            minDelay: DEFAULT_DELAY
+            minDelay: 4
         });
 
         await apiKey.save();
