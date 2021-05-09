@@ -22,9 +22,9 @@ export const register = (app: Application) => {
             return;
         }
 
-        const allowedOrigins: string[] = req.body["origins"] || [];
-        const allowedIps: string[] = req.body["ips"] || [];
-        const allowedAgents: string[] = req.body["agents"] || [];
+        const allowedOrigins: string[] = (req.body["origins"] || []).map((s: string) => s.trim().toLowerCase());
+        const allowedIps: string[] = (req.body["ips"] || []).map((s: string) => s.trim());
+        const allowedAgents: string[] = (req.body["agents"] || []).map((s: string) => s.trim().toLowerCase());
 
         console.log(info(`Generating new API Key "${ name }" for ${ owner }`));
         console.log(debug(`Origins: ${ allowedOrigins }`));
@@ -100,15 +100,15 @@ export const register = (app: Application) => {
         }
         const allowedOrigins: string[] = req.body["origins"];
         if (allowedOrigins) {
-            apiKey.allowedOrigins = allowedOrigins;
+            apiKey.allowedOrigins = allowedOrigins.map(s => s.trim().toLowerCase());
         }
         const allowedIps: string[] = req.body["ips"];
         if (allowedIps) {
-            apiKey.allowedIps = allowedIps;
+            apiKey.allowedIps = allowedIps.map(s => s.trim());
         }
         const allowedAgents: string[] = req.body["agents"];
         if (allowedAgents) {
-            apiKey.allowedAgents = allowedAgents;
+            apiKey.allowedAgents = allowedAgents.map(s => s.trim().toLowerCase());
         }
 
 

@@ -91,19 +91,22 @@ export async function getAndValidateRequestApiKey(req: MineSkinRequest): Promise
         // Either a server IP or a client origin, not both
         if (key.allowedIps && key.allowedIps.length > 0) {
             const ip = getIp(req);
-            if (!(ip in key.allowedIps)) {
+            if (!ip || key.allowedIps.includes(ip.trim())) {
+                console.log(debug(`Client ${ ip } not allowed`));
                 throw new MineSkinError("invalid_api_key", "Client not allowed", 403);
             }
         } else if (key.allowedOrigins && key.allowedOrigins.length > 0) {
             const origin = req.headers.origin;
-            if (!origin || !(origin.toLowerCase() in key.allowedOrigins)) {
+            if (!origin || !key.allowedOrigins.includes(origin.trim().toLowerCase())) {
+                console.log(debug(`Origin ${ origin } not allowed`));
                 throw new MineSkinError("invalid_api_key", "Origin not allowed", 403);
             }
         }
 
         if (key.allowedAgents && key.allowedAgents.length > 0) {
             const agent = req.headers["user-agent"];
-            if (!agent || !(agent.toLowerCase() in key.allowedAgents)) {
+            if (!agent || !key.allowedAgents.includes(agent.trim().toLowerCase())) {
+                console.log(debug(`Agent ${ agent } not allowed`));
                 throw new MineSkinError("invalid_api_key", "Agent not allowed", 403);
             }
         }
