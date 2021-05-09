@@ -904,6 +904,7 @@ export class Generator {
             .tag("userAgent", stripNumbers(client.userAgent))
             .tag("account", account.id)
             .tag("accountType", account.accountType || "unknown")
+            .tag("apiKey", client.apiKey || "none")
             .inc();
         if (!account) return;
         try {
@@ -933,6 +934,7 @@ export class Generator {
             .tag("visibility", options.visibility === SkinVisibility.PRIVATE ? "private" : "public")
             .tag("variant", options.variant)
             .tag("userAgent", stripNumbers(client.userAgent))
+            .tag("apiKey", client.apiKey || "none")
             .tag("via", client.via);
         if (account) {
             m.tag("account", account.id)

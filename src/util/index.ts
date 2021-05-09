@@ -41,7 +41,7 @@ export async function checkTraffic(req: Request, res: Response): Promise<boolean
     const apiKey = await getAndValidateRequestApiKey(req);
     if (apiKey) {
         Sentry.setUser({
-            username: apiKey.name,
+            username: `${ apiKey.key.substr(0, 16) } ${ apiKey.name }`,
             ip_address: ip
         });
     }
