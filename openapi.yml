@@ -18,9 +18,11 @@ tags:
 components:
   securitySchemes:
     bearerAuth:
+      description: Get your key from https://mineskin.org/apikey
       type: http
       scheme: bearer
     apiKey:
+      description: Get your key from https://mineskin.org/apikey
       type: apiKey
       in: query
       name: key
