@@ -2,8 +2,8 @@ import { Requests } from "../generator/Requests";
 import * as Sentry from "@sentry/node";
 import { getConfig } from "../typings/Configs";
 import { IAccountDocument, MineSkinError } from "../typings";
-import { GenerateType } from "../typings/ISkinDocument";
-import { AccountType } from "../typings/IAccountDocument";
+import { GenerateType } from "../typings/db/ISkinDocument";
+import { AccountType } from "../typings/db/IAccountDocument";
 
 const config = getConfig();
 
@@ -13,7 +13,7 @@ export const SUPPORT_CHANNEL = "482181024445497354";
 export class Discord {
 
     static postDiscordMessage(content: string, channel?: string, fallback?: () => void): void {
-        if (!config.discord || !config.discord.token) return;
+        if (!config.discordAccount || !config.discord.token) return;
         if (!channel) channel = config.discord.channel;
         Requests.axiosInstance.request({
             method: "POST",

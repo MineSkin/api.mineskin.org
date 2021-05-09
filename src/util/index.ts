@@ -9,11 +9,14 @@ import * as fileType from "file-type";
 import * as readChunk from "read-chunk";
 import * as crypto from "crypto";
 import { Caching } from "../generator/Caching";
-import { SkinModel, SkinVariant } from "../typings/ISkinDocument";
+import { SkinModel, SkinVariant } from "../typings/db/ISkinDocument";
 import { debug } from "./colors";
 import exp = require("constants");
 import { RATE_LIMIT_METRIC } from "./metrics";
 import { getConfig } from "../typings/Configs";
+import { IApiKeyDocument } from "../typings/db/IApiKeyDocument";
+import { MineSkinError, MineSkinRequest } from "../typings";
+import { ApiKeyRequest } from "../typings/ApiKeyRequest";
 
 const config = getConfig();
 
@@ -34,7 +37,17 @@ export async function checkTraffic(req: Request, res: Response): Promise<boolean
         return true;
     }
     const time = Date.now() / 1000;
-    const delay = await Generator.getDelay();
+
+    const apiKey = await getAndValidateRequestApiKey(req);
+    if (apiKey) {
+        Sentry.setUser({
+            username: apiKey.name,
+            ip_address: ip
+        });
+    }
+
+    const delay = await Generator.getDelay(apiKey);
+
     if ((lastRequest.getTime() / 1000) > time - delay) {
         res.status(429).json({ error: "Too many requests", nextRequest: time + delay + 10, delay: delay });
         console.log(debug("Request too soon"));
@@ -51,6 +64,57 @@ export async function checkTraffic(req: Request, res: Response): Promise<boolean
 export async function updateTraffic(req: Request): Promise<void> {
     const ip = getIp(req);
     return await Caching.updateTrafficRequestTime(ip, new Date());
+}
+
+export async function getAndValidateRequestApiKey(req: MineSkinRequest): Promise<Maybe<IApiKeyDocument>> {
+    let keyStr;
+
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+        keyStr = authHeader.substr("Bearer ".length);
+    }
+    const authQuery = req.query["key"];
+    if (authQuery) {
+        keyStr = authQuery as string
+    }
+
+    if (keyStr) {
+        req.apiKeyStr = keyStr;
+
+        const key = await Caching.getApiKey(Caching.cachedSha512(keyStr));
+        if (!key) {
+            throw new MineSkinError("invalid_api_key", "Invalid API Key", 403);
+        }
+
+        req.apiKey = key;
+
+        // Either a server IP or a client origin, not both
+        if (key.allowedIps && key.allowedIps.length > 0) {
+            const ip = getIp(req);
+            if (!ip || key.allowedIps.includes(ip.trim())) {
+                console.log(debug(`Client ${ ip } not allowed`));
+                throw new MineSkinError("invalid_api_key", "Client not allowed", 403);
+            }
+        } else if (key.allowedOrigins && key.allowedOrigins.length > 0) {
+            const origin = req.headers.origin;
+            if (!origin || !key.allowedOrigins.includes(origin.trim().toLowerCase())) {
+                console.log(debug(`Origin ${ origin } not allowed`));
+                throw new MineSkinError("invalid_api_key", "Origin not allowed", 403);
+            }
+        }
+
+        if (key.allowedAgents && key.allowedAgents.length > 0) {
+            const agent = req.headers["user-agent"];
+            if (!agent || !key.allowedAgents.includes(agent.trim().toLowerCase())) {
+                console.log(debug(`Agent ${ agent } not allowed`));
+                throw new MineSkinError("invalid_api_key", "Agent not allowed", 403);
+            }
+        }
+
+        return key;
+    }
+
+    return undefined;
 }
 
 export async function validateImage(req: Request, res: Response, file: string): Promise<boolean> {

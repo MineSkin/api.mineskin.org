@@ -3,13 +3,13 @@ import { Maybe, md5 } from "../../util";
 import { v4 as uuid } from "uuid";
 import { getConfig } from "../../typings/Configs";
 import { IAccountDocument } from "../../typings";
-import { AccountType, IAccountModel } from "../../typings/IAccountDocument";
+import { AccountType, IAccountModel } from "../../typings/db/IAccountDocument";
 import { debug, error } from "../../util/colors";
 import { Bread } from "../../typings/Bread";
 import { Caching } from "../../generator/Caching";
 import { metrics } from "../../util/metrics";
 import * as Sentry from "@sentry/node";
-import { MIN_ACCOUNT_DELAY } from "../../generator/Generator";
+import {  MIN_ACCOUNT_DELAY } from "../../generator/Generator";
 
 const config = getConfig();
 
@@ -240,13 +240,13 @@ AccountSchema.statics.countGlobalUsable = function (this: IAccountModel): Promis
     }).exec();
 };
 
-AccountSchema.statics.calculateDelay = function (this: IAccountModel): Promise<number> {
+AccountSchema.statics.calculateMinDelay = function (this: IAccountModel): Promise<number> {
     return this.countGlobalUsable().then(usable => {
         if (usable <= 0) {
             console.warn(error("Global usable account count is " + usable));
             return 200;
         }
-        return MIN_ACCOUNT_DELAY / Math.max(1, usable);
+        return MIN_ACCOUNT_DELAY / Math.max(1, usable)
     });
 };
 

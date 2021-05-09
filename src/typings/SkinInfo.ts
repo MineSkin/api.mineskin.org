@@ -1,4 +1,4 @@
-import { SkinModel, SkinVariant } from "./ISkinDocument";
+import { SkinModel, SkinVariant } from "./db/ISkinDocument";
 import { ProfileProperty } from "./ProfileResponse";
 
 export interface SkinInfoTextureUrls {

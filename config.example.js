@@ -35,7 +35,11 @@ config.crypto = {
     key: "I'm a key!"
 };
 
-config.discord = {
+config.discordAccount = {
+    token: "",
+    channel: ""
+};
+config.discordApiKey = {
     token: "",
     channel: ""
 };

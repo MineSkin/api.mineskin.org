@@ -1,12 +1,11 @@
 import { Requests } from "./Requests";
-import { AsyncLoadingCache, Caches, CacheStats, ICacheBase, SimpleCache, Time } from "@inventivetalent/loading-cache";
+import { AsyncLoadingCache, Caches, CacheStats, ICacheBase, LoadingCache, SimpleCache, Time } from "@inventivetalent/loading-cache";
 import * as Sentry from "@sentry/node";
 import { Severity } from "@sentry/node";
-import { Maybe, stripUuid } from "../util";
+import { Maybe, sha256, sha512, stripUuid } from "../util";
 import { IPoint } from "influx";
 import { Skin, Traffic } from "../database/schemas";
 import { BasicMojangProfile } from "./Authentication";
-import { PendingDiscordLink } from "../routes/accountManager";
 import { getConfig } from "../typings/Configs";
 import { SkinData } from "../typings/SkinData";
 import { User } from "../typings/User";
@@ -14,6 +13,9 @@ import { ISkinDocument } from "../typings";
 import { ProfileResponse } from "../typings/ProfileResponse";
 import { metrics } from "../util/metrics";
 import { Bread } from "../typings/Bread";
+import { IApiKeyDocument } from "../typings/db/IApiKeyDocument";
+import { ApiKey } from "../database/schemas/ApiKey";
+import { IPendingDiscordLink } from "../typings/DiscordAccountLink";
 
 const config = getConfig();
 
@@ -159,9 +161,14 @@ export class Caching {
         .expirationInterval(Time.seconds(5))
         .buildAsync<number, ISkinDocument>(id => Skin.findForId(id));
 
+    protected static readonly apiKeyCache: AsyncLoadingCache<string, IApiKeyDocument> = Caches.builder()
+        .expireAfterAccess(Time.minutes(1))
+        .expirationInterval(Time.seconds(20))
+        .buildAsync<string, IApiKeyDocument>(key => ApiKey.findKey(key));
+
     //// OTHER
 
-    protected static readonly pendingDiscordLinkByStateCache: SimpleCache<string, PendingDiscordLink> = Caches.builder()
+    protected static readonly pendingDiscordLinkByStateCache: SimpleCache<string, IPendingDiscordLink> = Caches.builder()
         .expireAfterWrite(Time.minutes(5))
         .expirationInterval(Time.seconds(30))
         .build();
@@ -170,6 +177,11 @@ export class Caching {
         .expireAfterWrite(Time.minutes(1))
         .expirationInterval(Time.seconds(20))
         .build();
+
+    protected static readonly hashCache: LoadingCache<string, string> = Caches.builder()
+        .expireAfterAccess(Time.seconds(40))
+        .expirationInterval(Time.seconds(10))
+        .build(key => sha512(key));
 
     ////
 
@@ -182,9 +194,11 @@ export class Caching {
 
             ["trafficById", Caching.trafficByIpCache],
             ["skinById", Caching.skinByIdCache],
+            ["apiKeys", Caching.apiKeyCache],
 
             ["pendingDiscordLinks", Caching.pendingDiscordLinkByStateCache],
-            ["accountLock", Caching.recentAccountsLock]
+            ["accountLock", Caching.recentAccountsLock],
+            ["hashes", Caching.hashCache]
         ]);
         const points: IPoint[] = [];
         caches.forEach((cache, name) => {
@@ -246,14 +260,18 @@ export class Caching {
         return this.skinByIdCache.get(id);
     }
 
+    public static getApiKey(key: string): Promise<Maybe<IApiKeyDocument>> {
+        return this.apiKeyCache.get(key);
+    }
+
     /// OTHER
 
-    public static storePendingDiscordLink(pendingLink: PendingDiscordLink): void {
+    public static storePendingDiscordLink(pendingLink: IPendingDiscordLink): void {
         this.pendingDiscordLinkByStateCache.put(pendingLink.state, pendingLink);
     }
 
-    public static getPendingDiscordLink(state: string): Maybe<PendingDiscordLink> {
-        return this.pendingDiscordLinkByStateCache.getIfPresent(state);
+    public static getPendingDiscordLink<T extends IPendingDiscordLink>(state: string): Maybe<T> {
+        return this.pendingDiscordLinkByStateCache.getIfPresent(state) as T;
     }
 
     public static invalidatePendingDiscordLink(state: string): void {
@@ -270,6 +288,10 @@ export class Caching {
 
     public static isAccountLocked(accountId: number): boolean {
         return !!this.recentAccountsLock.getIfPresent(accountId);
+    }
+
+    public static cachedSha512(str: string): string {
+        return this.hashCache.get(str)!;
     }
 
     ///

@@ -1,8 +1,8 @@
 import { Document, Model } from "mongoose";
 import { access } from "fs";
-import { Maybe } from "../util";
-import { MojangSecurityAnswer } from "../generator/Authentication";
-import { Bread } from "./Bread";
+import { Maybe } from "../../util";
+import { MojangSecurityAnswer } from "../../generator/Authentication";
+import { Bread } from "../Bread";
 
 export interface SecurityQuestion extends MojangSecurityAnswer {
 }
@@ -92,7 +92,7 @@ export interface IAccountModel extends Model<IAccountDocument> {
 
     countGlobalUsable(): Promise<number>;
 
-    calculateDelay(): Promise<number>;
+    calculateMinDelay(): Promise<number>;
 
     getAccountsPerServer(): Promise<{ server: string, count: number }[]>;
 

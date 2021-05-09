@@ -7,7 +7,7 @@ import { Discord } from "../util/Discord";
 import { AxiosResponse } from "axios";
 import { getConfig } from "../typings/Configs";
 import { IAccountDocument, MineSkinError } from "../typings";
-import { AccessTokenSource, AccountType } from "../typings/IAccountDocument";
+import { AccessTokenSource, AccountType } from "../typings/db/IAccountDocument";
 import { debug, warn } from "../util/colors";
 import { Encryption } from "../util/Encryption";
 import { AUTHENTICATION_METRIC } from "../util/metrics";

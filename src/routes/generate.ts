@@ -1,11 +1,11 @@
 import { Application, Request, Response } from "express";
-import { checkTraffic, corsMiddleware, getIp, getVia, longAndShortUuid, Maybe, md5, modelToVariant, updateTraffic, validateUrl, variantToModel } from "../util";
+import { checkTraffic, corsMiddleware, corsWithCredentialsMiddleware, getAndValidateRequestApiKey, getIp, getVia, longAndShortUuid, Maybe, md5, modelToVariant, updateTraffic, validateUrl, variantToModel } from "../util";
 import { UploadedFile } from "express-fileupload";
 import { Generator } from "../generator/Generator";
 import { generateLimiter } from "../util/rateLimiters";
 import { ClientInfo } from "../typings/ClientInfo";
 import { GenerateOptions } from "../typings/GenerateOptions";
-import { GenerateType, SkinModel, SkinVariant, SkinVisibility } from "../typings/ISkinDocument";
+import { GenerateType, SkinModel, SkinVariant, SkinVisibility } from "../typings/db/ISkinDocument";
 import { debug } from "../util/colors";
 import * as Sentry from "@sentry/node";
 import { Bread, nextBreadColor } from "../typings/Bread";
@@ -14,10 +14,10 @@ import { Caching } from "../generator/Caching";
 
 export const register = (app: Application) => {
 
-    app.use("/generate", corsMiddleware);
+    app.use("/generate", corsWithCredentialsMiddleware);
     app.use("/generate", generateLimiter);
     app.use("/generate", async (req, res, next) => {
-        const delay = await Generator.getDelay();
+        const delay = await Generator.getDelay(await getAndValidateRequestApiKey(req));
         res.header("X-MineSkin-Delay", `${ delay || 5 }`);
         next();
     })
@@ -37,12 +37,14 @@ export const register = (app: Application) => {
         await updateTraffic(req);
 
         const options = getAndValidateOptions(GenerateType.URL, req, res);
-        console.log(debug(`${ options.breadcrumb } URL:         ${ url }`))
+        console.log(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`));
+        console.log(debug(`${ options.breadcrumb } Key:         ${ req.apiKey?.name ?? "none" }`));
+        console.log(debug(`${ options.breadcrumb } URL:         ${ url }`));
         const client = getClientInfo(req);
 
 
         const skin = await Generator.generateFromUrlAndSave(url, options, client);
-        res.json(skin.toResponseJson(await Generator.getDelay()));
+        res.json(skin.toResponseJson(await Generator.getDelay(await getAndValidateRequestApiKey(req))));
     })
 
 
@@ -65,12 +67,14 @@ export const register = (app: Application) => {
         await updateTraffic(req);
 
         const options = getAndValidateOptions(GenerateType.UPLOAD, req, res);
+        console.log(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`));
+        console.log(debug(`${ options.breadcrumb } Key:         ${ req.apiKey?.name ?? "none" }`));
         console.log(debug(`${ options.breadcrumb } FILE:        "${ file.name }" ${ file.md5 }`))
         const client = getClientInfo(req);
 
 
         const skin = await Generator.generateFromUploadAndSave(file, options, client);
-        res.json(skin.toResponseJson(await Generator.getDelay()));
+        res.json(skin.toResponseJson(await Generator.getDelay(await getAndValidateRequestApiKey(req))));
     })
 
 
@@ -101,13 +105,14 @@ export const register = (app: Application) => {
         }
 
         const options = getAndValidateOptions(GenerateType.USER, req, res);
+        console.log(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`));
+        console.log(debug(`${ options.breadcrumb } Key:         ${ req.apiKey?.name ?? "none" }`));
         console.log(debug(`${ options.breadcrumb } USER:        ${ uuids.long }`))
         const client = getClientInfo(req);
 
 
-
         const skin = await Generator.generateFromUserAndSave(uuids.long, options, client);
-        res.json(skin.toResponseJson(await Generator.getDelay()));
+        res.json(skin.toResponseJson(await Generator.getDelay(await getAndValidateRequestApiKey(req))));
     })
 
     // TODO: remove at some point
@@ -136,13 +141,15 @@ export const register = (app: Application) => {
         }
 
         const options = getAndValidateOptions(GenerateType.USER, req, res);
+        console.log(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`));
+        console.log(debug(`${ options.breadcrumb } Key:         ${ req.apiKey?.name ?? "none" }`));
         console.log(debug(`${ options.breadcrumb } USER:        ${ uuids.long }`))
         const client = getClientInfo(req);
 
 
 
         const skin = await Generator.generateFromUserAndSave(uuids.long, options, client);
-        res.json(skin.toResponseJson(await Generator.getDelay()));
+        res.json(skin.toResponseJson(await Generator.getDelay(await getAndValidateRequestApiKey(req))));
     })
 
     ///

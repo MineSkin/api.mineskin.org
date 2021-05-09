@@ -22,7 +22,7 @@ import { getConfig } from "../typings/Configs";
 import { IAccountDocument, ISkinDocument, IStatDocument, MineSkinError } from "../typings";
 import { SkinData, SkinMeta, SkinValue } from "../typings/SkinData";
 import { GenerateOptions } from "../typings/GenerateOptions";
-import { GenerateType, SkinModel, SkinVariant, SkinVisibility } from "../typings/ISkinDocument";
+import { GenerateType, SkinModel, SkinVariant, SkinVisibility } from "../typings/db/ISkinDocument";
 import { AccountStats, CountDuplicateViewStats, DurationStats, Stats, SuccessRateStats, TimeFrameStats } from "../typings/Stats";
 import { ClientInfo } from "../typings/ClientInfo";
 import { durationMetric, HASH_MISMATCH_METRIC, metrics, NEW_DUPLICATES_METRIC, NO_ACCOUNTS_METRIC, SUCCESS_FAIL_METRIC } from "../util/metrics";
@@ -33,10 +33,15 @@ import { Discord } from "../util/Discord";
 import { Bread } from "../typings/Bread";
 import { IPoint } from "influx";
 import { Notifications } from "../util/Notifications";
+import { IApiKeyDocument } from "../typings/db/IApiKeyDocument";
 
 const config = getConfig();
 
-export const MIN_ACCOUNT_DELAY = 150;
+// minimum delay for accounts to be used - don't set lower than 60
+export const MIN_ACCOUNT_DELAY = 120;
+
+// default generator delay (seconds) between requests
+export const DEFAULT_DELAY = 4;
 
 const MAX_ID_TRIES = 10;
 
@@ -72,9 +77,17 @@ export class Generator {
 
     protected static detailedStatsQueryTimer = setInterval(() => Generator.queryDetailedStats(), 120000);
 
+    static async getDelay(apiKey?: IApiKeyDocument): Promise<number> {
+        const minDelay = await this.getMinDelay();
+        if (!apiKey) {
+            return Math.max(DEFAULT_DELAY, minDelay);
+        }
+        return Math.max(DEFAULT_DELAY, minDelay, apiKey.minDelay);
+    }
+
     @MemoizeExpiring(30000)
-    static async getDelay(): Promise<number> {
-        const delay = await Account.calculateDelay();
+    static async getMinDelay(): Promise<number> {
+        const delay = await Account.calculateMinDelay();
         try {
             metrics.influx.writePoints([{
                 measurement: 'delay',
@@ -99,7 +112,7 @@ export class Generator {
 
     @MemoizeExpiring(60000)
     static async getStats(): Promise<Stats> {
-        const delay = await this.getDelay();
+        const delay = await this.getMinDelay();
 
         const stats = <Stats>{
             server: config.server,
