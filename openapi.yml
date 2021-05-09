@@ -16,6 +16,15 @@ tags:
   - name: get
   - name: util
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+    apiKey:
+      type: apiKey
+      in: query
+      name: key
+
   schemas:
     PartialSkinInfo:
       type: object
@@ -190,6 +199,9 @@ paths:
         - generate
       parameters:
         - $ref: '#/components/parameters/userAgent'
+      security:
+        - bearerAuth: []
+          apiKey: []
       requestBody:
         required: true
         content:
@@ -215,6 +227,9 @@ paths:
         - generate
       parameters:
         - $ref: '#/components/parameters/userAgent'
+      security:
+        - bearerAuth: [ ]
+          apiKey: [ ]
       requestBody:
         required: true
         content:
@@ -241,6 +256,9 @@ paths:
         - generate
       parameters:
         - $ref: '#/components/parameters/userAgent'
+      security:
+        - bearerAuth: [ ]
+          apiKey: [ ]
       requestBody:
         required: true
         content:
@@ -269,6 +287,9 @@ paths:
         - get
       parameters:
         - $ref: '#/components/parameters/userAgent'
+      security:
+        - bearerAuth: [ ]
+          apiKey: [ ]
       responses:
         200:
           $ref: '#/components/responses/DelayInfo'
