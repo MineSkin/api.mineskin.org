@@ -1,5 +1,5 @@
 import { Application, Request, Response } from "express";
-import { checkTraffic, corsMiddleware, getAndValidateRequestApiKey, getIp, getVia, longAndShortUuid, Maybe, md5, modelToVariant, updateTraffic, validateUrl, variantToModel } from "../util";
+import { checkTraffic, corsMiddleware, corsWithCredentialsMiddleware, getAndValidateRequestApiKey, getIp, getVia, longAndShortUuid, Maybe, md5, modelToVariant, updateTraffic, validateUrl, variantToModel } from "../util";
 import { UploadedFile } from "express-fileupload";
 import { Generator } from "../generator/Generator";
 import { generateLimiter } from "../util/rateLimiters";
@@ -14,7 +14,7 @@ import { Caching } from "../generator/Caching";
 
 export const register = (app: Application) => {
 
-    app.use("/generate", corsMiddleware);
+    app.use("/generate", corsWithCredentialsMiddleware);
     app.use("/generate", generateLimiter);
     app.use("/generate", async (req, res, next) => {
         const delay = await Generator.getDelay(await getAndValidateRequestApiKey(req));

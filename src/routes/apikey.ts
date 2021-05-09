@@ -1,5 +1,5 @@
 import { Application, Request, Response } from "express";
-import { base64encode, Maybe, random32BitNumber, sha256, sha512 } from "../util";
+import { base64encode, corsMiddleware, corsWithCredentialsMiddleware, Maybe, random32BitNumber, sha256, sha512 } from "../util";
 import { debug, info, warn } from "../util/colors";
 import { Caching } from "../generator/Caching";
 import { IApiKeyDocument } from "../typings/db/IApiKeyDocument";
@@ -16,9 +16,9 @@ const config = getConfig();
 
 export const register = (app: Application) => {
 
-    // no cors middleware here, want to restrict it to mineskin.org only
+    app.use("/apikey", corsWithCredentialsMiddleware);
 
-    app.get("/apikey", async (req: Request, res: Response)=>{
+    app.get("/apikey", async (req: Request, res: Response) => {
         const key: string = req.query["key"] as string;
         if (!key) {
             res.status(400).json({ error: "missing key" });
@@ -33,6 +33,7 @@ export const register = (app: Application) => {
 
         res.json({
             success: true,
+            server: config.server,
             name: apiKey.name,
             owner: apiKey.owner,
             key: key,
@@ -63,9 +64,9 @@ export const register = (app: Application) => {
         }
         Caching.invalidatePendingDiscordLink(ownerState);
 
-        const allowedOrigins: string[] = (req.body["origins"] || []).map((s: string) => s.trim().toLowerCase());
-        const allowedIps: string[] = (req.body["ips"] || []).map((s: string) => s.trim());
-        const allowedAgents: string[] = (req.body["agents"] || []).map((s: string) => s.trim().toLowerCase());
+        const allowedOrigins: string[] = (req.body["origins"] || []).map((s: string) => s.trim().toLowerCase()).filter((s: string) => s.length > 2);
+        const allowedIps: string[] = (req.body["ips"] || []).map((s: string) => s.trim()).filter((s: string) => s.length > 2);
+        const allowedAgents: string[] = (req.body["agents"] || []).map((s: string) => s.trim().toLowerCase()).filter((s: string) => s.length > 2);
 
         console.log(info(`Generating new API Key "${ name }" for ${ owner }`));
         console.log(debug(`Origins: ${ allowedOrigins }`));
@@ -90,6 +91,7 @@ export const register = (app: Application) => {
             key: keyHash,
             secret: secretHash,
             createdAt: date,
+            updatedAt: date,
             allowedOrigins: allowedOrigins,
             allowedIps: allowedIps,
             allowedAgents: allowedAgents,
@@ -143,16 +145,18 @@ export const register = (app: Application) => {
         }
         const allowedOrigins: string[] = req.body["origins"];
         if (allowedOrigins) {
-            apiKey.allowedOrigins = allowedOrigins.map(s => s.trim().toLowerCase());
+            apiKey.allowedOrigins = allowedOrigins.map(s => s.trim().toLowerCase()).filter(s => s.length > 2);
         }
         const allowedIps: string[] = req.body["ips"];
         if (allowedIps) {
-            apiKey.allowedIps = allowedIps.map(s => s.trim());
+            apiKey.allowedIps = allowedIps.map(s => s.trim()).filter(s => s.length > 2);
         }
         const allowedAgents: string[] = req.body["agents"];
         if (allowedAgents) {
-            apiKey.allowedAgents = allowedAgents.map(s => s.trim().toLowerCase());
+            apiKey.allowedAgents = allowedAgents.map(s => s.trim().toLowerCase()).filter(s => s.length > 2);
         }
+
+        apiKey.updatedAt = new Date();
 
 
         await apiKey.save();
@@ -165,6 +169,7 @@ export const register = (app: Application) => {
 
 
     app.delete("/apikey", async (req: Request, res: Response) => {
+        console.log(req.body)
         const key: string = req.body["key"];
         if (!key) {
             res.status(400).json({ error: "missing key" });
@@ -204,7 +209,7 @@ export const register = (app: Application) => {
 
         const clientId = config.discordApiKey.id;
         const redirect = encodeURIComponent(`https://${ config.server }.api.mineskin.org/apikey/discord/oauth/callback`);
-        const state = sha256(`${Date.now()}${config.server}${Math.random()}`);
+        const state = sha256(`${ Date.now() }${ config.server }${ Math.random() }`);
 
         Caching.storePendingDiscordLink(<PendingDiscordApiKeyLink>{
             state: state
@@ -281,7 +286,7 @@ export const register = (app: Application) => {
             return;
         }
 
-        const state = sha256(`${req.query["state"]}${Date.now()}`);
+        const state = sha256(`${ req.query["state"] }${ Date.now() }`);
 
         // use this as a temporary storage for the user id
         Caching.storePendingDiscordLink(<PendingDiscordApiKeyLink>{
@@ -289,7 +294,7 @@ export const register = (app: Application) => {
             user: discordId
         });
 
-        res.redirect("https://mineskin.org/apikey#" + base64encode(state));
+        res.redirect(`https://mineskin.org/apikey?` + base64encode(config.server + ":" + state));
     })
 
 

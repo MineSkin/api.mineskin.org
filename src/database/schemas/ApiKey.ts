@@ -28,6 +28,9 @@ const schema: Schema<IApiKeyDocument, IApiKeyModel> = new Schema(
             type: Date,
             required: true
         },
+        updatedAt: {
+            type: Date
+        },
         allowedOrigins: [String],
         allowedIps: [String],
         allowedAgents: [String],
