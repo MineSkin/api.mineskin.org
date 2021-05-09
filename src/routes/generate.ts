@@ -11,6 +11,7 @@ import * as Sentry from "@sentry/node";
 import { Bread, nextBreadColor } from "../typings/Bread";
 import { GenerateRequest, MineSkinRequest } from "../typings";
 import { Caching } from "../generator/Caching";
+import { isApiKeyRequest } from "../typings/ApiKeyRequest";
 
 export const register = (app: Application) => {
 
@@ -147,7 +148,6 @@ export const register = (app: Application) => {
         const client = getClientInfo(req);
 
 
-
         const skin = await Generator.generateFromUserAndSave(uuids.long, options, client);
         res.json(skin.toResponseJson(await Generator.getDelay(await getAndValidateRequestApiKey(req))));
     })
@@ -158,13 +158,18 @@ export const register = (app: Application) => {
         const userAgent = req.header("user-agent") || "n/a";
         const origin = req.header("origin");
         const via = getVia(req);
+        let apiKey;
+        if (isApiKeyRequest(req) && req.apiKey) {
+            apiKey = `${ req.apiKey.key.substr(0, 8) } ${ req.apiKey?.name }`;
+        }
 
         Sentry.setTag("generate_via", via);
 
         return {
             userAgent,
             origin,
-            via
+            via,
+            apiKey
         };
     }
 
