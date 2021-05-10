@@ -14,7 +14,7 @@ import { MineSkinError, MineSkinRequest } from "../typings";
 import { Encryption } from "../util/Encryption";
 import { debug, info, warn } from "../util/colors";
 import * as Sentry from "@sentry/node";
-import { Time } from "@inventivetalent/loading-cache";
+import { Time } from "@inventivetalent/time";
 import { PendingDiscordAccountLink } from "../typings/DiscordAccountLink";
 
 const config = getConfig();

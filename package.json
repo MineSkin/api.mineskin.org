@@ -15,6 +15,7 @@
     "@inventivetalent/gitsha": "^1.0.0",
     "@inventivetalent/loading-cache": "^0.4.0",
     "@inventivetalent/optimus-ts": "^0.2.1",
+    "@inventivetalent/time": "^1.0.0",
     "@inventivetalent/typescript-memoize": "^1.0.0-alpha.5",
     "@sentry/node": "^5.29.1",
     "@sentry/tracing": "^5.29.1",

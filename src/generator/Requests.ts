@@ -1,6 +1,6 @@
 import { JobQueue } from "jobqu";
 import axios, { AxiosRequestConfig, AxiosResponse, AxiosInstance } from "axios";
-import { Time } from "@inventivetalent/loading-cache";
+import { Time } from "@inventivetalent/time";
 import { metrics } from "../util/metrics";
 import { URL } from "url";
 import { setInterval } from "timers";

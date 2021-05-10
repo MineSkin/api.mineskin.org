@@ -15,7 +15,6 @@ import * as fileUpload from "express-fileupload";
 import * as session from "express-session";
 import { generateRoute, getRoute, renderRoute, testerRoute, utilRoute, accountManagerRoute, apiKeyRoute } from "./routes";
 import { MOJ_DIR, Temp, UPL_DIR, URL_DIR } from "./generator/Temp";
-import { Time } from "@inventivetalent/loading-cache";
 import { getConfig } from "./typings/Configs";
 import { MineSkinError, MineSkinRequest, GenerateRequest, isBreadRequest } from "./typings";
 import { apiRequestsMiddleware } from "./util/metrics";

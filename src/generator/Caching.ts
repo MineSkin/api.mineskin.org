@@ -1,5 +1,5 @@
 import { Requests } from "./Requests";
-import { AsyncLoadingCache, Caches, CacheStats, ICacheBase, LoadingCache, SimpleCache, Time } from "@inventivetalent/loading-cache";
+import { AsyncLoadingCache, Caches, CacheStats, ICacheBase, LoadingCache, SimpleCache } from "@inventivetalent/loading-cache";
 import * as Sentry from "@sentry/node";
 import { Severity } from "@sentry/node";
 import { Maybe, sha256, sha512, stripUuid } from "../util";
@@ -16,6 +16,7 @@ import { Bread } from "../typings/Bread";
 import { IApiKeyDocument } from "../typings/db/IApiKeyDocument";
 import { ApiKey } from "../database/schemas/ApiKey";
 import { IPendingDiscordLink } from "../typings/DiscordAccountLink";
+import { Time } from "@inventivetalent/time";
 
 const config = getConfig();
 
