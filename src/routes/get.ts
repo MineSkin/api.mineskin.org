@@ -93,7 +93,7 @@ export const register = (app: Application) => {
             query.name = { '$regex': `.*${ req.query["filter"] }.*` }
         }
 
-        const count = await Skin.countDocuments(query).exec();
+        const count = await Skin.estimatedDocumentCount(query).exec();
         const skins = await Skin
             .find(query)
             .skip(size * (page - 1))
@@ -113,5 +113,8 @@ export const register = (app: Application) => {
             filter: req.query["filter"]
         });
     })
+
+
+
 
 }
