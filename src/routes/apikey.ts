@@ -14,6 +14,8 @@ import * as qs from "querystring";
 
 const config = getConfig();
 
+const DEFAULT_API_KEY_DELAY = 4;
+
 export const register = (app: Application) => {
 
     app.use("/apikey", corsWithCredentialsMiddleware);
@@ -95,7 +97,7 @@ export const register = (app: Application) => {
             allowedOrigins: allowedOrigins,
             allowedIps: allowedIps,
             allowedAgents: allowedAgents,
-            minDelay: 4
+            minDelay: DEFAULT_API_KEY_DELAY
         });
 
         await apiKey.save();
