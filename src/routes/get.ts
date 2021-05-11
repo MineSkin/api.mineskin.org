@@ -96,11 +96,11 @@ export const register = (app: Application) => {
         }
 
         const transaction = Sentry.getCurrentHub().getScope()?.getTransaction();
+
         let countSpan = transaction?.startChild({
             op: "skin_pagination_count",
             description: "Skin Pagination Count"
         });
-
         const count = await Caching.getSkinDocumentCount(query);
         countSpan?.finish();
 
@@ -113,7 +113,6 @@ export const register = (app: Application) => {
                 size: size
             }
         });
-
         const skins = await Skin
             .find(query)
             .skip(size * (page - 1))
