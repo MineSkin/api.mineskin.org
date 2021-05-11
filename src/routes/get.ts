@@ -3,6 +3,8 @@ import { Generator } from "../generator/Generator";
 import { Caching } from "../generator/Caching";
 import { Skin } from "../database/schemas";
 import { corsMiddleware, corsWithAuthMiddleware, corsWithCredentialsMiddleware, getAndValidateRequestApiKey, getIp, stripUuid } from "../util";
+import { debug } from "../util/colors";
+import * as Sentry from "@sentry/node";
 
 export const register = (app: Application) => {
 
@@ -71,8 +73,8 @@ export const register = (app: Application) => {
 
     // TODO: add route to get by hash
 
-    app.get("/get/forTexture/:value/:signature?", async (req: Request, res: Response) =>{
-        const query: any = {value: req.params["value"]};
+    app.get("/get/forTexture/:value/:signature?", async (req: Request, res: Response) => {
+        const query: any = { value: req.params["value"] };
         if (req.params.hasOwnProperty("signature")) {
             query.signature = req.params["signature"];
         }
@@ -93,7 +95,25 @@ export const register = (app: Application) => {
             query.name = { '$regex': `.*${ req.query["filter"] }.*` }
         }
 
+        const transaction = Sentry.getCurrentHub().getScope()?.getTransaction();
+        let countSpan = transaction?.startChild({
+            op: "skin_pagination_count",
+            description: "Skin Pagination Count"
+        });
+
         const count = await Caching.getSkinDocumentCount(query);
+        countSpan?.finish();
+
+        let querySpan = transaction?.startChild({
+            op: "skin_pagination_query",
+            description: "Skin Pagination Query",
+            data: {
+                filter: req.query.filter,
+                page: page - 1,
+                size: size
+            }
+        });
+
         const skins = await Skin
             .find(query)
             .skip(size * (page - 1))
@@ -102,6 +122,7 @@ export const register = (app: Application) => {
             .sort({ time: -1 })
             .lean()
             .exec();
+        querySpan?.finish();
 
         res.json({
             skins: skins,
@@ -113,8 +134,6 @@ export const register = (app: Application) => {
             filter: req.query["filter"]
         });
     })
-
-
 
 
 }
