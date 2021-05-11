@@ -170,7 +170,10 @@ export const register = (app: Application) => {
             apiKey = `${ req.apiKey.key.substr(0, 8) } ${ req.apiKey?.name }`;
         }
 
-        Sentry.setTag("generate_via", via);
+        Sentry.setTags({
+            "generate_via": via,
+            "generate_api_key": apiKey ?? "none"
+        });
 
         return {
             userAgent,
