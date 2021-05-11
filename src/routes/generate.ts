@@ -1,7 +1,7 @@
 import { Application, Request, Response } from "express";
 import { checkTraffic, corsMiddleware, corsWithAuthMiddleware, corsWithCredentialsMiddleware, getAndValidateRequestApiKey, getIp, getVia, longAndShortUuid, Maybe, md5, modelToVariant, updateTraffic, validateUrl, variantToModel } from "../util";
 import { UploadedFile } from "express-fileupload";
-import { Generator } from "../generator/Generator";
+import { Generator, SavedSkin } from "../generator/Generator";
 import { generateLimiter } from "../util/rateLimiters";
 import { ClientInfo } from "../typings/ClientInfo";
 import { GenerateOptions } from "../typings/GenerateOptions";
@@ -45,7 +45,7 @@ export const register = (app: Application) => {
 
 
         const skin = await Generator.generateFromUrlAndSave(url, options, client);
-        res.json(skin.toResponseJson(await Generator.getDelay(await getAndValidateRequestApiKey(req))));
+        await sendSkin(req, res, skin);
     })
 
 
@@ -75,7 +75,7 @@ export const register = (app: Application) => {
 
 
         const skin = await Generator.generateFromUploadAndSave(file, options, client);
-        res.json(skin.toResponseJson(await Generator.getDelay(await getAndValidateRequestApiKey(req))));
+        await sendSkin(req, res, skin);
     })
 
 
@@ -113,7 +113,7 @@ export const register = (app: Application) => {
 
 
         const skin = await Generator.generateFromUserAndSave(uuids.long, options, client);
-        res.json(skin.toResponseJson(await Generator.getDelay(await getAndValidateRequestApiKey(req))));
+        await sendSkin(req, res, skin);
     })
 
     // TODO: remove at some point
@@ -149,10 +149,17 @@ export const register = (app: Application) => {
 
 
         const skin = await Generator.generateFromUserAndSave(uuids.long, options, client);
-        res.json(skin.toResponseJson(await Generator.getDelay(await getAndValidateRequestApiKey(req))));
+        await sendSkin(req, res, skin);
     })
 
     ///
+
+    async function sendSkin(req: Request, res: Response, skin: SavedSkin): Promise<void> {
+        const genDelay = await Generator.getDelay(await getAndValidateRequestApiKey(req));
+        res.json(skin.toResponseJson(skin.duplicate ? 1 : genDelay));
+
+        await updateTraffic(req, new Date(Date.now() - genDelay))
+    }
 
     function getClientInfo(req: GenerateRequest): ClientInfo {
         const userAgent = req.header("user-agent") || "n/a";

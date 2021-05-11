@@ -61,9 +61,9 @@ export async function checkTraffic(req: Request, res: Response): Promise<boolean
     return true;
 }
 
-export async function updateTraffic(req: Request): Promise<void> {
+export async function updateTraffic(req: Request, time: Date = new Date()): Promise<void> {
     const ip = getIp(req);
-    return await Caching.updateTrafficRequestTime(ip, new Date());
+    return await Caching.updateTrafficRequestTime(ip, time);
 }
 
 export async function getAndValidateRequestApiKey(req: MineSkinRequest): Promise<Maybe<IApiKeyDocument>> {

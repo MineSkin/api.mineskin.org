@@ -1136,7 +1136,7 @@ export class Generator {
 
 }
 
-class SavedSkin {
+export class SavedSkin {
     constructor(public readonly skin: ISkinDocument, public readonly duplicate: boolean) {
     }
 
