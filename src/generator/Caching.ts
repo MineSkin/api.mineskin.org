@@ -168,6 +168,12 @@ export class Caching {
         .expirationInterval(Time.seconds(20))
         .buildAsync<string, IApiKeyDocument>(key => ApiKey.findKey(key));
 
+    protected static readonly skinDocumentCounts: AsyncLoadingCache<string, number> = Caches.builder()
+        .expireAfterWrite(Time.minutes(5))
+        .expireAfterAccess(Time.minutes(1))
+        .expirationInterval(Time.seconds(10))
+        .buildAsync<string, number>(key => Skin.countDocuments(JSON.parse(key)).exec());
+
     //// OTHER
 
     protected static readonly pendingDiscordLinkByStateCache: SimpleCache<string, IPendingDiscordLink> = Caches.builder()
@@ -197,6 +203,7 @@ export class Caching {
             ["trafficById", Caching.trafficByIpCache],
             ["skinById", Caching.skinByIdCache],
             ["apiKeys", Caching.apiKeyCache],
+            ["skinDocumentCounts", Caching.skinDocumentCounts],
 
             ["pendingDiscordLinks", Caching.pendingDiscordLinkByStateCache],
             ["accountLock", Caching.recentAccountsLock],
@@ -264,6 +271,10 @@ export class Caching {
 
     public static getApiKey(key: string): Promise<Maybe<IApiKeyDocument>> {
         return this.apiKeyCache.get(key);
+    }
+
+    public static getSkinDocumentCount(query: any): Promise<number> {
+        return this.skinDocumentCounts.get(query ? JSON.stringify(query) : "ALL");
     }
 
     /// OTHER
