@@ -70,6 +70,7 @@ export const SkinSchema: Schema<ISkinDocument, ISkinModel> = new Schema({
     via: String,
     server: String,
     ua: String,
+    apiKey: String,
     apiVer: String,
     testerRequest: Boolean,
     testerMismatchCounter: Number

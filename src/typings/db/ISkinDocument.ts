@@ -83,6 +83,8 @@ export interface ISkinDocument extends Document {
     server?: string;
     /** User-Agent of generation request **/
     ua?: string;
+    /** Key used for request **/
+    apiKey?: string;
     /** @deprecated **/
     apiVer?: string;
 
