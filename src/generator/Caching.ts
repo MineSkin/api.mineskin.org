@@ -169,9 +169,9 @@ export class Caching {
         .buildAsync<string, IApiKeyDocument>(key => ApiKey.findKey(key));
 
     protected static readonly skinDocumentCounts: AsyncLoadingCache<string, number> = Caches.builder()
-        .expireAfterWrite(Time.minutes(5))
-        .expireAfterAccess(Time.minutes(1))
-        .expirationInterval(Time.seconds(10))
+        .expireAfterWrite(Time.minutes(10))
+        .expireAfterAccess(Time.minutes(5))
+        .expirationInterval(Time.seconds(30))
         .buildAsync<string, number>(key => Skin.countDocuments(JSON.parse(key)).exec());
 
     //// OTHER
