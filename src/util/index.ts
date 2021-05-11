@@ -27,6 +27,7 @@ export function getIp(req: Request): string {
 export async function checkTraffic(req: Request, res: Response): Promise<boolean> {
     const ip = getIp(req);
     console.log(debug("IP: " + ip));
+    console.log(debug("Host: " + req.hostname));
 
     Sentry.setUser({
         ip_address: ip
