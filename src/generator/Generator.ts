@@ -29,7 +29,6 @@ import { durationMetric, HASH_MISMATCH_METRIC, metrics, NEW_DUPLICATES_METRIC, N
 import { debug, error, info, warn } from "../util/colors";
 import { Optimus } from "@inventivetalent/optimus-ts";
 import { SkinInfo } from "../typings/SkinInfo";
-import { Discord } from "../util/Discord";
 import { Bread } from "../typings/Bread";
 import { IPoint } from "influx";
 import { Notifications } from "../util/Notifications";
@@ -1124,13 +1123,15 @@ export class Generator {
 
     static appendOptionsToDuplicateQuery(options: GenerateOptions, query: any): any {
         if (options) {
-            query.name = options.name || "";
+            query.name = options.name;
             query.visibility = options.visibility || 0;
-            //TODO: variant
             if (options.model && options.model !== SkinModel.UNKNOWN) {
                 query.model = options.model;
+            } else if (options.variant && options.variant !== SkinVariant.UNKNOWN) {
+                query.variant = options.variant;
             }
         }
+        console.log(query);
         return query;
     }
 
