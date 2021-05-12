@@ -158,7 +158,9 @@ export const register = (app: Application) => {
         const genDelay = await Generator.getDelay(await getAndValidateRequestApiKey(req));
         res.json(skin.toResponseJson(skin.duplicate ? 1 : genDelay));
 
-        await updateTraffic(req, new Date(Date.now() - genDelay))
+        if (skin.duplicate) {
+            await updateTraffic(req, new Date(Date.now() - genDelay))
+        }
     }
 
     function getClientInfo(req: GenerateRequest): ClientInfo {
