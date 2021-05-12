@@ -1131,7 +1131,6 @@ export class Generator {
                 query.variant = options.variant;
             }
         }
-        console.log(query);
         return query;
     }
 
