@@ -296,7 +296,7 @@ export const register = (app: Application) => {
             user: discordId
         });
 
-        res.redirect(`https://mineskin.org/apikey?` + base64encode(config.server + ":" + state));
+        res.redirect(`https://mineskin.org/apikey?` + encodeURIComponent(base64encode(config.server + ":" + state)));
     })
 
 
