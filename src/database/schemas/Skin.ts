@@ -14,7 +14,7 @@ export const SkinSchema: Schema<ISkinDocument, ISkinModel> = new Schema({
     skinUuid: {
         type: String,
         index: true,
-        unique: true
+        //TODO: unique + replace nulls
     },
     hash: {
         type: String,
