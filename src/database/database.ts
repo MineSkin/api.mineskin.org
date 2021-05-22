@@ -26,8 +26,14 @@ async function connectMongo(config: MineSkinConfig) {
     mongoose.set('useNewUrlParser', true);
     mongoose.set('useFindAndModify', false);
 
-    console.log("Connecting to mongodb://" + ((config.mongo.user || "admin") + ":*****" + "@" + (config.mongo.address || "localhost") + ":" + (config.mongo.port || 27017) + "/" + (config.mongo.database || "database")));
-    const m = await mongoose.connect("mongodb://" + ((config.mongo.user || "admin") + ":" + (config.mongo.pass || "admin") + "@" + (config.mongo.address || "localhost") + ":" + (config.mongo.port || 27017) + "/" + (config.mongo.database || "database")));
+    let m: Mongoose;
+    if (config.mongo.url) {
+        console.log("Connecting to mongodb...");
+        m = await mongoose.connect(config.mongo.url);
+    } else {
+        console.log("Connecting to mongodb://" + ((config.mongo.user || "admin") + ":*****" + "@" + (config.mongo.address || "localhost") + ":" + (config.mongo.port || 27017) + "/" + (config.mongo.database || "database")));
+        m = await mongoose.connect("mongodb://" + ((config.mongo.user || "admin") + ":" + (config.mongo.pass || "admin") + "@" + (config.mongo.address || "localhost") + ":" + (config.mongo.port || 27017) + "/" + (config.mongo.database || "database")));
+    }
     console.info("MongoDB connected!");
 
     mongoose.connection.on("error", err => {

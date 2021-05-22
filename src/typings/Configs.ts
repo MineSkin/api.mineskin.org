@@ -10,17 +10,15 @@ interface OptimusConfig {
     random: number;
 }
 
-interface TunnelConfig extends SshTunnelConfig {
-}
-
 interface MongoConfig {
     useTunnel: boolean;
-    tunnel: TunnelConfig;
+    tunnel: SshTunnelConfig;
 
-    user: string;
-    pass: string;
-    address: string;
-    port: number;
+    url?: string;
+    user?: string;
+    pass?: string;
+    address?: string;
+    port?: number;
     database: string;
 }
 
