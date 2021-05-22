@@ -816,6 +816,7 @@ export class Generator {
         const mojangHash = await this.getMojangHash(data.decodedValue!.textures!.SKIN!.url);
 
         this.compareImageAndMojangHash(tempFileValidation.hash!, mojangHash!.hash!, type, options, account);
+        //TODO: compare actual image contents
 
         await this.handleGenerateSuccess(type, options, client, account);
 
