@@ -92,7 +92,7 @@ export const register = (app: Application) => {
 
         const query: any = { visibility: 0 };
         if (req.query.hasOwnProperty("filter") && (req.query["filter"]?.length || 0) > 0) {
-            query.name = { '$regex': `.*${ req.query["filter"] }.*` }
+            query["$text"] = { $search: req.query.filter };
         }
 
         const transaction = Sentry.getCurrentHub().getScope()?.getTransaction();
