@@ -1,5 +1,5 @@
 import * as mongoose from "mongoose";
-import { Mongoose } from "mongoose";
+import { ConnectOptions, Mongoose } from "mongoose";
 import * as Sentry from "@sentry/node";
 import { MineSkinConfig } from "../typings/Configs";
 import tunnel = require("tunnel-ssh");
@@ -23,16 +23,20 @@ export function connectToMongo(config: MineSkinConfig): Promise<Mongoose> {
 
 async function connectMongo(config: MineSkinConfig) {
     // Connect to DB
-    mongoose.set('useNewUrlParser', true);
-    mongoose.set('useFindAndModify', false);
+
+    const options: ConnectOptions = {
+        useNewUrlParser: true,
+        useFindAndModify: false,
+        autoIndex: config.mongo.autoIndex
+    };
 
     let m: Mongoose;
     if (config.mongo.url) {
         console.log("Connecting to mongodb...");
-        m = await mongoose.connect(config.mongo.url, { autoIndex: config.mongo.autoIndex });
+        m = await mongoose.connect(config.mongo.url, options);
     } else {
         console.log("Connecting to mongodb://" + ((config.mongo.user || "admin") + ":*****" + "@" + (config.mongo.address || "localhost") + ":" + (config.mongo.port || 27017) + "/" + (config.mongo.database || "database")));
-        m = await mongoose.connect("mongodb://" + ((config.mongo.user || "admin") + ":" + (config.mongo.pass || "admin") + "@" + (config.mongo.address || "localhost") + ":" + (config.mongo.port || 27017) + "/" + (config.mongo.database || "database")), { autoIndex: config.mongo.autoIndex });
+        m = await mongoose.connect("mongodb://" + ((config.mongo.user || "admin") + ":" + (config.mongo.pass || "admin") + "@" + (config.mongo.address || "localhost") + ":" + (config.mongo.port || 27017) + "/" + (config.mongo.database || "database")), options);
     }
     console.info("MongoDB connected!");
 
