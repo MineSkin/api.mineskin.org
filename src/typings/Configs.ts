@@ -20,7 +20,6 @@ interface MongoConfig {
     address?: string;
     port?: number;
     database: string;
-    autoIndex?: boolean;
 }
 
 interface CryptoConfig {

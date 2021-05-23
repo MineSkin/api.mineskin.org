@@ -27,7 +27,7 @@ async function connectMongo(config: MineSkinConfig) {
     const options: ConnectOptions = {
         useNewUrlParser: true,
         useFindAndModify: false,
-        autoIndex: config.mongo.autoIndex
+        autoIndex: false
     };
 
     let m: Mongoose;
