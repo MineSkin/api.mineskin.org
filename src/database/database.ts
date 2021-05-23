@@ -29,10 +29,10 @@ async function connectMongo(config: MineSkinConfig) {
     let m: Mongoose;
     if (config.mongo.url) {
         console.log("Connecting to mongodb...");
-        m = await mongoose.connect(config.mongo.url);
+        m = await mongoose.connect(config.mongo.url, { autoIndex: config.mongo.autoIndex });
     } else {
         console.log("Connecting to mongodb://" + ((config.mongo.user || "admin") + ":*****" + "@" + (config.mongo.address || "localhost") + ":" + (config.mongo.port || 27017) + "/" + (config.mongo.database || "database")));
-        m = await mongoose.connect("mongodb://" + ((config.mongo.user || "admin") + ":" + (config.mongo.pass || "admin") + "@" + (config.mongo.address || "localhost") + ":" + (config.mongo.port || 27017) + "/" + (config.mongo.database || "database")));
+        m = await mongoose.connect("mongodb://" + ((config.mongo.user || "admin") + ":" + (config.mongo.pass || "admin") + "@" + (config.mongo.address || "localhost") + ":" + (config.mongo.port || 27017) + "/" + (config.mongo.database || "database")), { autoIndex: config.mongo.autoIndex });
     }
     console.info("MongoDB connected!");
 
