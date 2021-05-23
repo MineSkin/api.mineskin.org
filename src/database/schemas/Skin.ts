@@ -22,7 +22,7 @@ export const SkinSchema: Schema<ISkinDocument, ISkinModel> = new Schema({
     },
     name: {
         type: String,
-        index: true
+        index: 'text'
     },
     uuid: {
         type: String
