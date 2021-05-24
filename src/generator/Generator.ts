@@ -25,7 +25,7 @@ import { GenerateOptions } from "../typings/GenerateOptions";
 import { GenerateType, SkinModel, SkinVariant, SkinVisibility } from "../typings/db/ISkinDocument";
 import { AccountStats, CountDuplicateViewStats, DurationStats, Stats, SuccessRateStats, TimeFrameStats } from "../typings/Stats";
 import { ClientInfo } from "../typings/ClientInfo";
-import { durationMetric, HASH_MISMATCH_METRIC, metrics, NEW_DUPLICATES_METRIC, NO_ACCOUNTS_METRIC, SUCCESS_FAIL_METRIC } from "../util/metrics";
+import { durationMetric, HASH_MISMATCH_METRIC, metrics, NEW_DUPLICATES_METRIC, NO_ACCOUNTS_METRIC, SUCCESS_FAIL_METRIC, URL_HOST_METRIC } from "../util/metrics";
 import { debug, error, info, warn } from "../util/colors";
 import { Optimus } from "@inventivetalent/optimus-ts";
 import { SkinInfo } from "../typings/SkinInfo";
@@ -33,6 +33,7 @@ import { Bread } from "../typings/Bread";
 import { IPoint } from "influx";
 import { Notifications } from "../util/Notifications";
 import { IApiKeyDocument } from "../typings/db/IApiKeyDocument";
+import * as Url from "url";
 
 const config = getConfig();
 
@@ -595,6 +596,14 @@ export class Generator {
     protected static async generateFromUrl(originalUrl: string, options: GenerateOptions, client: ClientInfo): Promise<GenerateResult> {
         console.log(info(options.breadcrumb + " [Generator] Generating from url"));
         Sentry.setExtra("generate_url", originalUrl);
+
+        try {
+            URL_HOST_METRIC
+                .tag('host', new URL(originalUrl).host)
+                .inc();
+        } catch (e) {
+            Sentry.captureException(e);
+        }
 
         let account: Maybe<IAccountDocument> = undefined;
         let tempFile: Maybe<TempFile> = undefined;

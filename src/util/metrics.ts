@@ -42,6 +42,8 @@ export const apiRequestsMiddleware = (req: Request, res: Response, next: NextFun
 
 export const RATE_LIMIT_METRIC = metrics.metric('mineskin', 'api_rate_limit');
 
+export const URL_HOST_METRIC = metrics.metric('mineskin', 'generate_url_hosts');
+
 export const AUTHENTICATION_METRIC = metrics.metric('mineskin', 'authentication');
 
 export const NEW_DUPLICATES_METRIC = metrics.metric('mineskin', 'generate_new_duplicate');
