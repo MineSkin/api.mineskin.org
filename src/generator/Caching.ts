@@ -172,7 +172,7 @@ export class Caching {
         .expireAfterWrite(Time.minutes(10))
         .expireAfterAccess(Time.minutes(5))
         .expirationInterval(Time.seconds(30))
-        .buildAsync<string, number>(key => Skin.estimatedDocumentCount(JSON.parse(key)).exec());
+        .buildAsync<string, number>(key => Skin.countDocuments(JSON.parse(key)).exec());
 
     //// OTHER
 
