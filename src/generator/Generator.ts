@@ -229,6 +229,10 @@ export class Generator {
         }).exec();
         const accountTypes = await Account.aggregate([
             {
+                "$match": {
+                    requestServer: { $in: ["default", config.server] }
+                }
+            }, {
                 "$group":
                     {
                         _id: "$accountType",
