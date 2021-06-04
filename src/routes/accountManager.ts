@@ -443,7 +443,7 @@ export const register = (app: Application) => {
             msg: "Account saved. Thanks for your contribution!"
         })
 
-        Discord.notifyNewAccount(account);
+        Discord.notifyNewAccount(account, req);
     })
 
     app.delete("/accountManager/deleteAccount", async (req: AccountManagerRequest, res: Response) => {

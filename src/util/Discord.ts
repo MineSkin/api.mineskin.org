@@ -4,6 +4,8 @@ import { getConfig } from "../typings/Configs";
 import { IAccountDocument, MineSkinError } from "../typings";
 import { GenerateType } from "../typings/db/ISkinDocument";
 import { AccountType } from "../typings/db/IAccountDocument";
+import { Request } from "express";
+import { getIp } from "./index";
 
 const config = getConfig();
 
@@ -114,12 +116,13 @@ export class Discord {
         })
     }
 
-    static notifyNewAccount(account: IAccountDocument): void {
+    static notifyNewAccount(account: IAccountDocument, req: Request): void {
         this.postDiscordMessage("ℹ A new Account #" + account.id + " has just been added!\n" +
             "  Account Type: " + account.getAccountType() + "\n" +
-            "  Server: " + account.requestServer);
+            "  Server: " + account.requestServer + "\n" +
+            "  Agent: " + req.headers["user-agent"] + "\n" +
+            "  IP: " + getIp(req));
     }
-
 
 
 }
