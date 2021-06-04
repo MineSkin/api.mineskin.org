@@ -82,7 +82,7 @@ export class Generator {
         if (!apiKey) {
             return Math.max(DEFAULT_DELAY, minDelay);
         }
-        return Math.max(DEFAULT_DELAY, minDelay, apiKey.minDelay);
+        return Math.max(Math.min(DEFAULT_DELAY, apiKey.minDelay), minDelay);
     }
 
     @MemoizeExpiring(30000)
