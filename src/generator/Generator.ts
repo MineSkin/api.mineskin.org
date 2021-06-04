@@ -38,10 +38,10 @@ import * as Url from "url";
 const config = getConfig();
 
 // minimum delay for accounts to be used - don't set lower than 60
-export const MIN_ACCOUNT_DELAY = 150; //TODO 120
+export const MIN_ACCOUNT_DELAY = 120;
 
 // default generator delay (seconds) between requests
-export const DEFAULT_DELAY = 2; //TODO 5
+export const DEFAULT_DELAY = 5; 
 
 const MAX_ID_TRIES = 10;
 
