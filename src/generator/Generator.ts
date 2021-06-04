@@ -41,7 +41,7 @@ const config = getConfig();
 export const MIN_ACCOUNT_DELAY = 120;
 
 // default generator delay (seconds) between requests
-export const DEFAULT_DELAY = 5;
+export const DEFAULT_DELAY = 4;
 
 const MAX_ID_TRIES = 10;
 

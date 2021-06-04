@@ -14,7 +14,7 @@ import * as qs from "querystring";
 
 const config = getConfig();
 
-const DEFAULT_API_KEY_DELAY = 4;
+const DEFAULT_API_KEY_DELAY = 3;
 
 export const register = (app: Application) => {
 
