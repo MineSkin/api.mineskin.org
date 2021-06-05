@@ -65,8 +65,14 @@ export const SkinSchema: Schema<ISkinDocument, ISkinModel> = new Schema({
     account: Number,
     breadcrumb: String,
     type: String,
-    duplicate: Number,
-    views: Number,
+    duplicate: {
+        type: Number,
+        index: true
+    },
+    views: {
+        type: Number,
+        index: true
+    },
     via: String,
     server: String,
     ua: String,
