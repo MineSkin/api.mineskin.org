@@ -48,8 +48,8 @@ export const register = (app: Application) => {
         if (skin.model === "alex") {
             skin.model = "slim";
         }
+        res.json(skin.toResponseJson()); // this triggers the generation of a random uuid if it doesn't have one, so do that before saving
         await skin.save();
-        res.json(skin.toResponseJson());
     })
 
     app.get("/get/uuid/:uuid", async (req: Request, res: Response) => {
@@ -67,8 +67,8 @@ export const register = (app: Application) => {
         if (skin.model === "alex") {
             skin.model = "slim";
         }
-        await skin.save();
         res.json(skin.toResponseJson());
+        await skin.save();
     })
 
     // TODO: add route to get by hash
