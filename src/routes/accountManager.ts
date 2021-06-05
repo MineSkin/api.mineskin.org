@@ -425,7 +425,8 @@ export const register = (app: Application) => {
             errorCounter: 0,
             totalErrorCounter: 0,
             successCounter: 0,
-            totalSuccessCounter: 0
+            totalSuccessCounter: 0,
+            ev: 0 //TODO
         });
         if (req.session.account.type === AccountType.MICROSOFT) {
             account.microsoftUserId = req.session.account.microsoftInfo?.userId;

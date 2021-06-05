@@ -95,7 +95,8 @@ export const AccountSchema: Schema<IAccountDocument, IAccountModel> = new Schema
     discordUser: String,
     discordMessageSent: Boolean,
     sendEmails: Boolean,
-    emailSent: Boolean
+    emailSent: Boolean,
+    ev: Number
 }, { id: false });
 
 
@@ -142,6 +143,14 @@ AccountSchema.methods.authenticationHeader = function (this: IAccountDocument): 
 
 AccountSchema.methods.toSimplifiedString = function (this: IAccountDocument): string {
     return `Account{ id=${ this.id }, uuid=${ this.uuid }, type=${ this.getAccountType() } }`
+};
+
+AccountSchema.methods.getEV = function (this: IAccountDocument): number {
+    if (this.ev) {
+        return this.ev;
+    }
+    this.ev = 0;
+    return this.ev;
 };
 
 /// STATICS
