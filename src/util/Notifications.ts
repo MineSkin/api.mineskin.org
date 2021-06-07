@@ -66,6 +66,7 @@ export class Notifications {
     static notifyLoginFailed(account: IAccountDocument, err: MineSkinError): void {
         // Log channel
         Discord.postDiscordMessage("⚠️ Account #" + account.id + " failed to login\n" +
+            "  UUID: " + account.uuid + "\n" +
             "  Error: " + err.msg + "\n" +
             "  Current Server: " + account.lastRequestServer + "/" + account.requestServer + "\n" +
             "  Account Type: " + account.getAccountType() + "\n" +
