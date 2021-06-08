@@ -317,7 +317,7 @@ export const register = (app: Application) => {
                 updater = account => {
                     account.enabled = !!req.body["enabled"]
 
-                    Discord.postDiscordMessage("Account " + account.id + "/" + account.uuid + " " + (account.enabled ? "enabled" : "disabled") + " (linked to " + account.discordUser + ")");
+                    Discord.postDiscordMessage("Account " + account.id + "/" + account.uuid + " " + (account.enabled ? "enabled" : "disabled") + " (linked to <@" + account.discordUser + ">)");
                 }
                 break;
             case 'emails':
@@ -490,7 +490,7 @@ export const register = (app: Application) => {
             Discord.sendDiscordDirectMessage("Your MineSkin account " + account.uuid + " has been deleted.", account.discordUser);
         }
 
-        Discord.postDiscordMessage("Account " + account.id + "/" + account.uuid + " deleted (was linked to " + account.discordUser + ")");
+        Discord.postDiscordMessage("Account " + account.id + "/" + account.uuid + " deleted (was linked to <@" + account.discordUser + ">)");
     })
 
 
