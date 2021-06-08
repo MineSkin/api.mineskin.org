@@ -665,12 +665,10 @@ export const register = (app: Application) => {
 }
 
 function validateSessionAndToken(req: AccountManagerRequest, res: Response): boolean {
-    console.log(debug(req.headers.authorization))
     if (!req.headers.authorization || !req.headers.authorization.startsWith("Bearer ")) {
         res.status(400).json({ error: "invalid session" });
         return false;
     }
-    console.log(debug(JSON.stringify(req.session)))
     const headerToken = req.headers.authorization.replace("Bearer ", "");
     if (!req.session || !req.session.account) {
         res.status(400).json({ error: "invalid session" });
