@@ -1036,7 +1036,12 @@ export class Generator {
         }
 
         // Get the imageHash
-        const imageHash = await imgHash(imageBuffer, fType?.mime);
+        let imageHash;
+        try {
+            imageHash = await imgHash(imageBuffer, fType?.mime);
+        } catch (e) {
+            throw new GeneratorError(GenError.INVALID_IMAGE, "Failed to get image hash", 400, undefined, e);
+        }
         console.log(debug(options.breadcrumb + " Image hash: " + imageHash));
         // Check duplicate from imageHash
         const hashDuplicate = await this.findDuplicateFromImageHash(imageHash, options, client, type);
