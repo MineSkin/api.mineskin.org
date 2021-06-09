@@ -290,11 +290,11 @@ export async function imgHash(buffer: Buffer, ext?: string): Promise<string> {
         imageHash({
             data: buffer,
             ext: ext
-        }, 16, false, (err: any, data: string) => {
+        }, 64, true, (err: any, data: string) => {
             if (err) {
                 reject(err);
             } else if (data) {
-                resolve(data);
+                resolve(sha1(data));
             } else {
                 reject("data=null");
             }
