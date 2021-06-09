@@ -65,6 +65,8 @@ const MAX_FOLLOW_REDIRECTS = 5;
 const MAX_IMAGE_SIZE = 20000; // 20KB - about 70x70px at 32bit
 const ALLOWED_IMAGE_TYPES = ["image/png"];
 
+const HASH_VERSION = 2;
+
 export class Generator {
 
     protected static readonly optimus = new Optimus(config.optimus.prime, config.optimus.inverse, config.optimus.random);
@@ -435,7 +437,7 @@ export class Generator {
 
             duplicate: 0,
             views: 0,
-            hv: 2
+            hv: HASH_VERSION
         })
         return skin.save().then(skin => {
             console.log(info(options.breadcrumb + " New skin saved #" + skin.id + " - generated in " + duration + "ms by " + result.account?.getAccountType() + " account #" + result.account?.id));
