@@ -1035,6 +1035,7 @@ export class Generator {
 
         // Get the imageHash
         const imageHash = await imgHash(imageBuffer);
+        console.log(debug(options.breadcrumb + " Image hash: " + imageHash));
         // Check duplicate from imageHash
         const hashDuplicate = await this.findDuplicateFromImageHash(imageHash, options, client, type);
         if (hashDuplicate) {
