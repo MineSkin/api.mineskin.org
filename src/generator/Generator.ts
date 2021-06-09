@@ -1138,7 +1138,6 @@ export class Generator {
     static appendOptionsToDuplicateQuery(options: GenerateOptions, query: any): any {
         if (options) {
             query.name = options.name;
-            query.visibility = options.visibility || 0;
             if (options.model && options.model !== SkinModel.UNKNOWN) {
                 query.model = options.model;
             } else if (options.variant && options.variant !== SkinVariant.UNKNOWN) {
