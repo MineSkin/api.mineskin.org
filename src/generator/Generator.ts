@@ -527,7 +527,7 @@ export class Generator {
         return undefined;
     }
 
-    protected static async findDuplicateFromImageHash(hash: string, options: GenerateOptions, type: GenerateType): Promise<Maybe<ISkinDocument>> {
+    protected static async findDuplicateFromImageHash(hash: string, options: GenerateOptions, client: ClientInfo, type: GenerateType): Promise<Maybe<ISkinDocument>> {
         if (!hash || hash.length < 30) {
             return undefined;
         }
@@ -546,6 +546,7 @@ export class Generator {
                     .tag("server", config.server)
                     .tag("source", DuplicateSource.IMAGE_HASH)
                     .tag("type", type)
+                    .tag("userAgent", stripNumbers(client.userAgent))
                     .inc();
             } catch (e) {
                 Sentry.captureException(e);
@@ -663,7 +664,7 @@ export class Generator {
             }
 
             // Validate downloaded image file
-            const tempFileValidation = await this.validateTempFile(tempFile, options, GenerateType.URL);
+            const tempFileValidation = await this.validateTempFile(tempFile, options, client, GenerateType.URL);
             if (tempFileValidation.duplicate) {
                 // found a duplicate
                 return tempFileValidation;
@@ -772,7 +773,7 @@ export class Generator {
             }
 
             // Validate uploaded image file
-            const tempFileValidation = await this.validateTempFile(tempFile, options, GenerateType.UPLOAD);
+            const tempFileValidation = await this.validateTempFile(tempFile, options, client, GenerateType.UPLOAD);
             if (tempFileValidation.duplicate) {
                 // found a duplicate
                 return tempFileValidation;
@@ -1000,7 +1001,7 @@ export class Generator {
         return response.headers["content-type"];
     }
 
-    protected static async validateTempFile(tempFile: TempFile, options: GenerateOptions, type: GenerateType): Promise<TempFileValidationResult> {
+    protected static async validateTempFile(tempFile: TempFile, options: GenerateOptions, client: ClientInfo, type: GenerateType): Promise<TempFileValidationResult> {
         // Validate downloaded image file
         const imageBuffer = await fs.readFile(tempFile.path);
         const size = imageBuffer.byteLength;
@@ -1034,7 +1035,7 @@ export class Generator {
         // Get the imageHash
         const imgHash = await imageHash(imageBuffer);
         // Check duplicate from imageHash
-        const hashDuplicate = await this.findDuplicateFromImageHash(imgHash, options, type);
+        const hashDuplicate = await this.findDuplicateFromImageHash(imgHash, options, client, type);
         if (hashDuplicate) {
             return {
                 duplicate: hashDuplicate
