@@ -205,6 +205,7 @@ export const register = (app: Application) => {
 
         console.log(debug(`${ breadcrumb } Type:        ${ type }`))
         console.log(debug(`${ breadcrumb } Variant:     ${ variant }`));
+        console.log(debug(`${ breadcrumb } Model:       ${ model }`));
         console.log(debug(`${ breadcrumb } Visibility:  ${ visibility }`));
         console.log(debug(`${ breadcrumb } Name:        "${ name ?? '' }"`));
 
