@@ -65,7 +65,7 @@ const MAX_FOLLOW_REDIRECTS = 5;
 const MAX_IMAGE_SIZE = 20000; // 20KB - about 70x70px at 32bit
 const ALLOWED_IMAGE_TYPES = ["image/png"];
 
-const HASH_VERSION = 2;
+export const HASH_VERSION = 2;
 
 export class Generator {
 
@@ -1073,7 +1073,7 @@ export class Generator {
         return decoded;
     }
 
-    protected static async getMojangHash(url: string): Promise<MojangHashInfo> {
+    public static async getMojangHash(url: string): Promise<MojangHashInfo> {
         const tempFile = await Temp.file({
             dir: MOJ_DIR
         });

@@ -4,6 +4,7 @@ import { ISkinDocument } from "../../typings";
 import { ISkinModel, SkinModel, SkinVisibility } from "../../typings/db/ISkinDocument";
 import { SkinInfo } from "../../typings/SkinInfo";
 import { v4 as randomUuid } from "uuid";
+import { Generator, HASH_VERSION } from "../../generator/Generator";
 
 export const SkinSchema: Schema<ISkinDocument, ISkinModel> = new Schema({
     id: {
@@ -91,6 +92,21 @@ SkinSchema.methods.getUuid = function (this: ISkinDocument): string {
     }
     this.skinUuid = stripUuid(randomUuid());
     return this.skinUuid;
+}
+
+//TODO: remove, temporary thing to convert hash versions
+SkinSchema.methods.getHash = async function (this: ISkinDocument): Promise<string> {
+    if (this.hv === HASH_VERSION) {
+        return this.hash;
+    }
+    const oldHash = this.hash;
+    const newHash = await Generator.getMojangHash(this.url).then(info => info.hash);
+    if (newHash) {
+        this.hash = newHash;
+        this.hv = HASH_VERSION;
+        console.log("Converted hash of " + this.getUuid() + " to new version (" + oldHash + "->" + this.hash + ")");
+    }
+    return this.hash;
 }
 
 SkinSchema.methods.toResponseJson = function (this: ISkinDocument): SkinInfo {

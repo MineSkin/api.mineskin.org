@@ -94,6 +94,8 @@ export interface ISkinDocument extends Document {
 
     getUuid(): string;
 
+    getHash(): Promise<string>;
+
     toResponseJson(delay?: number): SkinInfo;
 }
 
