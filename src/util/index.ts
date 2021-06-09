@@ -17,6 +17,7 @@ import { getConfig } from "../typings/Configs";
 import { IApiKeyDocument } from "../typings/db/IApiKeyDocument";
 import { MineSkinError, MineSkinRequest } from "../typings";
 import { ApiKeyRequest } from "../typings/ApiKeyRequest";
+import { imageHash } from "@inventivetalent/image-hash";
 
 const config = getConfig();
 
@@ -284,9 +285,20 @@ export function random32BitNumber(): Promise<number> {
     });
 }
 
-export async function imageHash(buffer: Buffer) {
-    return hasha.async(buffer, {
-        algorithm: "sha1"
+export async function imgHash(buffer: Buffer, ext?: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+        imageHash({
+            data: buffer,
+            ext: ext
+        }, 16, false, (err: any, data: string) => {
+            if (err) {
+                reject(err);
+            } else if (data) {
+                resolve(data);
+            } else {
+                reject("data=null");
+            }
+        });
     })
 }
 

@@ -1,6 +1,6 @@
 import { Account, Skin, Stat } from "../database/schemas";
 import { MemoizeExpiring } from "@inventivetalent/typescript-memoize";
-import { base64decode, getHashFromMojangTextureUrl, hasOwnProperty, imageHash, longAndShortUuid, Maybe, random32BitNumber, stripNumbers, stripUuid } from "../util";
+import { base64decode, getHashFromMojangTextureUrl, hasOwnProperty, imgHash, longAndShortUuid, Maybe, random32BitNumber, stripNumbers, stripUuid } from "../util";
 import { Caching } from "./Caching";
 import { Authentication, AuthenticationError } from "./Authentication";
 import * as Sentry from "@sentry/node";
@@ -64,6 +64,8 @@ const MAX_FOLLOW_REDIRECTS = 5;
 
 const MAX_IMAGE_SIZE = 20000; // 20KB - about 70x70px at 32bit
 const ALLOWED_IMAGE_TYPES = ["image/png"];
+
+export const HASH_VERSION = 2;
 
 export class Generator {
 
@@ -434,7 +436,8 @@ export class Generator {
             apiKey: client.apiKey,
 
             duplicate: 0,
-            views: 0
+            views: 0,
+            hv: HASH_VERSION
         })
         return skin.save().then(skin => {
             console.log(info(options.breadcrumb + " New skin saved #" + skin.id + " - generated in " + duration + "ms by " + result.account?.getAccountType() + " account #" + result.account?.id));
@@ -1033,9 +1036,10 @@ export class Generator {
         }
 
         // Get the imageHash
-        const imgHash = await imageHash(imageBuffer);
+        const imageHash = await imgHash(imageBuffer, fType?.mime);
+        console.log(debug(options.breadcrumb + " Image hash: " + imageHash));
         // Check duplicate from imageHash
-        const hashDuplicate = await this.findDuplicateFromImageHash(imgHash, options, client, type);
+        const hashDuplicate = await this.findDuplicateFromImageHash(imageHash, options, client, type);
         if (hashDuplicate) {
             return {
                 duplicate: hashDuplicate
@@ -1059,7 +1063,7 @@ export class Generator {
             size: size,
             dimensions: dimensions,
             fileType: fType,
-            hash: imgHash
+            hash: imageHash
         };
     }
 
@@ -1069,14 +1073,20 @@ export class Generator {
         return decoded;
     }
 
-    protected static async getMojangHash(url: string): Promise<MojangHashInfo> {
+    public static async getMojangHash(url: string): Promise<MojangHashInfo> {
         const tempFile = await Temp.file({
             dir: MOJ_DIR
         });
         try {
             await Temp.downloadImage(url, tempFile);
             const imageBuffer = await fs.readFile(tempFile.path);
-            const hash = await imageHash(imageBuffer);
+            let fType = undefined;
+            try {
+                fType = await fileType.fromBuffer(imageBuffer);
+            } catch (e) {
+                Sentry.captureException(e);
+            }
+            const hash = await imgHash(imageBuffer, fType?.mime);
             return {
                 buffer: imageBuffer,
                 hash: hash
