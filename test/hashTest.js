@@ -5,13 +5,19 @@ const {imageHash} = require("@inventivetalent/image-hash");
 const hasha = require("hasha");
 
 const imgHash = function (path, callback) {
-    imageHash(path, 64, true, (err, data) => callback(err, sha1(data)));
+    imageHash(path, 64, true, (err, data) => callback(err, data));
 };
 
  function sha1(str){
     return crypto.createHash('sha1').update(str).digest("hex");
 }
 
+imgHash("./images/e67f768c98ccd2dca2fb6f0c9a676138.png", function (err,hash) {
+    console.log("1 e67f768c98ccd2dca2fb6f0c9a676138: " + hash);
+})
+imgHash("./images/2e1409adf419f9807f97b78a3440fe877eba5f2d77f194c97f9f579d84952104.png", function (err,hash) {
+    console.log("1 2e1409adf419f9807f97b78a3440fe877eba5f2d77f194c97f9f579d84952104: " + hash);
+})
 imgHash("./images/a.png",function (err,hash) {
     console.log("1 a: " + hash);
 });
@@ -41,6 +47,9 @@ imgHash("./images/f.png",function (err,hash) {
 });
 imgHash("./images/f2.png",function (err,hash) {
     console.log("1 f2: " + hash);
+});
+imgHash("./images/fi.png",function (err,hash) {
+    console.log("1 fi: " + hash);
 });
 imgHash("./images/g.png",function (err,hash) {
     console.log("1 g: " + hash);
