@@ -13,7 +13,7 @@
   "author": "Haylee Schäfer",
   "dependencies": {
     "@inventivetalent/gitsha": "^1.0.0",
-    "@inventivetalent/image-hash": "^4.1.0",
+    "@inventivetalent/image-hash": "^4.1.1",
     "@inventivetalent/loading-cache": "^0.4.0",
     "@inventivetalent/optimus-ts": "^0.2.1",
     "@inventivetalent/time": "^1.0.0",
