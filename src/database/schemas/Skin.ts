@@ -79,7 +79,8 @@ export const SkinSchema: Schema<ISkinDocument, ISkinModel> = new Schema({
     apiKey: String,
     apiVer: String,
     testerRequest: Boolean,
-    testerMismatchCounter: Number
+    testerMismatchCounter: Number,
+    hv: Number
 }, { id: false })
 
 /// METHODS

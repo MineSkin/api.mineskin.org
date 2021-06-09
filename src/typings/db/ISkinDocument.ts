@@ -90,6 +90,7 @@ export interface ISkinDocument extends Document {
 
     testerRequest?: boolean;
     testerMismatchCounter?: number;
+    hv?: number;
 
     getUuid(): string;
 

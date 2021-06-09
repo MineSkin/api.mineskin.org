@@ -1,6 +1,6 @@
 import { Account, Skin, Stat } from "../database/schemas";
 import { MemoizeExpiring } from "@inventivetalent/typescript-memoize";
-import { base64decode, getHashFromMojangTextureUrl, hasOwnProperty, imageHash, longAndShortUuid, Maybe, random32BitNumber, stripNumbers, stripUuid } from "../util";
+import { base64decode, getHashFromMojangTextureUrl, hasOwnProperty, imgHash, longAndShortUuid, Maybe, random32BitNumber, stripNumbers, stripUuid } from "../util";
 import { Caching } from "./Caching";
 import { Authentication, AuthenticationError } from "./Authentication";
 import * as Sentry from "@sentry/node";
@@ -434,7 +434,8 @@ export class Generator {
             apiKey: client.apiKey,
 
             duplicate: 0,
-            views: 0
+            views: 0,
+            hv: 2
         })
         return skin.save().then(skin => {
             console.log(info(options.breadcrumb + " New skin saved #" + skin.id + " - generated in " + duration + "ms by " + result.account?.getAccountType() + " account #" + result.account?.id));
@@ -1033,9 +1034,9 @@ export class Generator {
         }
 
         // Get the imageHash
-        const imgHash = await imageHash(imageBuffer);
+        const imageHash = await imgHash(imageBuffer);
         // Check duplicate from imageHash
-        const hashDuplicate = await this.findDuplicateFromImageHash(imgHash, options, client, type);
+        const hashDuplicate = await this.findDuplicateFromImageHash(imageHash, options, client, type);
         if (hashDuplicate) {
             return {
                 duplicate: hashDuplicate
@@ -1059,7 +1060,7 @@ export class Generator {
             size: size,
             dimensions: dimensions,
             fileType: fType,
-            hash: imgHash
+            hash: imageHash
         };
     }
 
@@ -1076,7 +1077,7 @@ export class Generator {
         try {
             await Temp.downloadImage(url, tempFile);
             const imageBuffer = await fs.readFile(tempFile.path);
-            const hash = await imageHash(imageBuffer);
+            const hash = await imgHash(imageBuffer);
             return {
                 buffer: imageBuffer,
                 hash: hash
