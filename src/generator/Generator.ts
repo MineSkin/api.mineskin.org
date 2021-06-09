@@ -1034,7 +1034,7 @@ export class Generator {
         }
 
         // Get the imageHash
-        const imageHash = await imgHash(imageBuffer);
+        const imageHash = await imgHash(imageBuffer, fType?.mime);
         console.log(debug(options.breadcrumb + " Image hash: " + imageHash));
         // Check duplicate from imageHash
         const hashDuplicate = await this.findDuplicateFromImageHash(imageHash, options, client, type);
@@ -1078,7 +1078,13 @@ export class Generator {
         try {
             await Temp.downloadImage(url, tempFile);
             const imageBuffer = await fs.readFile(tempFile.path);
-            const hash = await imgHash(imageBuffer);
+            let fType = undefined;
+            try {
+                fType = await fileType.fromBuffer(imageBuffer);
+            } catch (e) {
+                Sentry.captureException(e);
+            }
+            const hash = await imgHash(imageBuffer, fType?.mime);
             return {
                 buffer: imageBuffer,
                 hash: hash

@@ -285,10 +285,11 @@ export function random32BitNumber(): Promise<number> {
     });
 }
 
-export async function imgHash(buffer: Buffer): Promise<string> {
+export async function imgHash(buffer: Buffer, ext?: string): Promise<string> {
     return new Promise((resolve, reject) => {
         imageHash({
-            data: buffer
+            data: buffer,
+            ext: ext
         }, 16, false, (err: any, data: string | null) => {
             if (err) {
                 reject(err);
