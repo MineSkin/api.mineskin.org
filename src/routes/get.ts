@@ -88,8 +88,8 @@ export const register = (app: Application) => {
     })
 
     app.get("/get/list/:page?", async (req: Request, res: Response) => {
-        const page = Math.max((req.params.hasOwnProperty("page") ? parseInt(req.params["page"]) : 1), 1);
-        const size = Math.min(Math.max((req.query.hasOwnProperty("size") ? parseInt(req.query["size"] as string) : 16)), 64)
+        const page = Math.max(Number(req.params.hasOwnProperty("page") ? parseInt(req.params["page"]) : 1), 1);
+        const size = Math.min(Math.max(Number(req.query.hasOwnProperty("size") ? parseInt(req.query["size"] as string) : 16)), 64)
 
         const query: any = { visibility: 0 };
         if (req.query.hasOwnProperty("filter") && (req.query["filter"]?.length || 0) > 0) {
