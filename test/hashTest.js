@@ -1,25 +1,40 @@
-const crypto =  require("crypto");
+const crypto = require("crypto");
+const fs = require("fs");
 
 const {imageHash} = require("@inventivetalent/imghash");
 
 const hasha = require("hasha");
 
 const imgHash = function (path, callback) {
-    imageHash(path, 64, true, (err, data) => callback(err, sha1(data)));
-    // imggHash.hash(path, 128).then(res=>callback(null, sha1(res)))
+    // imageHash(path, , (err, data) => callback(err, sha1(data)));
+    imageHash(fs.readFileSync(path), {algorithm: "sha1"}).then(res => callback(null, res))
 };
 
- function sha1(str){
+function sha1(str) {
     return crypto.createHash('sha1').update(str).digest("hex");
 }
 
-imgHash("./images/1BS95uM.png", function (err,hash) {
+imgHash("./images/msdebug3.png", function (err, hash) {
+    console.log("1 msdebug3: " + hash);
+})
+
+imgHash("./images/msdebug2.png", function (err, hash) {
+    console.log("1 msdebug2: " + hash);
+})
+
+
+imgHash("./images/msdebug1.png", function (err, hash) {
+    console.log("1 msdebug1: " + hash);
+})
+
+imgHash("./images/1BS95uM.png", function (err, hash) {
     console.log("1 1BS95uM: " + hash);
 })
-imgHash("./images/1BS95uMr.png", function (err,hash) {
+imgHash("./images/1BS95uMr.png", function (err, hash) {
     console.log("1 1BS95uMr: " + hash);
 })
 
+/*
 imgHash("./images/e67f768c98ccd2dca2fb6f0c9a676138.png", function (err,hash) {
     console.log("1 e67f768c98ccd2dca2fb6f0c9a676138: " + hash);
 })
@@ -115,4 +130,4 @@ imgHash("./images2/dafqweqghtue.png",function (err,hash) {
 imgHash("./images2/6f81077323a41b569adf22b1b3405f58e46790b4248b762876d7abea6b41d7fb.png",function (err,hash) {
     console.log("2 6f81077323a41b569adf22b1b3405f58e46790b4248b762876d7abea6b41d7fb: " + hash);
 });
-
+*/
