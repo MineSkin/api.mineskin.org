@@ -65,7 +65,7 @@ const MAX_FOLLOW_REDIRECTS = 5;
 const MAX_IMAGE_SIZE = 20000; // 20KB - about 70x70px at 32bit
 const ALLOWED_IMAGE_TYPES = ["image/png"];
 
-export const HASH_VERSION = 3;
+export const HASH_VERSION = 4;
 
 export class Generator {
 
