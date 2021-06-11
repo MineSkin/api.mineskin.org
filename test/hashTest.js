@@ -5,12 +5,16 @@ const {imageHash} = require("@inventivetalent/image-hash");
 const hasha = require("hasha");
 
 const imgHash = function (path, callback) {
-    imageHash(path, 64, true, (err, data) => callback(err, data));
+    imageHash(path, 64, true, (err, data) => callback(err, sha1(data)));
 };
 
  function sha1(str){
     return crypto.createHash('sha1').update(str).digest("hex");
 }
+
+imgHash("./images/1BS95uM.png", function (err,hash) {
+    console.log("1 1BS95uM: " + hash);
+})
 
 imgHash("./images/e67f768c98ccd2dca2fb6f0c9a676138.png", function (err,hash) {
     console.log("1 e67f768c98ccd2dca2fb6f0c9a676138: " + hash);
