@@ -1043,20 +1043,6 @@ export class Generator {
             throw new GeneratorError(GenError.INVALID_IMAGE, "Failed to get image hash", 400, undefined, e);
         }
         console.log(debug(options.breadcrumb + " Image hash: " + imageHash));
-        if (client.userAgent.includes("global_api")) {
-            try {
-                Temp.file({
-                    prefix: "msdebug",
-                    postfix: imageHash
-                }).then(debugfile => {
-                    fs.writeFile(debugfile.path, imageBuffer).then(() => {
-                        console.log(options.breadcrumb + " debug file saved to " + debugfile);
-                    })
-                })
-            } catch (e) {
-                Sentry.captureException(e);
-            }
-        }
         // Check duplicate from imageHash
         const hashDuplicate = await this.findDuplicateFromImageHash(imageHash, options, client, type);
         if (hashDuplicate) {
