@@ -1,11 +1,12 @@
 const crypto =  require("crypto");
 
-const {imageHash} = require("@inventivetalent/image-hash");
+const {imageHash} = require("@inventivetalent/imghash");
 
 const hasha = require("hasha");
 
 const imgHash = function (path, callback) {
     imageHash(path, 64, true, (err, data) => callback(err, sha1(data)));
+    // imggHash.hash(path, 128).then(res=>callback(null, sha1(res)))
 };
 
  function sha1(str){
@@ -14,6 +15,9 @@ const imgHash = function (path, callback) {
 
 imgHash("./images/1BS95uM.png", function (err,hash) {
     console.log("1 1BS95uM: " + hash);
+})
+imgHash("./images/1BS95uMr.png", function (err,hash) {
+    console.log("1 1BS95uMr: " + hash);
 })
 
 imgHash("./images/e67f768c98ccd2dca2fb6f0c9a676138.png", function (err,hash) {

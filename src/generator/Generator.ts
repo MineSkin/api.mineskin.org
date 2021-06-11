@@ -1038,7 +1038,7 @@ export class Generator {
         // Get the imageHash
         let imageHash;
         try {
-            imageHash = await imgHash(imageBuffer, fType?.mime);
+            imageHash = await imgHash(imageBuffer);
         } catch (e) {
             throw new GeneratorError(GenError.INVALID_IMAGE, "Failed to get image hash", 400, undefined, e);
         }
@@ -1091,7 +1091,7 @@ export class Generator {
             } catch (e) {
                 Sentry.captureException(e);
             }
-            const hash = await imgHash(imageBuffer, fType?.mime);
+            const hash = await imgHash(imageBuffer);
             return {
                 buffer: imageBuffer,
                 hash: hash

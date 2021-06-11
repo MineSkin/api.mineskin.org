@@ -17,7 +17,7 @@ import { getConfig } from "../typings/Configs";
 import { IApiKeyDocument } from "../typings/db/IApiKeyDocument";
 import { MineSkinError, MineSkinRequest } from "../typings";
 import { ApiKeyRequest } from "../typings/ApiKeyRequest";
-import { imageHash } from "@inventivetalent/image-hash";
+import { imageHash } from "@inventivetalent/imghash";
 
 const config = getConfig();
 
@@ -285,21 +285,8 @@ export function random32BitNumber(): Promise<number> {
     });
 }
 
-export async function imgHash(buffer: Buffer, ext?: string): Promise<string> {
-    return new Promise((resolve, reject) => {
-        imageHash({
-            data: buffer,
-            ext: ext
-        }, 64, true, (err: any, data: string) => {
-            if (err) {
-                reject(err);
-            } else if (data) {
-                resolve(sha1(data));
-            } else {
-                reject("data=null");
-            }
-        });
-    })
+export async function imgHash(buffer: Buffer): Promise<string> {
+    return imageHash(buffer, { algorithm: "sha1" })
 }
 
 export function stripNumbers(str?: string): string {
