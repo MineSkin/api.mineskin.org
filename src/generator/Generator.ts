@@ -1085,7 +1085,7 @@ export class Generator {
         try {
             await Temp.downloadImage(url, tempFile);
             const imageBuffer = await fs.readFile(tempFile.path);
-            let fType = undefined;
+            let fType: Maybe<FileTypeResult> = { mime: "image/png", ext: "png" };
             try {
                 fType = await fileType.fromBuffer(imageBuffer);
             } catch (e) {
