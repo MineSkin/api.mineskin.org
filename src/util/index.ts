@@ -18,6 +18,7 @@ import { IApiKeyDocument } from "../typings/db/IApiKeyDocument";
 import { MineSkinError, MineSkinRequest } from "../typings";
 import { ApiKeyRequest } from "../typings/ApiKeyRequest";
 import { imageHash } from "@inventivetalent/imghash";
+import { ClientInfo } from "../typings/ClientInfo";
 
 const config = getConfig();
 
@@ -28,7 +29,6 @@ export function getIp(req: Request): string {
 export async function checkTraffic(req: Request, res: Response): Promise<boolean> {
     const ip = getIp(req);
     console.log(debug("IP: " + ip));
-    console.log(debug("Host: " + req.hostname));
 
     Sentry.setUser({
         ip_address: ip
@@ -63,10 +63,11 @@ export async function checkTraffic(req: Request, res: Response): Promise<boolean
     return true;
 }
 
-export async function updateTraffic(req: Request, time: Date = new Date()): Promise<void> {
-    const ip = getIp(req);
+export async function updateTraffic(req: Request | ClientInfo, time: Date = new Date()): Promise<void> {
+    const ip = req.ip ?? getIp(req as Request);
     return await Caching.updateTrafficRequestTime(ip, time);
 }
+
 
 export async function getAndValidateRequestApiKey(req: MineSkinRequest): Promise<Maybe<IApiKeyDocument>> {
     let keyStr;
@@ -118,6 +119,7 @@ export async function getAndValidateRequestApiKey(req: MineSkinRequest): Promise
 
     return undefined;
 }
+
 
 export async function validateImage(req: Request, res: Response, file: string): Promise<boolean> {
     const stats = fs.statSync(file);

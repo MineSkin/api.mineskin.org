@@ -1,7 +1,7 @@
 import { Application, Request, Response } from "express";
 import { checkTraffic, corsMiddleware, corsWithAuthMiddleware, corsWithCredentialsMiddleware, getAndValidateRequestApiKey, getIp, getVia, longAndShortUuid, Maybe, md5, modelToVariant, updateTraffic, validateUrl, variantToModel } from "../util";
 import { UploadedFile } from "express-fileupload";
-import { Generator, SavedSkin } from "../generator/Generator";
+import { Generator, GeneratorError, GenError, SavedSkin } from "../generator/Generator";
 import { generateLimiter } from "../util/rateLimiters";
 import { ClientInfo } from "../typings/ClientInfo";
 import { GenerateOptions } from "../typings/GenerateOptions";
@@ -35,7 +35,6 @@ export const register = (app: Application) => {
         if (!requestAllowed) {
             return;
         }
-        await updateTraffic(req);
 
         const options = getAndValidateOptions(GenerateType.URL, req, res);
         console.log(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`));
@@ -43,6 +42,9 @@ export const register = (app: Application) => {
         console.log(debug(`${ options.breadcrumb } URL:         ${ url }`));
         const client = getClientInfo(req);
 
+        if (!options.checkOnly || !client.apiKey) {
+            await updateTraffic(req);
+        }
 
         const skin = await Generator.generateFromUrlAndSave(url, options, client);
         await sendSkin(req, res, skin);
@@ -65,7 +67,6 @@ export const register = (app: Application) => {
         if (!requestAllowed) {
             return;
         }
-        await updateTraffic(req);
 
         const options = getAndValidateOptions(GenerateType.UPLOAD, req, res);
         console.log(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`));
@@ -73,6 +74,9 @@ export const register = (app: Application) => {
         console.log(debug(`${ options.breadcrumb } FILE:        "${ file.name }" ${ file.md5 }`))
         const client = getClientInfo(req);
 
+        if (!options.checkOnly || !client.apiKey) {
+            await updateTraffic(req);
+        }
 
         const skin = await Generator.generateFromUploadAndSave(file, options, client);
         await sendSkin(req, res, skin);
@@ -166,6 +170,7 @@ export const register = (app: Application) => {
     function getClientInfo(req: GenerateRequest): ClientInfo {
         const userAgent = req.header("user-agent") || "n/a";
         const origin = req.header("origin");
+        const ip = getIp(req);
         const via = getVia(req);
         let apiKey;
         if (isApiKeyRequest(req) && req.apiKey) {
@@ -180,6 +185,7 @@ export const register = (app: Application) => {
         return {
             userAgent,
             origin,
+            ip,
             via,
             apiKey
         };

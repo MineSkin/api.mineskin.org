@@ -19,9 +19,9 @@ import { getConfig } from "./typings/Configs";
 import { MineSkinError, MineSkinRequest, GenerateRequest, isBreadRequest } from "./typings";
 import { apiRequestsMiddleware } from "./util/metrics";
 import { error, info, warn } from "./util/colors";
-import { corsMiddleware, getAndValidateRequestApiKey, hasOwnProperty } from "./util";
+import { corsMiddleware, getAndValidateRequestApiKey, hasOwnProperty, updateTraffic } from "./util";
 import { AuthenticationError } from "./generator/Authentication";
-import { Generator, GeneratorError } from "./generator/Generator";
+import { Generator, GeneratorError, GenError } from "./generator/Generator";
 import gitsha from "@inventivetalent/gitsha";
 
 sourceMapSupport.install();
