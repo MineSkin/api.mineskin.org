@@ -7,4 +7,5 @@ export interface GenerateOptions extends Bread {
     variant: SkinVariant;
     name?: string;
     visibility: SkinVisibility;
+    checkOnly?: boolean;
 }

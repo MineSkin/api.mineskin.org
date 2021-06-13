@@ -674,6 +674,10 @@ export class Generator {
                 return tempFileValidation;
             }
 
+            if (options.checkOnly) {
+                throw new GeneratorError(GenError.NO_DUPLICATE, "No duplicate found", 404, undefined)
+            }
+
             /// Run generation for new skin
 
             account = await this.getAndAuthenticateAccount(options);
@@ -781,6 +785,10 @@ export class Generator {
             if (tempFileValidation.duplicate) {
                 // found a duplicate
                 return tempFileValidation;
+            }
+
+            if (options.checkOnly) {
+                throw new GeneratorError(GenError.NO_DUPLICATE, "No duplicate found", 404, undefined)
             }
 
             /// Run generation for new skin
@@ -1225,7 +1233,8 @@ export enum GenError {
     INVALID_IMAGE = "invalid_image",
     INVALID_IMAGE_URL = "invalid_image_url",
     INVALID_IMAGE_UPLOAD = "invalid_image_upload",
-    INVALID_SKIN_DATA = "invalid_skin_data"
+    INVALID_SKIN_DATA = "invalid_skin_data",
+    NO_DUPLICATE = "no_duplicate"
 }
 
 export class GeneratorError extends MineSkinError {

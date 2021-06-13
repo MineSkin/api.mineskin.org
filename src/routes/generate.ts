@@ -198,6 +198,8 @@ export const register = (app: Application) => {
         const visibility = validateVisibility(req.body["visibility"] || req.query["visibility"]);
         const name = validateName(req.body["name"] || req.query["name"]);
 
+        const checkOnly = !!(req.body["checkOnly"] || req.query["checkOnly"])
+
         const breadcrumbId = md5(`${ getIp(req) }${ Date.now() }${ variant }${ visibility }${ Math.random() }${ name }`).substr(0, 8);
         const breadcrumb = nextBreadColor()(breadcrumbId);
         req.breadcrumb = breadcrumb;
@@ -208,6 +210,9 @@ export const register = (app: Application) => {
         console.log(debug(`${ breadcrumb } Model:       ${ model }`));
         console.log(debug(`${ breadcrumb } Visibility:  ${ visibility }`));
         console.log(debug(`${ breadcrumb } Name:        "${ name ?? '' }"`));
+        if (checkOnly) {
+            console.log(debug(`${ breadcrumb } Check Only:  true`));
+        }
 
         Sentry.setTags({
             "generate_type": type,
@@ -221,7 +226,8 @@ export const register = (app: Application) => {
             variant,
             visibility,
             name,
-            breadcrumb
+            breadcrumb,
+            checkOnly
         };
     }
 
