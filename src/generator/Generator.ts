@@ -948,6 +948,12 @@ export class Generator {
     }
 
     protected static async handleGenerateError(e: any, type: GenerateType, options: GenerateOptions, client: ClientInfo, account?: IAccountDocument): Promise<void> {
+        if (e instanceof GeneratorError) {
+            if (e.code == GenError.NO_DUPLICATE) {
+                return;
+            }
+        }
+
         console.log(error(options.breadcrumb + "   ==> FAIL"));
 
         if (!account) {
