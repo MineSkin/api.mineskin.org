@@ -34,6 +34,7 @@ import { IPoint } from "influx";
 import { Notifications } from "../util/Notifications";
 import { IApiKeyDocument } from "../typings/db/IApiKeyDocument";
 import * as Url from "url";
+import stripUserAgent from "user-agent-stripper";
 
 const config = getConfig();
 
@@ -549,7 +550,7 @@ export class Generator {
                     .tag("server", config.server)
                     .tag("source", DuplicateSource.IMAGE_HASH)
                     .tag("type", type)
-                    .tag("userAgent", stripNumbers(client.userAgent))
+                    .tag("userAgent", stripUserAgent(client.userAgent))
                     .inc();
             } catch (e) {
                 Sentry.captureException(e);
@@ -921,7 +922,7 @@ export class Generator {
             .tag("visibility", options.visibility === SkinVisibility.PRIVATE ? "private" : "public")
             .tag("variant", options.variant)
             .tag("via", client.via)
-            .tag("userAgent", stripNumbers(client.userAgent))
+            .tag("userAgent", stripUserAgent(client.userAgent))
             .tag("account", account.id)
             .tag("accountType", account.accountType || "unknown")
             .tag("apiKey", client.apiKey || "none")
@@ -953,7 +954,7 @@ export class Generator {
             .tag("type", type)
             .tag("visibility", options.visibility === SkinVisibility.PRIVATE ? "private" : "public")
             .tag("variant", options.variant)
-            .tag("userAgent", stripNumbers(client.userAgent))
+            .tag("userAgent", stripUserAgent(client.userAgent))
             .tag("apiKey", client.apiKey || "none")
             .tag("via", client.via);
         if (account) {

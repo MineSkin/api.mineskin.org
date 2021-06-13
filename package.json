@@ -53,6 +53,7 @@
     "source-map-support": "^0.5.19",
     "tmp": "0.2.1",
     "tunnel-ssh": "^4.1.4",
+    "user-agent-stripper": "^1.0.1",
     "uuid": "^3.4.0"
   },
   "devDependencies": {
