@@ -35,16 +35,20 @@ export const register = (app: Application) => {
             res.status(400).json({ error: "invalid url" });
             return;
         }
-        const requestAllowed = await checkTraffic(req, res);
-        if (!requestAllowed) {
-            return;
-        }
 
         const options = getAndValidateOptions(GenerateType.URL, req, res);
+        const client = getClientInfo(req);
+
+        if (!options.checkOnly || !client.apiKey) {
+            const requestAllowed = await checkTraffic(req, res);
+            if (!requestAllowed) {
+                return;
+            }
+        }
+
         console.log(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`));
         console.log(debug(`${ options.breadcrumb } Key:         ${ req.apiKey?.name ?? "none" }`));
         console.log(debug(`${ options.breadcrumb } URL:         ${ url }`));
-        const client = getClientInfo(req);
 
         if (!options.checkOnly || !client.apiKey) {
             await updateTraffic(req);
@@ -67,16 +71,20 @@ export const register = (app: Application) => {
             res.status(400).json({ error: "missing file" });
             return;
         }
-        const requestAllowed = await checkTraffic(req, res);
-        if (!requestAllowed) {
-            return;
-        }
 
         const options = getAndValidateOptions(GenerateType.UPLOAD, req, res);
+        const client = getClientInfo(req);
+
+        if (!options.checkOnly || !client.apiKey) {
+            const requestAllowed = await checkTraffic(req, res);
+            if (!requestAllowed) {
+                return;
+            }
+        }
+
         console.log(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`));
         console.log(debug(`${ options.breadcrumb } Key:         ${ req.apiKey?.name ?? "none" }`));
         console.log(debug(`${ options.breadcrumb } FILE:        "${ file.name }" ${ file.md5 }`))
-        const client = getClientInfo(req);
 
         if (!options.checkOnly || !client.apiKey) {
             await updateTraffic(req);
@@ -95,6 +103,10 @@ export const register = (app: Application) => {
             res.status(400).json({ error: "missing uuid" });
             return;
         }
+
+        const options = getAndValidateOptions(GenerateType.USER, req, res);
+        const client = getClientInfo(req);
+
         const requestAllowed = await checkTraffic(req, res);
         if (!requestAllowed) {
             return;
@@ -113,12 +125,9 @@ export const register = (app: Application) => {
             return;
         }
 
-        const options = getAndValidateOptions(GenerateType.USER, req, res);
         console.log(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`));
         console.log(debug(`${ options.breadcrumb } Key:         ${ req.apiKey?.name ?? "none" }`));
         console.log(debug(`${ options.breadcrumb } USER:        ${ uuids.long }`))
-        const client = getClientInfo(req);
-
 
         const skin = await Generator.generateFromUserAndSave(uuids.long, options, client);
         await sendSkin(req, res, skin);
@@ -131,6 +140,10 @@ export const register = (app: Application) => {
             res.status(400).json({ error: "missing uuid" });
             return;
         }
+
+        const options = getAndValidateOptions(GenerateType.USER, req, res);
+        const client = getClientInfo(req);
+
         const requestAllowed = await checkTraffic(req, res);
         if (!requestAllowed) {
             return;
@@ -149,12 +162,9 @@ export const register = (app: Application) => {
             return;
         }
 
-        const options = getAndValidateOptions(GenerateType.USER, req, res);
         console.log(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`));
         console.log(debug(`${ options.breadcrumb } Key:         ${ req.apiKey?.name ?? "none" }`));
         console.log(debug(`${ options.breadcrumb } USER:        ${ uuids.long }`))
-        const client = getClientInfo(req);
-
 
         const skin = await Generator.generateFromUserAndSave(uuids.long, options, client);
         await sendSkin(req, res, skin);
