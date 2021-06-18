@@ -129,7 +129,6 @@ async function init() {
             secret: config.gitconfig.secret
         });
         app.use(config.gitconfig.endpoint, webhookHandler.middleware, (req, res) => {
-            console.log(debug(req.body));
             if (req.body["action"] === "completed" && req.body["check_run"]["conclusion"] === "success") {
                 console.log(info("Invalidating git configs..."));
                 GitConfig.invalidateAll().then(b => {
