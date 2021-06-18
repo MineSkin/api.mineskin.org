@@ -17,7 +17,7 @@ import { MOJ_DIR, Temp, UPL_DIR, URL_DIR } from "./generator/Temp";
 import { getConfig, getLocalConfig, MineSkinConfig } from "./typings/Configs";
 import { MineSkinError, MineSkinRequest, GenerateRequest, isBreadRequest } from "./typings";
 import { MineSkinMetrics } from "./util/metrics";
-import { error, info, warn } from "./util/colors";
+import { debug, error, info, warn } from "./util/colors";
 import { corsMiddleware, getAndValidateRequestApiKey, hasOwnProperty, updateTraffic } from "./util";
 import { AuthenticationError } from "./generator/Authentication";
 import { Generator, GeneratorError, GenError } from "./generator/Generator";
@@ -129,11 +129,11 @@ async function init() {
             secret: config.gitconfig.secret
         });
         app.use(config.gitconfig.endpoint, webhookHandler.middleware, (req, res) => {
-            console.log(req.body);
+            console.log(debug(req.body));
             if (req.body["action"] === "completed" && req.body["check_run"]["conclusion"] === "success") {
-                console.log("Invalidating git configs...");
+                console.log(info("Invalidating git configs..."));
                 GitConfig.invalidateAll().then(b => {
-                    console.log("invalidated: " + b);
+                    console.log(info("invalidated: " + b));
                 })
             }
             res.sendStatus(200);
