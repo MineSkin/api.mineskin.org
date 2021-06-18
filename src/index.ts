@@ -12,22 +12,23 @@ import RotatingFileStream from "rotating-file-stream";
 import * as morgan from "morgan";
 import * as bodyParser from "body-parser";
 import * as fileUpload from "express-fileupload";
-import * as session from "express-session";
 import { generateRoute, getRoute, renderRoute, testerRoute, utilRoute, accountManagerRoute, apiKeyRoute } from "./routes";
 import { MOJ_DIR, Temp, UPL_DIR, URL_DIR } from "./generator/Temp";
-import { getConfig } from "./typings/Configs";
+import { getConfig, getLocalConfig, MineSkinConfig } from "./typings/Configs";
 import { MineSkinError, MineSkinRequest, GenerateRequest, isBreadRequest } from "./typings";
-import { apiRequestsMiddleware } from "./util/metrics";
+import { MineSkinMetrics } from "./util/metrics";
 import { error, info, warn } from "./util/colors";
 import { corsMiddleware, getAndValidateRequestApiKey, hasOwnProperty, updateTraffic } from "./util";
 import { AuthenticationError } from "./generator/Authentication";
 import { Generator, GeneratorError, GenError } from "./generator/Generator";
 import gitsha from "@inventivetalent/gitsha";
+import { GitConfig } from "@inventivetalent/gitconfig";
+import { GithubWebhook } from "@inventivetalent/express-github-webhook/dist/src";
 
 sourceMapSupport.install();
 
-const config = getConfig();
-const port = process.env.PORT || config.port || 3014;
+let config: MineSkinConfig;
+let port: number;
 
 let updatingApp = true;
 
@@ -40,6 +41,21 @@ const app: Express = express();
 
 async function init() {
     console.log("Node Version " + process.version);
+
+    {// Config
+        console.log("Setting up config");
+
+        const localConfig = getLocalConfig();
+        console.log(localConfig)
+        GitConfig.debug = true;
+        GitConfig.source = localConfig.gitconfig.base;
+        GitConfig.local = localConfig.gitconfig.local;
+        GitConfig.axiosInstance.defaults.headers["Accept"] = "application/vnd.github.v3.raw";
+        GitConfig.axiosInstance.defaults.headers["Authorization"] = "token " + localConfig.gitconfig.token;
+
+        config = await getConfig();
+        console.log(config);
+    }
 
     {
         console.log("Creating temp directories");
@@ -98,6 +114,8 @@ async function init() {
     {
         console.log("Setting up express middleware")
 
+        port = config.port || 3014;
+
         app.set("trust proxy", 1);
         app.use(bodyParser.urlencoded({ extended: true, limit: '50kb' }));
         app.use(bodyParser.json({ limit: '20kb' }));
@@ -106,7 +124,23 @@ async function init() {
             res.header("X-MineSkin-Server", config.server || "default");
             next();
         });
-        app.use(apiRequestsMiddleware);
+        app.use((await MineSkinMetrics.get()).apiRequestsMiddleware);
+
+        // register remote config stuff here since we need the body middleware
+        const webhookHandler = new GithubWebhook({
+            events: ["check_run"],
+            secret: config.gitconfig.secret
+        });
+        app.use(config.gitconfig.endpoint, webhookHandler.middleware, (req, res) => {
+            console.log(req.body);
+            if (req.body["action"] === "completed" && req.body["check_run"]["conclusion"] === "success") {
+                console.log("Invalidating git configs...");
+                GitConfig.invalidateAll().then(b => {
+                    console.log("invalidated: " + b);
+                })
+            }
+            res.sendStatus(200);
+        })
 
         app.use("/.well-known", express.static(".well-known"));
     }
@@ -175,13 +209,13 @@ async function init() {
             res.redirect("https://rest.wiki/?https://api.mineskin.org/openapi.yml");
         });
 
-        generateRoute.register(app);
-        getRoute.register(app);
-        renderRoute.register(app);
-        accountManagerRoute.register(app);
-        testerRoute.register(app);
-        utilRoute.register(app);
-        apiKeyRoute.register(app);
+        generateRoute.register(app, config);
+        getRoute.register(app, config);
+        renderRoute.register(app, config);
+        accountManagerRoute.register(app, config);
+        testerRoute.register(app, config);
+        utilRoute.register(app, config);
+        apiKeyRoute.register(app, config);
 
     }
 

@@ -4,8 +4,9 @@ import { Request, Response } from "express";
 import * as Sentry from "@sentry/node";
 import { Generator } from "../generator/Generator";
 import { corsMiddleware } from "../util";
+import { MineSkinConfig } from "../typings/Configs";
 
-export const register = (app: Application) => {
+export const register = (app: Application, config: MineSkinConfig) => {
 
     app.use("/validate", corsMiddleware);
 

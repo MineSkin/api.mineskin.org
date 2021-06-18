@@ -12,8 +12,9 @@ import { Bread, nextBreadColor } from "../typings/Bread";
 import { GenerateRequest, MineSkinRequest } from "../typings";
 import { Caching } from "../generator/Caching";
 import { isApiKeyRequest } from "../typings/ApiKeyRequest";
+import { MineSkinConfig } from "../typings/Configs";
 
-export const register = (app: Application) => {
+export const register = (app: Application, config: MineSkinConfig) => {
 
     app.use("/generate", corsWithAuthMiddleware);
     app.use("/generate", generateLimiter);

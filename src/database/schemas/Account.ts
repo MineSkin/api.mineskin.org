@@ -7,11 +7,9 @@ import { AccountType, IAccountModel } from "../../typings/db/IAccountDocument";
 import { debug, error } from "../../util/colors";
 import { Bread } from "../../typings/Bread";
 import { Caching } from "../../generator/Caching";
-import { metrics } from "../../util/metrics";
+import { MineSkinMetrics } from "../../util/metrics";
 import * as Sentry from "@sentry/node";
-import {  MIN_ACCOUNT_DELAY } from "../../generator/Generator";
-
-const config = getConfig();
+import { MIN_ACCOUNT_DELAY } from "../../generator/Generator";
 
 const Int32 = require("mongoose-int32");
 export const AccountSchema: Schema<IAccountDocument, IAccountModel> = new Schema({
@@ -155,8 +153,9 @@ AccountSchema.methods.getEV = function (this: IAccountDocument): number {
 
 /// STATICS
 
-AccountSchema.statics.findUsable = function (this: IAccountModel, bread?: Bread): Promise<Maybe<IAccountDocument>> {
+AccountSchema.statics.findUsable = async function (this: IAccountModel, bread?: Bread): Promise<Maybe<IAccountDocument>> {
     const time = Math.floor(Date.now() / 1000);
+    const metrics = await MineSkinMetrics.get();
     return this.findOne({
         enabled: true,
         id: { $nin: Caching.getLockedAccounts() },
@@ -165,7 +164,7 @@ AccountSchema.statics.findUsable = function (this: IAccountModel, bread?: Bread)
                 $or: [
                     { requestServer: { $exists: false } },
                     { requestServer: null },
-                    { requestServer: { $in: ["default", config.server] } }
+                    { requestServer: { $in: ["default", metrics.config.server] } }
                 ]
             },
             {
@@ -187,7 +186,7 @@ AccountSchema.statics.findUsable = function (this: IAccountModel, bread?: Bread)
                 ]
             }
         ],
-        errorCounter: { $lt: (config.errorThreshold || 10) },
+        errorCounter: { $lt: (metrics.config.errorThreshold || 10) },
         timeAdded: { $lt: (time - 60) }
     }).sort({
         lastUsed: 1,
@@ -211,10 +210,10 @@ AccountSchema.statics.findUsable = function (this: IAccountModel, bread?: Bread)
             let usedDiffMins = Math.round(usedDiff / 60 / 2) * 2;
             Sentry.setTag("used_diff_mins", `${ usedDiffMins }`);
             try {
-                metrics.influx.writePoints([{
+                metrics.metrics!.influx.writePoints([{
                     measurement: 'account_selection_difference',
                     tags: {
-                        server: config.server,
+                        server: metrics.config.server,
                         account: account.id
                     },
                     fields: {
@@ -237,8 +236,9 @@ AccountSchema.statics.findUsable = function (this: IAccountModel, bread?: Bread)
         })
 };
 
-AccountSchema.statics.countGlobalUsable = function (this: IAccountModel): Promise<number> {
+AccountSchema.statics.countGlobalUsable = async function (this: IAccountModel): Promise<number> {
     const time = Math.floor(Date.now() / 1000);
+    const config = await getConfig();
     return this.countDocuments({
         enabled: true,
         errorCounter: { $lt: (config.errorThreshold || 10) },

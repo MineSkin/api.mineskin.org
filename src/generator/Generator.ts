@@ -25,7 +25,6 @@ import { GenerateOptions } from "../typings/GenerateOptions";
 import { GenerateType, SkinModel, SkinVariant, SkinVisibility } from "../typings/db/ISkinDocument";
 import { AccountStats, CountDuplicateViewStats, DurationStats, Stats, SuccessRateStats, TimeFrameStats } from "../typings/Stats";
 import { ClientInfo } from "../typings/ClientInfo";
-import { durationMetric, HASH_MISMATCH_METRIC, metrics, NEW_DUPLICATES_METRIC, NO_ACCOUNTS_METRIC, SUCCESS_FAIL_METRIC, URL_HOST_METRIC } from "../util/metrics";
 import { debug, error, info, warn } from "../util/colors";
 import { Optimus } from "@inventivetalent/optimus-ts";
 import { SkinInfo } from "../typings/SkinInfo";
@@ -35,8 +34,9 @@ import { Notifications } from "../util/Notifications";
 import { IApiKeyDocument } from "../typings/db/IApiKeyDocument";
 import * as Url from "url";
 import stripUserAgent from "user-agent-stripper";
+import { MineSkinMetrics } from "../util/metrics";
+import { MineSkinOptimus } from "../util/optimus";
 
-const config = getConfig();
 
 // minimum delay for accounts to be used - don't set lower than 60
 export const MIN_ACCOUNT_DELAY = 90;
@@ -70,8 +70,6 @@ export const HASH_VERSION = 4;
 
 export class Generator {
 
-    protected static readonly optimus = new Optimus(config.optimus.prime, config.optimus.inverse, config.optimus.random);
-
     protected static accountStats: AccountStats;
     protected static durationStats: DurationStats;
     protected static successRateStats: SuccessRateStats;
@@ -90,9 +88,10 @@ export class Generator {
 
     @MemoizeExpiring(30000)
     static async getMinDelay(): Promise<number> {
+        const metrics = await MineSkinMetrics.get();
         const delay = await Account.calculateMinDelay();
         try {
-            metrics.influx.writePoints([{
+            metrics.metrics!.influx.writePoints([{
                 measurement: 'delay',
                 fields: {
                     delay: delay
@@ -108,6 +107,7 @@ export class Generator {
 
     @MemoizeExpiring(30000)
     static async getPreferredAccountServer(): Promise<string> {
+        const config = await getConfig();
         return await Account.getPreferredAccountServer() || config.server;
     }
 
@@ -115,6 +115,7 @@ export class Generator {
 
     @MemoizeExpiring(60000)
     static async getStats(): Promise<Stats> {
+        const config = await getConfig();
         const delay = await this.getMinDelay();
 
         const stats = <Stats>{
@@ -157,6 +158,8 @@ export class Generator {
     }
 
     protected static async queryDetailedStats(): Promise<void> {
+        const metrics = await MineSkinMetrics.get();
+
         this.accountStats = await this.queryAccountStats();
         this.durationStats = await this.queryDurationStats();
         this.successRateStats = await this.querySuccessRateStats();
@@ -164,11 +167,11 @@ export class Generator {
         this.timeFrameStats = await this.queryTimeFrameStats();
 
         try {
-            await metrics.influx.writePoints([
+            await metrics.metrics!.influx.writePoints([
                 {
                     measurement: 'accounts',
                     tags: {
-                        server: config.server
+                        server: metrics.config.server
                     },
                     fields: {
                         total: this.accountStats.accounts,
@@ -194,7 +197,7 @@ export class Generator {
                 accountsPerTypePoints.push({
                     measurement: 'account_types',
                     tags: {
-                        server: config.server,
+                        server: metrics.config.server,
                         type: accountType
                     },
                     fields: {
@@ -202,7 +205,7 @@ export class Generator {
                     }
                 })
             }
-            await metrics.influx.writePoints(accountsPerTypePoints, {
+            await metrics.metrics!.influx.writePoints(accountsPerTypePoints, {
                 database: 'mineskin'
             })
         } catch (e) {
@@ -212,6 +215,7 @@ export class Generator {
     }
 
     protected static async queryAccountStats(): Promise<AccountStats> {
+        const config = await getConfig();
         const time = Date.now() / 1000;
 
         const enabledAccounts = await Account.countDocuments({
@@ -377,7 +381,7 @@ export class Generator {
             throw new GeneratorError(GenError.FAILED_TO_CREATE_ID, "Failed to create unique skin ID after " + tryN + " tries!");
         }
         const rand = await random32BitNumber();
-        const newId = this.optimus.encode(rand);
+        const newId = (await MineSkinOptimus.get()).encode(rand);
         const existing = await Skin.findOne({ id: newId }, "id").lean().exec();
         if (existing && existing.hasOwnProperty("id")) {
             return this.makeRandomSkinId(tryN + 1);
@@ -401,6 +405,7 @@ export class Generator {
 
 
     protected static async saveSkin(result: GenerateResult, options: GenerateOptions, client: ClientInfo, type: GenerateType, start: number): Promise<ISkinDocument> {
+        const config = await getConfig();
         const id = await this.makeNewSkinId();
         const skinUuid = stripUuid(randomUuid());
         const time = Date.now();
@@ -447,14 +452,15 @@ export class Generator {
     }
 
     protected static async getDuplicateOrSaved(result: GenerateResult, options: GenerateOptions, client: ClientInfo, type: GenerateType, start: number): Promise<SavedSkin> {
+        const metrics = await MineSkinMetrics.get();
         if (result.duplicate) {
             return new SavedSkin(result.duplicate, true);
         }
         if (result.data) {
             try {
-                NEW_DUPLICATES_METRIC
+                metrics.newDuplicate
                     .tag("newOrDuplicate", "new")
-                    .tag("server", config.server)
+                    .tag("server", metrics.config.server)
                     .tag("type", type)
                     .inc();
             } catch (e) {
@@ -470,6 +476,7 @@ export class Generator {
     /// DUPLICATE CHECKS
 
     protected static async findDuplicateFromUrl(url: string, options: GenerateOptions, type: GenerateType): Promise<Maybe<ISkinDocument>> {
+        const metrics = await MineSkinMetrics.get();
         if (!url || url.length < 8 || !url.startsWith("http")) {
             return undefined;
         }
@@ -484,9 +491,9 @@ export class Generator {
                 console.log(debug(options.breadcrumb + " Found existing skin from mineskin url"));
                 existingSkin.duplicate++;
                 try {
-                    NEW_DUPLICATES_METRIC
+                    metrics.newDuplicate
                         .tag("newOrDuplicate", "duplicate")
-                        .tag("server", config.server)
+                        .tag("server", metrics.config.server)
                         .tag("source", DuplicateSource.MINESKIN_URL)
                         .tag("type", type)
                         .inc();
@@ -513,9 +520,9 @@ export class Generator {
                 console.log(debug(options.breadcrumb + " Found existing skin with same minecraft texture url/hash"));
                 existingSkin.duplicate++;
                 try {
-                    NEW_DUPLICATES_METRIC
+                    metrics.newDuplicate
                         .tag("newOrDuplicate", "duplicate")
-                        .tag("server", config.server)
+                        .tag("server", metrics.config.server)
                         .tag("source", DuplicateSource.TEXTURE_URL)
                         .tag("type", type)
                         .inc();
@@ -532,6 +539,7 @@ export class Generator {
     }
 
     protected static async findDuplicateFromImageHash(hash: string, options: GenerateOptions, client: ClientInfo, type: GenerateType): Promise<Maybe<ISkinDocument>> {
+        const metrics = await MineSkinMetrics.get();
         if (!hash || hash.length < 30) {
             return undefined;
         }
@@ -545,9 +553,9 @@ export class Generator {
             console.log(debug(options.breadcrumb + " Found existing skin with same image hash"));
             existingSkin.duplicate++;
             try {
-                NEW_DUPLICATES_METRIC
+                metrics.newDuplicate
                     .tag("newOrDuplicate", "duplicate")
-                    .tag("server", config.server)
+                    .tag("server", metrics.config.server)
                     .tag("source", DuplicateSource.IMAGE_HASH)
                     .tag("type", type)
                     .tag("userAgent", stripUserAgent(client.userAgent))
@@ -562,6 +570,7 @@ export class Generator {
     }
 
     protected static async findDuplicateFromUuid(uuid: string, options: GenerateOptions, type: GenerateType): Promise<Maybe<ISkinDocument>> {
+        const metrics = await MineSkinMetrics.get();
         if (!uuid || uuid.length < 34) {
             return undefined;
         }
@@ -576,9 +585,9 @@ export class Generator {
             console.log(debug(options.breadcrumb + " Found existing skin for user"));
             existingSkin.duplicate++;
             try {
-                NEW_DUPLICATES_METRIC
+                metrics.newDuplicate
                     .tag("newOrDuplicate", "duplicate")
-                    .tag("server", config.server)
+                    .tag("server", metrics.config.server)
                     .tag("source", DuplicateSource.USER_UUID)
                     .tag("type", type)
                     .inc();
@@ -598,16 +607,17 @@ export class Generator {
         const data = await this.generateFromUrl(url, options, client);
         const skin = await this.getDuplicateOrSaved(data, options, client, GenerateType.URL, start);
         const end = Date.now();
-        durationMetric(end - start, GenerateType.URL, options, data.account);
+        (await MineSkinMetrics.get()).durationMetric(end - start, GenerateType.URL, options, data.account);
         return skin;
     }
 
     protected static async generateFromUrl(originalUrl: string, options: GenerateOptions, client: ClientInfo): Promise<GenerateResult> {
+        const metrics = await MineSkinMetrics.get();
         console.log(info(options.breadcrumb + " [Generator] Generating from url"));
         Sentry.setExtra("generate_url", originalUrl);
 
         try {
-            URL_HOST_METRIC
+            metrics.urlHosts
                 .tag('host', new URL(originalUrl).host)
                 .inc();
         } catch (e) {
@@ -759,7 +769,7 @@ export class Generator {
         const data = await this.generateFromUpload(file, options, client);
         const skin = await this.getDuplicateOrSaved(data, options, client, GenerateType.UPLOAD, start);
         const end = Date.now();
-        durationMetric(end - start, GenerateType.UPLOAD, options, data.account);
+        (await MineSkinMetrics.get()).durationMetric(end - start, GenerateType.UPLOAD, options, data.account);
         return skin;
     }
 
@@ -841,7 +851,7 @@ export class Generator {
         }
         const mojangHash = await this.getMojangHash(data.decodedValue!.textures!.SKIN!.url);
 
-        this.compareImageAndMojangHash(tempFileValidation.hash!, mojangHash!.hash!, type, options, account);
+        await this.compareImageAndMojangHash(tempFileValidation.hash!, mojangHash!.hash!, type, options, account);
         //TODO: compare actual image contents
 
         await this.handleGenerateSuccess(type, options, client, account);
@@ -867,7 +877,7 @@ export class Generator {
         const data = await this.generateFromUser(user, options);
         const skin = await this.getDuplicateOrSaved(data, options, client, GenerateType.USER, start);
         const end = Date.now();
-        durationMetric(end - start, GenerateType.USER, options, data.account);
+        (await MineSkinMetrics.get()).durationMetric(end - start, GenerateType.USER, options, data.account);
         return skin;
     }
 
@@ -901,11 +911,12 @@ export class Generator {
     /// AUTH
 
     protected static async getAndAuthenticateAccount(bread?: Bread): Promise<IAccountDocument> {
+        const metrics = await MineSkinMetrics.get();
         let account = await Account.findUsable(bread);
         if (!account) {
             console.warn(error(bread?.breadcrumb + " [Generator] No account available!"));
-            NO_ACCOUNTS_METRIC
-                .tag('server', config.server)
+            metrics.noAccounts
+                .tag('server', metrics.config.server)
                 .inc();
             throw new GeneratorError(GenError.NO_ACCOUNT_AVAILABLE, "No account available");
         }
@@ -914,7 +925,7 @@ export class Generator {
         account = await Authentication.authenticate(account, bread);
 
         account.lastUsed = Math.floor(Date.now() / 1000);
-        account.updateRequestServer(config.server);
+        account.updateRequestServer(metrics.config.server);
 
         return account;
     }
@@ -922,10 +933,11 @@ export class Generator {
     /// SUCCESS / ERROR HANDLERS
 
     protected static async handleGenerateSuccess(type: GenerateType, options: GenerateOptions, client: ClientInfo, account: IAccountDocument): Promise<void> {
+        const metrics = await MineSkinMetrics.get();
         console.log(info(options.breadcrumb + "   ==> SUCCESS"));
-        SUCCESS_FAIL_METRIC
+        metrics.successFail
             .tag("state", "success")
-            .tag("server", config.server)
+            .tag("server", metrics.config.server)
             .tag("type", type)
             .tag("visibility", options.visibility === SkinVisibility.PRIVATE ? "private" : "public")
             .tag("variant", options.variant)
@@ -948,6 +960,7 @@ export class Generator {
     }
 
     protected static async handleGenerateError(e: any, type: GenerateType, options: GenerateOptions, client: ClientInfo, account?: IAccountDocument): Promise<void> {
+        const metrics = await MineSkinMetrics.get();
         if (e instanceof GeneratorError) {
             if (e.code == GenError.NO_DUPLICATE) {
                 return;
@@ -962,9 +975,9 @@ export class Generator {
             }
         }
 
-        let m = SUCCESS_FAIL_METRIC
+        let m = metrics.successFail
             .tag("state", "fail")
-            .tag("server", config.server)
+            .tag("server", metrics.config.server)
             .tag("type", type)
             .tag("visibility", options.visibility === SkinVisibility.PRIVATE ? "private" : "public")
             .tag("variant", options.variant)
@@ -1118,13 +1131,14 @@ export class Generator {
         }
     }
 
-    protected static compareImageAndMojangHash(imageHash: string, mojangHash: string, type: GenerateType, options: GenerateOptions, account: IAccountDocument): boolean {
+    protected static async compareImageAndMojangHash(imageHash: string, mojangHash: string, type: GenerateType, options: GenerateOptions, account: IAccountDocument): Promise<boolean> {
         if (imageHash === mojangHash) {
             return true;
         }
+        const metrics = await MineSkinMetrics.get();
         console.warn(warn(options.breadcrumb + " image hash does not match mojang hash (" + imageHash + " != " + mojangHash + ")"));
-        HASH_MISMATCH_METRIC
-            .tag('server', config.server)
+        metrics.hashMismatch
+            .tag('server', metrics.config.server)
             .tag('type', type)
             .tag('account', account.id)
             .inc();

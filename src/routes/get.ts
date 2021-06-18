@@ -3,10 +3,10 @@ import { Generator } from "../generator/Generator";
 import { Caching } from "../generator/Caching";
 import { Skin } from "../database/schemas";
 import { corsMiddleware, corsWithAuthMiddleware, corsWithCredentialsMiddleware, getAndValidateRequestApiKey, getIp, stripUuid } from "../util";
-import { debug } from "../util/colors";
 import * as Sentry from "@sentry/node";
+import { MineSkinConfig } from "../typings/Configs";
 
-export const register = (app: Application) => {
+export const register = (app: Application, config: MineSkinConfig) => {
 
     app.use("/get", corsWithAuthMiddleware);
 

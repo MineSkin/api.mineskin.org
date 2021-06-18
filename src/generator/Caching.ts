@@ -2,7 +2,7 @@ import { Requests } from "./Requests";
 import { AsyncLoadingCache, Caches, CacheStats, ICacheBase, LoadingCache, SimpleCache } from "@inventivetalent/loading-cache";
 import * as Sentry from "@sentry/node";
 import { Severity } from "@sentry/node";
-import { Maybe, sha256, sha512, stripUuid } from "../util";
+import { Maybe,  sha512, stripUuid } from "../util";
 import { IPoint } from "influx";
 import { Skin, Traffic } from "../database/schemas";
 import { BasicMojangProfile } from "./Authentication";
@@ -11,14 +11,12 @@ import { SkinData } from "../typings/SkinData";
 import { User } from "../typings/User";
 import { ISkinDocument } from "../typings";
 import { ProfileResponse } from "../typings/ProfileResponse";
-import { metrics } from "../util/metrics";
+import {  MineSkinMetrics } from "../util/metrics";
 import { Bread } from "../typings/Bread";
 import { IApiKeyDocument } from "../typings/db/IApiKeyDocument";
 import { ApiKey } from "../database/schemas/ApiKey";
 import { IPendingDiscordLink } from "../typings/DiscordAccountLink";
 import { Time } from "@inventivetalent/time";
-
-const config = getConfig();
 
 export class Caching {
 
@@ -193,7 +191,8 @@ export class Caching {
 
     ////
 
-    protected static metricsCollector = setInterval(() => {
+    protected static metricsCollector = setInterval(async () => {
+        const metrics = await MineSkinMetrics.get();
         const caches = new Map<string, ICacheBase<any, any>>([
             ["skinData", Caching.skinDataCache],
             ["userByName", Caching.userByNameCache],
@@ -215,7 +214,7 @@ export class Caching {
                 measurement: "caches",
                 tags: {
                     cache: name,
-                    server: config.server
+                    server: metrics.config.server
                 },
                 fields: {
                     size: cache.keys().length,
@@ -230,7 +229,7 @@ export class Caching {
             cache.stats.reset();
         });
         try {
-            metrics.influx.writePoints(points);
+            metrics.metrics!.influx.writePoints(points);
         } catch (e) {
             Sentry.captureException(e);
         }

@@ -2,11 +2,8 @@ import { Request, Response } from "express";
 import * as rateLimit from "express-rate-limit";
 import { getIp } from "./index";
 import { debug } from "./colors";
-import { RATE_LIMIT_METRIC } from "./metrics";
-import { getConfig } from "../typings/Configs";
+import { MineSkinMetrics } from "./metrics";
 import { DEFAULT_DELAY, Generator, MIN_ACCOUNT_DELAY } from "../generator/Generator";
-
-const config = getConfig();
 
 function keyGenerator(req: Request): string {
     return getIp(req);
@@ -22,9 +19,11 @@ export const generateLimiter = rateLimit({
     keyGenerator: keyGenerator,
     onLimitReached: (req: Request, res: Response) => {
         console.log(debug(`${ getIp(req) } (${ req.header("user-agent") }) reached their rate limit`));
-        RATE_LIMIT_METRIC
-            .tag("server", config.server)
-            .tag("limiter", "express")
-            .inc();
+        MineSkinMetrics.get().then(metrics => {
+            metrics.rateLimit
+                .tag("server", metrics.config.server)
+                .tag("limiter", "express")
+                .inc();
+        })
     }
 });

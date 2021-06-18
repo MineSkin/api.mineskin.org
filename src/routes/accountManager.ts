@@ -8,7 +8,7 @@ import { Caching } from "../generator/Caching";
 import { Requests } from "../generator/Requests";
 import * as qs from "querystring";
 import { Discord } from "../util/Discord";
-import { getConfig } from "../typings/Configs";
+import { getConfig, MineSkinConfig } from "../typings/Configs";
 import { AccessTokenSource, AccountType, IAccountDocument } from "../typings/db/IAccountDocument";
 import { MineSkinError, MineSkinRequest } from "../typings";
 import { Encryption } from "../util/Encryption";
@@ -17,9 +17,7 @@ import * as Sentry from "@sentry/node";
 import { Time } from "@inventivetalent/time";
 import { PendingDiscordAccountLink } from "../typings/DiscordAccountLink";
 
-const config = getConfig();
-
-export const register = (app: Application) => {
+export const register = (app: Application, config: MineSkinConfig) => {
 
     app.use("/accountManager", corsWithCredentialsMiddleware);
     app.use("/accountManager", session({
@@ -246,7 +244,7 @@ export const register = (app: Application) => {
 
         // Update password
         if (req.body["password"] && req.body["password"].length > 3) {
-            account.passwordNew = Encryption.encrypt(base64decode(req.body["password"]));
+            account.passwordNew = await Encryption.encrypt(base64decode(req.body["password"]));
         }
 
         // Update token
@@ -405,7 +403,7 @@ export const register = (app: Application) => {
             username: req.session.account.email,
             email: req.session.account.email,
 
-            passwordNew: Encryption.encrypt(base64decode(req.body["password"])),
+            passwordNew:await Encryption.encrypt(base64decode(req.body["password"])),
 
             uuid: req.session.account.uuid,
             playername: profileValidation.profile.name,

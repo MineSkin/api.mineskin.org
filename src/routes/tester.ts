@@ -2,13 +2,11 @@ import { Application, Request, Response } from "express";
 import * as Sentry from "@sentry/node";
 import { Skin, Stat } from "../database/schemas";
 import { Discord } from "../util/Discord";
-import { getConfig } from "../typings/Configs";
-import { metrics } from "../util/metrics";
+import { getConfig, MineSkinConfig } from "../typings/Configs";
+import { MineSkinMetrics } from "../util/metrics";
 
-const config = getConfig();
-const TESTER_METRIC = metrics.metric('mineskin', 'tester');
 
-export const register = (app: Application) => {
+export const register = (app: Application, config: MineSkinConfig) => {
 
     app.post("/testing/upload_tester_result", (req: Request, res: Response) => {
         if (!config.testerToken || req.body.token !== config.testerToken) return;
@@ -16,11 +14,13 @@ export const register = (app: Application) => {
         if (req.headers["user-agent"] !== "mineskin-tester") return;
 
         try {
-            TESTER_METRIC
-                .tag("server", config.server)
-                .tag("result", req.body.data.r || "fail")
-                .tag("mismatches", req.body.data.m > 0 ? "true" : "false")
-                .inc();
+            MineSkinMetrics.get().then(metrics => {
+                metrics.tester
+                    .tag("server", config.server)
+                    .tag("result", req.body.data.r || "fail")
+                    .tag("mismatches", req.body.data.m > 0 ? "true" : "false")
+                    .inc();
+            })
         } catch (e) {
             console.warn(e);
             Sentry.captureException(e);

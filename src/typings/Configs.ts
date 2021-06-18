@@ -3,6 +3,7 @@ import { ISingleHostConfig } from "influx";
 import { Config as SshTunnelConfig } from "tunnel-ssh";
 import { Options as EmailOptions } from "nodemailer/lib/smtp-transport";
 import { Email } from "../util/Email";
+import { GitConfig } from "@inventivetalent/gitconfig";
 
 interface OptimusConfig {
     prime: number;
@@ -54,6 +55,15 @@ interface SentryConfig {
 interface MetricsConfig extends ISingleHostConfig {
 }
 
+interface GitConfigConfig {
+    base: string;
+    local: string;
+    file: string;
+    endpoint: string;
+    secret: string;
+    token: string;
+}
+
 export interface MineSkinConfig {
     port: number;
     server: string;
@@ -75,8 +85,15 @@ export interface MineSkinConfig {
     puller: PullerConfig;
     sentry: SentryConfig;
     metrics: MetricsConfig;
+    gitconfig: GitConfigConfig;
 }
 
-export function getConfig(): MineSkinConfig {
+export function getLocalConfig(): MineSkinConfig {
     return require("../../config.js") as MineSkinConfig;
+}
+
+export async function getConfig(): Promise<MineSkinConfig> {
+    const local = getLocalConfig();
+    const remote = await GitConfig.get("mineskin.config.json");
+    return remote.mergedWith(local) as MineSkinConfig;
 }

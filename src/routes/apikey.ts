@@ -8,15 +8,13 @@ import { DEFAULT_DELAY } from "../generator/Generator";
 import { Account } from "../database/schemas";
 import { Requests } from "../generator/Requests";
 import { Discord } from "../util/Discord";
-import { getConfig } from "../typings/Configs";
+import { getConfig, MineSkinConfig } from "../typings/Configs";
 import { PendingDiscordApiKeyLink } from "../typings/DiscordAccountLink";
 import * as qs from "querystring";
 
-const config = getConfig();
-
 const DEFAULT_API_KEY_DELAY = 3;
 
-export const register = (app: Application) => {
+export const register = (app: Application, config: MineSkinConfig) => {
 
     app.use("/apikey", corsWithCredentialsMiddleware);
 

@@ -1,4 +1,3 @@
-import * as hasha from "hasha";
 import * as colors from "./colors";
 import * as fs from "fs";
 import { NextFunction, Request, Response } from "express";
@@ -11,16 +10,11 @@ import * as crypto from "crypto";
 import { Caching } from "../generator/Caching";
 import { SkinModel, SkinVariant } from "../typings/db/ISkinDocument";
 import { debug } from "./colors";
-import exp = require("constants");
-import { RATE_LIMIT_METRIC } from "./metrics";
-import { getConfig } from "../typings/Configs";
+import { MineSkinMetrics } from "./metrics";
 import { IApiKeyDocument } from "../typings/db/IApiKeyDocument";
 import { MineSkinError, MineSkinRequest } from "../typings";
-import { ApiKeyRequest } from "../typings/ApiKeyRequest";
 import { imageHash } from "@inventivetalent/imghash";
 import { ClientInfo } from "../typings/ClientInfo";
-
-const config = getConfig();
 
 export function getIp(req: Request): string {
     return req.get('cf-connecting-ip') || req.get('x-forwarded-for') || req.get("x-real-ip") || req.connection.remoteAddress || req.ip;
@@ -53,10 +47,12 @@ export async function checkTraffic(req: Request, res: Response): Promise<boolean
     if ((lastRequest.getTime() / 1000) > time - delay) {
         res.status(429).json({ error: "Too many requests", nextRequest: time + delay + 10, delay: delay });
         console.log(debug("Request too soon"));
-        RATE_LIMIT_METRIC
-            .tag("server", config.server)
-            .tag("limiter", "mongo")
-            .inc();
+        MineSkinMetrics.get().then(metrics => {
+            metrics.rateLimit
+                .tag("server", metrics.config.server)
+                .tag("limiter", "mongo")
+                .inc();
+        })
         Sentry.captureMessage("rate-limited");
         return false;
     }

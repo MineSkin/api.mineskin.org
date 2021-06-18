@@ -7,14 +7,13 @@ import { AccountType } from "../typings/db/IAccountDocument";
 import { Request } from "express";
 import { getIp } from "./index";
 
-const config = getConfig();
-
 export const OWNER_CHANNEL = "636632020985839619";
 export const SUPPORT_CHANNEL = "482181024445497354";
 
 export class Discord {
 
-    static postDiscordMessage(content: string, channel?: string, fallback?: () => void): void {
+    static async postDiscordMessage(content: string, channel?: string, fallback?: () => void): Promise<void> {
+        const config = await getConfig();
         if (!config.discordAccount || !config.discord.token) return;
         if (!channel) channel = config.discord.channel;
         Requests.axiosInstance.request({
@@ -41,7 +40,8 @@ export class Discord {
     }
 
 
-    static sendDiscordDirectMessage(content: string, receiver: string, fallback?: () => void): void {
+    static async sendDiscordDirectMessage(content: string, receiver: string, fallback?: () => void): Promise<void> {
+        const config = await getConfig();
         if (!config.discord || !config.discord.token) return;
         Requests.axiosInstance.request({
             method: "POST",
@@ -69,6 +69,7 @@ export class Discord {
     }
 
     static async addDiscordAccountOwnerRole(userId: string): Promise<boolean> {
+        const config = await getConfig();
         if (!config.discord || !config.discord.token || !config.discord.guild) return false;
         return Requests.axiosInstance.request({
             method: "PUT",
@@ -93,6 +94,7 @@ export class Discord {
     }
 
     static async removeDiscordAccountOwnerRole(userId: string): Promise<boolean> {
+        const config = await getConfig();
         if (!config.discord || !config.discord.token || !config.discord.guild) return false;
         return Requests.axiosInstance.request({
             method: "DELETE",

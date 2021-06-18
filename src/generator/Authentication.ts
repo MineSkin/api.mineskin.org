@@ -3,20 +3,17 @@ import * as Sentry from "@sentry/node";
 import * as XboxLiveAuth from "@xboxreplay/xboxlive-auth";
 import { AuthenticateResponse } from "@xboxreplay/xboxlive-auth";
 import * as qs from "querystring";
-import { Discord } from "../util/Discord";
 import { AxiosResponse } from "axios";
 import { getConfig } from "../typings/Configs";
 import { IAccountDocument, MineSkinError } from "../typings";
 import { AccessTokenSource, AccountType } from "../typings/db/IAccountDocument";
 import { debug, warn } from "../util/colors";
 import { Encryption } from "../util/Encryption";
-import { AUTHENTICATION_METRIC } from "../util/metrics";
 import { Bread } from "../typings/Bread";
 import { Notifications } from "../util/Notifications";
 import { Account } from "../database/schemas";
 import { Maybe } from "../util";
-
-const config = getConfig();
+import { MineSkinMetrics } from "../util/metrics";
 
 const ACCESS_TOKEN_EXPIRATION_MOJANG = 86360;
 const ACCESS_TOKEN_EXPIRATION_MICROSOFT = 86360;
@@ -78,6 +75,7 @@ export class Mojang {
     }
 
     static async login(account: IAccountDocument, bread?: Bread): Promise<IAccountDocument> {
+        const config = await getConfig();
         if (account.microsoftAccount && account.accountType !== AccountType.MOJANG) {
             throw new AuthenticationError(AuthError.UNSUPPORTED_ACCOUNT, "Can't login microsoft account via mojang auth", account);
         }
@@ -87,7 +85,7 @@ export class Mojang {
         }
 
         console.log(debug(bread?.breadcrumb + " [Auth] Logging in " + account.toSimplifiedString()));
-        const authBody = await Mojang.loginWithCredentials(account.getEmail(), Encryption.decrypt(account.passwordNew), account.getOrCreateClientToken())
+        const authBody = await Mojang.loginWithCredentials(account.getEmail(), await Encryption.decrypt(account.passwordNew), account.getOrCreateClientToken())
             .catch(err => {
                 if (err.response) {
                     throw new AuthenticationError(AuthError.MOJANG_AUTH_FAILED, "Failed to authenticate via mojang", account, err);
@@ -147,6 +145,7 @@ export class Mojang {
     }
 
     static async refreshAccessToken(account: IAccountDocument, bread?: Bread): Promise<IAccountDocument> {
+        const config = await getConfig();
         if (account.microsoftAccount && account.accountType !== AccountType.MOJANG) {
             throw new AuthenticationError(AuthError.UNSUPPORTED_ACCOUNT, "Can't refresh microsoft account access token via mojang auth", account);
         }
@@ -324,6 +323,7 @@ export class Microsoft {
     }
 
     static async login(account: IAccountDocument, bread?: Bread): Promise<IAccountDocument> {
+        const config = await getConfig();
         if (!account.microsoftAccount && account.accountType !== AccountType.MICROSOFT) {
             throw new AuthenticationError(AuthError.UNSUPPORTED_ACCOUNT, "Can't login non-microsoft account via microsoft auth", account);
         }
@@ -333,7 +333,7 @@ export class Microsoft {
         }
 
         console.log(debug(bread?.breadcrumb + " [Auth] Logging in " + account.toSimplifiedString()));
-        const minecraftAccessToken = await Microsoft.loginWithEmailAndPassword(account.getEmail(), Encryption.decrypt(account.passwordNew), xboxInfo => {
+        const minecraftAccessToken = await Microsoft.loginWithEmailAndPassword(account.getEmail(), await Encryption.decrypt(account.passwordNew), xboxInfo => {
             account.microsoftAccessToken = xboxInfo.accessToken;
             account.microsoftRefreshToken = xboxInfo.refreshToken;
             account.microsoftUserId = xboxInfo.userId;
@@ -374,6 +374,7 @@ export class Microsoft {
     }
 
     static async refreshAccessToken(account: IAccountDocument, bread?: Bread): Promise<IAccountDocument> {
+        const config = await getConfig();
         if (!account.microsoftAccount && account.accountType !== AccountType.MICROSOFT) {
             throw new AuthenticationError(AuthError.UNSUPPORTED_ACCOUNT, "Can't refresh token of non-microsoft account via microsoft auth", account);
         }
@@ -551,8 +552,9 @@ export class Microsoft {
 export class Authentication {
 
     public static async authenticate(account: IAccountDocument, bread?: Bread): Promise<IAccountDocument> {
-        const metric = AUTHENTICATION_METRIC
-            .tag("server", config.server)
+        const metrics = await MineSkinMetrics.get();
+        const metric = metrics.authentication
+            .tag("server", metrics.config.server)
             .tag("type", account.getAccountType())
             .tag("account", account.id);
         try {

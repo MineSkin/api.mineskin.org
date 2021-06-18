@@ -1,21 +1,18 @@
 import { JobQueue } from "jobqu";
 import axios, { AxiosRequestConfig, AxiosResponse, AxiosInstance } from "axios";
 import { Time } from "@inventivetalent/time";
-import { metrics } from "../util/metrics";
 import { URL } from "url";
 import { setInterval } from "timers";
 import { IPoint } from "influx";
 import * as Sentry from "@sentry/node";
 import { getConfig } from "../typings/Configs";
-
-const config = getConfig();
+import { MineSkinMetrics } from "../util/metrics";
 
 axios.defaults.headers["User-Agent"] = "MineSkin";
 axios.defaults.headers["Content-Type"] = "application/json";
 axios.defaults.headers["Accept"] = "application/json";
 axios.defaults.timeout = 20000;
 
-export const REQUESTS_METRIC = metrics.metric('mineskin', 'requests');
 
 export class Requests {
 
@@ -57,7 +54,8 @@ export class Requests {
     protected static readonly liveLoginRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
         = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, Requests.liveLoginInstance), Time.seconds(1));
 
-    protected static metricsCollector = setInterval(() => {
+    protected static metricsCollector = setInterval(async () => {
+        const config = await getConfig();
         const queues = new Map<string, JobQueue<AxiosRequestConfig, AxiosResponse>>([
             ["mojangAuth", Requests.mojangAuthRequestQueue],
             ["mojangApi", Requests.mojangApiRequestQueue],
@@ -79,7 +77,9 @@ export class Requests {
             });
         });
         try {
-            metrics.influx.writePoints(points);
+            MineSkinMetrics.get().then(metrics => {
+                metrics.metrics!.influx.writePoints(points);
+            })
         } catch (e) {
             Sentry.captureException(e);
         }
@@ -87,14 +87,15 @@ export class Requests {
 
     protected static runAxiosRequest(request: AxiosRequestConfig, instance = this.axiosInstance): Promise<AxiosResponse> {
         return instance.request(request)
-            .then(response => this.processRequestMetric(response, request, response, instance))
+            .then(async (response) => this.processRequestMetric(response, request, response, instance))
             .catch(err => this.processRequestMetric(err, request, err.response, instance, err))
     }
 
-    static processRequestMetric<T>(responseOrError: T, request?: AxiosRequestConfig, response?: AxiosResponse, instance?: AxiosInstance, err?: any): T {
+    static async processRequestMetric<T>(responseOrError: T, request?: AxiosRequestConfig, response?: AxiosResponse, instance?: AxiosInstance, err?: any): Promise<T> {
+        const metrics = await MineSkinMetrics.get();
         try {
-            const m = REQUESTS_METRIC
-                .tag("server", config.server);
+            const m = metrics.requests
+                .tag("server", metrics.config.server);
             if (request) {
                 const url = new URL(axios.getUri(request), instance?.defaults.baseURL);
                 m.tag("method", request.method || "GET")
