@@ -128,13 +128,19 @@ async function init() {
             secret: config.gitconfig.secret
         });
         app.use(config.gitconfig.endpoint, webhookHandler.middleware, (req, res) => {
-            if (req.body["action"] === "completed" && req.body["check_run"]["conclusion"] === "success") {
-                console.log(info("Invalidating git configs..."));
-                GitConfig.invalidateAll().then(b => {
-                    console.log(info("invalidated: " + b));
-                })
+            try {
+                if (req.body["action"] === "completed" && req.body["check_run"]["conclusion"] === "success") {
+                    console.log(info("Invalidating git configs..."));
+                    GitConfig.invalidateAll().then(b => {
+                        console.log(info("invalidated: " + b));
+                    }).catch(e => {
+                        Sentry.captureException(e);
+                    })
+                }
+                res.sendStatus(200);
+            } catch (e) {
+                Sentry.captureException(e);
             }
-            res.sendStatus(200);
         })
 
         app.use("/.well-known", express.static(".well-known"));
