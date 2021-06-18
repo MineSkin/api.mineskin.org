@@ -103,8 +103,6 @@ async function init() {
         morgan.token('remote-addr', (req, res): string => {
             return req.headers['x-real-ip'] as string || req.headers['x-forwarded-for'] as string || req.connection.remoteAddress || "";
         });
-
-
     }
 
 
