@@ -3,7 +3,7 @@ import * as rateLimit from "express-rate-limit";
 import { getIp } from "./index";
 import { debug } from "./colors";
 import { MineSkinMetrics } from "./metrics";
-import { DEFAULT_DELAY, Generator, MIN_ACCOUNT_DELAY } from "../generator/Generator";
+import {  Generator } from "../generator/Generator";
 
 function keyGenerator(req: Request): string {
     return getIp(req);

@@ -79,11 +79,12 @@ export class Generator {
     protected static detailedStatsQueryTimer = setInterval(() => Generator.queryDetailedStats(), 120000);
 
     static async getDelay(apiKey?: IApiKeyDocument): Promise<number> {
+        const config = await getConfig();
         const minDelay = await this.getMinDelay();
         if (!apiKey) {
-            return Math.max(DEFAULT_DELAY, minDelay);
+            return Math.max(config.delays.default, minDelay);
         }
-        return Math.max(Math.min(DEFAULT_DELAY, apiKey.minDelay), minDelay);
+        return Math.max(Math.min(config.delays.default, apiKey.minDelay), minDelay);
     }
 
     @MemoizeExpiring(30000)

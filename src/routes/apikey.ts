@@ -4,15 +4,11 @@ import { debug, info, warn } from "../util/colors";
 import { Caching } from "../generator/Caching";
 import { IApiKeyDocument } from "../typings/db/IApiKeyDocument";
 import { ApiKey } from "../database/schemas/ApiKey";
-import { DEFAULT_DELAY } from "../generator/Generator";
-import { Account } from "../database/schemas";
 import { Requests } from "../generator/Requests";
-import { Discord } from "../util/Discord";
 import { getConfig, MineSkinConfig } from "../typings/Configs";
 import { PendingDiscordApiKeyLink } from "../typings/DiscordAccountLink";
 import * as qs from "querystring";
 
-const DEFAULT_API_KEY_DELAY = 3;
 
 export const register = (app: Application, config: MineSkinConfig) => {
 
@@ -95,7 +91,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
             allowedOrigins: allowedOrigins,
             allowedIps: allowedIps,
             allowedAgents: allowedAgents,
-            minDelay: DEFAULT_API_KEY_DELAY
+            minDelay: config.delays.defaultApiKey
         });
 
         await apiKey.save();

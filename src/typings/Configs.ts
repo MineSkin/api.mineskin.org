@@ -64,6 +64,11 @@ interface GitConfigConfig {
     token: string;
 }
 
+interface DelaysConfig {
+    default: number;
+    defaultApiKey: number;
+}
+
 export interface MineSkinConfig {
     port: number;
     server: string;
@@ -86,6 +91,7 @@ export interface MineSkinConfig {
     sentry: SentryConfig;
     metrics: MetricsConfig;
     gitconfig: GitConfigConfig;
+    delays: DelaysConfig;
 }
 
 export function getLocalConfig(): MineSkinConfig {
