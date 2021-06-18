@@ -39,6 +39,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
             return;
         }
 
+        const config = await getConfig();
         const existingServer = await Authentication.getExistingAccountServer(req.body["email"]);
         if (existingServer && existingServer !== config.server) {
             res.json({
@@ -128,6 +129,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
             return;
         }
 
+        const config = await getConfig();
         const existingServer = await Authentication.getExistingAccountServer(req.body["email"]);
         if (existingServer && existingServer !== config.server) {
             res.json({
@@ -221,6 +223,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
             return;
         }
 
+        const config = await getConfig();
         const profileValidation = await getAndValidateMojangProfile(req.session.account!.token!, req.body["uuid"]);
         if (!profileValidation.valid || !profileValidation.profile) return;
 
@@ -495,6 +498,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
     /// ACCOUNT LINKING
 
     app.get("/accountManager/discord/oauth/start", async (req: AccountManagerRequest, res: Response) => {
+        const config = await getConfig();
         if (!config.discordAccount) {
             res.status(400).json({ error: "server can't handle discord auth" });
             return;
@@ -551,6 +555,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
             res.status(400).end();
             return;
         }
+        const config = await getConfig();
         if (!config.discordAccount) {
             res.status(400).json({ error: "server can't handle discord auth" });
             return;

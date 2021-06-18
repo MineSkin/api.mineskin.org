@@ -14,7 +14,7 @@ import { Caching } from "../generator/Caching";
 import { isApiKeyRequest } from "../typings/ApiKeyRequest";
 import { MineSkinConfig } from "../typings/Configs";
 
-export const register = (app: Application, config: MineSkinConfig) => {
+export const register = (app: Application) => {
 
     app.use("/generate", corsWithAuthMiddleware);
     app.use("/generate", generateLimiter);

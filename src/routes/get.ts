@@ -6,7 +6,7 @@ import { corsMiddleware, corsWithAuthMiddleware, corsWithCredentialsMiddleware, 
 import * as Sentry from "@sentry/node";
 import { MineSkinConfig } from "../typings/Configs";
 
-export const register = (app: Application, config: MineSkinConfig) => {
+export const register = (app: Application) => {
 
     app.use("/get", corsWithAuthMiddleware);
 

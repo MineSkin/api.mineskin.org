@@ -6,9 +6,10 @@ import { getConfig, MineSkinConfig } from "../typings/Configs";
 import { MineSkinMetrics } from "../util/metrics";
 
 
-export const register = (app: Application, config: MineSkinConfig) => {
+export const register = (app: Application) => {
 
-    app.post("/testing/upload_tester_result", (req: Request, res: Response) => {
+    app.post("/testing/upload_tester_result", async (req: Request, res: Response) => {
+        const config = await getConfig();
         if (!config.testerToken || req.body.token !== config.testerToken) return;
         if (!req.body.data) return;
         if (req.headers["user-agent"] !== "mineskin-tester") return;

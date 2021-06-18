@@ -6,7 +6,7 @@ import { ISkinDocument } from "../typings";
 import { corsMiddleware } from "../util";
 import { MineSkinConfig } from "../typings/Configs";
 
-export const register = (app: Application, config: MineSkinConfig) => {
+export const register = (app: Application) => {
 
     app.use("/render", corsMiddleware);
 

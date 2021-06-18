@@ -214,13 +214,13 @@ async function init() {
             res.redirect("https://rest.wiki/?https://api.mineskin.org/openapi.yml");
         });
 
-        generateRoute.register(app, config);
-        getRoute.register(app, config);
-        renderRoute.register(app, config);
+        generateRoute.register(app);
+        getRoute.register(app);
+        renderRoute.register(app);
         accountManagerRoute.register(app, config);
-        testerRoute.register(app, config);
-        utilRoute.register(app, config);
-        apiKeyRoute.register(app, config);
+        testerRoute.register(app);
+        utilRoute.register(app);
+        apiKeyRoute.register(app);
 
     }
 

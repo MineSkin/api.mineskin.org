@@ -10,7 +10,7 @@ import { PendingDiscordApiKeyLink } from "../typings/DiscordAccountLink";
 import * as qs from "querystring";
 
 
-export const register = (app: Application, config: MineSkinConfig) => {
+export const register = (app: Application) => {
 
     app.use("/apikey", corsWithCredentialsMiddleware);
 
@@ -26,6 +26,8 @@ export const register = (app: Application, config: MineSkinConfig) => {
             res.status(400).json({ error: "invalid key" });
             return;
         }
+
+        const config = await getConfig();
 
         res.json({
             success: true,
@@ -59,6 +61,8 @@ export const register = (app: Application, config: MineSkinConfig) => {
             return;
         }
         Caching.invalidatePendingDiscordLink(ownerState);
+
+        const config = await getConfig();
 
         const allowedOrigins: string[] = (req.body["origins"] || []).map((s: string) => s.trim().toLowerCase()).filter((s: string) => s.length > 7 && s.length < 30);
         const allowedIps: string[] = (req.body["ips"] || []).map((s: string) => s.trim()).filter((s: string) => s.length > 7 && s.length < 40);
@@ -198,6 +202,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
 
 
     app.get("/apikey/discord/oauth/start", async (req: Request, res: Response) => {
+        const config = await getConfig();
         if (!config.discordApiKey) {
             res.status(400).json({ error: "server can't handle discord auth" });
             return;
@@ -219,6 +224,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
             res.status(400).end();
             return;
         }
+        const config = await getConfig();
         if (!config.discordApiKey) {
             res.status(400).json({ error: "server can't handle discord auth" });
             return;
