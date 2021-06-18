@@ -57,7 +57,7 @@ export class MineSkinMetrics {
         this.requests = this.metrics.metric('mineskin', 'requests');
         this.authentication = this.metrics.metric('mineskin', 'authentication');
         this.newDuplicate = this.metrics.metric('mineskin', 'generate_new_duplicate');
-        this.successFail = this.metrics.metric('mineskin', 'generate_new_duplicate');
+        this.successFail = this.metrics.metric('mineskin', 'generate_success_fail');
         this.noAccounts = this.metrics.metric('mineskin', 'no_accounts');
         this.hashMismatch = this.metrics.metric('mineskin', 'hash_mismatch');
         this.tester = this.metrics.metric('mineskin', 'tester');
