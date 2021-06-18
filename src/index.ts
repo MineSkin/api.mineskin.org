@@ -46,15 +46,12 @@ async function init() {
         console.log("Setting up config");
 
         const localConfig = getLocalConfig();
-        console.log(localConfig)
-        GitConfig.debug = true;
         GitConfig.source = localConfig.gitconfig.base;
         GitConfig.local = localConfig.gitconfig.local;
         GitConfig.axiosInstance.defaults.headers["Accept"] = "application/vnd.github.v3.raw";
         GitConfig.axiosInstance.defaults.headers["Authorization"] = "token " + localConfig.gitconfig.token;
 
         config = await getConfig();
-        console.log(config);
     }
 
     {
