@@ -110,6 +110,7 @@ async function init() {
         console.log("Setting up express middleware")
 
         port = config.port || 3014;
+        const metrics = await MineSkinMetrics.get();
 
         app.set("trust proxy", 1);
         app.use(bodyParser.urlencoded({ extended: true, limit: '50kb' }));
@@ -119,7 +120,7 @@ async function init() {
             res.header("X-MineSkin-Server", config.server || "default");
             next();
         });
-        app.use((await MineSkinMetrics.get()).apiRequestsMiddleware);
+        app.use((req, res, next) => metrics.apiRequestsMiddleware(req, res, next));
 
         // register remote config stuff here since we need the body middleware
         const webhookHandler = new GithubWebhook({
