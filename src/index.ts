@@ -24,6 +24,7 @@ import { Generator, GeneratorError, GenError } from "./generator/Generator";
 import gitsha from "@inventivetalent/gitsha";
 import { GitConfig } from "@inventivetalent/gitconfig";
 import { GithubWebhook } from "@inventivetalent/express-github-webhook/dist/src";
+import { EventHint, Event } from "@sentry/node";
 
 sourceMapSupport.install();
 
@@ -81,7 +82,10 @@ async function init() {
             ],
             serverName: config.server,
             tracesSampleRate: 0.02,
-            sampleRate: 0.5
+            sampleRate: 0.5,
+            ignoreErrors: [
+                "No duplicate found"
+            ]
         });
 
         app.use(Sentry.Handlers.requestHandler());
