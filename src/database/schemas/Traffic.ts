@@ -1,4 +1,4 @@
-import { LeanDocumentOrArray, Model, model, Schema } from "mongoose";
+import { LeanDocumentOrArray, model, Schema } from "mongoose";
 import { ITrafficDocument } from "../../typings";
 import { ITrafficModel } from "../../typings/db/ITrafficDocument";
 

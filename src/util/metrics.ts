@@ -1,5 +1,5 @@
 import { IntervalFlusher, Metric, Metrics } from "metrics-node";
-import { Request, Response, NextFunction } from "express";
+import { NextFunction, Request, Response } from "express";
 import * as Sentry from "@sentry/node";
 import { getConfig, MineSkinConfig } from "../typings/Configs";
 import { GenerateType } from "../typings/db/ISkinDocument";

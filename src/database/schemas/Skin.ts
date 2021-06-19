@@ -1,7 +1,7 @@
 import { model, Schema } from "mongoose";
-import { Maybe, modelToVariant, stripUuid } from "../../util";
+import { modelToVariant, stripUuid } from "../../util";
 import { ISkinDocument } from "../../typings";
-import { ISkinModel, SkinModel, SkinVisibility } from "../../typings/db/ISkinDocument";
+import { ISkinModel, SkinVisibility } from "../../typings/db/ISkinDocument";
 import { SkinInfo } from "../../typings/SkinInfo";
 import { v4 as randomUuid } from "uuid";
 import { Generator, HASH_VERSION } from "../../generator/Generator";

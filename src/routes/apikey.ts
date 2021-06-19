@@ -1,11 +1,11 @@
 import { Application, Request, Response } from "express";
-import { base64encode, corsMiddleware, corsWithAuthMiddleware, corsWithCredentialsMiddleware, Maybe, random32BitNumber, sha256, sha512 } from "../util";
-import { debug, info, warn } from "../util/colors";
+import { base64encode, corsWithCredentialsMiddleware, Maybe, random32BitNumber, sha256, sha512 } from "../util";
+import { debug, info } from "../util/colors";
 import { Caching } from "../generator/Caching";
 import { IApiKeyDocument } from "../typings/db/IApiKeyDocument";
 import { ApiKey } from "../database/schemas/ApiKey";
 import { Requests } from "../generator/Requests";
-import { getConfig, MineSkinConfig } from "../typings/Configs";
+import { getConfig } from "../typings/Configs";
 import { PendingDiscordApiKeyLink } from "../typings/DiscordAccountLink";
 import * as qs from "querystring";
 import { Discord } from "../util/Discord";

@@ -1,5 +1,4 @@
 import { Document, Model } from "mongoose";
-import { ITrafficDocument } from "./ITrafficDocument";
 
 export interface IStatDocument extends Document {
     key: string;

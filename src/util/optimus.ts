@@ -1,5 +1,4 @@
 import { Maybe } from "./index";
-import { MineSkinMetrics } from "./metrics";
 import { getConfig } from "../typings/Configs";
 import { Optimus } from "@inventivetalent/optimus-ts";
 

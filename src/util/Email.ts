@@ -1,4 +1,4 @@
-import { createTransport, TransportOptions } from "nodemailer";
+import { createTransport } from "nodemailer";
 import * as Sentry from "@sentry/node";
 import { getConfig } from "../typings/Configs";
 import * as Mail from "nodemailer/lib/mailer";

@@ -1,4 +1,4 @@
-import { Application, NextFunction, Request, Response } from "express";
+import { Application, Request, Response } from "express";
 import { Authentication, AuthenticationError, AuthError, BasicMojangProfile, Microsoft, Mojang, MojangSecurityAnswer, XboxInfo } from "../generator/Authentication";
 import { base64decode, corsWithCredentialsMiddleware, getIp, Maybe, md5, sha256, sha512, stripUuid } from "../util";
 import * as session from "express-session";
@@ -12,7 +12,7 @@ import { getConfig, MineSkinConfig } from "../typings/Configs";
 import { AccessTokenSource, AccountType, IAccountDocument } from "../typings/db/IAccountDocument";
 import { MineSkinError, MineSkinRequest } from "../typings";
 import { Encryption } from "../util/Encryption";
-import { debug, info, warn } from "../util/colors";
+import { info, warn } from "../util/colors";
 import * as Sentry from "@sentry/node";
 import { Time } from "@inventivetalent/time";
 import { PendingDiscordAccountLink } from "../typings/DiscordAccountLink";

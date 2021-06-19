@@ -1,18 +1,17 @@
 import { Application, Request, Response } from "express";
-import { checkTraffic, corsMiddleware, corsWithAuthMiddleware, corsWithCredentialsMiddleware, getAndValidateRequestApiKey, getIp, getVia, longAndShortUuid, Maybe, md5, modelToVariant, updateTraffic, validateUrl, variantToModel } from "../util";
+import { checkTraffic, corsWithAuthMiddleware, getAndValidateRequestApiKey, getIp, getVia, longAndShortUuid, Maybe, md5, modelToVariant, updateTraffic, validateUrl, variantToModel } from "../util";
 import { UploadedFile } from "express-fileupload";
-import { Generator, GeneratorError, GenError, SavedSkin } from "../generator/Generator";
+import { Generator, SavedSkin } from "../generator/Generator";
 import { generateLimiter } from "../util/rateLimiters";
 import { ClientInfo } from "../typings/ClientInfo";
 import { GenerateOptions } from "../typings/GenerateOptions";
 import { GenerateType, SkinModel, SkinVariant, SkinVisibility } from "../typings/db/ISkinDocument";
 import { debug } from "../util/colors";
 import * as Sentry from "@sentry/node";
-import { Bread, nextBreadColor } from "../typings/Bread";
-import { GenerateRequest, MineSkinRequest } from "../typings";
+import { nextBreadColor } from "../typings/Bread";
+import { GenerateRequest } from "../typings";
 import { Caching } from "../generator/Caching";
 import { isApiKeyRequest } from "../typings/ApiKeyRequest";
-import { MineSkinConfig } from "../typings/Configs";
 
 export const register = (app: Application) => {
 

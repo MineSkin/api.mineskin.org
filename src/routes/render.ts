@@ -4,7 +4,6 @@ import { Requests } from "../generator/Requests";
 import * as Sentry from "@sentry/node";
 import { ISkinDocument } from "../typings";
 import { corsMiddleware } from "../util";
-import { MineSkinConfig } from "../typings/Configs";
 
 export const register = (app: Application) => {
 

@@ -2,7 +2,6 @@ import { Options as GitPullerOptions } from "express-git-puller";
 import { ISingleHostConfig } from "influx";
 import { Config as SshTunnelConfig } from "tunnel-ssh";
 import { Options as EmailOptions } from "nodemailer/lib/smtp-transport";
-import { Email } from "../util/Email";
 import { GitConfig } from "@inventivetalent/gitconfig";
 
 interface OptimusConfig {

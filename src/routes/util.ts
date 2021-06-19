@@ -1,10 +1,7 @@
-import { Application } from "express";
+import { Application, Request, Response } from "express";
 import { Caching } from "../generator/Caching";
-import { Request, Response } from "express";
 import * as Sentry from "@sentry/node";
-import { Generator } from "../generator/Generator";
 import { corsMiddleware } from "../util";
-import { MineSkinConfig } from "../typings/Configs";
 
 export const register = (app: Application) => {
 

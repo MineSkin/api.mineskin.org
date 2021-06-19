@@ -1,6 +1,6 @@
 import { Account, Skin, Stat } from "../database/schemas";
 import { MemoizeExpiring } from "@inventivetalent/typescript-memoize";
-import { base64decode, getHashFromMojangTextureUrl, hasOwnProperty, imgHash, longAndShortUuid, Maybe, random32BitNumber, stripNumbers, stripUuid, updateTraffic } from "../util";
+import { base64decode, getHashFromMojangTextureUrl, hasOwnProperty, imgHash, longAndShortUuid, Maybe, random32BitNumber, stripUuid } from "../util";
 import { Caching } from "./Caching";
 import { Authentication, AuthenticationError } from "./Authentication";
 import * as Sentry from "@sentry/node";
@@ -26,13 +26,11 @@ import { GenerateType, SkinModel, SkinVariant, SkinVisibility } from "../typings
 import { AccountStats, CountDuplicateViewStats, DurationStats, Stats, SuccessRateStats, TimeFrameStats } from "../typings/Stats";
 import { ClientInfo } from "../typings/ClientInfo";
 import { debug, error, info, warn } from "../util/colors";
-import { Optimus } from "@inventivetalent/optimus-ts";
 import { SkinInfo } from "../typings/SkinInfo";
 import { Bread } from "../typings/Bread";
 import { IPoint } from "influx";
 import { Notifications } from "../util/Notifications";
 import { IApiKeyDocument } from "../typings/db/IApiKeyDocument";
-import * as Url from "url";
 import stripUserAgent from "user-agent-stripper";
 import { MineSkinMetrics } from "../util/metrics";
 import { MineSkinOptimus } from "../util/optimus";

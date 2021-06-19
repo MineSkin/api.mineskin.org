@@ -1,4 +1,5 @@
 import * as colors from "./colors";
+import { debug } from "./colors";
 import * as fs from "fs";
 import { NextFunction, Request, Response } from "express";
 import * as Sentry from "@sentry/node";
@@ -9,7 +10,6 @@ import * as readChunk from "read-chunk";
 import * as crypto from "crypto";
 import { Caching } from "../generator/Caching";
 import { SkinModel, SkinVariant } from "../typings/db/ISkinDocument";
-import { debug } from "./colors";
 import { MineSkinMetrics } from "./metrics";
 import { IApiKeyDocument } from "../typings/db/IApiKeyDocument";
 import { MineSkinError, MineSkinRequest } from "../typings";
