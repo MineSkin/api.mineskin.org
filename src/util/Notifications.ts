@@ -38,7 +38,7 @@ export class Notifications {
 
     static notifyMissingCredentials(account: IAccountDocument): void {
         // Log Channel
-        Discord.postDiscordMessage("⚠️ Account #" + account.id + " just lost its access token\n" +
+        Discord.postDiscordMessage("⚠️ 👤 Account #" + account.id + " just lost its access token\n" +
             "  Current Server: " + account.lastRequestServer + "/" + account.requestServer + "\n" +
             "  Account Type: " + account.getAccountType() + "\n" +
             "  Total Success/Error: " + account.totalSuccessCounter + "/" + account.totalErrorCounter + "\n" +
@@ -65,7 +65,7 @@ export class Notifications {
 
     static notifyLoginFailed(account: IAccountDocument, err: MineSkinError): void {
         // Log channel
-        Discord.postDiscordMessage("⚠️ Account #" + account.id + " failed to login\n" +
+        Discord.postDiscordMessage("⚠️ 👤 Account #" + account.id + " failed to login\n" +
             "  UUID: " + account.uuid + "\n" +
             "  Error: " + err.msg + "\n" +
             "  Current Server: " + account.lastRequestServer + "/" + account.requestServer + "\n" +
@@ -97,7 +97,7 @@ export class Notifications {
 
     static notifyHighErrorCount(account: IAccountDocument, lastType: GenerateType, err: any): void {
         // Log channel
-        Discord.postDiscordMessage("⚠️ Account #" + account.id + " has " + account.errorCounter + " errors!\n" +
+        Discord.postDiscordMessage("⚠️ 👤 Account #" + account.id + " has " + account.errorCounter + " errors!\n" +
             "  Current Server: " + account.lastRequestServer + "/" + account.requestServer + "\n" +
             "  Account Type: " + account.getAccountType() + "\n" +
             "  Latest Type: " + lastType + "\n" +

@@ -318,7 +318,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
                 updater = account => {
                     account.enabled = !!req.body["enabled"]
 
-                    Discord.postDiscordMessage("Account " + account.id + "/" + account.uuid + " " + (account.enabled ? "enabled" : "disabled") + " (linked to <@" + account.discordUser + ">)");
+                    Discord.postDiscordMessage("👤 Account " + account.id + "/" + account.uuid + " " + (account.enabled ? "enabled" : "disabled") + " (linked to <@" + account.discordUser + ">)");
                 }
                 break;
             case 'emails':
@@ -406,7 +406,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
             username: req.session.account.email,
             email: req.session.account.email,
 
-            passwordNew:await Encryption.encrypt(base64decode(req.body["password"])),
+            passwordNew: await Encryption.encrypt(base64decode(req.body["password"])),
 
             uuid: req.session.account.uuid,
             playername: profileValidation.profile.name,
@@ -491,7 +491,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
             Discord.sendDiscordDirectMessage("Your MineSkin account " + account.uuid + " has been deleted.", account.discordUser);
         }
 
-        Discord.postDiscordMessage("Account " + account.id + "/" + account.uuid + " deleted (was linked to <@" + account.discordUser + ">)");
+        Discord.postDiscordMessage("👤 Account " + account.id + "/" + account.uuid + " deleted (was linked to <@" + account.discordUser + ">)");
     })
 
 
@@ -651,7 +651,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
         console.log(info("Discord User " + userBody["username"] + "#" + userBody["discriminator"] + " linked to Mineskin account #" + account.id + "/" + account.uuid + " - adding roles!"));
         const roleAdded = await Discord.addDiscordAccountOwnerRole(discordId);
         Discord.sendDiscordDirectMessage("Thanks for linking your Discord account to Mineskin! :)", discordId);
-        Discord.postDiscordMessage(userBody.username + "#" + userBody.discriminator + " <@" + discordId + "> linked to account #" + account.id + "/" + account.uuid);
+        Discord.postDiscordMessage("👤 " + userBody.username + "#" + userBody.discriminator + " <@" + discordId + "> linked to account #" + account.id + "/" + account.uuid);
         if (roleAdded) {
             res.json({
                 success: true,
