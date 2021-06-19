@@ -8,6 +8,7 @@ import { Requests } from "../generator/Requests";
 import { getConfig, MineSkinConfig } from "../typings/Configs";
 import { PendingDiscordApiKeyLink } from "../typings/DiscordAccountLink";
 import * as qs from "querystring";
+import { Discord } from "../util/Discord";
 
 
 export const register = (app: Application) => {
@@ -100,6 +101,13 @@ export const register = (app: Application) => {
 
         await apiKey.save();
 
+        Discord.postDiscordMessage("🔑 New API Key created\n" +
+            "Name:      " + apiKey.name + "\n" +
+            "Owner:     <@" + apiKey.owner + ">\n" +
+            "Origins:   " + apiKey.allowedOrigins + "\n" +
+            "IPs:       " + apiKey.allowedIps + "\n" +
+            "Agents:    " + apiKey.allowedAgents + "\n");
+
         res.json({
             success: true,
             msg: "key created",
@@ -158,8 +166,14 @@ export const register = (app: Application) => {
 
         apiKey.updatedAt = new Date();
 
-
         await apiKey.save();
+
+        Discord.postDiscordMessage("🔑 API Key updated\n" +
+            "Name:      " + apiKey.name + "\n" +
+            "Owner:     <@" + apiKey.owner + ">\n" +
+            "Origins:   " + apiKey.allowedOrigins + "\n" +
+            "IPs:       " + apiKey.allowedIps + "\n" +
+            "Agents:    " + apiKey.allowedAgents + "\n");
 
         res.json({
             success: true,
@@ -193,6 +207,13 @@ export const register = (app: Application) => {
         }
 
         await apiKey.delete();
+
+        Discord.postDiscordMessage("🔑 API Key deleted\n" +
+            "Name:      " + apiKey.name + "\n" +
+            "Owner:     <@" + apiKey.owner + ">\n" +
+            "Origins:   " + apiKey.allowedOrigins + "\n" +
+            "IPs:       " + apiKey.allowedIps + "\n" +
+            "Agents:    " + apiKey.allowedAgents + "\n");
 
         res.json({
             success: true,
