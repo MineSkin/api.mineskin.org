@@ -39,10 +39,7 @@ import { MineSkinOptimus } from "../util/optimus";
 
 
 // minimum delay for accounts to be used - don't set lower than 60
-export const MIN_ACCOUNT_DELAY = 90;
-
-// default generator delay (seconds) between requests
-export const DEFAULT_DELAY = 5;
+export const MIN_ACCOUNT_DELAY = 80;
 
 const MAX_ID_TRIES = 10;
 
