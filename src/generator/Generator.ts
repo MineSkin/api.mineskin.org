@@ -870,14 +870,14 @@ export class Generator {
 
     public static async generateFromUserAndSave(user: string, options: GenerateOptions, client: ClientInfo): Promise<SavedSkin> {
         const start = Date.now();
-        const data = await this.generateFromUser(user, options);
+        const data = await this.generateFromUser(user, options, client);
         const skin = await this.getDuplicateOrSaved(data, options, client, GenerateType.USER, start);
         const end = Date.now();
         (await MineSkinMetrics.get()).durationMetric(end - start, GenerateType.USER, options, data.account);
         return skin;
     }
 
-    protected static async generateFromUser(uuid: string, options: GenerateOptions): Promise<GenerateResult> {
+    protected static async generateFromUser(uuid: string, options: GenerateOptions, client: ClientInfo): Promise<GenerateResult> {
         console.log(info(options.breadcrumb + " [Generator] Generating from user"));
         Sentry.setExtra("generate_user", uuid);
 
@@ -893,6 +893,13 @@ export class Generator {
             uuid: uuids.short
         });
         const mojangHash = await this.getMojangHash(data.decodedValue!.textures!.SKIN!.url);
+
+        const hashDuplicate = await this.findDuplicateFromImageHash(mojangHash!.hash!, options, client, GenerateType.USER);
+        if (hashDuplicate) {
+            return {
+                duplicate: hashDuplicate
+            };
+        }
 
         return {
             data: data,
