@@ -109,11 +109,12 @@ SkinSchema.methods.getHash = async function (this: ISkinDocument): Promise<strin
     return this.hash;
 }
 
-SkinSchema.methods.toResponseJson = function (this: ISkinDocument): SkinInfo {
+SkinSchema.methods.toResponseJson = async function (this: ISkinDocument): Promise<SkinInfo> {
     return {
         id: this.id,
         idStr: "" + this.id,
         uuid: this.getUuid(),
+        hash: await this.getHash(),
         name: this.name || "",
         model: this.model,
         variant: modelToVariant(this.model),

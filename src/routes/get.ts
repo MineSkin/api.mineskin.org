@@ -47,8 +47,7 @@ export const register = (app: Application) => {
         if (skin.model === "alex") {
             skin.model = "slim";
         }
-        await skin.getHash(); //TODO
-        res.json(skin.toResponseJson()); // this triggers the generation of a random uuid if it doesn't have one, so do that before saving
+        res.json(await skin.toResponseJson()); // this triggers the generation of a random uuid if it doesn't have one, so do that before saving
         await skin.save();
     })
 
@@ -67,7 +66,7 @@ export const register = (app: Application) => {
         if (skin.model === "alex") {
             skin.model = "slim";
         }
-        res.json(skin.toResponseJson());
+        res.json(await skin.toResponseJson());
         await skin.save();
     })
 
@@ -83,7 +82,7 @@ export const register = (app: Application) => {
             res.status(404).json({ error: "Skin not found" });
             return;
         }
-        res.json(skin.toResponseJson());
+        res.json(await skin.toResponseJson());
     })
 
     app.get("/get/list/:page?", async (req: Request, res: Response) => {

@@ -174,7 +174,7 @@ export const register = (app: Application) => {
 
     async function sendSkin(req: Request, res: Response, skin: SavedSkin): Promise<void> {
         const genDelay = await Generator.getDelay(await getAndValidateRequestApiKey(req));
-        res.json(skin.toResponseJson(skin.duplicate ? 1 : genDelay));
+        res.json(await skin.toResponseJson(skin.duplicate ? 1 : genDelay));
 
         if (skin.duplicate) {
             await updateTraffic(req, new Date(Date.now() - genDelay))

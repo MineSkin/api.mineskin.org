@@ -20,6 +20,7 @@ export interface SkinInfo {
     id: number;
     idStr: string;
     uuid: string;
+    hash: string;
     name: string;
     /**@deprecated**/
     model: SkinModel;

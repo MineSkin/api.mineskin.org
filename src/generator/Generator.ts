@@ -1194,8 +1194,8 @@ export class SavedSkin {
     constructor(public readonly skin: ISkinDocument, public readonly duplicate: boolean) {
     }
 
-    toResponseJson(delay?: number): SkinInfo {
-        const info = this.skin.toResponseJson();
+    async toResponseJson(delay?: number): Promise<SkinInfo> {
+        const info = await this.skin.toResponseJson();
         info.duplicate = this.duplicate;
         if (delay) {
             info.nextRequest = delay;
