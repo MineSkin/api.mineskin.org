@@ -37,6 +37,33 @@ export class Discord {
         })
     }
 
+    static async postDiscordMessageWithAttachment(content: string, file: Buffer, fileName: string, channel?: string): Promise<void> {
+        const config = await getConfig();
+        if (!config.discordAccount || !config.discord.token) return;
+        if (!channel) channel = config.discord.channel;
+        const body = new FormData();
+        body.append("content", content);
+        body.append("file", new Blob([new Uint8Array(file)]), fileName);
+        Requests.axiosInstance.request({
+            method: "POST",
+            url: "https://discordapp.com/api/channels/" + channel + "/messages",
+            headers: {
+                "Authorization": "Bot " + config.discord.token,
+                "User-Agent": "MineSkin",
+                "Content-Type": "multipart/form-data"
+            },
+            data: body
+        }).then(response => {
+            if (response.status !== 200) {
+                console.warn("postDiscordMessageWithAttachment");
+                console.warn(response.status);
+                console.warn(response.data);
+            }
+        }).catch(err => {
+            Sentry.captureException(err);
+        })
+    }
+
 
     static async sendDiscordDirectMessage(content: string, receiver: string, fallback?: () => void): Promise<void> {
         const config = await getConfig();

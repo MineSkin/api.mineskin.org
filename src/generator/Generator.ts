@@ -34,6 +34,7 @@ import { IApiKeyDocument } from "../typings/db/IApiKeyDocument";
 import stripUserAgent from "user-agent-stripper";
 import { MineSkinMetrics } from "../util/metrics";
 import { MineSkinOptimus } from "../util/optimus";
+import { Discord } from "../util/Discord";
 
 
 // minimum delay for accounts to be used - don't set lower than 60
@@ -847,8 +848,15 @@ export class Generator {
         }
         const mojangHash = await this.getMojangHash(data.decodedValue!.textures!.SKIN!.url);
 
-        await this.compareImageAndMojangHash(tempFileValidation.hash!, mojangHash!.hash!, type, options, account);
-        //TODO: compare actual image contents
+        const hashesMatch = await this.compareImageAndMojangHash(tempFileValidation.hash!, mojangHash!.hash!, type, options, account);
+        if (!hashesMatch) {
+            Discord.postDiscordMessageWithAttachment("⚠ Hash mismatch\n" +
+                "  Image:  " + tempFileValidation.hash + "\n" +
+                "  Mojang: " + mojangHash.hash + "\n" +
+                data.decodedValue!.textures!.SKIN!.url,
+                tempFileValidation!.buffer!, "image.png")
+                .catch(e => Sentry.captureException(e));
+        }
 
         await this.handleGenerateSuccess(type, options, client, account);
 
