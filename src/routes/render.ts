@@ -23,7 +23,7 @@ export const register = (app: Application) => {
         let id = req.params["id"];
         let query;
         if (id.length > 10) {
-            query = { uuid: id };
+            query = { skinUuid: id };
         } else {
             query = { id: id };
         }
@@ -44,7 +44,7 @@ export const register = (app: Application) => {
         let id = req.params["id"];
         let query;
         if (id.length > 10) {
-            query = { uuid: id };
+            query = { skinUuid: id };
         } else {
             query = { id: id };
         }
