@@ -51,11 +51,10 @@ export class Discord {
         Requests.axiosInstance.request({
             method: "POST",
             url: "https://discordapp.com/api/channels/" + channel + "/messages",
-            headers: {
+            headers: body.getHeaders({
                 "Authorization": "Bot " + config.discord.token,
-                "User-Agent": "MineSkin",
-                "Content-Type": "multipart/form-data"
-            },
+                "User-Agent": "MineSkin"
+            }),
             data: body
         }).then(response => {
             console.warn("postDiscordMessageWithAttachment");
