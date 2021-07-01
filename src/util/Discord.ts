@@ -44,7 +44,9 @@ export class Discord {
         if (!channel) channel = config.discord.channel;
         const body = new FormData();
         body.append("content", content);
-        body.append("file", file, fileName);
+        body.append("file", file, {
+            filename: fileName
+        });
         console.log(body)
         Requests.axiosInstance.request({
             method: "POST",
