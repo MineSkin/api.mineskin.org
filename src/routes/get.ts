@@ -116,14 +116,14 @@ export const register = (app: Application) => {
             .find(query)
             .skip(size * (page - 1))
             .limit(size)
-            .select({ '_id': 0, id: 1, uuid: 1, name: 1, url: 1, time: 1 })
+            .select({ '_id': 0, id: 1, uuid: 1, skinUuid: 1, name: 1, url: 1, time: 1 })
             .sort({ time: -1 })
             .lean()
             .exec();
         querySpan?.finish();
 
         res.json({
-            skins: skins,
+            skins: skins.map(s => s.uuid = s.skinUuid || s.uuid),
             page: {
                 index: page,
                 amount: Math.round(count / size),
