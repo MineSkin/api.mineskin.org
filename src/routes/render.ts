@@ -20,7 +20,14 @@ export const register = (app: Application) => {
     })
 
     app.get("/render/:id/:type(head|skin)", (req: Request, res: Response) => {
-        Skin.findOne({ id: req.params["id"] }, { url: 1 }).lean().exec().then((skin: ISkinDocument) => {
+        let id = req.params["id"];
+        let query;
+        if (id.length > 10) {
+            query = { uuid: id };
+        } else {
+            query = { id: id };
+        }
+        Skin.findOne(query, { url: 1 }).lean().exec().then((skin: ISkinDocument) => {
             if (!skin) {
                 res.status(404).end();
             } else {
@@ -29,12 +36,19 @@ export const register = (app: Application) => {
             }
         }).catch((err: any) => {
             Sentry.captureException(err);
-        })
+        });
     });
 
     // Helper route to avoid CORS issues
     app.get("/render/texture/:id", (req: Request, res: Response) => {
-        Skin.findOne({ id: req.params["id"] }, { url: 1 }).lean().exec().then((skin: ISkinDocument) => {
+        let id = req.params["id"];
+        let query;
+        if (id.length > 10) {
+            query = { uuid: id };
+        } else {
+            query = { id: id };
+        }
+        Skin.findOne(query, { url: 1 }).lean().exec().then((skin: ISkinDocument) => {
             if (!skin) {
                 res.status(404).end();
             } else {
