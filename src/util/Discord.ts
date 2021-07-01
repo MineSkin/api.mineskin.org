@@ -44,7 +44,7 @@ export class Discord {
         if (!channel) channel = config.discord.channel;
         const body = new FormData();
         body.append("content", content);
-        body.append("file", new Blob([new Uint8Array(file)]), fileName);
+        body.append("file", file, fileName);
         Requests.axiosInstance.request({
             method: "POST",
             url: "https://discordapp.com/api/channels/" + channel + "/messages",
