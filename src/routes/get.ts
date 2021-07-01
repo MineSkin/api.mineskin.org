@@ -123,7 +123,10 @@ export const register = (app: Application) => {
         querySpan?.finish();
 
         res.json({
-            skins: skins.map(s => s.uuid = s.skinUuid || s.uuid),
+            skins: skins.map(s => {
+                s.uuid = s.skinUuid || s.uuid;
+                return s;
+            }),
             page: {
                 index: page,
                 amount: Math.round(count / size),
