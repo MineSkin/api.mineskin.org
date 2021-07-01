@@ -59,6 +59,7 @@ export class Discord {
             console.warn(response.status);
             console.warn(response.data);
         }).catch(err => {
+            console.warn(err);
             Sentry.captureException(err);
         })
     }
