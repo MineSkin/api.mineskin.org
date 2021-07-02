@@ -47,7 +47,6 @@ export class Discord {
         body.append("file", file, {
             filename: fileName
         });
-        console.log(body)
         Requests.axiosInstance.request({
             method: "POST",
             url: "https://discordapp.com/api/channels/" + channel + "/messages",
@@ -57,9 +56,11 @@ export class Discord {
             }),
             data: body
         }).then(response => {
-            console.warn("postDiscordMessageWithAttachment");
-            console.warn(response.status);
-            console.warn(response.data);
+            if (response.status != 200) {
+                console.warn("postDiscordMessageWithAttachment");
+                console.warn(response.status);
+                console.warn(response.data);
+            }
         }).catch(err => {
             console.warn(err);
             Sentry.captureException(err);
