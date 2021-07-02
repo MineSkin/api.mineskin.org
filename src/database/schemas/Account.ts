@@ -4,7 +4,7 @@ import { v4 as uuid } from "uuid";
 import { getConfig } from "../../typings/Configs";
 import { IAccountDocument } from "../../typings";
 import { AccountType, IAccountModel } from "../../typings/db/IAccountDocument";
-import { debug, error } from "../../util/colors";
+import { debug, error, warn } from "../../util/colors";
 import { Bread } from "../../typings/Bread";
 import { Caching } from "../../generator/Caching";
 import { MineSkinMetrics } from "../../util/metrics";
@@ -197,6 +197,10 @@ AccountSchema.statics.findUsable = async function (this: IAccountModel, bread?: 
             if (!account) {
                 console.warn(error(bread?.breadcrumb + " There are no accounts available!"));
                 return undefined;
+            }
+            if (Caching.isAccountLocked(account.id)) {
+                console.warn(warn(bread?.breadcrumb + " Selecting a different account since " + account.id + " got locked since querying"));
+                return Account.findUsable(bread);
             }
             Caching.lockSelectedAccount(account.id, bread);
 
