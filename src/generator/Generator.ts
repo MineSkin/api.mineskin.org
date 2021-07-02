@@ -837,13 +837,18 @@ export class Generator {
         const skinChangeResponse = skinResponse.data as SkinChangeResponse;
         const minecraftSkinId = skinChangeResponse?.skins[0]?.id;
 
+        const config = await getConfig();
+
         const data = await this.getSkinData(account);
         if (skinChangeResponse && skinChangeResponse.skins && skinChangeResponse.skins.length > 0) {
             if (skinChangeResponse.skins[0].url !== data.decodedValue!.textures!.SKIN!.url) {
                 console.warn(warn(options.breadcrumb + " Skin url returned by skin change does not match url returned by data query (" + skinChangeResponse.skins[0].url + " != " + data.decodedValue!.textures!.SKIN!.url + ")"));
                 //TODO: figure out why this happens
 
-                // throw new MineSkinError("skin_url_mismatch", "Skin url returned by skin change does not match url returned by data query", 500);
+                Discord.postDiscordMessage("⚠ URL mismatch\n" +
+                    "  Server:       " + config.server + "\n" +
+                    "  Changed to:   " + skinChangeResponse.skins[0].url + "\n" +
+                    "  Texture Data: " + data.decodedValue!.textures!.SKIN!.url);
             }
         }
         const mojangHash = await this.getMojangHash(data.decodedValue!.textures!.SKIN!.url);
@@ -851,11 +856,11 @@ export class Generator {
         const hashesMatch = await this.compareImageAndMojangHash(tempFileValidation.hash!, mojangHash!.hash!, type, options, account);
         if (!hashesMatch) {
             Discord.postDiscordMessageWithAttachment("⚠ Hash mismatch\n" +
+                "  Server: " + config.server + "\n" +
                 "  Image:  " + tempFileValidation.hash + "\n" +
                 "  Mojang: " + mojangHash.hash + "\n" +
                 data.decodedValue!.textures!.SKIN!.url,
-                tempFileValidation!.buffer!, "image.png")
-                .catch(e => Sentry.captureException(e));
+                tempFileValidation!.buffer!, "image.png");
         }
 
         await this.handleGenerateSuccess(type, options, client, account);
