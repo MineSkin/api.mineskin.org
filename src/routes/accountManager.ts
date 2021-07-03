@@ -279,7 +279,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
         const generateTotal = account.totalSuccessCounter + account.totalErrorCounter;
         const recentTotal = account.successCounter + account.errorCounter;
         res.json({
-            type: account.type || (account.microsoftAccount ? "microsoft" : "mojang"),
+            type: account.accountType || (account.microsoftAccount ? "microsoft" : "mojang"),
             username: account.username,
             email: account.email || account.username,
             uuid: account.uuid,
