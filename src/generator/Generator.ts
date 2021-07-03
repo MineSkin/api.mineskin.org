@@ -847,6 +847,7 @@ export class Generator {
 
                 Discord.postDiscordMessage("⚠ URL mismatch\n" +
                     "  Server:       " + config.server + "\n" +
+                    "  Account:      " + account.id + "/" + account.uuid + "\n" +
                     "  Changed to:   " + skinChangeResponse.skins[0].url + "\n" +
                     "  Texture Data: " + data.decodedValue!.textures!.SKIN!.url);
             }
