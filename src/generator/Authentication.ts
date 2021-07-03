@@ -542,7 +542,7 @@ export class Microsoft {
                 Sentry.captureException(e);
             }
         }
-        // Minecraft accessToken
+        // Minecraft accessToken - does not return a refresh token, so need the MS one above
         return xboxLoginResponse.access_token;
     }
 
