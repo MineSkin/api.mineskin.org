@@ -278,6 +278,10 @@ export const register = (app: Application, config: MineSkinConfig) => {
 
         const generateTotal = account.totalSuccessCounter + account.totalErrorCounter;
         const recentTotal = account.successCounter + account.errorCounter;
+
+        const successRate = generateTotal === 0 ? 0 : account.totalSuccessCounter / generateTotal;
+        const recentSuccessRate = recentTotal === 0 ? 0 : account.successCounter / recentTotal;
+
         res.json({
             type: account.accountType || (account.microsoftAccount ? "microsoft" : "mojang"),
             username: account.username,
@@ -286,8 +290,8 @@ export const register = (app: Application, config: MineSkinConfig) => {
             lastUsed: account.lastUsed,
             enabled: account.enabled,
             usable: account.errorCounter < config.errorThreshold,
-            successRate: Number((account.totalSuccessCounter / generateTotal).toFixed(3)),
-            recentSuccessRate: Number((account.successCounter / recentTotal).toFixed(3)),
+            successRate: Number(successRate.toFixed(3)),
+            recentSuccessRate: Number(recentSuccessRate.toFixed(3)),
             successStreak: Math.round(account.successCounter / 10) * 10,
             discordLinked: !!account.discordUser,
             sendEmails: !!account.sendEmails,
