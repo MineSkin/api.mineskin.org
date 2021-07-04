@@ -185,7 +185,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
     })
 
     app.get("/accountManager/preferredAccountServer", (req: Request, res: Response) => {
-        Generator.getPreferredAccountServer().then(server => {
+        Generator.getPreferredAccountServer(req.query["type"] as string).then(server => {
             res.json({
                 server: server,
                 host: `${ server }.api.mineskin.org`
@@ -389,7 +389,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
 
         const ip = getIp(req);
 
-        const preferredServer = await Generator.getPreferredAccountServer();
+        const preferredServer = await Generator.getPreferredAccountServer(req.session.account.type);
         if (preferredServer !== config.server) {
             console.warn("Got /confirmAccountSubmission but preferred server is " + preferredServer);
         }

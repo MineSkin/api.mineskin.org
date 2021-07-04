@@ -94,7 +94,7 @@ export interface IAccountModel extends Model<IAccountDocument> {
 
     calculateMinDelay(): Promise<number>;
 
-    getAccountsPerServer(): Promise<{ server: string, count: number }[]>;
+    getAccountsPerServer(accountType?: string): Promise<{ server: string, count: number }[]>;
 
-    getPreferredAccountServer(): Promise<Maybe<string>>;
+    getPreferredAccountServer(accountType?: string): Promise<Maybe<string>>;
 }

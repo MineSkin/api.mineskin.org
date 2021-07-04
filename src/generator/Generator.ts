@@ -103,9 +103,9 @@ export class Generator {
     }
 
     @MemoizeExpiring(30000)
-    static async getPreferredAccountServer(): Promise<string> {
+    static async getPreferredAccountServer(accountType?: string): Promise<string> {
         const config = await getConfig();
-        return await Account.getPreferredAccountServer() || config.server;
+        return await Account.getPreferredAccountServer(accountType) || config.server;
     }
 
     // Stats

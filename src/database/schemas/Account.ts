@@ -263,9 +263,13 @@ AccountSchema.statics.calculateMinDelay = function (this: IAccountModel): Promis
     });
 };
 
-AccountSchema.statics.getAccountsPerServer = function (this: IAccountModel): Promise<{ server: string, count: number }[]> {
+AccountSchema.statics.getAccountsPerServer = function (this: IAccountModel, accountType?: string): Promise<{ server: string, count: number }[]> {
+    let filter: any = { enabled: true, errorCounter: { $lt: 10 } };
+    if (accountType) {
+        filter.accountType = accountType;
+    }
     return this.aggregate([
-        { $match: { enabled: true, errorCounter: { $lt: 10 } } },
+        { $match: filter },
         { $group: { _id: '$requestServer', count: { $sum: 1 } } },
         { $sort: { count: 1 } }
     ]).exec().then((accountsPerServer: any[]) => {
@@ -282,8 +286,8 @@ AccountSchema.statics.getAccountsPerServer = function (this: IAccountModel): Pro
     });
 }
 
-AccountSchema.statics.getPreferredAccountServer = function (this: IAccountModel): Promise<Maybe<string>> {
-    return this.getAccountsPerServer().then(accountsPerServer => {
+AccountSchema.statics.getPreferredAccountServer = function (this: IAccountModel, accountType?: string): Promise<Maybe<string>> {
+    return this.getAccountsPerServer(accountType).then(accountsPerServer => {
         if (!accountsPerServer || accountsPerServer.length < 1) {
             return undefined;
         }
