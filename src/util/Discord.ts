@@ -35,6 +35,10 @@ export class Discord {
             }
         }).catch(err => {
             Sentry.captureException(err);
+            if (err.response && fallback) {
+                console.warn(err.response)
+                fallback()
+            }
         })
     }
 
@@ -93,6 +97,10 @@ export class Discord {
             }
         }).catch(err => {
             Sentry.captureException(err);
+            if (err.response && fallback) {
+                console.warn(err.response)
+                fallback()
+            }
         })
     }
 
