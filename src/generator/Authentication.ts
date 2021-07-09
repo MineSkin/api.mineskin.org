@@ -162,6 +162,8 @@ export class Mojang {
             data: JSON.stringify(body)
         }).catch(err => {
             if (err.response) {
+                console.warn(err);
+                Sentry.captureException(err);
                 throw new AuthenticationError(AuthError.MOJANG_REFRESH_FAILED, "Failed to refresh token via mojang", account, err);
             }
             throw err;
@@ -389,6 +391,8 @@ export class Microsoft {
             account.minecraftXboxUsername = xboxInfo.username;
         }).catch(err => {
             if (err.response || err.name === "XboxReplayError") {
+                console.warn(err);
+                Sentry.captureException(err);
                 throw new AuthenticationError(AuthError.MICROSOFT_REFRESH_FAILED, "Failed to refresh token via microsoft", account, err);
             }
             throw err;
