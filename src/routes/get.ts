@@ -38,7 +38,7 @@ export const register = (app: Application) => {
             res.status(400).json({ error: "invalid number" });
             return;
         }
-        const skin = await Skin.findForId(id);
+        const skin = await Caching.getSkinById(id);
         if (!skin) {
             res.status(404).json({ error: "Skin not found" });
             return;
@@ -57,7 +57,7 @@ export const register = (app: Application) => {
             res.status(400).json({ error: "invalid uuid" });
             return;
         }
-        const skin = await Skin.findForUuid(stripUuid(uuid));
+        const skin = await Caching.getSkinByUuid(stripUuid(uuid));
         if (!skin) {
             res.status(404).json({ error: "Skin not found" });
             return;

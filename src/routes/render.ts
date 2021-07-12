@@ -1,9 +1,9 @@
 import { Application, Request, Response } from "express";
-import { Skin } from "../database/schemas";
 import { Requests } from "../generator/Requests";
 import * as Sentry from "@sentry/node";
 import { ISkinDocument } from "../typings";
-import { corsMiddleware } from "../util";
+import { corsMiddleware, Maybe } from "../util";
+import { Caching } from "../generator/Caching";
 
 export const register = (app: Application) => {
 
@@ -21,13 +21,13 @@ export const register = (app: Application) => {
 
     app.get("/render/:id/:type(head|skin)", (req: Request, res: Response) => {
         let id = req.params["id"];
-        let query;
+        let promise: Promise<Maybe<ISkinDocument>>;
         if (id.length > 10) {
-            query = { skinUuid: id };
+            promise = Caching.getSkinByUuid(id);
         } else {
-            query = { id: id };
+            promise = Caching.getSkinById(parseInt(id));
         }
-        Skin.findOne(query, { url: 1 }).lean().exec().then((skin: ISkinDocument) => {
+        promise.then((skin: ISkinDocument) => {
             if (!skin) {
                 res.status(404).end();
             } else {
@@ -42,13 +42,13 @@ export const register = (app: Application) => {
     // Helper route to avoid CORS issues
     app.get("/render/texture/:id", (req: Request, res: Response) => {
         let id = req.params["id"];
-        let query;
+        let promise: Promise<Maybe<ISkinDocument>>;
         if (id.length > 10) {
-            query = { skinUuid: id };
+            promise = Caching.getSkinByUuid(id);
         } else {
-            query = { id: id };
+            promise = Caching.getSkinById(parseInt(id));
         }
-        Skin.findOne(query, { url: 1 }).lean().exec().then((skin: ISkinDocument) => {
+        promise.then((skin: ISkinDocument) => {
             if (!skin) {
                 res.status(404).end();
             } else {

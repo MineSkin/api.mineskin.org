@@ -159,6 +159,11 @@ export class Caching {
         .expirationInterval(Time.seconds(5))
         .buildAsync<number, ISkinDocument>(id => Skin.findForId(id));
 
+    protected static readonly skinByUuidCache: AsyncLoadingCache<string, ISkinDocument> = Caches.builder()
+        .expireAfterWrite(Time.seconds(20))
+        .expirationInterval(Time.seconds(5))
+        .buildAsync<string, ISkinDocument>(id => Skin.findForUuid(id));
+
     protected static readonly apiKeyCache: AsyncLoadingCache<string, IApiKeyDocument> = Caches.builder()
         .expireAfterWrite(Time.minutes(5))
         .expireAfterAccess(Time.minutes(1))
@@ -200,6 +205,7 @@ export class Caching {
 
             ["trafficById", Caching.trafficByIpCache],
             ["skinById", Caching.skinByIdCache],
+            ["skinByUuid", Caching.skinByUuidCache],
             ["apiKeys", Caching.apiKeyCache],
             ["skinDocumentCounts", Caching.skinDocumentCounts],
 
@@ -265,6 +271,10 @@ export class Caching {
 
     public static getSkinById(id: number): Promise<Maybe<ISkinDocument>> {
         return this.skinByIdCache.get(id);
+    }
+
+    public static getSkinByUuid(id: string): Promise<Maybe<ISkinDocument>> {
+        return this.skinByUuidCache.get(id);
     }
 
     public static getApiKey(key: string): Promise<Maybe<IApiKeyDocument>> {
