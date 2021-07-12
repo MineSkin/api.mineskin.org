@@ -143,11 +143,11 @@ SkinSchema.methods.toResponseJson = async function (this: ISkinDocument): Promis
 /// STATICS
 
 SkinSchema.statics.findForId = function ( id: number): Promise<ISkinDocument | null> {
-    return Skin.findOne({ id: id }).exec();
+    return Skin.findOne({ id: id }).read("secondaryPreferred").exec();
 };
 
 SkinSchema.statics.findForUuid = function ( uuid: string): Promise<ISkinDocument | null> {
-    return Skin.findOne({ skinUuid: uuid }).exec();
+    return Skin.findOne({ skinUuid: uuid }).read("secondaryPreferred").exec();
 };
 
 SkinSchema.statics.attachTesterResult = function ( id: number, server: string, mismatchCount: number): Promise<ISkinDocument | null> {
