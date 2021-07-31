@@ -426,6 +426,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
 
             type: "external",
             enabled: true,
+            sendEmails: true,
             lastUsed: 0,
             lastSelected: 0,
             forcedTimeoutAt: 0,
