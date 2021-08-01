@@ -53,7 +53,6 @@ export async function checkTraffic(req: Request, res: Response): Promise<boolean
                 .tag("limiter", "mongo")
                 .inc();
         })
-        Sentry.captureMessage("rate-limited");
         return false;
     }
     return true;
