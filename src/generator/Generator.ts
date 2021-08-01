@@ -388,20 +388,33 @@ export class Generator {
 
 
     static async getSkinData(accountOrUuid: IAccountDocument | { uuid: string }): Promise<SkinData> {
+        const transaction = Sentry.getCurrentHub().getScope()?.getTransaction();
+        const span = transaction?.startChild({
+            op: "generate_getSkinData"
+        })
+
         const uuid = stripUuid(accountOrUuid.uuid);
         const data = await Caching.getSkinData(uuid);
         if (!data || !data.value) {
+            span?.setStatus("internal_error").finish();
             throw new GeneratorError(GenError.INVALID_SKIN_DATA, "Skin data was invalid", 500, hasOwnProperty(accountOrUuid, "id") ? accountOrUuid as IAccountDocument : undefined, data);
         }
         const decodedValue = this.decodeValue(data);
         if (!decodedValue || !decodedValue.textures || !decodedValue.textures.SKIN) {
+            span?.setStatus("internal_error").finish();
             throw new GeneratorError(GenError.INVALID_SKIN_DATA, "Skin data has no skin info", 500, hasOwnProperty(accountOrUuid, "id") ? accountOrUuid as IAccountDocument : undefined, data);
         }
+        span?.finish();
         return data;
     }
 
 
     protected static async saveSkin(result: GenerateResult, options: GenerateOptions, client: ClientInfo, type: GenerateType, start: number): Promise<ISkinDocument> {
+        const transaction = Sentry.getCurrentHub().getScope()?.getTransaction();
+        const span = transaction?.startChild({
+            op: "generate_saveSkin"
+        })
+
         const config = await getConfig();
         const id = await this.makeNewSkinId();
         const skinUuid = stripUuid(randomUuid());
@@ -444,6 +457,7 @@ export class Generator {
         })
         return skin.save().then(skin => {
             console.log(info(options.breadcrumb + " New skin saved #" + skin.id + " - generated in " + duration + "ms by " + result.account?.getAccountType() + " account #" + result.account?.id));
+            span?.finish();
             return skin;
         })
     }
@@ -478,6 +492,11 @@ export class Generator {
             return undefined;
         }
 
+        const transaction = Sentry.getCurrentHub().getScope()?.getTransaction();
+        const span = transaction?.startChild({
+            op: "generate_findDuplicateFromUrl"
+        })
+
         const mineskinUrlResult = MINESKIN_URL_REGEX.exec(url);
         if (!!mineskinUrlResult && mineskinUrlResult.length >= 3) {
             const mineskinId = parseInt(mineskinUrlResult[2]);
@@ -497,8 +516,10 @@ export class Generator {
                 } catch (e) {
                     Sentry.captureException(e);
                 }
+                span?.setData("duplicate", true).finish();
                 return await existingSkin.save();
             } else {
+                span?.setData("duplicate", false).finish();
                 return undefined;
             }
         }
@@ -526,12 +547,15 @@ export class Generator {
                 } catch (e) {
                     Sentry.captureException(e);
                 }
+                span?.setData("duplicate", true).finish();
                 return await existingSkin.save();
             } else {
+                span?.setData("duplicate", false).finish();
                 return undefined;
             }
         }
 
+        span?.setData("duplicate", false).finish();
         return undefined;
     }
 
@@ -540,6 +564,11 @@ export class Generator {
         if (!hash || hash.length < 30) {
             return undefined;
         }
+
+        const transaction = Sentry.getCurrentHub().getScope()?.getTransaction();
+        const span = transaction?.startChild({
+            op: "generate_findDuplicateFromImageHash"
+        })
 
         const query = {
             hash: hash
@@ -560,8 +589,10 @@ export class Generator {
             } catch (e) {
                 Sentry.captureException(e);
             }
+            span?.setData("duplicate", true).finish();
             return await existingSkin.save();
         } else {
+            span?.setData("duplicate", false).finish();
             return undefined;
         }
     }
@@ -571,6 +602,11 @@ export class Generator {
         if (!uuid || uuid.length < 34) {
             return undefined;
         }
+
+        const transaction = Sentry.getCurrentHub().getScope()?.getTransaction();
+        const span = transaction?.startChild({
+            op: "generate_findDuplicateFromUuid"
+        })
 
         const time = Math.floor(Date.now() / 1000);
         const existingSkin = await Skin.findOne({
@@ -591,8 +627,10 @@ export class Generator {
             } catch (e) {
                 Sentry.captureException(e);
             }
+            span?.setData("duplicate", true).finish();
             return await existingSkin.save();
         } else {
+            span?.setData("duplicate", false).finish();
             return undefined;
         }
     }
@@ -613,6 +651,11 @@ export class Generator {
         console.log(info(options.breadcrumb + " [Generator] Generating from url"));
         Sentry.setExtra("generate_url", originalUrl);
 
+        const transaction = Sentry.getCurrentHub().getScope()?.getTransaction();
+        const span = transaction?.startChild({
+            op: "generate_generateFromUrl"
+        })
+
         try {
             metrics.urlHosts
                 .tag('host', new URL(originalUrl).host)
@@ -627,6 +670,7 @@ export class Generator {
             // Check original url for duplicate or for mineskin urls
             const originalUrlDuplicate = await this.findDuplicateFromUrl(originalUrl, options, GenerateType.URL);
             if (originalUrlDuplicate) {
+                span?.finish();
                 return {
                     duplicate: originalUrlDuplicate
                 };
@@ -636,11 +680,13 @@ export class Generator {
             // Try to find the source image
             const followResponse = await this.followUrl(originalUrl);
             if (!followResponse) {
+                span?.setStatus("invalid_argument").finish()
                 throw new GeneratorError(GenError.INVALID_IMAGE_URL, "Failed to find image from url", 400, undefined, originalUrl);
             }
             // Validate response headers
             const url = this.getUrlFromResponse(followResponse, originalUrl);
             if (!url) {
+                span?.setStatus("invalid_argument").finish()
                 throw new GeneratorError(GenError.INVALID_IMAGE_URL, "Failed to follow url", 400, undefined, originalUrl);
             }
             Sentry.setExtra("generate_url_followed", url);
@@ -648,6 +694,7 @@ export class Generator {
             if (url !== originalUrl) {
                 const followedUrlDuplicate = await this.findDuplicateFromUrl(url, options, GenerateType.URL);
                 if (followedUrlDuplicate) {
+                    span?.finish()
                     return {
                         duplicate: followedUrlDuplicate
                     };
@@ -656,11 +703,13 @@ export class Generator {
             const contentType = this.getContentTypeFromResponse(followResponse);
             Sentry.setExtra("generate_contentType", contentType);
             if (!contentType || !contentType.startsWith("image") || !ALLOWED_IMAGE_TYPES.includes(contentType)) {
+                span?.setStatus("invalid_argument").finish()
                 throw new GeneratorError(GenError.INVALID_IMAGE, "Invalid image content type: " + contentType, 400, undefined, originalUrl);
             }
             const size = this.getSizeFromResponse(followResponse);
             Sentry.setExtra("generate_contentLength", size);
             if (!size || size < 100 || size > MAX_IMAGE_SIZE) {
+                span?.setStatus("invalid_argument").finish();
                 throw new GeneratorError(GenError.INVALID_IMAGE, "Invalid image file size", 400, undefined, originalUrl);
             }
 
@@ -671,6 +720,7 @@ export class Generator {
             try {
                 await Temp.downloadImage(url, tempFile)
             } catch (e) {
+                span?.setStatus("internal_error").finish();
                 throw new GeneratorError(GenError.INVALID_IMAGE, "Failed to download image", 500, undefined, e);
             }
 
@@ -678,10 +728,12 @@ export class Generator {
             const tempFileValidation = await this.validateTempFile(tempFile, options, client, GenerateType.URL);
             if (tempFileValidation.duplicate) {
                 // found a duplicate
+                span?.finish();
                 return tempFileValidation;
             }
 
             if (options.checkOnly) {
+                span?.setStatus("not_found").finish();
                 throw new GeneratorError(GenError.NO_DUPLICATE, "No duplicate found", 404, undefined)
             }
 
@@ -708,8 +760,10 @@ export class Generator {
                 }
                 throw err;
             });
+            span?.finish();
             return this.handleSkinChangeResponse(skinResponse, GenerateType.URL, options, client, account, tempFileValidation);
         } catch (e) {
+            span?.setStatus("internal_error").finish();
             await this.handleGenerateError(e, GenerateType.URL, options, client, account);
             throw e;
         } finally {
@@ -733,12 +787,20 @@ export class Generator {
 
     protected static async followUrl(urlStr: string): Promise<Maybe<AxiosResponse>> {
         if (!urlStr) return undefined;
+
+        const transaction = Sentry.getCurrentHub().getScope()?.getTransaction();
+        const span = transaction?.startChild({
+            op: "generate_followUrl"
+        })
+
         try {
             const url = new URL(urlStr);
             if (!url.host || !url.pathname) {
+                span?.finish();
                 return undefined;
             }
             if (!url.protocol || (url.protocol !== "http:" && url.protocol !== "https:")) {
+                span?.finish();
                 return undefined;
             }
             const follow = URL_FOLLOW_WHITELIST.includes(url.host!);
@@ -749,12 +811,16 @@ export class Generator {
                 headers: {
                     "User-Agent": "MineSkin"
                 }
+            }).then(res => {
+                span?.finish();
+                return res;
             });
         } catch (e) {
             Sentry.captureException(e, {
                 level: Severity.Warning
             });
         }
+        span?.finish();
         return undefined;
     }
 
@@ -774,6 +840,11 @@ export class Generator {
         console.log(info(options.breadcrumb + " [Generator] Generating from upload"));
         Sentry.setExtra("generate_file", file.md5);
 
+        const transaction = Sentry.getCurrentHub().getScope()?.getTransaction();
+        const span = transaction?.startChild({
+            op: "generate_generateFromUpload"
+        })
+
         let account: Maybe<IAccountDocument> = undefined;
         let tempFile: Maybe<TempFile> = undefined;
         try {
@@ -784,6 +855,7 @@ export class Generator {
             try {
                 await Temp.copyUploadedImage(file, tempFile);
             } catch (e) {
+                span?.setStatus("internal_error").finish();
                 throw new GeneratorError(GenError.INVALID_IMAGE, "Failed to upload image", 500, undefined, e);
             }
 
@@ -791,10 +863,12 @@ export class Generator {
             const tempFileValidation = await this.validateTempFile(tempFile, options, client, GenerateType.UPLOAD);
             if (tempFileValidation.duplicate) {
                 // found a duplicate
+                span?.finish();
                 return tempFileValidation;
             }
 
             if (options.checkOnly) {
+                span?.setStatus("not_found").finish();
                 throw new GeneratorError(GenError.NO_DUPLICATE, "No duplicate found", 404, undefined)
             }
 
@@ -822,8 +896,10 @@ export class Generator {
                 }
                 throw err;
             });
+            span?.finish();
             return this.handleSkinChangeResponse(skinResponse, GenerateType.UPLOAD, options, client, account, tempFileValidation);
         } catch (e) {
+            span?.setStatus("internal_error").finish();
             await this.handleGenerateError(e, GenerateType.UPLOAD, options, client, account);
             throw e;
         } finally {
@@ -834,6 +910,11 @@ export class Generator {
     }
 
     static async handleSkinChangeResponse(skinResponse: AxiosResponse, type: GenerateType, options: GenerateOptions, client: ClientInfo, account: IAccountDocument, tempFileValidation: TempFileValidationResult): Promise<GenerateResult> {
+        const transaction = Sentry.getCurrentHub().getScope()?.getTransaction();
+        const span = transaction?.startChild({
+            op: "generate_handleSkinChangeResponse"
+        })
+
         const skinChangeResponse = skinResponse.data as SkinChangeResponse;
         const minecraftSkinId = skinChangeResponse?.skins[0]?.id;
 
@@ -868,6 +949,7 @@ export class Generator {
 
         account.lastTextureUrl = data.decodedValue!.textures!.SKIN!.url;
 
+        span?.finish()
         return {
             data: data,
             account: account,
@@ -895,9 +977,15 @@ export class Generator {
         console.log(info(options.breadcrumb + " [Generator] Generating from user"));
         Sentry.setExtra("generate_user", uuid);
 
+        const transaction = Sentry.getCurrentHub().getScope()?.getTransaction();
+        const span = transaction?.startChild({
+            op: "generate_generateFromUser"
+        })
+
         const uuids = longAndShortUuid(uuid)!;
         const uuidDuplicate = await this.findDuplicateFromUuid(uuids.long, options, GenerateType.USER);
         if (uuidDuplicate) {
+            span?.finish();
             return {
                 duplicate: uuidDuplicate
             };
@@ -910,11 +998,13 @@ export class Generator {
 
         const hashDuplicate = await this.findDuplicateFromImageHash(mojangHash!.hash!, options, client, GenerateType.USER);
         if (hashDuplicate) {
+            span?.finish()
             return {
                 duplicate: hashDuplicate
             };
         }
 
+        span?.finish()
         return {
             data: data,
             meta: {
@@ -928,6 +1018,11 @@ export class Generator {
     /// AUTH
 
     protected static async getAndAuthenticateAccount(bread?: Bread): Promise<IAccountDocument> {
+        const transaction = Sentry.getCurrentHub().getScope()?.getTransaction();
+        const span = transaction?.startChild({
+            op: "generate_getAndAuthenticateAccount"
+        })
+
         const metrics = await MineSkinMetrics.get();
         let account = await Account.findUsable(bread);
         if (!account) {
@@ -935,6 +1030,7 @@ export class Generator {
             metrics.noAccounts
                 .tag('server', metrics.config.server)
                 .inc();
+            span?.setStatus("internal_error").finish();
             throw new GeneratorError(GenError.NO_ACCOUNT_AVAILABLE, "No account available");
         }
         Sentry.setTag("account", account.id);
@@ -944,6 +1040,7 @@ export class Generator {
         account.lastUsed = Math.floor(Date.now() / 1000);
         account.updateRequestServer(metrics.config.server);
 
+        span?.finish();
         return account;
     }
 
@@ -1050,11 +1147,17 @@ export class Generator {
     }
 
     protected static async validateTempFile(tempFile: TempFile, options: GenerateOptions, client: ClientInfo, type: GenerateType): Promise<TempFileValidationResult> {
+        const transaction = Sentry.getCurrentHub().getScope()?.getTransaction();
+        const span = transaction?.startChild({
+            op: "generate_validateTempFile"
+        })
+
         // Validate downloaded image file
         const imageBuffer = await fs.readFile(tempFile.path);
         const size = imageBuffer.byteLength;
         Sentry.setExtra("generate_filesize", size);
         if (!size || size < 100 || size > MAX_IMAGE_SIZE) {
+            span?.setStatus("invalid_argument").finish()
             throw new GeneratorError(GenError.INVALID_IMAGE, "Invalid file size", 400);
         }
 
@@ -1062,10 +1165,12 @@ export class Generator {
         try {
             fType = await fileType.fromBuffer(imageBuffer);
         } catch (e) {
+            span?.setStatus("invalid_argument").finish()
             throw new GeneratorError(GenError.INVALID_IMAGE, "Failed to determine file type", 400, undefined, e);
         }
         Sentry.setExtra("generate_mime", fType?.mime)
         if (!fType || !fType.mime.startsWith("image") || !ALLOWED_IMAGE_TYPES.includes(fType.mime)) {
+            span?.setStatus("invalid_argument").finish()
             throw new GeneratorError(GenError.INVALID_IMAGE, "Invalid file type: " + fType, 400);
         }
 
@@ -1073,10 +1178,12 @@ export class Generator {
         try {
             dimensions = imageSize(imageBuffer);
         } catch (e) {
+            span?.setStatus("invalid_argument").finish();
             throw new GeneratorError(GenError.INVALID_IMAGE, "Failed to determine image dimensions", 400, undefined, e);
         }
         Sentry.setExtra("generate_dimensions", `${ dimensions.width }x${ dimensions.height }`);
         if ((dimensions.width !== 64) || (dimensions.height !== 64 && dimensions.height !== 32)) {
+            span?.setStatus("invalid_argument").finish();
             throw new GeneratorError(GenError.INVALID_IMAGE, "Invalid image dimensions. Must be 64x32 or 64x64 (Were " + dimensions.width + "x" + dimensions.height + ")", 400);
         }
 
@@ -1085,12 +1192,14 @@ export class Generator {
         try {
             imageHash = await imgHash(imageBuffer);
         } catch (e) {
+            span?.setStatus("invalid_argument").finish();
             throw new GeneratorError(GenError.INVALID_IMAGE, "Failed to get image hash", 400, undefined, e);
         }
         console.log(debug(options.breadcrumb + " Image hash: " + imageHash));
         // Check duplicate from imageHash
         const hashDuplicate = await this.findDuplicateFromImageHash(imageHash, options, client, type);
         if (hashDuplicate) {
+            span?.finish();
             return {
                 duplicate: hashDuplicate
             };
@@ -1105,9 +1214,11 @@ export class Generator {
                 Sentry.setExtra("generate_detected_variant", dataValidation.variant);
             }
         } catch (e) {
+            span?.setStatus("invalid_argument").finish();
             throw new GeneratorError(GenError.INVALID_IMAGE, "Failed to validate image data", 400, undefined, e);
         }
 
+        span?.finish();
         return {
             buffer: imageBuffer,
             size: size,
@@ -1124,6 +1235,11 @@ export class Generator {
     }
 
     public static async getMojangHash(url: string): Promise<MojangHashInfo> {
+        const transaction = Sentry.getCurrentHub().getScope()?.getTransaction();
+        const span = transaction?.startChild({
+            op: "generate_getMojangHash"
+        })
+
         const tempFile = await Temp.file({
             dir: MOJ_DIR
         });
@@ -1137,11 +1253,13 @@ export class Generator {
                 Sentry.captureException(e);
             }
             const hash = await imgHash(imageBuffer);
+            span?.finish();
             return {
                 buffer: imageBuffer,
                 hash: hash
             };
         } finally {
+            span?.finish()
             if (tempFile) {
                 tempFile.remove();
             }
@@ -1163,13 +1281,20 @@ export class Generator {
     }
 
     protected static async validateImageData(buffer: Buffer): Promise<ImageDataValidationResult> {
+        const transaction = Sentry.getCurrentHub().getScope()?.getTransaction();
+        const span = transaction?.startChild({
+            op: "generate_validateImageData"
+        })
+
         const image = await Jimp.read(buffer);
         const width = image.getWidth();
         const height = image.getHeight();
         if ((width !== 64) || (height !== 64 && height !== 32)) {
+            span?.setStatus("invalid_argument").finish()
             throw new GeneratorError(GenError.INVALID_IMAGE, "Invalid image dimensions. Must be 64x32 or 64x64 (Were " + width + "x" + height + ")", 400);
         }
         if (height < 64) {
+            span?.finish();
             return {
                 model: SkinModel.CLASSIC,
                 variant: SkinVariant.CLASSIC
@@ -1184,6 +1309,7 @@ export class Generator {
             }
         });
 
+        span?.finish()
         if (allTransparent) {
             return {
                 model: SkinModel.SLIM,
