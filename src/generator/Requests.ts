@@ -119,42 +119,42 @@ export class Requests {
     public static mojangAuthRequest(request: AxiosRequestConfig): Promise<AxiosResponse> {
         const t = this.trackSentryQueued(request);
         const r = this.mojangAuthRequestQueue.add(request);
-        t.finish();
+        t?.finish();
         return r;
     }
 
     public static mojangApiRequest(request: AxiosRequestConfig): Promise<AxiosResponse> {
         const t = this.trackSentryQueued(request);
         const r = this.mojangApiRequestQueue.add(request);
-        t.finish();
+        t?.finish();
         return r;
     }
 
     public static mojangSessionRequest(request: AxiosRequestConfig): Promise<AxiosResponse> {
         const t = this.trackSentryQueued(request);
         const r = this.mojangSessionRequestQueue.add(request);
-        t.finish();
+        t?.finish();
         return r;
     }
 
     public static minecraftServicesRequest(request: AxiosRequestConfig): Promise<AxiosResponse> {
         const t = this.trackSentryQueued(request);
         const r = this.minecraftServicesRequestQueue.add(request);
-        t.finish();
+        t?.finish();
         return r;
     }
 
     public static liveLoginRequest(request: AxiosRequestConfig): Promise<AxiosResponse> {
         const t = this.trackSentryQueued(request);
         const r = this.liveLoginRequestQueue.add(request);
-        t.finish();
+        t?.finish();
         return r;
     }
 
     private static trackSentryQueued(request: AxiosRequestConfig) {
-        return Sentry.startTransaction({
+        return Sentry.getCurrentHub().getScope()?.getTransaction()?.startChild({
             op: "request_queued",
-            name: `${ request.method } ${ request.url }`
+            description: `${ request.method } ${ request.url }`
         });
     }
 
