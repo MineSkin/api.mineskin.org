@@ -13,7 +13,7 @@
   "author": "Haylee Schäfer",
   "dependencies": {
     "@inventivetalent/express-github-webhook": "^1.0.2",
-    "@inventivetalent/gitconfig": "^1.0.8",
+    "@inventivetalent/gitconfig": "^1.0.9",
     "@inventivetalent/gitsha": "^1.0.0",
     "@inventivetalent/imghash": "^1.0.0",
     "@inventivetalent/loading-cache": "^0.4.0",
