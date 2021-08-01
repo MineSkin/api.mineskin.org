@@ -116,37 +116,37 @@ export class Requests {
 
     /// API REQUESTS
 
-    public static mojangAuthRequest(request: AxiosRequestConfig): Promise<AxiosResponse> {
+    public static async mojangAuthRequest(request: AxiosRequestConfig): Promise<AxiosResponse> {
         const t = this.trackSentryQueued(request);
-        const r = this.mojangAuthRequestQueue.add(request);
+        const r = await this.mojangAuthRequestQueue.add(request);
         t?.finish();
         return r;
     }
 
-    public static mojangApiRequest(request: AxiosRequestConfig): Promise<AxiosResponse> {
+    public static async mojangApiRequest(request: AxiosRequestConfig): Promise<AxiosResponse> {
         const t = this.trackSentryQueued(request);
-        const r = this.mojangApiRequestQueue.add(request);
+        const r = await this.mojangApiRequestQueue.add(request);
         t?.finish();
         return r;
     }
 
-    public static mojangSessionRequest(request: AxiosRequestConfig): Promise<AxiosResponse> {
+    public static async mojangSessionRequest(request: AxiosRequestConfig): Promise<AxiosResponse> {
         const t = this.trackSentryQueued(request);
-        const r = this.mojangSessionRequestQueue.add(request);
+        const r = await this.mojangSessionRequestQueue.add(request);
         t?.finish();
         return r;
     }
 
-    public static minecraftServicesRequest(request: AxiosRequestConfig): Promise<AxiosResponse> {
+    public static async minecraftServicesRequest(request: AxiosRequestConfig): Promise<AxiosResponse> {
         const t = this.trackSentryQueued(request);
-        const r = this.minecraftServicesRequestQueue.add(request);
+        const r = await this.minecraftServicesRequestQueue.add(request);
         t?.finish();
         return r;
     }
 
-    public static liveLoginRequest(request: AxiosRequestConfig): Promise<AxiosResponse> {
+    public static async liveLoginRequest(request: AxiosRequestConfig): Promise<AxiosResponse> {
         const t = this.trackSentryQueued(request);
-        const r = this.liveLoginRequestQueue.add(request);
+        const r = await this.liveLoginRequestQueue.add(request);
         t?.finish();
         return r;
     }
