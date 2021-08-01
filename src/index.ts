@@ -80,8 +80,8 @@ async function init() {
                 new Tracing.Integrations.Express({ app })
             ],
             serverName: config.server,
-            tracesSampleRate: 0.02,
-            sampleRate: 0.5,
+            tracesSampleRate: 0.1,
+            sampleRate: 0.8,
             ignoreErrors: [
                 "No duplicate found"
             ]
