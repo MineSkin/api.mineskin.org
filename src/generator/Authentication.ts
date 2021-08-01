@@ -556,6 +556,11 @@ export class Microsoft {
 export class Authentication {
 
     public static async authenticate(account: IAccountDocument, bread?: Bread): Promise<IAccountDocument> {
+        const transaction = Sentry.getCurrentHub().getScope()?.getTransaction();
+        const span = transaction?.startChild({
+            op: "auth_authenticate"
+        })
+
         const metrics = await MineSkinMetrics.get();
         const metric = metrics.authentication
             .tag("server", metrics.config.server)
@@ -574,6 +579,7 @@ export class Authentication {
                 .tag("result", "success")
                 .tag("source", (prevAccessTokenExpiration === result.accessTokenExpiration) ? "reused" : result.accessTokenSource)
                 .inc();
+            span?.finish();
             return result;
         } catch (e) {
             metric.tag("result", "fail");
@@ -598,6 +604,7 @@ export class Authentication {
                 metric.tag("reason", e.name);
             }
             metric.inc();
+            span?.setStatus("internal_error").finish();
             throw e;
         }
     }

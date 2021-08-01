@@ -154,6 +154,11 @@ AccountSchema.methods.getEV = function (this: IAccountDocument): number {
 /// STATICS
 
 AccountSchema.statics.findUsable = async function (this: IAccountModel, bread?: Bread): Promise<Maybe<IAccountDocument>> {
+    const transaction = Sentry.getCurrentHub().getScope()?.getTransaction();
+    const span = transaction?.startChild({
+        op: "account_findUsable"
+    })
+
     const time = Math.floor(Date.now() / 1000);
     const metrics = await MineSkinMetrics.get();
     return this.findOne({
@@ -196,10 +201,12 @@ AccountSchema.statics.findUsable = async function (this: IAccountModel, bread?: 
         .then((account: IAccountDocument) => {
             if (!account) {
                 console.warn(error(bread?.breadcrumb + " There are no accounts available!"));
+                span?.setStatus("not_found").finish()
                 return undefined;
             }
             if (Caching.isAccountLocked(account.id)) {
                 console.warn(warn(bread?.breadcrumb + " Selecting a different account since " + account.id + " got locked since querying"));
+                span?.setStatus("not_found").finish();
                 return Account.findUsable(bread);
             }
             Caching.lockSelectedAccount(account.id, bread);
@@ -236,6 +243,8 @@ AccountSchema.statics.findUsable = async function (this: IAccountModel, bread?: 
             if (!account.errorCounter) account.errorCounter = 0;
             if (!account.totalSuccessCounter) account.totalSuccessCounter = 0;
             if (!account.totalErrorCounter) account.totalErrorCounter = 0;
+
+            span?.finish();
             return account.save();
         })
 };
