@@ -154,7 +154,7 @@ export class Requests {
     private static trackSentryQueued(request: AxiosRequestConfig) {
         return Sentry.getCurrentHub().getScope()?.getTransaction()?.startChild({
             op: "request_queued",
-            description: `${ request.method } ${ request.url }`
+            description: `${ request.method || "GET" } ${ request.url }`
         });
     }
 
