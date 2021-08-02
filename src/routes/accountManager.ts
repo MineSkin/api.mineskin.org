@@ -273,6 +273,8 @@ export const register = (app: Application, config: MineSkinConfig) => {
         account.discordMessageSent = false;
         account.emailSent = false;
 
+        Discord.postDiscordMessage("👤 Account " + account.id + "/" + account.uuid + " updated due to manual login (linked to <@" + account.discordUser + ">)");
+
         console.log(info("Saving updated details of " + (req.session.account.type) + " account #" + account.id + " " + req.body["uuid"]));
         await account.save();
 
