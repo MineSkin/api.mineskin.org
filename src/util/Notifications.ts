@@ -37,7 +37,7 @@ export class Notifications {
     }
 
     protected static supportLink(email: boolean): string {
-        return "For further assistance feel free to ask " + (email ? "on https://yeleha.co/discord" : "in <#" + SUPPORT_CHANNEL + ">") + " :)"
+        return "For further assistance feel free to ask " + (email ? "on https://yeleha.co/discord" : "in <#" + SUPPORT_CHANNEL + ">") + " 🙂"
     }
 
     protected static accountInfo(acc: IAccountDocument, html: boolean): string {
