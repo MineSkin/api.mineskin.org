@@ -1,7 +1,8 @@
 import { model, Schema } from "mongoose";
 import { IApiKeyDocument, IApiKeyModel } from "../../typings/db/IApiKeyDocument";
+import { getConfig } from "../../typings/Configs";
 
-const schema: Schema<IApiKeyDocument, IApiKeyModel> = new Schema(
+const ApiKeySchema: Schema<IApiKeyDocument, IApiKeyModel> = new Schema(
     {
         name: {
             type: String,
@@ -36,11 +37,21 @@ const schema: Schema<IApiKeyDocument, IApiKeyModel> = new Schema(
         collection: "apikeys"
     });
 
+/// METHODS
+
+
+ApiKeySchema.methods.getMinDelay = async function (this: IApiKeyDocument): Promise<number> {
+    if (this.minDelay) {
+        return this.minDelay;
+    }
+    return (await getConfig()).delays.defaultApiKey;
+}
+
 
 /// STATICS
 
-schema.statics.findKey = function (key: string): Promise<IApiKeyDocument | null> {
+ApiKeySchema.statics.findKey = function (key: string): Promise<IApiKeyDocument | null> {
     return ApiKey.findOne({ key: key }).exec();
 };
 
-export const ApiKey: IApiKeyModel = model<IApiKeyDocument, IApiKeyModel>("ApiKey", schema);
+export const ApiKey: IApiKeyModel = model<IApiKeyDocument, IApiKeyModel>("ApiKey", ApiKeySchema);

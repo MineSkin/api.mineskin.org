@@ -8,10 +8,12 @@ export interface IApiKeyDocument extends Document {
     secret: string;
     createdAt: Date;
     updatedAt?: Date;
-    minDelay: number;
+    minDelay?: number;
     allowedOrigins?: string[];
     allowedIps?: string[];
     allowedAgents?: string[];
+
+    getMinDelay(): Promise<number>;
 }
 
 export interface IApiKeyModel extends Model<IApiKeyDocument> {

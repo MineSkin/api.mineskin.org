@@ -40,7 +40,7 @@ export const register = (app: Application) => {
             origins: apiKey.allowedOrigins,
             ips: apiKey.allowedIps,
             agents: apiKey.allowedAgents,
-            minDelay: apiKey.minDelay
+            minDelay: await apiKey.getMinDelay()
         })
     })
 
@@ -95,8 +95,7 @@ export const register = (app: Application) => {
             updatedAt: date,
             allowedOrigins: allowedOrigins,
             allowedIps: allowedIps,
-            allowedAgents: allowedAgents,
-            minDelay: config.delays.defaultApiKey
+            allowedAgents: allowedAgents
         });
 
         await apiKey.save();
@@ -119,7 +118,7 @@ export const register = (app: Application) => {
             origins: apiKey.allowedOrigins,
             ips: apiKey.allowedIps,
             agents: apiKey.allowedAgents,
-            minDelay: apiKey.minDelay
+            minDelay: await apiKey.getMinDelay()
         })
     });
 
