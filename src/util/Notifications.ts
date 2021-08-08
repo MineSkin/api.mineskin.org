@@ -4,23 +4,36 @@ import { AccountType } from "../typings/db/IAccountDocument";
 import { GenerateType } from "../typings/db/ISkinDocument";
 import { Discord, OWNER_CHANNEL, SUPPORT_CHANNEL } from "./Discord";
 import { Email } from "./Email";
+import { MineSkinMetrics } from "./metrics";
 
 export class Notifications {
 
-    protected static sendEmailAndDiscord(account: IAccountDocument,
-                                         simpleMessage: (account: IAccountDocument, email: boolean) => string,
-                                         publicMessage: (account: IAccountDocument) => string,
-                                         htmlMessage: (account: IAccountDocument) => string,
-                                         subject: (account: IAccountDocument) => string) {
+    protected static async sendEmailAndDiscord(account: IAccountDocument,
+                                               simpleMessage: (account: IAccountDocument, email: boolean) => string,
+                                               publicMessage: (account: IAccountDocument) => string,
+                                               htmlMessage: (account: IAccountDocument) => string,
+                                               subject: (account: IAccountDocument) => string) {
         if (account.discordUser && !account.discordMessageSent) {
             try {
-                Discord.sendDiscordDirectMessage(simpleMessage(account, false), account.discordUser, () => {
+                Discord.sendDiscordDirectMessage(simpleMessage(account, false), account.discordUser, async () => {
                     if (publicMessage) {
                         Discord.postDiscordMessage(publicMessage(account), OWNER_CHANNEL);
+
+                        (await MineSkinMetrics.get()).accountNotifications
+                            .tag('type', 'discord_public')
+                            .tag('account', `${ account.id }`)
+                            .tag('account_type', account.accountType || 'unknown')
+                            .inc();
                     }
                 });
 
                 account.discordMessageSent = true;
+
+                (await MineSkinMetrics.get()).accountNotifications
+                    .tag('type', 'discord')
+                    .tag('account', `${ account.id }`)
+                    .tag('account_type', account.accountType || 'unknown')
+                    .inc();
             } catch (e) {
                 Sentry.captureException(e);
             }
@@ -30,6 +43,12 @@ export class Notifications {
                 Email.sendEmail(account.email, simpleMessage(account, true), htmlMessage(account), subject(account));
 
                 account.emailSent = true;
+
+                (await MineSkinMetrics.get()).accountNotifications
+                    .tag('type', 'email')
+                    .tag('account', `${ account.id }`)
+                    .tag('account_type', account.accountType || 'unknown')
+                    .inc();
             } catch (e) {
                 Sentry.captureException(e);
             }
@@ -85,7 +104,7 @@ ${ account.getAccountType() === AccountType.MICROSOFT ? "You should also check h
 ${ this.supportLink(email) }
             `,
             acc => `
-${this.publicPrefix(acc)}
+${ this.publicPrefix(acc) }
 MineSkin just lost access to one of your accounts (${ acc.getAccountType() })\n
 ${ this.trimmedAccountInfo(acc) }
 Please log back in at https://mineskin.org/account\n
@@ -126,7 +145,7 @@ ${ account.getAccountType() === AccountType.MICROSOFT ? "You should also check h
 ${ this.supportLink(email) }
             `,
             acc => `
-${this.publicPrefix(acc)}
+${ this.publicPrefix(acc) }
 MineSkin just failed to login to one of your accounts (${ acc.getAccountType() })\n
 ${ this.trimmedAccountInfo(acc) }
 Please log back in at https://mineskin.org/account\n
@@ -168,7 +187,7 @@ ${ account.getAccountType() === AccountType.MICROSOFT ? "You should also check h
 ${ this.supportLink(email) }
             `,
             acc => `
-${this.publicPrefix(acc)}
+${ this.publicPrefix(acc) }
 One of your accounts (${ acc.getAccountType() }) was just disabled since it failed to properly generate skin data recently. 
 ${ this.trimmedAccountInfo(acc) }
 Please log back in at https://mineskin.org/account
