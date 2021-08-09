@@ -76,7 +76,7 @@ export class Notifications {
     }
 
     protected static trimmedAccountInfo(acc: IAccountDocument): string {
-        return "  Account (trimmed): " + (acc.playername || acc.uuid || "").substr(0, 5) + "****\n";
+        return "  Account (trimmed): " + (acc.playername || acc.uuid || "").substr(0, 5) + "\\*\\*\\*\\*\n";
     }
 
     protected static publicPrefix(acc: IAccountDocument): string {
