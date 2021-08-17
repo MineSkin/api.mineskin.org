@@ -435,6 +435,7 @@ export class Generator {
             value: result.data!.value,
             signature: result.data!.signature,
             url: result.data!.decodedValue!.textures!.SKIN!.url!,
+            capeUrl: result.data?.decodedValue?.textures?.CAPE?.url,
             minecraftTextureHash: getHashFromMojangTextureUrl(result.data!.decodedValue!.textures.SKIN!.url!),
             textureHash: result.meta?.mojangHash,
             minecraftSkinId: result.meta?.minecraftSkinId,
