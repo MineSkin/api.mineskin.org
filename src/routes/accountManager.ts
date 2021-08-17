@@ -455,6 +455,23 @@ export const register = (app: Application, config: MineSkinConfig) => {
         })
 
         Discord.notifyNewAccount(account, req);
+
+        // Disable mojang accounts just migrated to microsoft
+        if (account.accountType === AccountType.MICROSOFT) {
+            Account.updateMany({
+                accountType: AccountType.MOJANG,
+                enabled: true,
+                uuid: account.uuid
+            }, {
+                $set: {
+                    enabled: false
+                }
+            }).exec().then(updateResult => {
+                if (updateResult.nModified > 0) {
+                    Discord.postDiscordMessage(`Disabled ${ updateResult.nModified } mojang account with the same uuid (${ account.uuid }) as a newly added microsoft account (#${ account.id })`);
+                }
+            })
+        }
     })
 
     app.delete("/accountManager/deleteAccount", async (req: AccountManagerRequest, res: Response) => {
