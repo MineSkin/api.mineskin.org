@@ -44,6 +44,7 @@ export interface IAccountDocument extends Document {
     /**@deprecated**/
     microsoftAccount?: boolean;
     microsoftUserId?: string;
+    microsoftUserHash?: string;
     microsoftAccessToken?: string;
     microsoftRefreshToken?: string;
     minecraftXboxUsername?: string;

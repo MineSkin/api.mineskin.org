@@ -46,6 +46,7 @@ export const AccountSchema: Schema<IAccountDocument, IAccountModel> = new Schema
         type: String,
         index: true
     },
+    microsoftUserHash: String,
     microsoftAccessToken: String,
     microsoftRefreshToken: String,
     minecraftXboxUsername: {

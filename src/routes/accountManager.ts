@@ -529,11 +529,12 @@ export const register = (app: Application, config: MineSkinConfig) => {
             ev: 0 //TODO
         });
         if (req.session.account.type === AccountType.MICROSOFT) {
+            account.microsoftUserHash = req.session.account.microsoftInfo?.userHash;
             account.microsoftUserId = req.session.account.microsoftInfo?.userId;
+            account.minecraftXboxUsername = req.session.account.microsoftInfo?.username;
             account.microsoftXSTSToken = req.session.account.microsoftInfo?.XSTSToken;
             account.microsoftAccessToken = req.session.account.microsoftInfo?.accessToken;
             account.microsoftRefreshToken = req.session.account.microsoftInfo?.refreshToken;
-            account.minecraftXboxUsername = req.session.account.microsoftInfo?.username;
         } else if (req.session.account!.type === AccountType.MOJANG) {
             account.passwordNew = await Encryption.encrypt(base64decode(req.body["password"]));
             account.multiSecurity = req.session.account.mojangInfo?.securityAnswers;
