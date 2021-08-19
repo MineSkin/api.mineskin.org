@@ -385,7 +385,7 @@ export class Microsoft {
         }
 
         console.log(debug(bread?.breadcrumb + " [Auth] Refreshing " + account.toSimplifiedString()));
-        const newMinecraftAccessToken = await Microsoft.refreshXboxAccessToken(account.microsoftRefreshToken, xboxInfo => {
+        const newMinecraftAccessToken = await Microsoft.refreshXboxAccessToken(account.microsoftRefreshToken, !account.passwordNew/* no password set, assume we're using the custom client */, xboxInfo => {
             account.microsoftAccessToken = xboxInfo.accessToken;
             account.microsoftRefreshToken = xboxInfo.refreshToken;
             account.minecraftXboxUsername = xboxInfo.username;
@@ -445,7 +445,30 @@ export class Microsoft {
         return xboxLoginResponse.access_token;
     }
 
+    static async loginWithXboxCode(code: string, xboxInfoConsumer?: (info: XboxInfo) => void): Promise<string> {
+        const config = await getConfig();
+        // const form = {
+        //     "client_id": /*"00000000402b5328"*/"000000004C12AE6F",
+        //     "code": code,
+        //     "grant_type": "authorization_code",
+        //     "redirect_uri": "https://login.live.com/oauth20_desktop.srf",
+        //     "scope": "service::user.auth.xboxlive.com::MBI_SSL"
+        // }
+        const form = {
+            "client_id": config.microsoft.clientId,
+            "client_secret": config.microsoft.clientSecret,
+            "code": code,
+            "grant_type": "authorization_code",
+            "redirect_uri": `https://${ config.server }.api.mineskin.org/accountManager/microsoft/oauth/callback`
+        }
+        return Microsoft.authenticateXboxWithFormData(form, xboxInfoConsumer);
+    }
+
     static async exchangeRpsTicketForIdentity(rpsTicket: string): Promise<AuthenticateResponse> {
+        if (!rpsTicket.startsWith("d=")) {
+            // username+password login doesn't seem to need this prefix, code auth does
+            rpsTicket = `d=${rpsTicket}`;
+        }
         // https://user.auth.xboxlive.com/user/authenticate
         const userTokenResponse = await XboxLiveAuth.exchangeRpsTicketForUserToken(rpsTicket);
         console.log("exchangeRpsTicket")
@@ -489,24 +512,26 @@ export class Microsoft {
         return entitlementsBody.hasOwnProperty("items") && entitlementsBody["items"].length > 0;
     }
 
-    static async loginWithXboxCode(code: string, xboxInfoConsumer?: (info: XboxInfo) => void): Promise<string> {
-        const form = {
-            "client_id": /*"00000000402b5328"*/"000000004C12AE6F",
-            "code": code,
-            "grant_type": "authorization_code",
-            "redirect_uri": "https://login.live.com/oauth20_desktop.srf",
-            "scope": "service::user.auth.xboxlive.com::MBI_SSL"
-        }
-        return Microsoft.authenticateXboxWithFormData(form, xboxInfoConsumer);
-    }
 
-    static async refreshXboxAccessToken(xboxRefreshToken: string, xboxInfoConsumer?: (info: XboxInfo) => void): Promise<string> {
-        const form = {
-            "client_id": /*"00000000402b5328"*/"000000004C12AE6F",
-            "refresh_token": xboxRefreshToken,
-            "grant_type": "refresh_token",
-            "redirect_uri": "https://login.live.com/oauth20_desktop.srf",
-            "scope": "service::user.auth.xboxlive.com::MBI_SSL"
+    static async refreshXboxAccessToken(xboxRefreshToken: string, useCustomClient: boolean, xboxInfoConsumer?: (info: XboxInfo) => void): Promise<string> {
+        const config = await getConfig();
+        let form: any;
+        if (useCustomClient) {
+            form = {
+                "client_id": config.microsoft.clientId,
+                "client_secret": config.microsoft.clientSecret,
+                "refresh_token": xboxRefreshToken,
+                "grant_type": "refresh_token",
+                "redirect_uri": `https://${ config.server }.api.mineskin.org/accountManager/microsoft/oauth/callback`
+            }
+        } else {
+            form = {
+                "client_id": /*"00000000402b5328"*/"000000004C12AE6F",
+                "refresh_token": xboxRefreshToken,
+                "grant_type": "refresh_token",
+                "redirect_uri": "https://login.live.com/oauth20_desktop.srf",
+                "scope": "service::user.auth.xboxlive.com::MBI_SSL"
+            }
         }
         return await Microsoft.authenticateXboxWithFormData(form, xboxInfoConsumer);
     }
@@ -539,7 +564,9 @@ export class Microsoft {
                 xboxInfoConsumer({
                     accessToken: xboxAccessToken,
                     refreshToken: xboxRefreshToken,
-                    username: minecraftXboxUsername
+                    username: minecraftXboxUsername,
+                    userId: refreshBody["user_id"],
+                    userHash: identityResponse.userHash
                 });
             } catch (e) {
                 console.warn(e);

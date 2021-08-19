@@ -68,6 +68,11 @@ interface DelaysConfig {
     defaultApiKey: number;
 }
 
+interface MicrosoftConfig {
+    clientId: string;
+    clientSecret: string;
+}
+
 export interface MineSkinConfig {
     port: number;
     server: string;
@@ -91,6 +96,7 @@ export interface MineSkinConfig {
     metrics: MetricsConfig;
     gitconfig: GitConfigConfig;
     delays: DelaysConfig;
+    microsoft: MicrosoftConfig;
 }
 
 export function getLocalConfig(): MineSkinConfig {

@@ -273,6 +273,7 @@ async function init() {
                     }).catch(e => Sentry.captureException(e));
                 });
         } else {
+            console.warn(err);
             res.status(500).json({
                 success: false,
                 error: "An unexpected error occurred"

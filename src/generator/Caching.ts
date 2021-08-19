@@ -183,6 +183,11 @@ export class Caching {
         .expirationInterval(Time.seconds(30))
         .build();
 
+    protected static readonly pendingMicrosoftLinkByStateCache: SimpleCache<string, boolean> = Caches.builder()
+        .expireAfterWrite(Time.minutes(5))
+        .expirationInterval(Time.seconds(30))
+        .build();
+
     protected static readonly recentAccountsLock: SimpleCache<number, string> = Caches.builder()
         .expireAfterWrite(Time.minutes(1))
         .expirationInterval(Time.seconds(20))
@@ -293,6 +298,14 @@ export class Caching {
 
     public static getPendingDiscordLink<T extends IPendingDiscordLink>(state: string): Maybe<T> {
         return this.pendingDiscordLinkByStateCache.getIfPresent(state) as T;
+    }
+
+    public static storePendingMicrosoftLink(state: string): void{
+        this.pendingMicrosoftLinkByStateCache.put(state, true);
+    }
+
+    public static getPendingMicrosoftLink(state: string): Maybe<boolean> {
+        return this.pendingMicrosoftLinkByStateCache.getIfPresent(state) as boolean;
     }
 
     public static invalidatePendingDiscordLink(state: string): void {
