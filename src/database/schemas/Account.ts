@@ -10,6 +10,7 @@ import { Caching } from "../../generator/Caching";
 import { MineSkinMetrics } from "../../util/metrics";
 import * as Sentry from "@sentry/node";
 import { MIN_ACCOUNT_DELAY } from "../../generator/Generator";
+import { Discord } from "../../util/Discord";
 
 const Int32 = require("mongoose-int32");
 export const AccountSchema: Schema<IAccountDocument, IAccountModel> = new Schema({
@@ -110,6 +111,7 @@ AccountSchema.methods.getOrCreateClientToken = function (this: IAccountDocument)
 AccountSchema.methods.updateRequestServer = function (this: IAccountDocument, newRequestServer: string | null) {
     if (this.requestServer && this.requestServer !== newRequestServer) {
         this.lastRequestServer = this.requestServer;
+        Discord.postDiscordMessage("👤 Account " + this.id + "/" + this.uuid + " moved to " + this.requestServer + " (was " + this.lastRequestServer + ")");
     }
     this.requestServer = newRequestServer;
 };
