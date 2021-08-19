@@ -427,6 +427,11 @@ export const register = (app: Application, config: MineSkinConfig) => {
                     account.sendEmails = !!req.body["emails"];
                 }
                 break;
+            case 'email':
+                updater = account => {
+                    account.email = req.body["email"];
+                }
+                break;
             default:
                 res.status(404).json({ error: "unknown setting" });
                 return;
