@@ -275,6 +275,11 @@ export const register = (app: Application, config: MineSkinConfig) => {
 
         Discord.postDiscordMessage("👤 Account " + account.id + "/" + account.uuid + " updated due to manual login (linked to <@" + account.discordUser + ">)");
 
+        if (!account.requestServer) {
+            account.requestServer = await Generator.getPreferredAccountServer(account.accountType);
+            Discord.postDiscordMessage("👤 Account " + account.id + "/" + account.uuid + " moved to " + account.requestServer);
+        }
+
         console.log(info("Saving updated details of " + (req.session.account.type) + " account #" + account.id + " " + req.body["uuid"]));
         await account.save();
 
