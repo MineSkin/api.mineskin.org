@@ -52,6 +52,7 @@ export const AccountSchema: Schema<IAccountDocument, IAccountModel> = new Schema
         type: String,
         index: true
     },
+    microsoftXSTSToken: String,
     lastSelected: Number,
     timeAdded: {
         type: Number,

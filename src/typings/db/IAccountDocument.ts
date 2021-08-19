@@ -47,6 +47,7 @@ export interface IAccountDocument extends Document {
     microsoftAccessToken?: string;
     microsoftRefreshToken?: string;
     minecraftXboxUsername?: string;
+    microsoftXSTSToken?: string;
     lastSelected?: number;
     timeAdded?: number;
     lastUsed?: number;

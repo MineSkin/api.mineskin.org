@@ -424,8 +424,9 @@ export class Microsoft {
         const identityResponse = await Microsoft.exchangeRpsTicketForIdentity(xboxAccessToken);
 
         const userHash = identityResponse.userHash;
+        const XSTSToken = identityResponse.XSTSToken;
 
-        const xboxLoginResponse = await Microsoft.loginToMinecraftWithXbox(identityResponse.userHash, identityResponse.XSTSToken);
+        const xboxLoginResponse = await Microsoft.loginToMinecraftWithXbox(userHash, XSTSToken);
         const minecraftXboxUsername = xboxLoginResponse.username;
 
         if (xboxInfoConsumer) {
@@ -434,6 +435,7 @@ export class Microsoft {
                     accessToken: xboxAccessToken,
                     refreshToken: xboxRefreshToken,
                     userId: xboxUserId,
+                    XSTSToken: XSTSToken,
                     userHash: userHash,
                     username: minecraftXboxUsername
                 });
@@ -556,7 +558,10 @@ export class Microsoft {
 
         const identityResponse = await Microsoft.exchangeRpsTicketForIdentity(xboxAccessToken);
 
-        const xboxLoginResponse = await Microsoft.loginToMinecraftWithXbox(identityResponse.userHash, identityResponse.XSTSToken);
+        const userHash = identityResponse.userHash;
+        const XSTSToken = identityResponse.XSTSToken;
+
+        const xboxLoginResponse = await Microsoft.loginToMinecraftWithXbox(userHash, XSTSToken);
         const minecraftXboxUsername = xboxLoginResponse.username;
 
         if (xboxInfoConsumer) {
@@ -566,7 +571,8 @@ export class Microsoft {
                     refreshToken: xboxRefreshToken,
                     username: minecraftXboxUsername,
                     userId: refreshBody["user_id"],
-                    userHash: identityResponse.userHash
+                    userHash: identityResponse.userHash,
+                    XSTSToken: XSTSToken,
                 });
             } catch (e) {
                 console.warn(e);
@@ -677,6 +683,7 @@ export class AuthenticationError extends MineSkinError {
 export interface XboxInfo {
     accessToken?: string;
     refreshToken?: string;
+    XSTSToken?: string;
     userId?: string;
     userHash?: string;
     username?: string;

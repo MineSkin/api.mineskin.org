@@ -336,6 +336,9 @@ export const register = (app: Application, config: MineSkinConfig) => {
                 account.multiSecurity = req.session.account.mojangInfo.securityAnswers;
             }
         } else if (req.session.account.type === AccountType.MICROSOFT && req.session.account.microsoftInfo) {
+            if (req.session.account.microsoftInfo.XSTSToken) {
+                account.microsoftXSTSToken = req.session.account.microsoftInfo.XSTSToken;
+            }
             if (req.session.account.microsoftInfo.accessToken) {
                 account.microsoftAccessToken = req.session.account.microsoftInfo.accessToken;
             }
@@ -527,6 +530,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
         });
         if (req.session.account.type === AccountType.MICROSOFT) {
             account.microsoftUserId = req.session.account.microsoftInfo?.userId;
+            account.microsoftXSTSToken = req.session.account.microsoftInfo?.XSTSToken;
             account.microsoftAccessToken = req.session.account.microsoftInfo?.accessToken;
             account.microsoftRefreshToken = req.session.account.microsoftInfo?.refreshToken;
             account.minecraftXboxUsername = req.session.account.microsoftInfo?.username;
