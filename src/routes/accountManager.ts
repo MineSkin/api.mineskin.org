@@ -515,7 +515,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
 
             type: "external",
             enabled: true,
-            sendEmails: true,
+            sendEmails: false,
             lastUsed: 0,
             lastSelected: 0,
             forcedTimeoutAt: 0,
@@ -537,6 +537,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
 
         if (req.session.account.email) {
             account.email = req.session.account.email;
+            account.sendEmails = true;
             account.username = req.session.account.email;
         }
 
