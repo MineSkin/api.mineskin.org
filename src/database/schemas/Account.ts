@@ -168,8 +168,8 @@ AccountSchema.statics.findUsable = async function (this: IAccountModel, bread?: 
             {
                 $or: [
                     { requestServer: { $exists: false } },
-                    { requestServer: null },
-                    { requestServer: { $in: ["default", metrics.config.server] } }
+                    { requestServer: { $in: ["default", metrics.config.server] } },
+                    { requestServer: null }
                 ]
             },
             {
