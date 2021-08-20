@@ -373,6 +373,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
             type: account.accountType || (account.microsoftAccount ? "microsoft" : "mojang"),
             username: account.username,
             email: account.email || account.username,
+            gamerTag: account.microsoftAuth?.identities?.xbox?.claims.gtg,
             uuid: account.uuid,
             lastUsed: account.lastUsed,
             enabled: account.enabled,
