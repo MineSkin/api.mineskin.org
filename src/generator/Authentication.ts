@@ -1,7 +1,7 @@
 import { Requests } from "./Requests";
 import * as Sentry from "@sentry/node";
 import * as XboxLiveAuth from "@xboxreplay/xboxlive-auth";
-import { AuthenticateResponse } from "@xboxreplay/xboxlive-auth";
+import { AuthenticateResponse, ExchangeRpsTicketResponse } from "@xboxreplay/xboxlive-auth";
 import * as qs from "querystring";
 import { AxiosResponse } from "axios";
 import { getConfig } from "../typings/Configs";
@@ -12,15 +12,17 @@ import { Encryption } from "../util/Encryption";
 import { Bread } from "../typings/Bread";
 import { Notifications } from "../util/Notifications";
 import { Account } from "../database/schemas";
-import { Maybe } from "../util";
+import { epochSeconds, Maybe, toEpochSeconds } from "../util";
 import { MineSkinMetrics } from "../util/metrics";
+import { MicrosoftAuthInfo } from "../typings/MicrosoftAuthInfo";
 
 const ACCESS_TOKEN_EXPIRATION_MOJANG = 86360;
 const ACCESS_TOKEN_EXPIRATION_MICROSOFT = 86360;
 
 const ACCESS_TOKEN_EXPIRATION_THRESHOLD = 20 * 60;
 
-const XSTSRelyingParty = 'rp://api.minecraftservices.com/'
+const MC_XSTSRelyingParty = 'rp://api.minecraftservices.com/'
+const XBOX_XSTSRelyingParty = 'http://xboxlive.com'
 
 export class Mojang {
 
@@ -389,6 +391,7 @@ export class Microsoft {
             account.microsoftAccessToken = xboxInfo.accessToken;
             account.microsoftRefreshToken = xboxInfo.refreshToken;
             account.minecraftXboxUsername = xboxInfo.username;
+            account.microsoftAuth = xboxInfo.msa as MicrosoftAuthInfo;
         }).catch(err => {
             if (err.response || err.name === "XboxReplayError") {
                 console.warn(err);
@@ -408,6 +411,9 @@ export class Microsoft {
     }
 
     // based on https://github.com/PrismarineJS/node-minecraft-protocol/blob/master/src/client/microsoftAuth.js
+    /**
+     * @deprecated
+     */
     static async loginWithEmailAndPassword(email: string, password: string, xboxInfoConsumer?: (info: XboxInfo) => void): Promise<string> {
         // https://login.live.com/oauth20_authorize.srf
         const preAuthResponse = await XboxLiveAuth.preAuth();
@@ -421,10 +427,14 @@ export class Microsoft {
         const xboxAccessToken = loginResponse.access_token;
         const xboxRefreshToken = loginResponse.refresh_token;
 
-        const identityResponse = await Microsoft.exchangeRpsTicketForIdentity(xboxAccessToken);
+        const identityResponses: MicrosoftIdentities = await Microsoft.exchangeRpsTicketForIdentities(xboxAccessToken);
+        console.log("identities");
+        console.log(identityResponses)
+        const mcIdentity = identityResponses.mc;
+        const xboxIdentity = identityResponses.xbox;
 
-        const userHash = identityResponse.userHash;
-        const XSTSToken = identityResponse.XSTSToken;
+        const userHash = mcIdentity.DisplayClaims.xui[0].uhs;
+        const XSTSToken = mcIdentity.Token;
 
         const xboxLoginResponse = await Microsoft.loginToMinecraftWithXbox(userHash, XSTSToken);
         const minecraftXboxUsername = xboxLoginResponse.username;
@@ -466,22 +476,60 @@ export class Microsoft {
         return Microsoft.authenticateXboxWithFormData(form, xboxInfoConsumer);
     }
 
-    static async exchangeRpsTicketForIdentity(rpsTicket: string): Promise<AuthenticateResponse> {
+    static async exchangeRpsTicketForIdentities(rpsTicket: string): Promise<MicrosoftIdentities & { token: ExchangeRpsTicketResponse }> {
         if (!rpsTicket.startsWith("d=")) {
             // username+password login doesn't seem to need this prefix, code auth does
-            rpsTicket = `d=${rpsTicket}`;
+            rpsTicket = `d=${ rpsTicket }`;
         }
         // https://user.auth.xboxlive.com/user/authenticate
-        const userTokenResponse = await XboxLiveAuth.exchangeRpsTicketForUserToken(rpsTicket);
+        const userTokenResponse: ExchangeRpsTicketResponse = await XboxLiveAuth.exchangeRpsTicketForUserToken(rpsTicket);
         console.log("exchangeRpsTicket")
         console.log(JSON.stringify(userTokenResponse))
+        return {
+            token: userTokenResponse,
+            mc: await this.getIdentityForRelyingParty(userTokenResponse, MC_XSTSRelyingParty),
+            xbox: await this.getIdentityForRelyingParty(userTokenResponse, XBOX_XSTSRelyingParty)
+        };
+    }
+
+    static async getIdentityForRelyingParty(userTokenResponse:ExchangeRpsTicketResponse, relyingParty: string): Promise<XSTSResponse> {
         // https://xsts.auth.xboxlive.com/xsts/authorize
-        const identityResponse = await XboxLiveAuth.exchangeUserTokenForXSTSIdentity(userTokenResponse.Token, { XSTSRelyingParty, raw: false }) as AuthenticateResponse;
-        console.log("exchangeUserToken")
+        const body = {
+            RelyingParty: relyingParty,
+            TokenType: "JWT",
+            Properties:{
+                SandboxId:"RETAIL",
+                UserTokens: [userTokenResponse.Token]
+            }
+        };
+        const authResponse = await Requests.axiosInstance.request({
+            method: "POST",
+            url: "https://xsts.auth.xboxlive.com/xsts/authorize",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+                /*"x-xbl-contract-version": 1*/
+            },
+            data: body
+        });
+        return authResponse.data as XSTSResponse
+    }
+
+    static async getMinecraftIdentity(userTokenResponse: ExchangeRpsTicketResponse): Promise<AuthenticateResponse> {
+        // https://xsts.auth.xboxlive.com/xsts/authorize
+        const identityResponse = await XboxLiveAuth.exchangeUserTokenForXSTSIdentity(userTokenResponse.Token, { XSTSRelyingParty: MC_XSTSRelyingParty, raw: false }) as AuthenticateResponse;
+        console.log("MC exchangeUserToken")
         console.log(JSON.stringify(identityResponse))
         return identityResponse;
     }
 
+    static async getXboxIdentity(userTokenResponse: ExchangeRpsTicketResponse): Promise<AuthenticateResponse> {
+        // https://xsts.auth.xboxlive.com/xsts/authorize
+        const identityResponse = await XboxLiveAuth.exchangeUserTokenForXSTSIdentity(userTokenResponse.Token, { XSTSRelyingParty: XBOX_XSTSRelyingParty, raw: false }) as AuthenticateResponse;
+        console.log("XBOX exchangeUserToken")
+        console.log(JSON.stringify(identityResponse))
+        return identityResponse;
+    }
 
     static async loginToMinecraftWithXbox(userHash: string, xstsToken: string): Promise<XboxLoginResponse> {
         const body = {
@@ -556,10 +604,14 @@ export class Microsoft {
         const xboxAccessToken = refreshBody["access_token"];
         const xboxRefreshToken = refreshBody["refresh_token"];
 
-        const identityResponse = await Microsoft.exchangeRpsTicketForIdentity(xboxAccessToken);
+        const identityResponses = await Microsoft.exchangeRpsTicketForIdentities(xboxAccessToken);
+        console.log("identities");
+        console.log(identityResponses)
+        const mcIdentity = identityResponses.mc;
+        const xboxIdentity = identityResponses.xbox;
 
-        const userHash = identityResponse.userHash;
-        const XSTSToken = identityResponse.XSTSToken;
+        const userHash = mcIdentity.DisplayClaims.xui[0].uhs;
+        const XSTSToken = mcIdentity.Token;
 
         const xboxLoginResponse = await Microsoft.loginToMinecraftWithXbox(userHash, XSTSToken);
         const minecraftXboxUsername = xboxLoginResponse.username;
@@ -571,8 +623,39 @@ export class Microsoft {
                     refreshToken: xboxRefreshToken,
                     username: minecraftXboxUsername,
                     userId: refreshBody["user_id"],
-                    userHash: identityResponse.userHash,
+                    userHash: userHash,
                     XSTSToken: XSTSToken,
+
+                    msa: {
+                        auth: {
+                            accessToken: xboxAccessToken,
+                            refreshToken: xboxRefreshToken,
+                            expires: epochSeconds() + parseInt(refreshBody["expires_in"]),
+                            issued: epochSeconds(),
+                            userId: refreshBody["user_id"]
+                        },
+                        userToken: {
+                            token: identityResponses.token.Token,
+                            expires: toEpochSeconds(Date.parse(identityResponses.token.NotAfter)),
+                            issued: toEpochSeconds(Date.parse(identityResponses.token.IssueInstant)),
+                            userHash: identityResponses.token.DisplayClaims.xui[0].uhs
+                        },
+                        identities: {
+                            mc: {
+                                token: mcIdentity.Token,
+                                expires: toEpochSeconds(Date.parse(mcIdentity.NotAfter)),
+                                issued: toEpochSeconds(Date.parse(mcIdentity.IssueInstant)),
+                                claims: mcIdentity.DisplayClaims.xui[0]
+                            },
+                            xbox: {
+                                token: xboxIdentity.Token,
+                                expires: toEpochSeconds(Date.parse(xboxIdentity.NotAfter)),
+                                issued: toEpochSeconds(Date.parse(xboxIdentity.IssueInstant)),
+                                claims: xboxIdentity.DisplayClaims.xui[0]
+                            }
+                        }
+                    }
+
                 });
             } catch (e) {
                 console.warn(e);
@@ -681,12 +764,20 @@ export class AuthenticationError extends MineSkinError {
 // Microsoft
 
 export interface XboxInfo {
+    /**@deprecated**/
     accessToken?: string;
+    /**@deprecated**/
     refreshToken?: string;
+    /**@deprecated**/
     XSTSToken?: string;
+    /**@deprecated**/
     userId?: string;
+    /**@deprecated**/
     userHash?: string;
+    /**@deprecated**/
     username?: string;
+
+    msa?: MicrosoftAuthInfo;
 }
 
 interface XboxLoginResponse {
@@ -748,4 +839,23 @@ export interface MojangSecurityQuestion {
 export interface MojangSecurityAnswer {
     id: number;
     answer: string;
+}
+
+interface XSTSResponse {
+    IssueInstant: string;
+    NotAfter: string;
+    Token: string;
+    DisplayClaims: {
+        xui: [
+            {
+                uhs: string;
+                [claim: string]: any;
+            }
+        ]
+    }
+}
+
+interface MicrosoftIdentities {
+    xbox: XSTSResponse;
+    mc: XSTSResponse;
 }

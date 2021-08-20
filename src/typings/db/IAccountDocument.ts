@@ -2,6 +2,7 @@ import { Document, Model } from "mongoose";
 import { Maybe } from "../../util";
 import { MojangSecurityAnswer } from "../../generator/Authentication";
 import { Bread } from "../Bread";
+import { MicrosoftAuthInfo } from "../MicrosoftAuthInfo";
 
 export interface SecurityQuestion extends MojangSecurityAnswer {
 }
@@ -41,13 +42,20 @@ export interface IAccountDocument extends Document {
     security?: string;
     multiSecurity?: SecurityQuestion[];
     accountType?: AccountType;
+    microsoftAuth?: MicrosoftAuthInfo;
     /**@deprecated**/
     microsoftAccount?: boolean;
+    /**@deprecated**/
     microsoftUserId?: string;
+    /**@deprecated**/
     microsoftUserHash?: string;
+    /**@deprecated**/
     microsoftAccessToken?: string;
+    /**@deprecated**/
     microsoftRefreshToken?: string;
+    /**@deprecated**/
     minecraftXboxUsername?: string;
+    /**@deprecated**/
     microsoftXSTSToken?: string;
     lastSelected?: number;
     timeAdded?: number;

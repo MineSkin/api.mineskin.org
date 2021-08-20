@@ -19,6 +19,7 @@ import { PendingDiscordAccountLink } from "../typings/DiscordAccountLink";
 import { v4 as randomUuid } from "uuid"
 import { Buffer } from "buffer";
 import { randomBytes } from "crypto";
+import { MicrosoftAuthInfo } from "../typings/MicrosoftAuthInfo";
 
 export const register = (app: Application, config: MineSkinConfig) => {
 
@@ -345,6 +346,9 @@ export const register = (app: Application, config: MineSkinConfig) => {
             if (req.session.account.microsoftInfo.refreshToken) {
                 account.microsoftRefreshToken = req.session.account.microsoftInfo.refreshToken;
             }
+            if (req.session.account.microsoftInfo.msa) {
+                account.microsoftAuth = req.session.account.microsoftInfo.msa;
+            }
         }
         account.discordMessageSent = false;
         account.emailSent = false;
@@ -535,6 +539,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
             account.microsoftXSTSToken = req.session.account.microsoftInfo?.XSTSToken;
             account.microsoftAccessToken = req.session.account.microsoftInfo?.accessToken;
             account.microsoftRefreshToken = req.session.account.microsoftInfo?.refreshToken;
+            account.microsoftAuth = req.session.account.microsoftInfo?.msa as MicrosoftAuthInfo;
         } else if (req.session.account!.type === AccountType.MOJANG) {
             account.passwordNew = await Encryption.encrypt(base64decode(req.body["password"]));
             account.multiSecurity = req.session.account.mojangInfo?.securityAnswers;

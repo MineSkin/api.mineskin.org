@@ -296,6 +296,14 @@ export function hasOwnProperty<X extends {}, Y extends PropertyKey>(obj: X, prop
     return obj.hasOwnProperty(prop)
 }
 
+export function epochSeconds(): number {
+    return toEpochSeconds(Date.now());
+}
+
+export function toEpochSeconds(timestamp: number): number {
+    return Math.floor(timestamp / 1000);
+}
+
 // https://github.com/microsoft/TypeScript/issues/13321#issuecomment-637120710
 export type Maybe<T> = T | undefined;
 

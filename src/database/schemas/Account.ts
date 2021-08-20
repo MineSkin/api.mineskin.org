@@ -42,18 +42,26 @@ export const AccountSchema: Schema<IAccountDocument, IAccountModel> = new Schema
     }],
     accountType: String,
     microsoftAccount: Boolean,
+    microsoftAuth: Schema.Types.Mixed, //TODO
+    /**@deprecated**/
     microsoftUserId: {
         type: String,
         index: true
     },
+    /**@deprecated**/
     microsoftUserHash: String,
+    /**@deprecated**/
     microsoftAccessToken: String,
+    /**@deprecated**/
     microsoftRefreshToken: String,
+    /**@deprecated**/
     minecraftXboxUsername: {
         type: String,
         index: true
     },
+    /**@deprecated**/
     microsoftXSTSToken: String,
+    //TODO: clean up microsoft stuff; can probably just store most of the response data as objects
     lastSelected: Number,
     timeAdded: {
         type: Number,
