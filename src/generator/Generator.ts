@@ -2,7 +2,7 @@ import { Account, Skin, Stat } from "../database/schemas";
 import { MemoizeExpiring } from "@inventivetalent/typescript-memoize";
 import { base64decode, getHashFromMojangTextureUrl, hasOwnProperty, imgHash, longAndShortUuid, Maybe, random32BitNumber, stripUuid } from "../util";
 import { Caching } from "./Caching";
-import { Authentication, AuthenticationError } from "./Authentication";
+import { Authentication, AuthenticationError, BasicMojangProfile } from "./Authentication";
 import * as Sentry from "@sentry/node";
 import { Severity } from "@sentry/node";
 import { Requests } from "./Requests";
@@ -741,6 +741,7 @@ export class Generator {
             /// Run generation for new skin
 
             account = await this.getAndAuthenticateAccount(options);
+            await this.clearCapeIfRequired(account);
 
             const body = {
                 variant: options.variant,
@@ -876,6 +877,7 @@ export class Generator {
             /// Run generation for new skin
 
             account = await this.getAndAuthenticateAccount(options);
+            await this.clearCapeIfRequired(account);
 
             const body = new FormData();
             body.append("variant", options.variant);
@@ -1043,6 +1045,33 @@ export class Generator {
 
         span?.finish();
         return account;
+    }
+
+    protected static async getUserProfile(account: IAccountDocument): Promise<Maybe<BasicMojangProfile>> {
+        if (!account.accessToken) return undefined;
+        return Caching.getProfileByAccessToken(account.accessToken);
+    }
+
+    protected static async clearCape(account: IAccountDocument): Promise<boolean> {
+        return Requests.minecraftServicesRequest({
+            method: "DELETE",
+            url: "/minecraft/profile/capes/active",
+            headers: {
+                Authorization: `Bearer ${ account.accessToken }`
+            }
+        }).then(res => res.status === 200);
+    }
+
+    protected static async clearCapeIfRequired(account: IAccountDocument): Promise<boolean> {
+        const profile = await this.getUserProfile(account);
+        if (profile && profile.capes && profile.capes.length > 0) {
+            for (let cape of profile.capes) {
+                if (cape.state === "ACTIVE") {
+                    return await this.clearCape(account);
+                }
+            }
+        }
+        return true;
     }
 
     /// SUCCESS / ERROR HANDLERS

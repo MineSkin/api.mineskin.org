@@ -492,13 +492,13 @@ export class Microsoft {
         };
     }
 
-    static async getIdentityForRelyingParty(userTokenResponse:ExchangeRpsTicketResponse, relyingParty: string): Promise<XSTSResponse> {
+    static async getIdentityForRelyingParty(userTokenResponse: ExchangeRpsTicketResponse, relyingParty: string): Promise<XSTSResponse> {
         // https://xsts.auth.xboxlive.com/xsts/authorize
         const body = {
             RelyingParty: relyingParty,
             TokenType: "JWT",
-            Properties:{
-                SandboxId:"RETAIL",
+            Properties: {
+                SandboxId: "RETAIL",
                 UserTokens: [userTokenResponse.Token]
             }
         };
@@ -817,13 +817,21 @@ export interface BasicMojangProfile {
     id: string;
     name: string;
     skins?: MojangProfileSkin[];
+    capes?: MojangProfileCape[];
 }
 
 export interface MojangProfileSkin {
     id: string;
-    state: string;
+    state: "ACTIVE" | string;
     url: string;
     variant: string;
+}
+
+export interface MojangProfileCape {
+    id: string;
+    state: "ACTIVE" | string;
+    url: string;
+    alias: string;
 }
 
 interface MojangChallengesResponse {
