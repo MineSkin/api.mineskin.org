@@ -1053,6 +1053,7 @@ export class Generator {
     }
 
     protected static async clearCape(account: IAccountDocument): Promise<boolean> {
+        console.log(info(`Clearing cape of ${ account.id }/${ account.uuid }`));
         return Requests.minecraftServicesRequest({
             method: "DELETE",
             url: "/minecraft/profile/capes/active",
