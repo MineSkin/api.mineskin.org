@@ -172,7 +172,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
 
     app.post("/accountManager/microsoft/login/finalize", async (req: AccountManagerRequest, res: Response) => {
         if (!req.session || !req.session.account || !req.session.account.token) {
-            res.status(400).json({ error: "invalid session" });
+            res.status(400).json({ error: "invalid session (token)" });
             return;
         }
 
@@ -281,7 +281,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
 
         const profile = await getMojangProfile(req.session.account!.token!);
         if (!profile) {
-            res.status(400).json({ error: "invalid session" });
+            res.status(400).json({ error: "invalid session (profile)" });
             return;
         }
         if (req.session && req.session.account) {
@@ -293,7 +293,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
     app.post("/accountManager/myAccount", async (req: AccountManagerRequest, res: Response) => {
         if (!validateSessionAndToken(req, res)) return;
         if (!req.session || !req.session.account) {
-            res.status(400).json({ error: "invalid session" });
+            res.status(400).json({ error: "invalid session (account)" });
             return;
         }
 
@@ -414,7 +414,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
     app.put("/accountManager/settings/:setting", async (req: AccountManagerRequest, res: Response) => {
         if (!validateSessionAndToken(req, res)) return;
         if (!req.session || !req.session.account) {
-            res.status(400).json({ error: "invalid session" });
+            res.status(400).json({ error: "invalid session (account)" });
             return;
         }
         const profileValidation = await getAndValidateMojangProfile(req.session.account!.token!, req.body["uuid"]);
@@ -464,16 +464,16 @@ export const register = (app: Application, config: MineSkinConfig) => {
     app.post("/accountManager/confirmAccountSubmission", async (req: AccountManagerRequest, res: Response) => {
         if (!validateSessionAndToken(req, res)) return;
         if (!req.session || !req.session.account) {
-            res.status(400).json({ error: "invalid session" });
+            res.status(400).json({ error: "invalid session (account)" });
             return;
         }
         if (req.session.account.type === AccountType.MOJANG) {
             if (req.body["email"] !== req.session.account.email) {
-                res.status(400).json({ error: "invalid session" });
+                res.status(400).json({ error: "invalid session (email)" });
                 return;
             }
             if (sha512(req.body["password"]) !== req.session.account.passwordHash) {
-                res.status(400).json({ error: "invalid session" });
+                res.status(400).json({ error: "invalid session (password)" });
                 return;
             }
         }
@@ -482,7 +482,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
             return;
         }
         if (req.body["uuid"] !== req.session.account.uuid) {
-            res.status(400).json({ error: "invalid session" });
+            res.status(400).json({ error: "invalid session (uuid)" });
             return;
         }
         const profileValidation = await getAndValidateMojangProfile(req.session.account!.token!, req.body["uuid"]);
@@ -582,7 +582,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
     app.delete("/accountManager/deleteAccount", async (req: AccountManagerRequest, res: Response) => {
         if (!validateSessionAndToken(req, res)) return;
         if (!req.session || !req.session.account) {
-            res.status(400).json({ error: "invalid session" });
+            res.status(400).json({ error: "invalid session (account)" });
             return;
         }
         const profileValidation = await getAndValidateMojangProfile(req.session.account!.token!, req.body["uuid"]);
@@ -629,15 +629,15 @@ export const register = (app: Application, config: MineSkinConfig) => {
             return;
         }
         if (!req.session || !req.session.account) {
-            res.status(400).json({ error: "invalid session" });
+            res.status(400).json({ error: "invalid session (account)" });
             return;
         }
         if (!req.session.account.token) {
-            res.status(400).json({ error: "invalid session" });
+            res.status(400).json({ error: "invalid session (token)" });
             return;
         }
         if (!req.session || !req.session.account) {
-            res.status(400).json({ error: "invalid session" });
+            res.status(400).json({ error: "invalid session (account)" });
             return;
         }
         const profileValidation = await getAndValidateMojangProfile(req.session.account!.token!, req.query["uuid"] as string);
@@ -687,7 +687,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
         // Make sure the session isn't doing anything weird
         if (!req.session || !req.session.account) {
             console.warn("discord account link callback had invalid session");
-            res.status(400).json({ error: "invalid session" });
+            res.status(400).json({ error: "invalid session (account)" });
             return;
         }
         const profileValidation = await getAndValidateMojangProfile(req.session.account.token!, pendingLink.uuid);
@@ -778,16 +778,16 @@ export const register = (app: Application, config: MineSkinConfig) => {
 
 function validateSessionAndToken(req: AccountManagerRequest, res: Response): boolean {
     if (!req.headers.authorization || !req.headers.authorization.startsWith("Bearer ")) {
-        res.status(400).json({ error: "invalid session" });
+        res.status(400).json({ error: "invalid session (bearer)" });
         return false;
     }
     const headerToken = req.headers.authorization.replace("Bearer ", "");
     if (!req.session || !req.session.account) {
-        res.status(400).json({ error: "invalid session" });
+        res.status(400).json({ error: "invalid session (account)" });
         return false;
     }
     if (headerToken !== req.session.account.token) {
-        res.status(400).json({ error: "invalid session" });
+        res.status(400).json({ error: "invalid session (token)" });
         return false;
     }
     return true;
