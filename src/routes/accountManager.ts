@@ -209,7 +209,13 @@ export const register = (app: Application, config: MineSkinConfig) => {
 
         const scopes = ["XboxLive.signin", "offline_access"].join("%20");
         const redirect = `https://${ config.server }.api.mineskin.org/accountManager/microsoft/oauth/callback`;
-        res.redirect(`https://login.live.com/oauth20_authorize.srf?client_id=${ config.microsoft.clientId }&response_type=code&redirect_uri=${ redirect }&scope=${ scopes }&state=${ state }&prompt=select_account`);
+        let url = `https://login.live.com/oauth20_authorize.srf?client_id=${ config.microsoft.clientId }&response_type=code&redirect_uri=${ redirect }&scope=${ scopes }&state=${ state }`;
+        if (!req.query["email"]) {
+            url += '&prompt=select_account';
+        } else {
+            url += `&prompt=login&account_hint=${ req.query["email"] }`;
+        }
+        res.redirect(url);
     });
 
     app.get("/accountManager/microsoft/oauth/callback", async (req: AccountManagerRequest, res: Response) => {
@@ -472,6 +478,8 @@ export const register = (app: Application, config: MineSkinConfig) => {
                 res.status(400).json({ error: "invalid session (email)" });
                 return;
             }
+            console.log(req.session.account)
+            console.log(sha512(req.body["password"]))
             if (sha512(req.body["password"]) !== req.session.account.passwordHash) {
                 res.status(400).json({ error: "invalid session (password)" });
                 return;
