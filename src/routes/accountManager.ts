@@ -191,7 +191,8 @@ export const register = (app: Application, config: MineSkinConfig) => {
 
         res.json({
             success: !!minecraftAccessToken,
-            token: minecraftAccessToken
+            token: minecraftAccessToken,
+            email: req.session.account.email
         });
     })
 
@@ -206,7 +207,10 @@ export const register = (app: Application, config: MineSkinConfig) => {
 
         const state = sha256(Buffer.concat([Buffer.from(randomUuid(), 'utf8'), randomBytes(16)]).toString('base64'));
 
-        Caching.storePendingMicrosoftLink(state);
+        Caching.storePendingMicrosoftLink(state, {
+            state: state,
+            email: req.query.email as string
+        });
 
         const scopes = ["XboxLive.signin", "offline_access"].join("%20");
         const redirect = `https://${ config.server }.api.mineskin.org/accountManager/microsoft/oauth/callback`;
@@ -234,8 +238,8 @@ export const register = (app: Application, config: MineSkinConfig) => {
             return;
         }
 
-        const validState = Caching.getPendingMicrosoftLink(req.query["state"] as string);
-        if (!validState) {
+        const pendingLink = Caching.getPendingMicrosoftLink(req.query["state"] as string);
+        if (!pendingLink) {
             res.status(403).json({ error: "invalid state" });
             return;
         }
@@ -249,7 +253,8 @@ export const register = (app: Application, config: MineSkinConfig) => {
         req.session.account = {
             type: AccountType.MICROSOFT,
             token: minecraftAccessToken,
-            microsoftInfo: microsoftInfo
+            microsoftInfo: microsoftInfo,
+            email: pendingLink.email
         };
 
         res.send(`

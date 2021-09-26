@@ -16,6 +16,7 @@ import { IApiKeyDocument } from "../typings/db/IApiKeyDocument";
 import { ApiKey } from "../database/schemas/ApiKey";
 import { IPendingDiscordLink } from "../typings/DiscordAccountLink";
 import { Time } from "@inventivetalent/time";
+import { MojangAccountLink } from "../typings/MojangAccountLink";
 
 export class Caching {
 
@@ -183,7 +184,7 @@ export class Caching {
         .expirationInterval(Time.seconds(30))
         .build();
 
-    protected static readonly pendingMicrosoftLinkByStateCache: SimpleCache<string, boolean> = Caches.builder()
+    protected static readonly pendingMicrosoftLinkByStateCache: SimpleCache<string, MojangAccountLink> = Caches.builder()
         .expireAfterWrite(Time.minutes(5))
         .expirationInterval(Time.seconds(30))
         .build();
@@ -300,12 +301,12 @@ export class Caching {
         return this.pendingDiscordLinkByStateCache.getIfPresent(state) as T;
     }
 
-    public static storePendingMicrosoftLink(state: string): void{
-        this.pendingMicrosoftLinkByStateCache.put(state, true);
+    public static storePendingMicrosoftLink(state: string, link: MojangAccountLink): void{
+        this.pendingMicrosoftLinkByStateCache.put(state, link);
     }
 
-    public static getPendingMicrosoftLink(state: string): Maybe<boolean> {
-        return this.pendingMicrosoftLinkByStateCache.getIfPresent(state) as boolean;
+    public static getPendingMicrosoftLink(state: string): Maybe<MojangAccountLink> {
+        return this.pendingMicrosoftLinkByStateCache.getIfPresent(state) as MojangAccountLink;
     }
 
     public static invalidatePendingDiscordLink(state: string): void {
