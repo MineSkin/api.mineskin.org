@@ -126,6 +126,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
 
     /// MICROSOFT
 
+    // @deprecated (non-oauth version)
     app.post("/accountManager/microsoft/login", async (req: AccountManagerRequest, res: Response) => {
         await regenerateSession(req);
         if (!req.body["email"] || !req.body["password"]) {
