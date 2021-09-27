@@ -90,7 +90,7 @@ export class Notifications {
             "  Account Type: " + account.getAccountType() + "\n" +
             "  Total Success/Error: " + account.totalSuccessCounter + "/" + account.totalErrorCounter + "\n" +
             "  Account Added: " + new Date((account.timeAdded || 0) * 1000).toUTCString() + "\n" +
-            "  Linked to <@" + account.discordUser + ">");
+            "  Linked to " + account.email + "/<@" + account.discordUser + ">");
 
         this.sendEmailAndDiscord(account,
             (acc, email) => `
@@ -131,7 +131,7 @@ ${ account.getAccountType() === AccountType.MICROSOFT ? "<p>You should also chec
             "  Account Type: " + account.getAccountType() + "\n" +
             "  Total Success/Error: " + account.totalSuccessCounter + "/" + account.totalErrorCounter + "\n" +
             "  Account Added: " + new Date((account.timeAdded || 0) * 1000).toUTCString() + "\n" +
-            "  Linked to <@" + account.discordUser + ">");
+            "  Linked to " + account.email + "/<@" + account.discordUser + ">");
 
         this.sendEmailAndDiscord(account,
             (acc, email) => `
@@ -173,7 +173,7 @@ ${ account.getAccountType() === AccountType.MICROSOFT ? "<p>You should also chec
             "  Latest Cause: " + (err.code || err.msg || "n/a") + "\n" +
             "  Total Success/Error: " + account.totalSuccessCounter + "/" + account.totalErrorCounter + "\n" +
             "  Account Added: " + new Date((account.timeAdded || 0) * 1000).toUTCString() + "\n" +
-            "  Linked to <@" + account.discordUser + ">");
+            "  Linked to " + account.email + "/<@" + account.discordUser + ">");
 
         this.sendEmailAndDiscord(account,
             (acc, email) => `
