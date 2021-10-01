@@ -500,10 +500,18 @@ export class Generator {
 
         const mineskinUrlResult = MINESKIN_URL_REGEX.exec(url);
         if (!!mineskinUrlResult && mineskinUrlResult.length >= 3) {
-            const mineskinId = parseInt(mineskinUrlResult[2]);
-            const existingSkin = await Skin.findOne({
-                id: mineskinId
-            }).exec();
+            let existingSkin;
+            try {
+                const mineskinId = parseInt(mineskinUrlResult[2]);
+                existingSkin = await Skin.findOne({
+                    id: mineskinId
+                }).exec();
+            } catch (ignored) {
+                const mineskinUuid = mineskinUrlResult[2];
+                existingSkin = await Skin.findOne({
+                    skinUuid: mineskinUuid
+                }).exec();
+            }
             if (existingSkin) {
                 console.log(debug(options.breadcrumb + " Found existing skin from mineskin url"));
                 existingSkin.duplicate++;
