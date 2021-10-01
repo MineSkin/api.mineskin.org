@@ -42,7 +42,7 @@ export const MIN_ACCOUNT_DELAY = 70;
 
 const MAX_ID_TRIES = 10;
 
-const MINESKIN_URL_REGEX = /https?:\/\/minesk(\.in|in\.org)\/([0-9]+)/i;
+const MINESKIN_URL_REGEX = /https?:\/\/minesk(\.in|in\.org)\/([0-9a-zA-Z]+)/i;
 const MINECRAFT_TEXTURE_REGEX = /https?:\/\/textures\.minecraft\.net\/texture\/([0-9a-z]+)/i;
 
 const URL_REWRITES = new Map<RegExp, string>([
