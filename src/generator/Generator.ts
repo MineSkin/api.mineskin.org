@@ -501,15 +501,15 @@ export class Generator {
         const mineskinUrlResult = MINESKIN_URL_REGEX.exec(url);
         if (!!mineskinUrlResult && mineskinUrlResult.length >= 3) {
             let existingSkin;
-            try {
-                const mineskinId = parseInt(mineskinUrlResult[2]);
-                existingSkin = await Skin.findOne({
-                    id: mineskinId
-                }).exec();
-            } catch (ignored) {
+            if (isNaN(mineskinUrlResult[2] as any)) {
                 const mineskinUuid = mineskinUrlResult[2];
                 existingSkin = await Skin.findOne({
                     skinUuid: mineskinUuid
+                }).exec();
+            } else {
+                const mineskinId = parseInt(mineskinUrlResult[2]);
+                existingSkin = await Skin.findOne({
+                    id: mineskinId
                 }).exec();
             }
             if (existingSkin) {
