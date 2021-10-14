@@ -144,18 +144,13 @@ export const register = (app: Application) => {
         const skin = (await Skin.aggregate([
             { $match: { visibility: 0 } },
             { $sample: { size: 1 } }
-        ]).exec())[0];
+        ]).exec()).map((s: any) => new Skin(s))[0];
 
         if (!skin) {
             res.status(404).json({ error: "Skin not found" });
             return;
         }
-        skin.views++;
-        if (skin.model === "alex") {
-            skin.model = "slim";
-        }
-        res.json(await skin.toResponseJson()); // this triggers the generation of a random uuid if it doesn't have one, so do that before saving
-        await skin.save();
+        res.json(await skin.toResponseJson()); 
     })
 
 }
