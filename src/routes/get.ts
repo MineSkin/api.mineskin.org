@@ -141,10 +141,10 @@ export const register = (app: Application) => {
     })
 
     app.get("/get/random", async (req: Request, res: Response) => {
-        const skin = await Skin.aggregate([
+        const skin = (await Skin.aggregate([
             { $match: { visibility: 0 } },
             { $sample: { size: 1 } }
-        ]).exec();
+        ]).exec())[0];
 
         if (!skin) {
             res.status(404).json({ error: "Skin not found" });
