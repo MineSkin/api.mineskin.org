@@ -47,7 +47,9 @@ export const register = (app: Application) => {
         if (skin.model === "alex") {
             skin.model = "slim";
         }
-        res.json(await skin.toResponseJson()); // this triggers the generation of a random uuid if it doesn't have one, so do that before saving
+        res
+            .header("Cache-Control", "public, max-age=3600")
+            .json(await skin.toResponseJson()); // this triggers the generation of a random uuid if it doesn't have one, so do that before saving
         await skin.save();
     })
 
@@ -66,7 +68,9 @@ export const register = (app: Application) => {
         if (skin.model === "alex") {
             skin.model = "slim";
         }
-        res.json(await skin.toResponseJson());
+        res
+            .header("Cache-Control", "public, max-age=3600")
+            .json(await skin.toResponseJson());
         await skin.save();
     })
 
