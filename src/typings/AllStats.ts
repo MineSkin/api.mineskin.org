@@ -1,8 +1,41 @@
-export interface Stats extends AccountStats, DurationStats, TimeFrameStats {
+export interface AllStats extends AccountStats, DurationStats, TimeFrameStats {
     server: string;
 
     delay: number;
 
+    account: {
+        global: {
+            total?: number;
+            healthy?: number;
+        }
+        local: {
+            total?: number;
+            usable?: number;
+        }
+    }
+
+    skin: {
+        total?: number;
+        unique?: number;
+        duplicate?: number;
+        views?: number;
+    }
+
+    generate: {
+        time: {
+            year?: number;
+            month?: number;
+            day?: number;
+            hour?: number;
+        }
+        source: {
+            upload?: number;
+            url?: number;
+            user?: number;
+        }
+        successRate?: number;
+        testerSuccessRate?: number;
+    }
 
     successRate?: number;
     mineskinTesterSuccessRate?: number;

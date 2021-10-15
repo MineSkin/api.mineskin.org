@@ -83,6 +83,7 @@ export interface MineSkinConfig {
     genSaveDelay: number;
     testerToken: string;
     sessionSecret: string;
+    statsServers: string[];
 
     optimus: OptimusConfig;
     mongo: MongoConfig;

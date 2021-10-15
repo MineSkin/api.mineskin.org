@@ -1,4 +1,4 @@
-import { Account, Skin, Stat } from "../database/schemas";
+import { Account, Skin } from "../database/schemas";
 import { MemoizeExpiring } from "@inventivetalent/typescript-memoize";
 import { base64decode, getHashFromMojangTextureUrl, hasOwnProperty, imgHash, longAndShortUuid, Maybe, random32BitNumber, stripUuid } from "../util";
 import { Caching } from "./Caching";
@@ -19,22 +19,22 @@ import { ISizeCalculationResult } from "image-size/dist/types/interface";
 import { v4 as randomUuid } from "uuid";
 import * as Jimp from "jimp";
 import { getConfig } from "../typings/Configs";
-import { IAccountDocument, ISkinDocument, IStatDocument, MineSkinError } from "../typings";
+import { IAccountDocument, ISkinDocument, MineSkinError } from "../typings";
 import { SkinData, SkinMeta, SkinValue } from "../typings/SkinData";
 import { GenerateOptions } from "../typings/GenerateOptions";
 import { GenerateType, SkinModel, SkinVariant, SkinVisibility } from "../typings/db/ISkinDocument";
-import { AccountStats, CountDuplicateViewStats, DurationStats, Stats, SuccessRateStats, TimeFrameStats } from "../typings/Stats";
+import { AllStats } from "../typings/AllStats";
 import { ClientInfo } from "../typings/ClientInfo";
 import { debug, error, info, warn } from "../util/colors";
 import { SkinInfo } from "../typings/SkinInfo";
 import { Bread } from "../typings/Bread";
-import { IPoint } from "influx";
 import { Notifications } from "../util/Notifications";
 import { IApiKeyDocument } from "../typings/db/IApiKeyDocument";
 import stripUserAgent from "user-agent-stripper";
 import { MineSkinMetrics } from "../util/metrics";
 import { MineSkinOptimus } from "../util/optimus";
 import { Discord } from "../util/Discord";
+import { Stats } from "./Stats";
 
 
 // minimum delay for accounts to be used - don't set lower than 60
@@ -66,13 +66,10 @@ export const HASH_VERSION = 4;
 
 export class Generator {
 
-    protected static accountStats: AccountStats;
-    protected static durationStats: DurationStats;
-    protected static successRateStats: SuccessRateStats;
-    protected static countDuplicateViewStats: CountDuplicateViewStats;
-    protected static timeFrameStats: TimeFrameStats;
+    protected static serverAccounts: number;
+    protected static usableAccounts: number;
 
-    protected static detailedStatsQueryTimer = setInterval(() => Generator.queryDetailedStats(), 120000);
+    private static accountStatsTimer = setInterval(() => Generator.queryAccountStats(), 1000 * 60 * 2);
 
     static async getDelay(apiKey?: IApiKeyDocument): Promise<number> {
         const config = await getConfig();
@@ -111,119 +108,49 @@ export class Generator {
     // Stats
 
     @MemoizeExpiring(60000)
-    static async getStats(): Promise<Stats> {
+    static async getStats(): Promise<AllStats> {
         const config = await getConfig();
         const delay = await this.getMinDelay();
 
-        const stats = <Stats>{
+        const stats = <AllStats>{
             server: config.server,
-            delay: delay
-        };
-        if (this.accountStats) {
-            stats.accounts = this.accountStats.accounts;
-            stats.serverAccounts = this.accountStats.serverAccounts;
-            stats.healthyAccounts = this.accountStats.healthyAccounts;
-            stats.useableAccounts = this.accountStats.useableAccounts;
-        }
-        if (this.successRateStats) {
-            const generateTotal = this.successRateStats.generateSuccess + this.successRateStats.generateFail;
-            stats.successRate = Number((this.successRateStats.generateSuccess / generateTotal).toFixed(3));
-            const testerTotal = this.successRateStats.testerSuccess + this.successRateStats.testerFail;
-            stats.mineskinTesterSuccessRate = Number((this.successRateStats.testerSuccess / testerTotal).toFixed(3));
-        }
-        if (this.durationStats) {
-            stats.avgGenerateDuration = this.durationStats.avgGenerateDuration;
-        }
-        if (this.countDuplicateViewStats) {
-            stats.genUpload = this.countDuplicateViewStats.genUpload;
-            stats.genUrl = this.countDuplicateViewStats.genUrl;
-            stats.genUser = this.countDuplicateViewStats.genUser;
-
-            stats.unique = this.countDuplicateViewStats.unique || 0;
-            stats.duplicate = this.countDuplicateViewStats.duplicate || 0;
-            stats.views = this.countDuplicateViewStats.views || 0;
-
-            stats.total = stats.unique + stats.duplicate;
-        }
-        if (this.timeFrameStats) {
-            stats.lastYear = this.timeFrameStats.lastYear;
-            stats.lastMonth = this.timeFrameStats.lastMonth;
-            stats.lastDay = this.timeFrameStats.lastDay;
-            stats.lastHour = this.timeFrameStats.lastHour;
-        }
-        return stats;
-    }
-
-    protected static async queryDetailedStats(): Promise<void> {
-        const metrics = await MineSkinMetrics.get();
-
-        this.accountStats = await this.queryAccountStats();
-        this.durationStats = await this.queryDurationStats();
-        this.successRateStats = await this.querySuccessRateStats();
-        this.countDuplicateViewStats = await this.queryCountDuplicateViewStats();
-        this.timeFrameStats = await this.queryTimeFrameStats();
-
-        try {
-            await metrics.metrics!.influx.writePoints([
-                {
-                    measurement: 'accounts',
-                    tags: {
-                        server: metrics.config.server
-                    },
-                    fields: {
-                        total: this.accountStats.accounts,
-                        totalServer: this.accountStats.serverAccounts,
-                        healthy: this.accountStats.healthyAccounts,
-                        useable: this.accountStats.useableAccounts
-                    }
-                },
-                {
-                    measurement: 'skins',
-                    fields: {
-                        total: (this.countDuplicateViewStats.unique || 0) + (this.countDuplicateViewStats.duplicate || 0),
-                        unique: this.countDuplicateViewStats.unique || 0,
-                        duplicate: this.countDuplicateViewStats.duplicate || 0
-                    }
-                }
-            ], {
-                database: 'mineskin'
-            })
-
-            let accountsPerTypePoints: IPoint[] = [];
-            for (let accountType in this.accountStats.accountTypes) {
-                accountsPerTypePoints.push({
-                    measurement: 'account_types',
-                    tags: {
-                        server: metrics.config.server,
-                        type: accountType
-                    },
-                    fields: {
-                        count: this.accountStats.accountTypes[accountType]
-                    }
-                })
+            delay: delay,
+            account: {
+                global: {},
+                local: {}
+            },
+            skin: {},
+            generate: {
+                time: {},
+                source: {}
             }
-            await metrics.metrics!.influx.writePoints(accountsPerTypePoints, {
-                database: 'mineskin'
-            })
-        } catch (e) {
-            console.warn(e);
-            Sentry.captureException(e);
+        };
+        if (this.serverAccounts) {
+            stats.serverAccounts = this.serverAccounts;
+            stats.account.local.total = this.serverAccounts;
         }
+        if (this.usableAccounts) {
+            stats.useableAccounts = this.usableAccounts;
+            stats.account.local.usable = this.usableAccounts;
+        }
+        return await Stats.get(stats);
     }
 
-    protected static async queryAccountStats(): Promise<AccountStats> {
+
+    protected static async queryAccountStats(): Promise<void> {
         const config = await getConfig();
         const time = Date.now() / 1000;
 
-        const enabledAccounts = await Account.countDocuments({
-            enabled: true
-        }).exec();
+        // const enabledAccounts = await Account.countDocuments({
+        //     enabled: true
+        // }).exec();
         const serverAccounts = await Account.countDocuments({
             enabled: true,
             requestServer: config.server
         }).exec();
-        const healthyAccounts = await Account.countGlobalUsable();
-        const useableAccounts = await Account.countDocuments({
+        this.serverAccounts = serverAccounts;
+
+        const usableAccounts = await Account.countDocuments({
             enabled: true,
             requestServer: { $in: ["default", config.server] },
             lastUsed: { '$lt': (time - MIN_ACCOUNT_DELAY) },
@@ -231,141 +158,31 @@ export class Generator {
             errorCounter: { '$lt': (config.errorThreshold || 10) },
             timeAdded: { $lt: (time - 60) }
         }).exec();
-        const accountTypes = await Account.aggregate([
-            {
-                "$match": {
-                    requestServer: { $in: ["default", config.server] }
-                }
-            }, {
-                "$group":
-                    {
-                        _id: "$accountType",
-                        count: { $sum: 1 }
+        this.usableAccounts = usableAccounts;
+
+        try {
+            const metrics = await MineSkinMetrics.get();
+            await metrics.metrics!.influx.writePoints([
+                {
+                    measurement: 'accounts',
+                    tags: {
+                        server: metrics.config.server
+                    },
+                    fields: {
+                        totalServer: serverAccounts,
+                        useable: usableAccounts
                     }
-            }
-        ]).exec().then((res: any[]) => {
-            let counts: { [type: string]: number; } = {};
-            res.forEach(e => {
-                counts[e["_id"]] = e["count"];
+                }
+            ], {
+                database: 'mineskin'
             })
-            return counts;
-        });
+        } catch (e) {
+            console.warn(e);
+            Sentry.captureException(e);
+        }
 
-        return {
-            accounts: enabledAccounts,
-            serverAccounts,
-            healthyAccounts,
-            useableAccounts,
-            accountTypes
-        };
     }
 
-    protected static async queryDurationStats(): Promise<DurationStats> {
-        return Skin.aggregate([
-            { "$sort": { time: -1 } },
-            { "$limit": 1000 },
-            {
-                "$group": {
-                    "_id": null,
-                    "avgGenTime": { "$avg": "$generateDuration" }
-                }
-            }
-        ]).exec().then((res: any[]) => {
-            return <DurationStats>{
-                avgGenerateDuration: res[0]["avgGenTime"] as number
-            };
-        });
-    }
-
-    protected static async querySuccessRateStats(): Promise<SuccessRateStats> {
-        const rawStats = await Stat.find({}).lean().exec();
-        const stats: SuccessRateStats = {
-            generateSuccess: 0,
-            generateFail: 0,
-            testerSuccess: 0,
-            testerFail: 0
-        };
-        rawStats.forEach((stat: IStatDocument) => {
-            switch (stat.key) {
-                case "generate.success":
-                    stats.generateSuccess = stat.value;
-                    break;
-                case "generate.fail":
-                    stats.generateFail = stat.value;
-                    break;
-                case "mineskintester.success":
-                    stats.testerSuccess = stat.value;
-                    break;
-                case "mineskintester.fail":
-                    stats.testerFail = stat.value;
-                    break;
-            }
-        });
-        return stats;
-    }
-
-    protected static async queryCountDuplicateViewStats(): Promise<CountDuplicateViewStats> {
-        return Skin.aggregate([
-            {
-                "$group":
-                    {
-                        _id: "$type",
-                        duplicate: { $sum: "$duplicate" },
-                        views: { $sum: "$views" },
-                        count: { $sum: 1 }
-                    }
-            }
-        ]).exec().then((res: any[]) => {
-            const urlStats = res.find(v => v["_id"] === "url");
-            const uploadStats = res.find(v => v["_id"] === "upload");
-            const userStats = res.find(v => v["_id"] === "user");
-
-            const stats = <CountDuplicateViewStats>{
-                genUpload: Number(uploadStats["count"]),
-                genUrl: Number(urlStats["count"]),
-                genUser: Number(userStats["count"]),
-
-                duplicateUpload: Number(uploadStats["duplicate"]),
-                duplicateUrl: Number(urlStats["duplicate"]),
-                duplicateUser: Number(userStats["duplicate"]),
-
-                viewsUpload: Number(uploadStats["views"]),
-                viewsUrl: Number(urlStats["views"]),
-                viewsUser: Number(userStats["views"])
-            };
-            stats.unique = stats.genUpload + stats.genUrl + stats.genUser;
-            stats.duplicate = stats.duplicateUpload + stats.duplicateUrl + stats.duplicateUser;
-            stats.views = stats.viewsUpload + stats.viewsUrl + stats.viewsUser;
-            return stats;
-        });
-    }
-
-    protected static async queryTimeFrameStats(): Promise<TimeFrameStats> {
-        const now = Date.now();
-        const lastHour = new Date(now - 3.6e+6).getTime() / 1000;
-        const lastDay = new Date(now - 8.64e+7).getTime() / 1000;
-        const lastMonth = new Date(now - 2.628e+9).getTime() / 1000;
-        const lastYear = new Date(now - 3.154e+10).getTime() / 1000;
-
-        return Skin.aggregate([
-            {
-                $group: {
-                    _id: null,
-                    lastYear: { $sum: { $cond: [{ $gte: ["$time", lastYear] }, 1, 0] } },
-                    lastMonth: { $sum: { $cond: [{ $gte: ["$time", lastMonth] }, 1, 0] } },
-                    lastDay: { $sum: { $cond: [{ $gte: ["$time", lastDay] }, 1, 0] } },
-                    lastHour: { $sum: { $cond: [{ $gte: ["$time", lastHour] }, 1, 0] } }
-                }
-            }
-        ]).exec().then((res: any[]) => {
-            return <TimeFrameStats>{
-                lastYear: res[0]["lastYear"] as number,
-                lastMonth: res[0]["lastMonth"] as number,
-                lastDay: res[0]["lastDay"] as number,
-                lastHour: res[0]["lastHour"] as number
-            }
-        })
-    }
 
     /// SAVING
 

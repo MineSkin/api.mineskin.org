@@ -24,6 +24,7 @@ import { Generator, GeneratorError } from "./generator/Generator";
 import gitsha from "@inventivetalent/gitsha";
 import { GitConfig } from "@inventivetalent/gitconfig";
 import { GithubWebhook } from "@inventivetalent/express-github-webhook/dist/src";
+import { Stats } from "./generator/Stats";
 
 sourceMapSupport.install();
 
@@ -281,6 +282,17 @@ async function init() {
         }
     }
     app.use(errorHandler);
+
+    if (config.statsServers?.includes(config.server)) {
+        console.log("Starting stats task");
+        setInterval(() => {
+            try {
+                Stats.query();
+            } catch (e) {
+                Sentry.captureException(e);
+            }
+        }, 1000 * 60 * 2);
+    }
 }
 
 function addErrorDetailsToSentry(err: AuthenticationError | GeneratorError): void {
