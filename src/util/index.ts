@@ -84,6 +84,8 @@ export async function getAndValidateRequestApiKey(req: MineSkinRequest): Promise
             throw new MineSkinError("invalid_api_key", "Invalid API Key", 403);
         }
 
+        key.updateLastUsed(new Date()); // don't await, don't really care
+
         req.apiKey = key;
 
         // Either a server IP or a client origin, not both

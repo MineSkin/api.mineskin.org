@@ -14,9 +14,10 @@ export interface IApiKeyDocument extends Document {
     allowedAgents?: string[];
 
     getMinDelay(): Promise<number>;
+
+    updateLastUsed(date: Date): Promise<void>;
 }
 
 export interface IApiKeyModel extends Model<IApiKeyDocument> {
     findKey(key: string): Promise<Maybe<IApiKeyDocument>>;
 }
-

@@ -28,6 +28,9 @@ const ApiKeySchema: Schema<IApiKeyDocument, IApiKeyModel> = new Schema(
         updatedAt: {
             type: Date
         },
+        lastUsed: {
+            type: Date
+        },
         allowedOrigins: [String],
         allowedIps: [String],
         allowedAgents: [String],
@@ -47,6 +50,10 @@ ApiKeySchema.methods.getMinDelay = async function (this: IApiKeyDocument): Promi
     return (await getConfig()).delays.defaultApiKey;
 }
 
+ApiKeySchema.methods.updateLastUsed = async function (this: IApiKeyDocument, date: Date): Promise<void> {
+    return ApiKey.updateOne({ key: this.key }, { $set: { lastUsed: date } }).exec().then(ignored => {
+    });
+}
 
 /// STATICS
 
