@@ -35,6 +35,7 @@ import { MineSkinMetrics } from "../util/metrics";
 import { MineSkinOptimus } from "../util/optimus";
 import { Discord } from "../util/Discord";
 import { Stats } from "./Stats";
+import { IPoint } from "influx";
 
 
 // minimum delay for accounts to be used - don't set lower than 60
@@ -160,6 +161,26 @@ export class Generator {
         }).exec();
         this.usableAccounts = usableAccounts;
 
+        const accountTypes = await Account.aggregate([
+            {
+                "$match": {
+                    requestServer: { $in: ["default", config.server] }
+                }
+            }, {
+                "$group":
+                    {
+                        _id: "$accountType",
+                        count: { $sum: 1 }
+                    }
+            }
+        ]).exec().then((res: any[]) => {
+            let counts: { [type: string]: number; } = {};
+            res.forEach(e => {
+                counts[e["_id"]] = e["count"];
+            })
+            return counts;
+        });
+
         try {
             const metrics = await MineSkinMetrics.get();
             await metrics.metrics!.influx.writePoints([
@@ -174,6 +195,23 @@ export class Generator {
                     }
                 }
             ], {
+                database: 'mineskin'
+            })
+
+            let accountsPerTypePoints: IPoint[] = [];
+            for (let accountType in accountTypes) {
+                accountsPerTypePoints.push({
+                    measurement: 'account_types',
+                    tags: {
+                        server: metrics.config.server,
+                        type: accountType
+                    },
+                    fields: {
+                        count: accountTypes[accountType]
+                    }
+                })
+            }
+            await metrics.metrics!.influx.writePoints(accountsPerTypePoints, {
                 database: 'mineskin'
             })
         } catch (e) {

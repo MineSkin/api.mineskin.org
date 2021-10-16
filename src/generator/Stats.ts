@@ -1,7 +1,6 @@
 import { AllStats, CountDuplicateViewStats } from "../typings/AllStats";
 import { getConfig } from "../typings/Configs";
 import { Account, Skin, Stat } from "../database/schemas";
-import { IPoint } from "influx";
 import * as Sentry from "@sentry/node";
 import { MineSkinMetrics } from "../util/metrics";
 import { debug } from "../util/colors";
@@ -147,25 +146,6 @@ export class Stats {
         //     requestServer: config.server
         // }).exec();
         const healthyAccounts = await Account.countGlobalUsable();
-        const accountTypes = await Account.aggregate([
-            {
-                "$match": {
-                    requestServer: { $in: ["default", config.server] }
-                }
-            }, {
-                "$group":
-                    {
-                        _id: "$accountType",
-                        count: { $sum: 1 }
-                    }
-            }
-        ]).exec().then((res: any[]) => {
-            let counts: { [type: string]: number; } = {};
-            res.forEach(e => {
-                counts[e["_id"]] = e["count"];
-            })
-            return counts;
-        });
 
         try {
             const metrics = await MineSkinMetrics.get();
@@ -183,39 +163,16 @@ export class Stats {
             ], {
                 database: 'mineskin'
             })
-
-            let accountsPerTypePoints: IPoint[] = [];
-            for (let type in accountTypes) {
-                accountsPerTypePoints.push({
-                    measurement: 'account_types',
-                    tags: {
-                        server: metrics.config.server,
-                        type: type
-                    },
-                    fields: {
-                        count: accountTypes[type]
-                    }
-                })
-            }
-            await metrics.metrics!.influx.writePoints(accountsPerTypePoints, {
-                database: 'mineskin'
-            })
         } catch (e) {
             console.warn(e);
             Sentry.captureException(e);
         }
 
 
-        const promises: Promise<any>[] = [
+        return Promise.all([
             Stat.set(ACCOUNTS_TOTAL, enabledAccounts),
             Stat.set(ACCOUNTS_HEALTHY, healthyAccounts)
-        ];
-
-        for (let type in accountTypes) {
-            promises.push(Stat.set(ACCOUNTS_TYPE_PREFIX + type, accountTypes[type]));
-        }
-
-        return Promise.all(promises).then((ignored: any) => {
+        ]).then((ignored: any) => {
         });
     }
 
