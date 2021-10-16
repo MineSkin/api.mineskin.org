@@ -29,7 +29,9 @@ export const register = (app: Application) => {
 
     app.get("/get/stats/:details?", async (req: Request, res: Response) => {
         const stats = await Generator.getStats();
-        res.json(stats);
+        res
+            .header("Cache-Control", "public, max-age=60")
+            .json(stats);
     })
 
     app.get("/get/id/:id", async (req: Request, res: Response) => {
@@ -150,7 +152,7 @@ export const register = (app: Application) => {
             res.status(404).json({ error: "Skin not found" });
             return;
         }
-        res.json(await skin.toResponseJson()); 
+        res.json(await skin.toResponseJson());
     })
 
 }
