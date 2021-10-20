@@ -378,6 +378,8 @@ export const register = (app: Application, config: MineSkinConfig) => {
         const generateTotal = account.totalSuccessCounter + account.totalErrorCounter;
         const recentTotal = account.successCounter + account.errorCounter;
 
+        const roundedSuccessCount = Math.floor(account.totalSuccessCounter / 100) * 100;
+
         const successRate = generateTotal === 0 ? 0 : account.totalSuccessCounter / generateTotal;
         const recentSuccessRate = recentTotal === 0 ? 0 : account.successCounter / recentTotal;
 
@@ -390,6 +392,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
             lastUsed: account.lastUsed,
             enabled: account.enabled,
             usable: account.errorCounter < config.errorThreshold,
+            successCount: roundedSuccessCount,
             successRate: Number(successRate.toFixed(3)),
             recentSuccessRate: Number(recentSuccessRate.toFixed(3)),
             successStreak: Math.round(account.successCounter / 10) * 10,
