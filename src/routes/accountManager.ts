@@ -218,7 +218,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
         if (!req.query["email"]) {
             url += '&prompt=select_account';
         } else {
-            url += `&prompt=login&account_hint=${ req.query["email"] }`;
+            url += `&prompt=select_account&account_hint=${ req.query["email"] }`;
         }
         res.redirect(url);
     });
