@@ -15,9 +15,9 @@ export class Notifications {
                                                subject: (account: IAccountDocument) => string) {
         if (account.discordUser && !account.discordMessageSent) {
             try {
-                Discord.sendDiscordDirectMessage(simpleMessage(account, false), account.discordUser, async () => {
+                await Discord.sendDiscordDirectMessage(simpleMessage(account, false), account.discordUser, async () => {
                     if (publicMessage) {
-                        Discord.postDiscordMessage(publicMessage(account), OWNER_CHANNEL);
+                        await Discord.postDiscordMessage(publicMessage(account), OWNER_CHANNEL);
 
                         (await MineSkinMetrics.get()).accountNotifications
                             .tag('type', 'discord_public')
@@ -40,7 +40,7 @@ export class Notifications {
         }
         if (account.sendEmails && account.email && !account.emailSent) {
             try {
-                Email.sendEmail(account.email, simpleMessage(account, true), htmlMessage(account), subject(account));
+                await Email.sendEmail(account.email, simpleMessage(account, true), htmlMessage(account), subject(account));
 
                 account.emailSent = true;
 
