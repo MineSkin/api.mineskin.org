@@ -365,6 +365,16 @@ export const register = (app: Application, config: MineSkinConfig) => {
         account.discordMessageSent = false;
         account.emailSent = false;
 
+        const generateTotal = account.totalSuccessCounter + account.totalErrorCounter;
+        const recentTotal = account.successCounter + account.errorCounter;
+
+        const roundedSuccessCount = Math.floor(account.totalSuccessCounter / 100) * 100;
+
+        const successRate = generateTotal === 0 ? 0 : account.totalSuccessCounter / generateTotal;
+        const recentSuccessRate = recentTotal === 0 ? 0 : account.successCounter / recentTotal;
+
+        account.errorCounter = 0;
+
         Discord.postDiscordMessage("👤 Account " + account.id + "/" + account.uuid + " updated due to manual login (linked to " + account.email + "/<@" + account.discordUser + ">)");
 
         if (!account.requestServer) {
@@ -374,14 +384,6 @@ export const register = (app: Application, config: MineSkinConfig) => {
 
         console.log(info("Saving updated details of " + (req.session.account.type) + " account #" + account.id + " " + req.body["uuid"]));
         await account.save();
-
-        const generateTotal = account.totalSuccessCounter + account.totalErrorCounter;
-        const recentTotal = account.successCounter + account.errorCounter;
-
-        const roundedSuccessCount = Math.floor(account.totalSuccessCounter / 100) * 100;
-
-        const successRate = generateTotal === 0 ? 0 : account.totalSuccessCounter / generateTotal;
-        const recentSuccessRate = recentTotal === 0 ? 0 : account.successCounter / recentTotal;
 
         res.json({
             type: account.accountType || (account.microsoftAccount ? "microsoft" : "mojang"),
