@@ -237,7 +237,8 @@ export class Stats {
                         }
                     }
                 ], {
-                    database: 'mineskin'
+                    database: 'mineskin',
+                    retentionPolicy: 'one_year'
                 })
             } catch (e) {
                 console.warn(e);
