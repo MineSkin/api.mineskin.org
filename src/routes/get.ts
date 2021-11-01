@@ -31,8 +31,8 @@ export const register = (app: Application) => {
                 next: Math.round(Date.now() / 1000), // deprecated
                 nextRelative: 0, // deprecated
 
-                seconds: 0,
-                millis: 0,
+                seconds: delayInfo.seconds,
+                millis: delayInfo.millis,
                 nextRequest: {
                     time: Date.now(),
                     relative: 0
