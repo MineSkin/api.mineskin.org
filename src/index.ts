@@ -263,13 +263,18 @@ async function init() {
                     return undefined;
                 })
                 .then(key => {
-                    Generator.getDelay(key).then(delay => {
+                    Generator.getDelay(key).then(delayInfo => {
                         res.json({
                             success: false,
                             errorType: err.name,
                             errorCode: err.code,
                             error: err.msg,
-                            nextRequest: (Date.now() / 1000) + delay
+                            nextRequest: (Date.now() / 1000) + delayInfo.seconds, // deprecated
+
+                            delayInfo: {
+                                seconds: delayInfo.seconds,
+                                millis: delayInfo.millis
+                            }
                         });
                     }).catch(e => Sentry.captureException(e));
                 });

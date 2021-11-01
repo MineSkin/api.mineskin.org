@@ -36,6 +36,7 @@ import { MineSkinOptimus } from "../util/optimus";
 import { Discord } from "../util/Discord";
 import { Stats } from "./Stats";
 import { IPoint } from "influx";
+import { DelayInfo } from "../typings/DelayInfo";
 
 
 // minimum delay for accounts to be used - don't set lower than 60
@@ -72,15 +73,26 @@ export class Generator {
 
     private static accountStatsTimer = setInterval(() => Generator.queryAccountStats(), 1000 * 60 * 2);
 
-    static async getDelay(apiKey?: IApiKeyDocument): Promise<number> {
+    static async getDelay(apiKey?: IApiKeyDocument): Promise<DelayInfo> {
         const config = await getConfig();
         const minDelay = await this.getMinDelay();
         if (!apiKey) {
-            return Math.max(config.delays.default, minDelay);
+            const d = Math.max(config.delays.default, minDelay);
+            return {
+                seconds: Math.ceil(d),
+                millis: Math.ceil(d / 1000)
+            }
         }
-        return Math.max(Math.min(config.delays.default, await apiKey.getMinDelay()), minDelay);
+        const d = Math.max(Math.min(config.delays.default, await apiKey.getMinDelay()), minDelay);
+        return {
+            seconds: Math.ceil(d),
+            millis: Math.ceil(d / 1000)
+        }
     }
 
+    /**
+     * minimum delay in seconds
+     */
     @MemoizeExpiring(30000)
     static async getMinDelay(): Promise<number> {
         const metrics = await MineSkinMetrics.get();
@@ -97,7 +109,7 @@ export class Generator {
         } catch (e) {
             Sentry.captureException(e);
         }
-        return Math.round(delay);
+        return delay;
     }
 
     @MemoizeExpiring(30000)
@@ -115,7 +127,7 @@ export class Generator {
 
         const stats = <AllStats>{
             server: config.server,
-            delay: delay,
+            delay: Math.round(delay), //TODO: maybe add a ms version
             account: {
                 global: {},
                 local: {}
@@ -1235,11 +1247,16 @@ export class SavedSkin {
     constructor(public readonly skin: ISkinDocument, public readonly duplicate: boolean) {
     }
 
-    async toResponseJson(delay?: number): Promise<SkinInfo> {
+    async toResponseJson(delayInfo?: DelayInfo): Promise<SkinInfo> {
         const info = await this.skin.toResponseJson();
         info.duplicate = this.duplicate;
-        if (delay) {
-            info.nextRequest = delay;
+        if (delayInfo) {
+            info.nextRequest = delayInfo.seconds; // deprecated
+
+            info.delayInfo = {
+                millis: delayInfo.millis,
+                seconds: delayInfo.seconds
+            }
         }
         return info;
     }
