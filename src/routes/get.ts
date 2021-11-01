@@ -22,7 +22,7 @@ export const register = (app: Application) => {
                 millis: delayInfo.millis,
                 nextRequest: {
                     time: Math.round(lastRequest.getTime() + delayInfo.millis),
-                    relative: Math.round(Math.max(10, ((lastRequest.getTime()) + delayInfo.millis) - Date.now()))
+                    relative: Math.round(Math.max(100, ((lastRequest.getTime()) + delayInfo.millis) - Date.now()))
                 }
             });
         } else {
@@ -35,7 +35,7 @@ export const register = (app: Application) => {
                 millis: delayInfo.millis,
                 nextRequest: {
                     time: Date.now(),
-                    relative: 0
+                    relative: 100
                 }
             });
         }
