@@ -4,7 +4,10 @@ import { IStatDocument, IStatModel } from "../../typings/db/IStatDocument";
 
 const schema: Schema<IStatDocument, IStatModel> = new Schema(
     {
-        key: String,
+        key: {
+            type: String,
+            index: true
+        },
         value: Number
     },
     {

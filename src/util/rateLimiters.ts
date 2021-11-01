@@ -9,11 +9,11 @@ function keyGenerator(req: Request): string {
     return getIp(req);
 }
 
-const GEN_LIMIT_WINDOW = 60;
+const GEN_LIMIT_WINDOW = 30;
 export const generateLimiter = rateLimit({
     windowMs: GEN_LIMIT_WINDOW * 1000,
     max: async () => {
-        return Math.min(GEN_LIMIT_WINDOW / await Generator.getMinDelay())
+        return Math.floor(GEN_LIMIT_WINDOW / await Generator.getMinDelay())
     },
     message: JSON.stringify({ error: "Too many requests" }),
     keyGenerator: keyGenerator,

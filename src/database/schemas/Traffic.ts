@@ -4,7 +4,10 @@ import { ITrafficModel } from "../../typings/db/ITrafficDocument";
 
 export const schema: Schema<ITrafficDocument, ITrafficModel> = new Schema(
     {
-        ip: String,
+        ip: {
+            type: String,
+            index: true
+        },
         lastRequest: {
             type: Date,
             expires: 3600
