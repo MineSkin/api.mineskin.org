@@ -80,13 +80,13 @@ export class Generator {
             const d = Math.max(config.delays.default, minDelay);
             return {
                 seconds: Math.ceil(d),
-                millis: Math.ceil(d * 1000)
+                millis: Math.ceil(Math.ceil(d * 1000) / 50) * 50
             }
         }
         const d = Math.max(Math.min(config.delays.default, await apiKey.getMinDelay()), minDelay);
         return {
             seconds: Math.ceil(d),
-            millis: Math.ceil(d * 1000)
+            millis: Math.ceil(Math.ceil(d * 1000) / 50) * 50
         }
     }
 
