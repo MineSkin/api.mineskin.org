@@ -20,8 +20,9 @@ export const register = (app: Application) => {
     app.use("/generate", async (req, res, next) => {
         try {
             const delay = await Generator.getDelay(await getAndValidateRequestApiKey(req));
-            //TODO: add proper rate-limit headers
-            res.header("X-MineSkin-Delay", `${ delay.seconds || 5 }`); //TODO
+            res.header("X-MineSkin-Delay", `${ delay.seconds || 5 }`); //deprecated
+            res.header("X-MineSkin-Delay-Seconds", `${ delay.seconds || 5 }`);
+            res.header("X-MineSkin-Delay-Millis", `${ delay.millis || 5000 }`);
             next();
         } catch (e) {
             next(e);
