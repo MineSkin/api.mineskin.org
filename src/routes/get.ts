@@ -10,19 +10,33 @@ export const register = (app: Application) => {
     app.use("/get", corsWithAuthMiddleware);
 
     app.get("/get/delay", async (req: Request, res: Response) => {
-        const delay = await Generator.getDelay(await getAndValidateRequestApiKey(req));
+        const delayInfo = await Generator.getDelay(await getAndValidateRequestApiKey(req));
         const lastRequest = await Caching.getTrafficRequestTimeByIp(getIp(req));
         if (lastRequest) {
             res.json({
-                delay: delay,
-                next: Math.round((lastRequest.getTime() / 1000) + delay),
-                nextRelative: Math.round(Math.max(0, ((lastRequest.getTime() / 1000) + delay) - (Date.now() / 1000)))
+                delay: delayInfo.seconds, // deprecated
+                next: Math.round((lastRequest.getTime() / 1000) + delayInfo.seconds), // deprecated
+                nextRelative: Math.round(Math.max(0, ((lastRequest.getTime() / 1000) + delayInfo.seconds) - (Date.now() / 1000))), // deprecated
+
+                seconds: delayInfo.seconds,
+                millis: delayInfo.millis,
+                nextRequest: {
+                    time: Math.round(lastRequest.getTime() + delayInfo.millis),
+                    relative: Math.round(Math.max(100, ((lastRequest.getTime()) + delayInfo.millis) - Date.now()))
+                }
             });
         } else {
             res.json({
-                delay: delay,
-                next: Math.round(Date.now() / 1000),
-                nextRelative: 0
+                delay: delayInfo.seconds, // deprecated
+                next: Math.round(Date.now() / 1000), // deprecated
+                nextRelative: 0, // deprecated
+
+                seconds: delayInfo.seconds,
+                millis: delayInfo.millis,
+                nextRequest: {
+                    time: Date.now(),
+                    relative: 100
+                }
             });
         }
     });

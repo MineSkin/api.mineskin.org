@@ -1,5 +1,6 @@
 import { SkinModel, SkinVariant } from "./db/ISkinDocument";
 import { ProfileProperty } from "./ProfileResponse";
+import { DelayInfo } from "./DelayInfo";
 
 export interface SkinInfoTextureUrls {
     skin: string;
@@ -36,4 +37,5 @@ export interface SkinInfo {
     views: number;
     duplicate?: boolean;
     nextRequest?: number;
+    delayInfo?: DelayInfo;
 }

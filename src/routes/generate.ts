@@ -20,7 +20,9 @@ export const register = (app: Application) => {
     app.use("/generate", async (req, res, next) => {
         try {
             const delay = await Generator.getDelay(await getAndValidateRequestApiKey(req));
-            res.header("X-MineSkin-Delay", `${ delay || 5 }`);
+            res.header("X-MineSkin-Delay", `${ delay.seconds || 5 }`); //deprecated
+            res.header("X-MineSkin-Delay-Seconds", `${ delay.seconds || 5 }`);
+            res.header("X-MineSkin-Delay-Millis", `${ delay.millis || 5000 }`);
             next();
         } catch (e) {
             next(e);
@@ -173,11 +175,11 @@ export const register = (app: Application) => {
     ///
 
     async function sendSkin(req: Request, res: Response, skin: SavedSkin): Promise<void> {
-        const genDelay = await Generator.getDelay(await getAndValidateRequestApiKey(req));
-        res.json(await skin.toResponseJson(skin.duplicate ? 1 : genDelay));
+        const delayInfo = await Generator.getDelay(await getAndValidateRequestApiKey(req));
+        res.json(await skin.toResponseJson(skin.duplicate ? { seconds: 0, millis: 100 } : delayInfo)); //TODO: adjust delay for duplicate
 
         if (skin.duplicate) {
-            await updateTraffic(req, new Date(Date.now() - genDelay))
+            await updateTraffic(req, new Date(Date.now() - delayInfo.millis))
         }
     }
 

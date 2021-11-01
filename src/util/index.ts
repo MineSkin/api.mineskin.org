@@ -32,7 +32,7 @@ export async function checkTraffic(req: Request, res: Response): Promise<boolean
     if (!lastRequest) { // First request
         return true;
     }
-    const time = Date.now() / 1000;
+    const time = Date.now();
 
     const apiKey = await getAndValidateRequestApiKey(req);
     if (apiKey) {
@@ -42,10 +42,19 @@ export async function checkTraffic(req: Request, res: Response): Promise<boolean
         });
     }
 
-    const delay = await Generator.getDelay(apiKey);
+    const delayInfo = await Generator.getDelay(apiKey);
 
-    if ((lastRequest.getTime() / 1000) > time - delay) {
-        res.status(429).json({ error: "Too many requests", nextRequest: time + delay + 10, delay: delay });
+    if (lastRequest.getTime() > time - delayInfo.millis) {
+        res.status(429).json({
+            error: "Too many requests",
+            nextRequest: (time / 1000) + delayInfo.seconds + 5, // deprecated
+            delay: delayInfo.seconds, // deprecated
+
+            delayInfo: {
+                seconds: delayInfo.seconds,
+                millis: delayInfo.millis
+            }
+        });
         console.log(debug("Request too soon"));
         MineSkinMetrics.get().then(metrics => {
             metrics.rateLimit
