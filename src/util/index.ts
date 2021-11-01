@@ -32,7 +32,7 @@ export async function checkTraffic(req: Request, res: Response): Promise<boolean
     if (!lastRequest) { // First request
         return true;
     }
-    const time = Date.now() / 1000;
+    const time = Date.now();
 
     const apiKey = await getAndValidateRequestApiKey(req);
     if (apiKey) {
@@ -47,7 +47,7 @@ export async function checkTraffic(req: Request, res: Response): Promise<boolean
     if (lastRequest.getTime()  > time - delayInfo.millis) {
         res.status(429).json({
             error: "Too many requests",
-            nextRequest: time + delayInfo.seconds + 10, // deprecated
+            nextRequest: (time/1000) + delayInfo.seconds + 10, // deprecated
             delay: delayInfo.seconds, // deprecated
 
             delayInfo: {
