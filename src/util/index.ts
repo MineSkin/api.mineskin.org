@@ -44,10 +44,10 @@ export async function checkTraffic(req: Request, res: Response): Promise<boolean
 
     const delayInfo = await Generator.getDelay(apiKey);
 
-    if (lastRequest.getTime()  > time - delayInfo.millis) {
+    if (lastRequest.getTime() > time - delayInfo.millis) {
         res.status(429).json({
             error: "Too many requests",
-            nextRequest: (time/1000) + delayInfo.seconds + 10, // deprecated
+            nextRequest: (time / 1000) + delayInfo.seconds + 5, // deprecated
             delay: delayInfo.seconds, // deprecated
 
             delayInfo: {
