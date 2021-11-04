@@ -4,7 +4,6 @@ import { base64decode, getHashFromMojangTextureUrl, hasOwnProperty, imgHash, lon
 import { Caching } from "./Caching";
 import { Authentication, AuthenticationError, BasicMojangProfile } from "./Authentication";
 import * as Sentry from "@sentry/node";
-import { Severity } from "@sentry/node";
 import { Requests } from "./Requests";
 import * as FormData from "form-data";
 import { URL } from "url";
@@ -682,7 +681,7 @@ export class Generator {
             }
             const follow = URL_FOLLOW_WHITELIST.includes(url.host!);
             return await Requests.axiosInstance.request({
-                method: "HEAD",
+                method: "GET",
                 url: url.href,
                 maxRedirects: follow ? MAX_FOLLOW_REDIRECTS : 0,
                 headers: {
@@ -693,9 +692,7 @@ export class Generator {
                 return res;
             });
         } catch (e) {
-            Sentry.captureException(e, {
-                level: Severity.Warning
-            });
+            Sentry.captureException(e);
         }
         span?.finish();
         return undefined;
