@@ -85,10 +85,13 @@ export class Requests {
         }
     }, 10000);
 
-    protected static runAxiosRequest(request: AxiosRequestConfig, instance = this.axiosInstance): Promise<AxiosResponse> {
-        return instance.request(request)
+    protected static async runAxiosRequest(request: AxiosRequestConfig, instance = this.axiosInstance): Promise<AxiosResponse> {
+        const t = this.trackSentryStart(request);
+        const r = await instance.request(request)
             .then(async (response) => this.processRequestMetric(response, request, response, instance))
-            .catch(err => this.processRequestMetric(err, request, err.response, instance, err))
+            .catch(err => this.processRequestMetric(err, request, err.response, instance, err));
+        t?.finish();
+        return r;
     }
 
     static async processRequestMetric<T>(responseOrError: T, request?: AxiosRequestConfig, response?: AxiosResponse, instance?: AxiosInstance, err?: any): Promise<T> {
@@ -154,6 +157,13 @@ export class Requests {
     private static trackSentryQueued(request: AxiosRequestConfig) {
         return Sentry.getCurrentHub().getScope()?.getTransaction()?.startChild({
             op: "request_queued",
+            description: `${ request.method || "GET" } ${ request.url }`
+        });
+    }
+
+    private static trackSentryStart(request: AxiosRequestConfig) {
+        return Sentry.getCurrentHub().getScope()?.getTransaction()?.startChild({
+            op: "request_start",
             description: `${ request.method || "GET" } ${ request.url }`
         });
     }
