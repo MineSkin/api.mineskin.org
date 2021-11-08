@@ -249,7 +249,7 @@ async function init() {
     app.use(Sentry.Handlers.errorHandler({
         shouldHandleError: (error) => {
             if (error.status === 400) {
-                return Math.random() < 0.2;
+                return Math.random() < 0.1;
             }
             return true;
         }
