@@ -155,17 +155,26 @@ export class Requests {
     }
 
     private static trackSentryQueued(request: AxiosRequestConfig) {
-        return Sentry.getCurrentHub().getScope()?.getTransaction()?.startChild({
+        const s = Sentry.getCurrentHub().getScope()?.getTransaction()?.startChild({
             op: "request_queued",
             description: `${ request.method || "GET" } ${ request.url }`
         });
+        if (s) {
+            if (!request.headers) request.headers = {};
+            request.headers["x-mineskin-sentry-span-id"] = s.spanId;
+            request.headers["x-mineskin-sentry-trace-id"] = s.traceId;
+        }
+        return s;
     }
 
     private static trackSentryStart(request: AxiosRequestConfig) {
-        return Sentry.getCurrentHub().getScope()?.getTransaction()?.startChild({
+        return Sentry.startTransaction({
+            name: "Request Start",
             op: "request_start",
-            description: `${ request.method || "GET" } ${ request.url }`
-        });
+            description: `${ request.method || "GET" } ${ request.url }`,
+            parentSpanId: request.headers["x-mineskin-sentry-span-id"] as string,
+            traceId: request.headers["x-mineskin-sentry-trace-id"] as string
+        })
     }
 
     /// UTIL
