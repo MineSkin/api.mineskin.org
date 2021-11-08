@@ -621,7 +621,7 @@ export class Generator {
                 variant: options.variant,
                 url: url
             };
-            const skinResponse = await Requests.minecraftServicesRequest({
+            const skinResponse = await Requests.minecraftServicesSkinRequest({
                 method: "POST",
                 url: "/minecraft/profile/skins",
                 headers: {
@@ -757,7 +757,7 @@ export class Generator {
                 filename: "skin.png",
                 contentType: "image/png"
             });
-            const skinResponse = await Requests.minecraftServicesRequest({
+            const skinResponse = await Requests.minecraftServicesSkinRequest({
                 method: "POST",
                 url: "/minecraft/profile/skins",
                 headers: body.getHeaders({

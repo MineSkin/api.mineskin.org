@@ -52,6 +52,8 @@ export class Requests {
         = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, Requests.mojangSessionInstance), Time.seconds(1));
     protected static readonly minecraftServicesRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
         = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, Requests.minecraftServicesInstance), Time.seconds(1));
+    protected static readonly minecraftServicesSkinRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
+        = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, Requests.minecraftServicesInstance), Time.seconds(1));
     protected static readonly liveLoginRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
         = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, Requests.liveLoginInstance), Time.seconds(1));
 
@@ -61,7 +63,8 @@ export class Requests {
             ["mojangAuth", Requests.mojangAuthRequestQueue],
             ["mojangApi", Requests.mojangApiRequestQueue],
             ["mojangSession", Requests.mojangSessionRequestQueue],
-            ["minecraftServices", Requests.minecraftServicesRequestQueue],
+            ["minecraftServices", Requests.minecraftServicesSkinRequestQueue],
+            ["minecraftServicesSkins", Requests.minecraftServicesSkinRequestQueue],
             ["liveLogin", Requests.liveLoginRequestQueue]
         ]);
         const points: IPoint[] = [];
@@ -148,6 +151,13 @@ export class Requests {
         return r;
     }
 
+    public static async minecraftServicesSkinRequest(request: AxiosRequestConfig): Promise<AxiosResponse> {
+        const t = this.trackSentryQueued(request);
+        const r = await this.minecraftServicesSkinRequestQueue.add(request);
+        t?.finish();
+        return r;
+    }
+
     public static async liveLoginRequest(request: AxiosRequestConfig): Promise<AxiosResponse> {
         const t = this.trackSentryQueued(request);
         const r = await this.liveLoginRequestQueue.add(request);
@@ -187,7 +197,7 @@ export class Requests {
         this.mojangAuthRequestQueue.end();
         this.mojangApiRequestQueue.end();
         this.mojangSessionRequestQueue.end();
-        this.minecraftServicesRequestQueue.end();
+        this.minecraftServicesSkinRequestQueue.end();
         this.liveLoginRequestQueue.end();
 
         clearInterval(this.metricsCollector);
