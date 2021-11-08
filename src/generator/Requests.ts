@@ -7,6 +7,7 @@ import { IPoint } from "influx";
 import * as Sentry from "@sentry/node";
 import { getConfig } from "../typings/Configs";
 import { MineSkinMetrics } from "../util/metrics";
+import { Transaction } from "@sentry/tracing";
 
 axios.defaults.headers["User-Agent"] = "MineSkin";
 axios.defaults.headers["Content-Type"] = "application/json";
@@ -155,26 +156,25 @@ export class Requests {
     }
 
     private static trackSentryQueued(request: AxiosRequestConfig) {
-        const s = Sentry.getCurrentHub().getScope()?.getTransaction()?.startChild({
+        const t = Sentry.getCurrentHub().getScope()?.getTransaction();
+        const s = t?.startChild({
             op: "request_queued",
             description: `${ request.method || "GET" } ${ request.url }`
         });
-        if (s) {
+        if (t) {
             if (!request.headers) request.headers = {};
-            request.headers["x-mineskin-sentry-span-id"] = s.spanId;
-            request.headers["x-mineskin-sentry-trace-id"] = s.traceId;
+            request.headers["x-mineskin-sentry-transaction"] = t;
         }
         return s;
     }
 
     private static trackSentryStart(request: AxiosRequestConfig) {
-        return Sentry.startTransaction({
-            name: "Request Start",
+        const s = (request.headers["x-mineskin-sentry-transaction"] as Transaction)?.startChild({
             op: "request_start",
             description: `${ request.method || "GET" } ${ request.url }`,
-            parentSpanId: request.headers["x-mineskin-sentry-span-id"] as string,
-            traceId: request.headers["x-mineskin-sentry-trace-id"] as string
-        })
+        });
+        delete request.headers["x-mineskin-sentry-transaction"];
+        return s;
     }
 
     /// UTIL
