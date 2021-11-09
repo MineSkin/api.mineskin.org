@@ -99,7 +99,9 @@ This is an automated notification that MineSkin lost access to one of your accou
 ${ this.accountInfo(acc, false) }
 
 The account won't be used for skin generation until the issues are resolved.
+
 Please log back in to your account at https://mineskin.org/account?email=${account.email}
+
 ${ account.getAccountType() === AccountType.MICROSOFT ? "You should also check https://account.live.com/Activity" : "" }
 ${ this.supportLink(email) }
             `,
@@ -115,7 +117,9 @@ Please log back in at https://mineskin.org/account\n
 ${ this.accountInfo(acc, true) }
 <p></p>
 <p>The account won't be used for skin generation until the issues are resolved.</p>
+<br/>
 <p><strong>Please log back in to your account at <a href="https://mineskin.org/account?email=${account.email}">mineskin.org/account</a></strong></p>
+<br/>
 ${ account.getAccountType() === AccountType.MICROSOFT ? "<p>You should also check <a href='https://account.live.com/Activity'>account.live.com/Activity</a></p>" : "" }
 <p>${ this.supportLink(true) }</p>
             `,
@@ -139,15 +143,17 @@ Hi there!
 This is an automated notification that MineSkin just failed to login to your account
 ${ this.accountInfo(acc, false) }
 
-The account won't be used for skin generation until the issues are resolved
+The account won't be used for skin generation until the issues are resolved  
+
 Please try to login at https://www.minecraft.net/login and check if there are any issues with your account and then log back in to your account at https://mineskin.org/account?email=${account.email}
+
 ${ account.getAccountType() === AccountType.MICROSOFT ? "You should also check https://account.live.com/Activity" : "" }
 ${ this.supportLink(email) }
             `,
             acc => `
 ${ this.publicPrefix(acc) }
 MineSkin just failed to login to one of your accounts (${ acc.getAccountType() })\n
-${ this.trimmedAccountInfo(acc) }
+${ this.trimmedAccountInfo(acc) } 
 Please log back in at https://mineskin.org/account\n
             `,
             acc => `
@@ -156,7 +162,9 @@ Please log back in at https://mineskin.org/account\n
 ${ this.accountInfo(acc, true) }
 <p></p>
 <p>The account won't be used for skin generation until the issues are resolved.</p>
+<br/>
 <p>Please try to login at <a href="https://www.minecraft.net/login">minecraft.net</a> and check if there are any issues with your account and then <strong>log back in to your account at <a href="https://mineskin.org/account?email=${account.email}">mineskin.org/account</a></strong></p>
+<br/>
 ${ account.getAccountType() === AccountType.MICROSOFT ? "<p>You should also check <a href='https://account.live.com/Activity'>account.live.com/Activity</a></p>" : "" }
 <p>${ this.supportLink(true) }</p>
             `,
@@ -181,8 +189,10 @@ Hi there!
 This is an automated notification that one of your MineSkin accounts been disabled since it failed to properly generate skin data recently.
 ${ this.accountInfo(acc, false) }
 
-The account won't be used for skin generation until the issues are resolved.
-Please make sure the configured credentials & security questions are correct at https://mineskin.org/account?email=${account.email}
+The account won't be used for skin generation until the issues are resolved.  
+
+Please make sure the configured credentials & security questions are correct at https://mineskin.org/account?email=${account.email}  
+
 ${ account.getAccountType() === AccountType.MICROSOFT ? "You should also check https://account.live.com/Activity" : "" }
 ${ this.supportLink(email) }
             `,
@@ -198,7 +208,9 @@ Please log back in at https://mineskin.org/account
 ${ this.accountInfo(acc, true) }
 <p></p>
 <p>The account won't be used for skin generation until the issues are resolved.</p>
+<br/>
 <p><strong>Please make sure the configured credentials & security questions are correct at <a href="https://mineskin.org/account?email=${account.email}">mineskin.org/account</a></strong></p>
+<br/>
 ${ account.getAccountType() === AccountType.MICROSOFT ? "<p>You should also check <a href='https://account.live.com/Activity'>account.live.com/Activity</a></p>" : "" }
 <p>${ this.supportLink(true) }</p>
             `,
