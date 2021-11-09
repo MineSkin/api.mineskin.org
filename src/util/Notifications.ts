@@ -115,7 +115,7 @@ Please log back in at https://mineskin.org/account\n
 ${ this.accountInfo(acc, true) }
 <p></p>
 <p>The account won't be used for skin generation until the issues are resolved.</p>
-<p>Please log back in to your account at <a href="https://mineskin.org/account?email=${account.email}">mineskin.org/account</a></p>
+<p><strong>Please log back in to your account at <a href="https://mineskin.org/account?email=${account.email}">mineskin.org/account</a></strong></p>
 ${ account.getAccountType() === AccountType.MICROSOFT ? "<p>You should also check <a href='https://account.live.com/Activity'>account.live.com/Activity</a></p>" : "" }
 <p>${ this.supportLink(true) }</p>
             `,
@@ -156,7 +156,7 @@ Please log back in at https://mineskin.org/account\n
 ${ this.accountInfo(acc, true) }
 <p></p>
 <p>The account won't be used for skin generation until the issues are resolved.</p>
-<p>Please try to login at <a href="https://www.minecraft.net/login">minecraft.net</a> and check if there are any issues with your account and then log back in to your account at <a href="https://mineskin.org/account?email=${account.email}">mineskin.org/account</a></p>
+<p>Please try to login at <a href="https://www.minecraft.net/login">minecraft.net</a> and check if there are any issues with your account and then <strong>log back in to your account at <a href="https://mineskin.org/account?email=${account.email}">mineskin.org/account</a></strong></p>
 ${ account.getAccountType() === AccountType.MICROSOFT ? "<p>You should also check <a href='https://account.live.com/Activity'>account.live.com/Activity</a></p>" : "" }
 <p>${ this.supportLink(true) }</p>
             `,
@@ -198,7 +198,7 @@ Please log back in at https://mineskin.org/account
 ${ this.accountInfo(acc, true) }
 <p></p>
 <p>The account won't be used for skin generation until the issues are resolved.</p>
-<p>Please make sure the configured credentials & security questions are correct at  <a href="https://mineskin.org/account?email=${account.email}">mineskin.org/account</a></p>
+<p><strong>Please make sure the configured credentials & security questions are correct at <a href="https://mineskin.org/account?email=${account.email}">mineskin.org/account</a></strong></p>
 ${ account.getAccountType() === AccountType.MICROSOFT ? "<p>You should also check <a href='https://account.live.com/Activity'>account.live.com/Activity</a></p>" : "" }
 <p>${ this.supportLink(true) }</p>
             `,
