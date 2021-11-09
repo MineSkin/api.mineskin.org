@@ -362,6 +362,8 @@ export const register = (app: Application, config: MineSkinConfig) => {
                 account.microsoftAuth = req.session.account.microsoftInfo.msa;
             }
         }
+
+        const hadSentMessage = account.discordMessageSent || account.emailSent || false;
         account.discordMessageSent = false;
         account.emailSent = false;
 
@@ -373,9 +375,11 @@ export const register = (app: Application, config: MineSkinConfig) => {
         const successRate = generateTotal === 0 ? 0 : account.totalSuccessCounter / generateTotal;
         const recentSuccessRate = recentTotal === 0 ? 0 : account.successCounter / recentTotal;
 
+        const hadErrors = account.errorCounter > 0;
         account.errorCounter = 0;
 
-        Discord.postDiscordMessage("👤 Account " + account.id + "/" + account.uuid + " updated due to manual login (linked to " + account.email + "/<@" + account.discordUser + ">)");
+        Discord.postDiscordMessage("👤 Account " + account.id + "/" + account.uuid + " updated due to manual login (linked to " + account.email + "/<@" + account.discordUser + ">)" +
+            "    hadSentMessage: " + hadSentMessage + ", hadErrors: " + hadErrors);
 
         if (!account.requestServer) {
             account.requestServer = await Generator.getPreferredAccountServer(account.accountType);
@@ -400,6 +404,8 @@ export const register = (app: Application, config: MineSkinConfig) => {
             successStreak: Math.round(account.successCounter / 10) * 10,
             discordLinked: !!account.discordUser,
             sendEmails: !!account.sendEmails,
+            hadSentMessage: hadSentMessage,
+            hadErrors: hadErrors,
             settings: {
                 enabled: account.enabled,
                 emails: account.sendEmails
