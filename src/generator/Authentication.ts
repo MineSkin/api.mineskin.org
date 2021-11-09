@@ -483,8 +483,8 @@ export class Microsoft {
         }
         // https://user.auth.xboxlive.com/user/authenticate
         const userTokenResponse: ExchangeRpsTicketResponse = await XboxLiveAuth.exchangeRpsTicketForUserToken(rpsTicket);
-        console.log("exchangeRpsTicket")
-        console.log(JSON.stringify(userTokenResponse))
+        // console.log("exchangeRpsTicket")
+        // console.log(JSON.stringify(userTokenResponse))
         return {
             token: userTokenResponse,
             mc: await this.getIdentityForRelyingParty(userTokenResponse, MC_XSTSRelyingParty),
@@ -518,16 +518,16 @@ export class Microsoft {
     static async getMinecraftIdentity(userTokenResponse: ExchangeRpsTicketResponse): Promise<AuthenticateResponse> {
         // https://xsts.auth.xboxlive.com/xsts/authorize
         const identityResponse = await XboxLiveAuth.exchangeUserTokenForXSTSIdentity(userTokenResponse.Token, { XSTSRelyingParty: MC_XSTSRelyingParty, raw: false }) as AuthenticateResponse;
-        console.log("MC exchangeUserToken")
-        console.log(JSON.stringify(identityResponse))
+        // console.log("MC exchangeUserToken")
+        // console.log(JSON.stringify(identityResponse))
         return identityResponse;
     }
 
     static async getXboxIdentity(userTokenResponse: ExchangeRpsTicketResponse): Promise<AuthenticateResponse> {
         // https://xsts.auth.xboxlive.com/xsts/authorize
         const identityResponse = await XboxLiveAuth.exchangeUserTokenForXSTSIdentity(userTokenResponse.Token, { XSTSRelyingParty: XBOX_XSTSRelyingParty, raw: false }) as AuthenticateResponse;
-        console.log("XBOX exchangeUserToken")
-        console.log(JSON.stringify(identityResponse))
+        // console.log("XBOX exchangeUserToken")
+        // console.log(JSON.stringify(identityResponse))
         return identityResponse;
     }
 
@@ -545,8 +545,8 @@ export class Microsoft {
             data: body
         });
         const xboxLoginBody = xboxLoginResponse.data;
-        console.log("xboxLogin")
-        console.log(JSON.stringify(xboxLoginBody));
+        // console.log("xboxLogin")
+        // console.log(JSON.stringify(xboxLoginBody));
         return xboxLoginBody as XboxLoginResponse;
     }
 
@@ -597,8 +597,8 @@ export class Microsoft {
             data: qs.stringify(form)
         });
         const refreshBody = refreshResponse.data;
-        console.log("refreshBody");
-        console.log(JSON.stringify(refreshBody))
+        // console.log("refreshBody");
+        // console.log(JSON.stringify(refreshBody))
 
         // Microsoft/Xbox accessToken
         const xboxAccessToken = refreshBody["access_token"];
