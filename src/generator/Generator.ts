@@ -71,7 +71,7 @@ export class Generator {
     protected static serverAccounts: number;
     protected static usableAccounts: number;
 
-    private static accountStatsTimer = setInterval(() => Generator.queryAccountStats(), 1000 * 60);
+    private static accountStatsTimer = setInterval(() => Generator.queryAccountStats(), 1000 * 30);
 
     static async getDelay(apiKey?: IApiKeyDocument): Promise<DelayInfo> {
         const config = await getConfig();
