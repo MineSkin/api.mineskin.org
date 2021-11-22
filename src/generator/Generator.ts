@@ -662,7 +662,7 @@ export class Generator {
                     "Authorization": account.authenticationHeader()
                 },
                 data: body
-            }).catch(err => {
+            }, options.breadcrumb).catch(err => {
                 if (err.response) {
                     let msg = (err.response as AxiosResponse).data?.errorMessage ?? "Failed to change skin";
                     throw new GeneratorError(GenError.SKIN_CHANGE_FAILED, msg, (err.response as AxiosResponse).status, account, err);
@@ -797,7 +797,7 @@ export class Generator {
                     "Authorization": account.authenticationHeader()
                 }),
                 data: body
-            }).catch(err => {
+            }, options.breadcrumb).catch(err => {
                 if (err.response) {
                     let msg = (err.response as AxiosResponse).data?.errorMessage ?? "Failed to change skin";
                     throw new GeneratorError(GenError.SKIN_CHANGE_FAILED, msg, (err.response as AxiosResponse).status, account, err);

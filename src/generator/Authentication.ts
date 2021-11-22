@@ -125,7 +125,7 @@ export class Mojang {
                 method: "POST",
                 url: "/validate",
                 data: JSON.stringify(body)
-            });
+            }, bread?.breadcrumb);
             return Requests.isOk(validateResponse);
         } catch (e) {
             return false;
@@ -162,7 +162,7 @@ export class Mojang {
             method: "POST",
             url: "/refresh",
             data: JSON.stringify(body)
-        }).catch(err => {
+        }, bread?.breadcrumb).catch(err => {
             if (err.response) {
                 console.warn(err);
                 Sentry.captureException(err);

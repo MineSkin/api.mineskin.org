@@ -8,6 +8,8 @@ import * as Sentry from "@sentry/node";
 import { getConfig } from "../typings/Configs";
 import { MineSkinMetrics } from "../util/metrics";
 import { Transaction } from "@sentry/tracing";
+import { c } from "../util/colors";
+import { Maybe } from "../util";
 
 axios.defaults.headers["User-Agent"] = "MineSkin";
 axios.defaults.headers["Content-Type"] = "application/json";
@@ -88,6 +90,7 @@ export class Requests {
 
     protected static async runAxiosRequest(request: AxiosRequestConfig, instance = this.axiosInstance): Promise<AxiosResponse> {
         const t = this.trackSentryStart(request);
+        console.log(c.gray(`${ this.getBreadcrumb(request) || '00000000' } ${ request.method || 'GET' } ${ request.baseURL || instance.defaults.baseURL }${ request.url }`))
         const r = await instance.request(request)
             .then(async (response) => this.processRequestMetric(response, request, response, instance))
             .catch(err => this.processRequestMetric(err, request, err.response, instance, err));
@@ -118,44 +121,66 @@ export class Requests {
         return responseOrError;
     }
 
+    private static addBreadcrumb(request: AxiosRequestConfig, bread?: string) {
+        if (bread) {
+            if (!request.headers) request.headers = {};
+            request.headers["x-mineskin-breadcrumb"] = bread;
+        }
+    }
+
+    private static getBreadcrumb(request: AxiosRequestConfig): Maybe<string> {
+        const h = request.headers["x-mineskin-breadcrumb"];
+        if (h) {
+            delete request.headers["x-mineskin-breadcrumb"];
+            return h;
+        }
+        return undefined;
+    }
+
     /// API REQUESTS
 
-    public static async mojangAuthRequest(request: AxiosRequestConfig): Promise<AxiosResponse> {
+    public static async mojangAuthRequest(request: AxiosRequestConfig, bread?: string): Promise<AxiosResponse> {
+        this.addBreadcrumb(request, bread);
         const t = this.trackSentryQueued(request);
         const r = await this.mojangAuthRequestQueue.add(request);
         t?.finish();
         return r;
     }
 
-    public static async mojangApiRequest(request: AxiosRequestConfig): Promise<AxiosResponse> {
+    public static async mojangApiRequest(request: AxiosRequestConfig, bread?: string): Promise<AxiosResponse> {
+        this.addBreadcrumb(request, bread);
         const t = this.trackSentryQueued(request);
         const r = await this.mojangApiRequestQueue.add(request);
         t?.finish();
         return r;
     }
 
-    public static async mojangSessionRequest(request: AxiosRequestConfig): Promise<AxiosResponse> {
+    public static async mojangSessionRequest(request: AxiosRequestConfig, bread?: string): Promise<AxiosResponse> {
+        this.addBreadcrumb(request, bread);
         const t = this.trackSentryQueued(request);
         const r = await this.mojangSessionRequestQueue.add(request);
         t?.finish();
         return r;
     }
 
-    public static async minecraftServicesRequest(request: AxiosRequestConfig): Promise<AxiosResponse> {
+    public static async minecraftServicesRequest(request: AxiosRequestConfig, bread?: string): Promise<AxiosResponse> {
+        this.addBreadcrumb(request, bread);
         const t = this.trackSentryQueued(request);
         const r = await this.minecraftServicesRequestQueue.add(request);
         t?.finish();
         return r;
     }
 
-    public static async minecraftServicesSkinRequest(request: AxiosRequestConfig): Promise<AxiosResponse> {
+    public static async minecraftServicesSkinRequest(request: AxiosRequestConfig, bread?: string): Promise<AxiosResponse> {
+        this.addBreadcrumb(request, bread);
         const t = this.trackSentryQueued(request);
         const r = await this.minecraftServicesRequestQueue.add(request);
         t?.finish();
         return r;
     }
 
-    public static async liveLoginRequest(request: AxiosRequestConfig): Promise<AxiosResponse> {
+    public static async liveLoginRequest(request: AxiosRequestConfig, bread?: string): Promise<AxiosResponse> {
+        this.addBreadcrumb(request, bread);
         const t = this.trackSentryQueued(request);
         const r = await this.liveLoginRequestQueue.add(request);
         t?.finish();
