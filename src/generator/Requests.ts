@@ -52,8 +52,6 @@ export class Requests {
         = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, Requests.mojangSessionInstance), Time.seconds(1));
     protected static readonly minecraftServicesRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
         = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, Requests.minecraftServicesInstance), Time.seconds(1));
-    protected static readonly minecraftServicesSkinRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
-        = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, Requests.minecraftServicesInstance), Time.seconds(1));
     protected static readonly liveLoginRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
         = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, Requests.liveLoginInstance), Time.seconds(1));
 
@@ -63,8 +61,7 @@ export class Requests {
             ["mojangAuth", Requests.mojangAuthRequestQueue],
             ["mojangApi", Requests.mojangApiRequestQueue],
             ["mojangSession", Requests.mojangSessionRequestQueue],
-            ["minecraftServices", Requests.minecraftServicesSkinRequestQueue],
-            ["minecraftServicesSkins", Requests.minecraftServicesSkinRequestQueue],
+            ["minecraftServices", Requests.minecraftServicesRequestQueue],
             ["liveLogin", Requests.liveLoginRequestQueue]
         ]);
         const points: IPoint[] = [];
@@ -153,7 +150,7 @@ export class Requests {
 
     public static async minecraftServicesSkinRequest(request: AxiosRequestConfig): Promise<AxiosResponse> {
         const t = this.trackSentryQueued(request);
-        const r = await this.minecraftServicesSkinRequestQueue.add(request);
+        const r = await this.minecraftServicesRequestQueue.add(request);
         t?.finish();
         return r;
     }
@@ -197,7 +194,7 @@ export class Requests {
         this.mojangAuthRequestQueue.end();
         this.mojangApiRequestQueue.end();
         this.mojangSessionRequestQueue.end();
-        this.minecraftServicesSkinRequestQueue.end();
+        this.minecraftServicesRequestQueue.end();
         this.liveLoginRequestQueue.end();
 
         clearInterval(this.metricsCollector);
