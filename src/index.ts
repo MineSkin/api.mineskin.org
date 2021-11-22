@@ -153,6 +153,7 @@ async function init() {
     {// Git Puller
         console.log("Setting up git puller");
 
+        const updateDelay = Math.ceil(Math.random() * 8000) + Math.ceil(Math.random() * 8000);
         const puller = new Puller({
             ...{
                 events: ["push"],
@@ -175,15 +176,20 @@ async function init() {
                     ]
                 },
                 delays: {
+                    pre: updateDelay,
                     install: Math.ceil(Math.random() * 200),
-                    post: 5000 + Math.ceil(Math.random() * 10000)
+                    post: Math.ceil(Math.random() * 1000)
                 }
             },
             ...config.puller
         });
         puller.on("before", (req: Request, res: Response) => {
-            updatingApp = true;
-            console.log(process.cwd());
+            console.log(`waiting ${ updateDelay }ms before updating`);
+            setTimeout(() => {
+                console.log("updating!")
+                updatingApp = true;
+                console.log(process.cwd());
+            }, updateDelay + 1000);
         });
         app.use(function (req: Request, res: Response, next: NextFunction) {
             if (updatingApp) {
