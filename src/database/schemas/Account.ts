@@ -9,7 +9,7 @@ import { Bread } from "../../typings/Bread";
 import { Caching } from "../../generator/Caching";
 import { MineSkinMetrics } from "../../util/metrics";
 import * as Sentry from "@sentry/node";
-import { MIN_ACCOUNT_DELAY } from "../../generator/Generator";
+import { Generator, MIN_ACCOUNT_DELAY } from "../../generator/Generator";
 import { Discord } from "../../util/Discord";
 
 const Int32 = require("mongoose-int32");
@@ -173,39 +173,7 @@ AccountSchema.statics.findUsable = async function (this: IAccountModel, bread?: 
 
     const time = Math.floor(Date.now() / 1000);
     const metrics = await MineSkinMetrics.get();
-    return this.findOne({
-        enabled: true,
-        id: { $nin: Caching.getLockedAccounts() },
-        $and: [
-            {
-                $or: [
-                    { requestServer: { $exists: false } },
-                    { requestServer: { $in: ["default", metrics.config.server] } },
-                    { requestServer: null }
-                ]
-            },
-            {
-                $or: [
-                    { lastSelected: { $exists: false } },
-                    { lastSelected: { $lt: (time - 50) } }
-                ]
-            },
-            {
-                $or: [
-                    { lastUsed: { $exists: false } },
-                    { lastUsed: { $lt: (time - 100) } }
-                ]
-            },
-            {
-                $or: [
-                    { forcedTimeoutAt: { $exists: false } },
-                    { forcedTimeoutAt: { $lt: (time - 500) } }
-                ]
-            }
-        ],
-        errorCounter: { $lt: (metrics.config.errorThreshold || 10) },
-        timeAdded: { $lt: (time - 60) }
-    }).sort({
+    return this.findOne(await Generator.usableAccountsQuery()).sort({
         lastUsed: 1,
         lastSelected: 1,
         sameTextureCounter: 1

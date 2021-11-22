@@ -36,6 +36,7 @@ import { Discord } from "../util/Discord";
 import { Stats } from "./Stats";
 import { IPoint } from "influx";
 import { DelayInfo } from "../typings/DelayInfo";
+import { FilterQuery } from "mongoose";
 
 
 // minimum delay for accounts to be used - don't set lower than 60
@@ -148,10 +149,48 @@ export class Generator {
         return await Stats.get(stats);
     }
 
+    public static async usableAccountsQuery(): Promise<FilterQuery<IAccountDocument>> {
+        const time = Math.floor(Date.now() / 1000);
+        const config = await getConfig();
+        return {
+            enabled: true,
+            id: { $nin: Caching.getLockedAccounts() },
+            $and: [
+                {
+                    $or: [
+                        { requestServer: { $exists: false } },
+                        { requestServer: { $in: ["default", config.server] } },
+                        { requestServer: null }
+                    ]
+                },
+                {
+                    $or: [
+                        { lastSelected: { $exists: false } },
+                        { lastSelected: { $lt: (time - MIN_ACCOUNT_DELAY) } }
+                    ]
+                },
+                {
+                    $or: [
+                        { lastUsed: { $exists: false } },
+                        { lastUsed: { $lt: (time - MIN_ACCOUNT_DELAY) } }
+                    ]
+                },
+                {
+                    $or: [
+                        { forcedTimeoutAt: { $exists: false } },
+                        { forcedTimeoutAt: { $lt: (time - 500) } }
+                    ]
+                }
+            ],
+            errorCounter: { $lt: (config.errorThreshold || 10) },
+            timeAdded: { $lt: (time - 60) }
+        }
+    }
+
 
     protected static async queryAccountStats(): Promise<void> {
+        const start = Date.now();
         const config = await getConfig();
-        const time = Date.now() / 1000;
 
         // const enabledAccounts = await Account.countDocuments({
         //     enabled: true
@@ -162,14 +201,7 @@ export class Generator {
         }).exec();
         this.serverAccounts = serverAccounts;
 
-        const usableAccounts = await Account.countDocuments({
-            enabled: true,
-            requestServer: { $in: ["default", config.server] },
-            lastUsed: { '$lt': (time - MIN_ACCOUNT_DELAY) },
-            forcedTimeoutAt: { '$lt': (time - 500) },
-            errorCounter: { '$lt': (config.errorThreshold || 10) },
-            timeAdded: { $lt: (time - 60) }
-        }).exec();
+        const usableAccounts = await Account.countDocuments(await this.usableAccountsQuery()).exec();
         this.usableAccounts = usableAccounts;
 
         const accountTypes = await Account.aggregate([
@@ -230,6 +262,7 @@ export class Generator {
             Sentry.captureException(e);
         }
 
+        console.log(debug(`Took ${ (Date.now() - start) }ms for account stats`));
     }
 
 
