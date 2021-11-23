@@ -835,6 +835,7 @@ export class Generator {
             if (skinChangeResponse.skins[0].url !== data.decodedValue!.textures!.SKIN!.url) {
                 console.warn(warn(options.breadcrumb + " Skin url returned by skin change does not match url returned by data query (" + skinChangeResponse.skins[0].url + " != " + data.decodedValue!.textures!.SKIN!.url + ")"));
                 //TODO: figure out why this happens
+                // TODO: maybe retry a few seconds later
 
                 Discord.postDiscordMessage("⚠ URL mismatch\n" +
                     "  Server:       " + config.server + "\n" +
