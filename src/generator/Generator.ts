@@ -1,6 +1,6 @@
 import { Account, Skin } from "../database/schemas";
 import { MemoizeExpiring } from "@inventivetalent/typescript-memoize";
-import { base64decode, getHashFromMojangTextureUrl, hasOwnProperty, imgHash, longAndShortUuid, Maybe, random32BitNumber, stripUuid } from "../util";
+import { base64decode, getHashFromMojangTextureUrl, hasOwnProperty, imgHash, longAndShortUuid, Maybe, random32BitNumber, sleep, stripUuid } from "../util";
 import { Caching } from "./Caching";
 import { Authentication, AuthenticationError, BasicMojangProfile } from "./Authentication";
 import * as Sentry from "@sentry/node";
@@ -827,6 +827,8 @@ export class Generator {
         const minecraftSkinId = skinChangeResponse?.skins[0]?.id;
 
         const config = await getConfig();
+
+        await sleep(200);
 
         const data = await this.getSkinData(account);
         if (skinChangeResponse && skinChangeResponse.skins && skinChangeResponse.skins.length > 0) {
