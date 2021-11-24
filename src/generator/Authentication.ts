@@ -321,6 +321,7 @@ export class Microsoft {
             // }
             const profile = await Caching.getProfileByAccessToken(account.accessToken);
             if (profile && profile.id?.length >= 32) {
+                // Still valid!
                 return account;
             }
         } catch (e) {
