@@ -62,16 +62,16 @@ export class Temp {
 
     // UTIL
 
-    public static async downloadImage(url: string, tmpFile?: TempFile): Promise<TempFile> {
+    public static async downloadImage(url: string, tmpFile?: TempFile, breadcrumb?: string): Promise<TempFile> {
         if (!tmpFile) {
             tmpFile = await this.file();
         }
         try {
-            const response = await Requests.axiosInstance.request({
+            const response = await Requests.genericRequest({
                 method: "GET",
                 url: url,
                 responseType: "stream"
-            });
+            }, breadcrumb);
             (response.data as Stream).pipe(fs.createWriteStream(tmpFile.path))
         } catch (e) {
             if (tmpFile) {

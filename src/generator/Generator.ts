@@ -586,7 +586,7 @@ export class Generator {
             // Fix user errors
             originalUrl = this.rewriteUrl(originalUrl, options);
             // Try to find the source image
-            const followResponse = await this.followUrl(originalUrl);
+            const followResponse = await this.followUrl(originalUrl, options.breadcrumb);
             if (!followResponse) {
                 span?.setStatus("invalid_argument").finish()
                 throw new GeneratorError(GenError.INVALID_IMAGE_URL, "Failed to find image from url", 400, undefined, originalUrl);
@@ -694,7 +694,7 @@ export class Generator {
         return urlStr;
     }
 
-    protected static async followUrl(urlStr: string): Promise<Maybe<AxiosResponse>> {
+    protected static async followUrl(urlStr: string, breadcrumb?: string): Promise<Maybe<AxiosResponse>> {
         if (!urlStr) return undefined;
 
         const transaction = Sentry.getCurrentHub().getScope()?.getTransaction();
@@ -713,14 +713,14 @@ export class Generator {
                 return undefined;
             }
             const follow = URL_FOLLOW_WHITELIST.includes(url.host!);
-            return await Requests.axiosInstance.request({
+            return await Requests.genericRequest({
                 method: "GET",
                 url: url.href,
                 maxRedirects: follow ? MAX_FOLLOW_REDIRECTS : 0,
                 headers: {
                     "User-Agent": "MineSkin"
                 }
-            }).then(res => {
+            }, breadcrumb).then(res => {
                 span?.finish();
                 return res;
             });
@@ -851,7 +851,7 @@ export class Generator {
                     "  Texture Data: " + data.decodedValue!.textures!.SKIN!.url);
             }
         }
-        const mojangHash = await this.getMojangHash(data.decodedValue!.textures!.SKIN!.url);
+        const mojangHash = await this.getMojangHash(data.decodedValue!.textures!.SKIN!.url, options);
 
         const hashesMatch = await this.compareImageAndMojangHash(tempFileValidation.hash!, mojangHash!.hash!, type, options, account);
         if (!hashesMatch) {
@@ -912,7 +912,7 @@ export class Generator {
         const data = await this.getSkinData({
             uuid: uuids.short
         });
-        const mojangHash = await this.getMojangHash(data.decodedValue!.textures!.SKIN!.url);
+        const mojangHash = await this.getMojangHash(data.decodedValue!.textures!.SKIN!.url, options);
 
         const hashDuplicate = await this.findDuplicateFromImageHash(mojangHash!.hash!, options, client, GenerateType.USER);
         if (hashDuplicate) {
@@ -1180,7 +1180,7 @@ export class Generator {
         return decoded;
     }
 
-    public static async getMojangHash(url: string, t = 1): Promise<MojangHashInfo> {
+    public static async getMojangHash(url: string, options?: GenerateOptions, t = 1): Promise<MojangHashInfo> {
         const transaction = Sentry.getCurrentHub().getScope()?.getTransaction();
         const span = transaction?.startChild({
             op: "generate_getMojangHash"
@@ -1190,7 +1190,7 @@ export class Generator {
             dir: MOJ_DIR
         });
         try {
-            await Temp.downloadImage(url, tempFile);
+            await Temp.downloadImage(url, tempFile, options?.breadcrumb);
             const imageBuffer = await fs.readFile(tempFile.path);
             let fType: Maybe<FileTypeResult> = { mime: "image/png", ext: "png" };
             try {
@@ -1207,7 +1207,7 @@ export class Generator {
         } catch (e) {
             console.warn(warn("Failed to get hash from mojang skin " + url + " (" + t + ")"));
             if (t > 0) {
-                return this.getMojangHash(url, t - 1);
+                return this.getMojangHash(url, options, t - 1);
             }
             throw e;
         } finally {

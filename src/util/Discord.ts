@@ -15,7 +15,7 @@ export class Discord {
         const config = await getConfig();
         if (!config.discord.token) return;
         if (!channel) channel = config.discord.channel;
-        Requests.axiosInstance.request({
+        Requests.genericRequest({
             method: "POST",
             url: "https://discordapp.com/api/channels/" + channel + "/messages",
             headers: {
@@ -51,7 +51,7 @@ export class Discord {
         body.append("file", file, {
             filename: fileName
         });
-        Requests.axiosInstance.request({
+        Requests.genericRequest({
             method: "POST",
             url: "https://discordapp.com/api/channels/" + channel + "/messages",
             headers: body.getHeaders({
@@ -75,7 +75,7 @@ export class Discord {
     static async sendDiscordDirectMessage(content: string, receiver: string, fallback?: () => void): Promise<void> {
         const config = await getConfig();
         if (!config.discord || !config.discord.token) return;
-        Requests.axiosInstance.request({
+        Requests.genericRequest({
             method: "POST",
             url: "https://discordapp.com/api/users/@me/channels",
             headers: {
@@ -107,7 +107,7 @@ export class Discord {
     static async addDiscordAccountOwnerRole(userId: string): Promise<boolean> {
         const config = await getConfig();
         if (!config.discord || !config.discord.token || !config.discord.guild) return false;
-        return Requests.axiosInstance.request({
+        return Requests.genericRequest({
             method: "PUT",
             url: "https://discordapp.com/api/guilds/" + config.discord.guild + "/members/" + userId + "/roles/" + config.discord.role,
             headers: {
@@ -132,7 +132,7 @@ export class Discord {
     static async removeDiscordAccountOwnerRole(userId: string): Promise<boolean> {
         const config = await getConfig();
         if (!config.discord || !config.discord.token || !config.discord.guild) return false;
-        return Requests.axiosInstance.request({
+        return Requests.genericRequest({
             method: "DELETE",
             url: "https://discordapp.com/api/guilds/" + config.discord.guild + "/members/" + userId + "/roles/" + config.discord.role,
             headers: {

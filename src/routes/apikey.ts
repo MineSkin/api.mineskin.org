@@ -271,7 +271,7 @@ export const register = (app: Application) => {
             redirect_uri: redirect,
             scope: "identify"
         };
-        const tokenResponse = await Requests.axiosInstance.request({
+        const tokenResponse = await Requests.genericRequest({
             method: "POST",
             url: "https://discordapp.com/api/oauth2/token",
             headers: {
@@ -290,7 +290,7 @@ export const register = (app: Application) => {
         }
 
         // Get user profile
-        const userResponse = await Requests.axiosInstance.request({
+        const userResponse = await Requests.genericRequest({
             method: "GET",
             url: "https://discordapp.com/api/users/@me",
             headers: {

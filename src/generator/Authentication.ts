@@ -509,7 +509,7 @@ export class Microsoft {
                 UserTokens: [userTokenResponse.Token]
             }
         };
-        const authResponse = await Requests.axiosInstance.request({
+        const authResponse = await Requests.genericRequest({
             method: "POST",
             url: "https://xsts.auth.xboxlive.com/xsts/authorize",
             headers: {

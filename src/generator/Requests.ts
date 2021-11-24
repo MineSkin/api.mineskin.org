@@ -95,7 +95,7 @@ export class Requests {
 
     protected static async runAxiosRequest(request: AxiosRequestConfig, instance = this.axiosInstance): Promise<AxiosResponse> {
         const t = this.trackSentryStart(request);
-        console.log(c.gray(`${ this.getBreadcrumb(request) || '00000000' } ${ request.method || 'GET' } ${ request.baseURL || instance.defaults.baseURL }${ request.url }`))
+        console.log(c.gray(`${ this.getBreadcrumb(request) || '00000000' } ${ request.method || 'GET' } ${ request.baseURL || instance.defaults.baseURL || '' }${ request.url }`))
         const r = await instance.request(request)
             .then(async (response) => this.processRequestMetric(response, request, response, instance))
             .catch(err => this.processRequestMetric(err, request, err.response, instance, err));
@@ -143,6 +143,14 @@ export class Requests {
     }
 
     /// API REQUESTS
+
+    public static async genericRequest(request: AxiosRequestConfig, bread?: string): Promise<AxiosResponse> {
+        this.addBreadcrumb(request, bread);
+        const t = this.trackSentryQueued(request);
+        const r = await this.runAxiosRequest(request, this.axiosInstance);
+        t?.finish();
+        return r;
+    }
 
     public static async mojangAuthRequest(request: AxiosRequestConfig, bread?: string): Promise<AxiosResponse> {
         this.addBreadcrumb(request, bread);

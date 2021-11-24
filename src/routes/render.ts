@@ -52,7 +52,7 @@ export const register = (app: Application) => {
             if (!skin) {
                 res.status(404).end();
             } else {
-                Requests.axiosInstance.request({
+                Requests.genericRequest({
                     url: skin.url,
                     responseType: "stream"
                 }).then(response => {
