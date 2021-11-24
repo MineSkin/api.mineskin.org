@@ -1180,7 +1180,7 @@ export class Generator {
         return decoded;
     }
 
-    public static async getMojangHash(url: string): Promise<MojangHashInfo> {
+    public static async getMojangHash(url: string, t = 1): Promise<MojangHashInfo> {
         const transaction = Sentry.getCurrentHub().getScope()?.getTransaction();
         const span = transaction?.startChild({
             op: "generate_getMojangHash"
@@ -1204,6 +1204,12 @@ export class Generator {
                 buffer: imageBuffer,
                 hash: hash
             };
+        } catch (e) {
+            console.warn(warn("Failed to get hash from mojang skin " + url + " (" + t + ")"));
+            if (t > 0) {
+                return this.getMojangHash(url, t - 1);
+            }
+            throw e;
         } finally {
             span?.finish()
             if (tempFile) {
