@@ -10,6 +10,7 @@ import { MineSkinMetrics } from "../util/metrics";
 import { Transaction } from "@sentry/tracing";
 import { c } from "../util/colors";
 import { Maybe } from "../util";
+import { Throttle } from "../util/Throttle";
 
 axios.defaults.headers["User-Agent"] = "MineSkin";
 axios.defaults.headers["Content-Type"] = "application/json";
@@ -45,6 +46,9 @@ export class Requests {
         baseURL: "https://login.live.com",
         headers: {}
     });
+
+    protected static readonly minecraftServicesSkinRequestThrottle: Throttle<AxiosRequestConfig, AxiosResponse>
+        = new Throttle<AxiosRequestConfig, AxiosResponse>(Time.seconds(5), request => Requests.runAxiosRequest(request, Requests.minecraftServicesInstance))
 
     protected static readonly mojangAuthRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
         = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, Requests.mojangAuthInstance), Time.seconds(1), 1);
@@ -177,7 +181,8 @@ export class Requests {
     public static async minecraftServicesSkinRequest(request: AxiosRequestConfig, bread?: string): Promise<AxiosResponse> {
         this.addBreadcrumb(request, bread);
         const t = this.trackSentryQueued(request);
-        const r = await this.minecraftServicesSkinRequestQueue.add(request);
+        // const r = await this.minecraftServicesSkinRequestQueue.add(request);
+        const r = await this.minecraftServicesSkinRequestThrottle.submit(request);
         t?.finish();
         return r;
     }
