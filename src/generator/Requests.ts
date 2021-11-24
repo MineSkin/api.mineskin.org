@@ -53,6 +53,8 @@ export class Requests {
     protected static readonly mojangSessionRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
         = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, Requests.mojangSessionInstance), Time.seconds(1), 1);
     protected static readonly minecraftServicesRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
+        = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, Requests.minecraftServicesInstance), Time.seconds(1), 1);
+    protected static readonly minecraftServicesSkinRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
         = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, Requests.minecraftServicesInstance), Time.seconds(2), 1);
     protected static readonly liveLoginRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
         = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, Requests.liveLoginInstance), Time.seconds(1), 1);
@@ -64,6 +66,7 @@ export class Requests {
             ["mojangApi", Requests.mojangApiRequestQueue],
             ["mojangSession", Requests.mojangSessionRequestQueue],
             ["minecraftServices", Requests.minecraftServicesRequestQueue],
+            ["minecraftServicesSkin", Requests.minecraftServicesSkinRequestQueue],
             ["liveLogin", Requests.liveLoginRequestQueue]
         ]);
         const points: IPoint[] = [];
@@ -174,7 +177,7 @@ export class Requests {
     public static async minecraftServicesSkinRequest(request: AxiosRequestConfig, bread?: string): Promise<AxiosResponse> {
         this.addBreadcrumb(request, bread);
         const t = this.trackSentryQueued(request);
-        const r = await this.minecraftServicesRequestQueue.add(request);
+        const r = await this.minecraftServicesSkinRequestQueue.add(request);
         t?.finish();
         return r;
     }
