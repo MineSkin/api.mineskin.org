@@ -47,9 +47,6 @@ export class Requests {
         headers: {}
     });
 
-    protected static readonly minecraftServicesSkinRequestThrottle: Throttle<AxiosRequestConfig, AxiosResponse>
-        = new Throttle<AxiosRequestConfig, AxiosResponse>(Time.seconds(5), request => Requests.runAxiosRequest(request, Requests.minecraftServicesInstance))
-
     protected static readonly mojangAuthRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
         = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, Requests.mojangAuthInstance), Time.seconds(1), 1);
     protected static readonly mojangApiRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
@@ -58,19 +55,20 @@ export class Requests {
         = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, Requests.mojangSessionInstance), Time.seconds(1), 1);
     protected static readonly minecraftServicesRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
         = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, Requests.minecraftServicesInstance), Time.seconds(1), 1);
-    protected static readonly minecraftServicesSkinRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
-        = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, Requests.minecraftServicesInstance), Time.seconds(2), 1);
     protected static readonly liveLoginRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
         = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, Requests.liveLoginInstance), Time.seconds(1), 1);
 
+    protected static readonly minecraftServicesSkinRequestThrottle: Throttle<AxiosRequestConfig, AxiosResponse>
+        = new Throttle<AxiosRequestConfig, AxiosResponse>(Time.seconds(5), request => Requests.runAxiosRequest(request, Requests.minecraftServicesInstance));
+
     protected static metricsCollector = setInterval(async () => {
         const config = await getConfig();
-        const queues = new Map<string, JobQueue<AxiosRequestConfig, AxiosResponse>>([
+        const queues = new Map<string, ISize>([
             ["mojangAuth", Requests.mojangAuthRequestQueue],
             ["mojangApi", Requests.mojangApiRequestQueue],
             ["mojangSession", Requests.mojangSessionRequestQueue],
             ["minecraftServices", Requests.minecraftServicesRequestQueue],
-            ["minecraftServicesSkin", Requests.minecraftServicesSkinRequestQueue],
+            ["minecraftServicesSkin", Requests.minecraftServicesSkinRequestThrottle],
             ["liveLogin", Requests.liveLoginRequestQueue]
         ]);
         const points: IPoint[] = [];
@@ -233,4 +231,8 @@ export class Requests {
         clearInterval(this.metricsCollector);
     }
 
+}
+
+interface ISize {
+    size: number;
 }
