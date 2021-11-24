@@ -43,6 +43,7 @@ export const AccountSchema: Schema<IAccountDocument, IAccountModel> = new Schema
     accountType: String,
     microsoftAccount: Boolean,
     microsoftAuth: Schema.Types.Mixed, //TODO
+    gamePass: Boolean,
     /**@deprecated**/
     microsoftUserId: {
         type: String,

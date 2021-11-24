@@ -43,6 +43,7 @@ export interface IAccountDocument extends Document {
     multiSecurity?: SecurityQuestion[];
     accountType?: AccountType;
     microsoftAuth?: MicrosoftAuthInfo;
+    gamePass?: boolean;
     /**@deprecated**/
     microsoftAccount?: boolean;
     /**@deprecated**/

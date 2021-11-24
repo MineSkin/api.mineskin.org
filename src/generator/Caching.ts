@@ -123,7 +123,7 @@ export class Caching {
         });
 
     protected static readonly profileByAccessTokenCache: AsyncLoadingCache<string, BasicMojangProfile> = Caches.builder()
-        .expireAfterWrite(Time.minutes(1))
+        .expireAfterWrite(Time.seconds(30))
         .expirationInterval(Time.seconds(30))
         .buildAsync<string, BasicMojangProfile>(accessToken => {
             return Requests.minecraftServicesRequest({

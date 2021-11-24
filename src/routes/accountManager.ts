@@ -186,13 +186,23 @@ export const register = (app: Application, config: MineSkinConfig) => {
                 throw err;
             });
         if (!ownsMinecraft) {
-            throw new AuthenticationError(AuthError.DOES_NOT_OWN_MINECRAFT, "User does not own minecraft", undefined);
+            if (req.session.account.gamePass) {
+                console.warn(warn("User " + req.session.account.email + " does not own minecraft, but apparently it's a game pass account!"));
+                const profile = await getMojangProfile(minecraftAccessToken);
+                if (!profile || !profile.id) {
+                    throw new AuthenticationError(AuthError.DOES_NOT_OWN_MINECRAFT, "User does not own minecraft (game pass)", undefined);
+                }
+            } else {
+                throw new AuthenticationError(AuthError.DOES_NOT_OWN_MINECRAFT, "User does not own minecraft", undefined);
+            }
         }
 
         res.json({
             success: !!minecraftAccessToken,
             token: minecraftAccessToken,
-            email: req.session.account.email
+            email: req.session.account.email,
+            ownsMinecraft: ownsMinecraft,
+            gamePass: req.session.account.gamePass
         });
     })
 
@@ -209,7 +219,8 @@ export const register = (app: Application, config: MineSkinConfig) => {
 
         Caching.storePendingMicrosoftLink(state, {
             state: state,
-            email: req.query.email as string
+            email: req.query.email as string,
+            gamePass: req.query.gamePass === 'true'
         });
 
         const scopes = ["XboxLive.signin", "offline_access"].join("%20");
@@ -254,7 +265,8 @@ export const register = (app: Application, config: MineSkinConfig) => {
             type: AccountType.MICROSOFT,
             token: minecraftAccessToken,
             microsoftInfo: microsoftInfo,
-            email: pendingLink.email
+            email: pendingLink.email,
+            gamePass: pendingLink.gamePass
         };
 
         res.send(`
@@ -566,6 +578,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
             account.microsoftAccessToken = req.session.account.microsoftInfo?.accessToken;
             account.microsoftRefreshToken = req.session.account.microsoftInfo?.refreshToken;
             account.microsoftAuth = req.session.account.microsoftInfo?.msa as MicrosoftAuthInfo;
+            account.gamePass = req.session.account.gamePass;
         } else if (req.session.account!.type === AccountType.MOJANG) {
             account.passwordNew = await Encryption.encrypt(base64decode(req.body["password"]));
             account.multiSecurity = req.session.account.mojangInfo?.securityAnswers;
@@ -888,6 +901,8 @@ interface SessionAccountInfo {
 
     mojangInfo?: MojangAccountInfo;
     microsoftInfo?: MicrosoftAccountInfo;
+
+    gamePass?: boolean;
 }
 
 interface MojangAccountInfo {

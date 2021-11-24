@@ -15,6 +15,7 @@ import { Account } from "../database/schemas";
 import { epochSeconds, Maybe, toEpochSeconds } from "../util";
 import { MineSkinMetrics } from "../util/metrics";
 import { MicrosoftAuthInfo } from "../typings/MicrosoftAuthInfo";
+import { Caching } from "./Caching";
 
 const ACCESS_TOKEN_EXPIRATION_MOJANG = 86360;
 const ACCESS_TOKEN_EXPIRATION_MICROSOFT = 86360;
@@ -314,8 +315,12 @@ export class Microsoft {
 
         try {
             // Try to use the access token
-            if (await Microsoft.checkGameOwnership(account.accessToken)) {
-                // Still valid!
+            // if (await Microsoft.checkGameOwnership(account.accessToken)) {
+            //     // Still valid!
+            //     return account;
+            // }
+            const profile = await Caching.getProfileByAccessToken(account.accessToken);
+            if (profile && profile.id?.length >= 32) {
                 return account;
             }
         } catch (e) {
@@ -326,6 +331,7 @@ export class Microsoft {
         return await Microsoft.refreshAccessTokenOrLogin(account, bread);
     }
 
+    /**@deprecated**/
     static async login(account: IAccountDocument, bread?: Bread): Promise<IAccountDocument> {
         const config = await getConfig();
         if (!account.microsoftAccount && account.accountType !== AccountType.MICROSOFT) {
@@ -559,6 +565,8 @@ export class Microsoft {
             }
         });
         const entitlementsBody = entitlementsResponse.data;
+        console.log("entitlements");
+        console.log(entitlementsBody)
         return entitlementsBody.hasOwnProperty("items") && entitlementsBody["items"].length > 0;
     }
 
