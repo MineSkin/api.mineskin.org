@@ -156,7 +156,7 @@ export class Discord {
 
     static notifyNewAccount(account: IAccountDocument, req: Request): void {
         this.postDiscordMessage("ℹ 👤 A new Account #" + account.id + " has just been added!\n" +
-            "  Account Type: " + account.getAccountType() + "\n" +
+            "  Account Type: " + account.getAccountType() + (account.gamePass ? " (game pass)" : "") + "\n" +
             "  UUID: " + account.uuid + "\n" +
             "  Server: " + account.requestServer + "\n" +
             "  Agent: " + req.headers["user-agent"] + "\n" +
