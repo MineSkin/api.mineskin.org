@@ -29,6 +29,7 @@ export class MineSkinMetrics {
 
     public readonly noAccounts: Metric;
     public readonly hashMismatch: Metric;
+    public readonly urlMismatch: Metric;
     public readonly accountNotifications: Metric;
 
     public readonly tester: Metric;
@@ -61,6 +62,7 @@ export class MineSkinMetrics {
         this.successFail = this.metrics.metric('mineskin', 'generate_success_fail');
         this.noAccounts = this.metrics.metric('mineskin', 'no_accounts');
         this.hashMismatch = this.metrics.metric('mineskin', 'hash_mismatch');
+        this.urlMismatch = this.metrics.metric('mineskin', 'url_mismatch');
         this.tester = this.metrics.metric('mineskin', 'tester');
         this.accountNotifications = this.metrics.metric('mineskin', 'account_notifications');
     }

@@ -837,6 +837,13 @@ export class Generator {
                 //TODO: figure out why this happens
                 // TODO: maybe retry a few seconds later
 
+                const metrics = await MineSkinMetrics.get();
+                metrics.urlMismatch
+                    .tag('server', metrics.config.server)
+                    .tag('type', type)
+                    .tag('account', account.id)
+                    .inc();
+
                 Discord.postDiscordMessage("⚠ URL mismatch\n" +
                     "  Server:       " + config.server + "\n" +
                     "  Account:      " + account.id + "/" + account.uuid + "\n" +
