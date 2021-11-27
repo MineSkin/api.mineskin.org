@@ -2,7 +2,7 @@ import { Account, Skin } from "../database/schemas";
 import { MemoizeExpiring } from "@inventivetalent/typescript-memoize";
 import { base64decode, getHashFromMojangTextureUrl, hasOwnProperty, imgHash, longAndShortUuid, Maybe, random32BitNumber, sleep, stripUuid } from "../util";
 import { Caching } from "./Caching";
-import { Authentication, AuthenticationError, BasicMojangProfile } from "./Authentication";
+import { Authentication, AuthenticationError } from "./Authentication";
 import * as Sentry from "@sentry/node";
 import { Requests } from "./Requests";
 import * as FormData from "form-data";
@@ -962,11 +962,6 @@ export class Generator {
         return account;
     }
 
-    protected static async getUserProfile(account: IAccountDocument): Promise<Maybe<BasicMojangProfile>> {
-        if (!account.accessToken) return undefined;
-        return Caching.getProfileByAccessToken(account.accessToken);
-    }
-
     protected static async clearCape(account: IAccountDocument): Promise<boolean> {
         console.log(info(`Clearing cape of ${ account.id }/${ account.uuid }`));
         return Requests.minecraftServicesRequest({
@@ -979,7 +974,8 @@ export class Generator {
     }
 
     protected static async clearCapeIfRequired(account: IAccountDocument): Promise<boolean> {
-        const profile = await this.getUserProfile(account);
+        if (!account.accessToken) return true;
+        const profile = await Caching.getProfileByAccessToken(account.accessToken);
         if (profile && profile.capes && profile.capes.length > 0) {
             for (let cape of profile.capes) {
                 if (cape.state === "ACTIVE") {

@@ -188,7 +188,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
         if (!ownsMinecraft) {
             if (req.session.account.gamePass) {
                 console.warn(warn("User " + req.session.account.email + " does not own minecraft, but apparently it's a game pass account!"));
-                const profile = await getMojangProfile(minecraftAccessToken);
+                const profile = await Caching.getProfileByAccessToken(minecraftAccessToken);
                 if (!profile || !profile.id) {
                     throw new AuthenticationError(AuthError.DOES_NOT_OWN_MINECRAFT, "User does not own minecraft (game pass)", undefined);
                 }
@@ -303,7 +303,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
     app.post("/accountManager/userProfile", async (req: AccountManagerRequest, res: Response) => {
         if (!validateSessionAndToken(req, res)) return;
 
-        const profile = await getMojangProfile(req.session.account!.token!);
+        const profile = await Caching.getProfileByAccessToken(req.session.account!.token!);
         if (!profile) {
             res.status(400).json({ error: "invalid session (profile)" });
             return;
@@ -845,14 +845,10 @@ function validateMultiSecurityAnswers(answers: any, req: Request, res: Response)
     return true;
 }
 
-async function getMojangProfile(accessToken: string): Promise<Maybe<BasicMojangProfile>> {
-    return Caching.getProfileByAccessToken(accessToken);
-}
-
 async function getAndValidateMojangProfile(accessToken: string, uuid: string): Promise<MojangProfileValidation> {
     if (!uuid || uuid.length < 32 || !accessToken) return { valid: false };
     const shortUuid = stripUuid(uuid);
-    const profile = await getMojangProfile(accessToken);
+    const profile = await Caching.getProfileByAccessToken(accessToken);
     if (!profile || shortUuid !== profile.id) {
         throw new MineSkinError("invalid_credentials", "invalid credentials for uuid");
     }
