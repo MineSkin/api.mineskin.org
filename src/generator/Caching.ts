@@ -156,13 +156,13 @@ export class Caching {
         });
 
     protected static readonly skinByIdCache: AsyncLoadingCache<number, ISkinDocument> = Caches.builder()
-        .expireAfterWrite(Time.seconds(20))
-        .expirationInterval(Time.seconds(5))
+        .expireAfterWrite(Time.minutes(1))
+        .expirationInterval(Time.seconds(30))
         .buildAsync<number, ISkinDocument>(id => Skin.findForId(id));
 
     protected static readonly skinByUuidCache: AsyncLoadingCache<string, ISkinDocument> = Caches.builder()
-        .expireAfterWrite(Time.seconds(20))
-        .expirationInterval(Time.seconds(5))
+        .expireAfterWrite(Time.minutes(1))
+        .expirationInterval(Time.seconds(30))
         .buildAsync<string, ISkinDocument>(id => Skin.findForUuid(id));
 
     protected static readonly apiKeyCache: AsyncLoadingCache<string, IApiKeyDocument> = Caches.builder()
