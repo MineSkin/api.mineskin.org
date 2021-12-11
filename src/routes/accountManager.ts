@@ -602,7 +602,6 @@ export const register = (app: Application, config: MineSkinConfig) => {
         // Disable mojang accounts just migrated to microsoft
         //  or accounts that just managed to sneak in twice
         Account.updateMany({
-            accountType: AccountType.MOJANG,
             enabled: true,
             uuid: account.uuid
         }, {
