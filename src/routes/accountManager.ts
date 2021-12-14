@@ -610,7 +610,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
             }
         }).exec().then(updateResult => {
             if (updateResult.nModified > 0) {
-                Discord.postDiscordMessage(`Disabled ${ updateResult.nModified } mojang account with the same uuid (${ account.uuid }) as a newly added ${ account.accountType } account (#${ account.id })`);
+                Discord.postDiscordMessage(`Disabled ${ updateResult.nModified } account with the same uuid (${ account.uuid }) as a newly added ${ account.accountType } account (#${ account.id })`);
             }
         })
     })
