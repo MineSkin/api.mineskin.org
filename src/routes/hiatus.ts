@@ -27,7 +27,9 @@ export const register = (app: Application) => {
             if (!validateAuth(req, res, auth, account)) return;
 
 
-            account.hiatus!.lastLaunch = Math.floor(Date.now() / 1000);
+            const t = Math.floor(Date.now() / 1000);
+            account.hiatus!.lastLaunch = t;
+            account.hiatus!.lastPing = t;
             account.save().then(() => {
                 res.json({
                     success: true,
