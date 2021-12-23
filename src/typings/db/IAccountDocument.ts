@@ -23,6 +23,13 @@ export enum AccessTokenSource {
     USER_LOGIN_MICROSOFT = "user_login_microsoft"
 }
 
+export interface AccountHiatus {
+    enabled: boolean;
+    token: string;
+    lastLaunch: number;
+    lastPing: number;
+}
+
 export interface IAccountDocument extends Document {
     id: number | any;
     /**@deprecated legacy email **/
@@ -62,6 +69,7 @@ export interface IAccountDocument extends Document {
     timeAdded?: number;
     lastUsed?: number;
     enabled: boolean;
+    hiatus?: AccountHiatus;
     errorCounter: number;
     successCounter: number;
     totalErrorCounter: number;
@@ -92,6 +100,8 @@ export interface IAccountDocument extends Document {
     getEmail(): string;
 
     getAccountType(): AccountType;
+
+    isOnHiatus(): boolean;
 
     authenticationHeader(): string;
 

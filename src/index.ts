@@ -12,7 +12,7 @@ import RotatingFileStream from "rotating-file-stream";
 import * as morgan from "morgan";
 import * as bodyParser from "body-parser";
 import * as fileUpload from "express-fileupload";
-import { accountManagerRoute, apiKeyRoute, generateRoute, getRoute, renderRoute, testerRoute, utilRoute } from "./routes";
+import { accountManagerRoute, apiKeyRoute, generateRoute, getRoute, hiatusRoute, renderRoute, testerRoute, utilRoute } from "./routes";
 import { MOJ_DIR, UPL_DIR, URL_DIR } from "./generator/Temp";
 import { getConfig, getLocalConfig, MineSkinConfig } from "./typings/Configs";
 import { isBreadRequest, MineSkinError } from "./typings";
@@ -227,6 +227,7 @@ async function init() {
         testerRoute.register(app);
         utilRoute.register(app);
         apiKeyRoute.register(app);
+        hiatusRoute.register(app);
 
     }
 

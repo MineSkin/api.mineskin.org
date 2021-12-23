@@ -180,6 +180,13 @@ export class Generator {
                         { forcedTimeoutAt: { $exists: false } },
                         { forcedTimeoutAt: { $lt: (time - 500) } }
                     ]
+                },
+                {
+                    $or: [
+                        { hiatus: { $exists: false } },
+                        { 'hiatus.enabled': false },
+                        { 'hiatus.lastPing': { $lt: (time - 900) } }
+                    ]
                 }
             ],
             errorCounter: { $lt: (config.errorThreshold || 10) },

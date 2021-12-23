@@ -76,6 +76,12 @@ export const AccountSchema: Schema<IAccountDocument, IAccountModel> = new Schema
         type: Boolean,
         index: true
     },
+    hiatus: {
+        enabled: Boolean,
+        token: String,
+        lastLaunch: Number,
+        lastPing: Number
+    },
     errorCounter: Int32,
     successCounter: Int32,
     totalErrorCounter: Number,
@@ -147,6 +153,14 @@ AccountSchema.methods.getAccountType = function (this: IAccountDocument): Accoun
     }
     return this.accountType;
 };
+
+AccountSchema.methods.isOnHiatus = function (this: IAccountDocument): boolean {
+    const now = Math.floor(Date.now() / 1000);
+    const fifteenMins = 900;
+    return !!this.hiatus &&
+        this.hiatus.enabled &&
+        (now - this.hiatus.lastPing < fifteenMins || now - this.hiatus.lastLaunch < fifteenMins);
+}
 
 AccountSchema.methods.authenticationHeader = function (this: IAccountDocument): string {
     return `Bearer ${ this.accessToken }`;
