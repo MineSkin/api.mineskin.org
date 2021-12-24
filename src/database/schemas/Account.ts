@@ -31,6 +31,7 @@ export const AccountSchema: Schema<IAccountDocument, IAccountModel> = new Schema
         index: true
     },
     playername: String,
+    originalSkinTexture: String,
     authInterceptorEnabled: Boolean,
     password: String,
     passwordOld: String,

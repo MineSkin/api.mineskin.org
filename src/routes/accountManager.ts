@@ -463,6 +463,10 @@ export const register = (app: Application, config: MineSkinConfig) => {
                     account.enabled = !!req.body["enabled"]
 
                     Discord.postDiscordMessage("👤 Account " + account.id + "/" + account.uuid + " " + (account.enabled ? "enabled" : "disabled") + " (linked to " + account.email + "/<@" + account.discordUser + ">)");
+
+                    if (account.enabled) {
+                        Generator.saveOriginalSkin(account); // save current skin before using the account again
+                    }
                 }
                 break;
             case 'emails':
@@ -613,6 +617,8 @@ export const register = (app: Application, config: MineSkinConfig) => {
                 Discord.postDiscordMessage(`Disabled ${ updateResult.nModified } account with the same uuid (${ account.uuid }) as a newly added ${ account.accountType } account (#${ account.id })`);
             }
         })
+
+        await Generator.saveOriginalSkin(account);
     })
 
     app.delete("/accountManager/deleteAccount", async (req: AccountManagerRequest, res: Response) => {
