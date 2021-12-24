@@ -32,6 +32,7 @@ export interface IAccountDocument extends Document {
     uuid: string;
     /** player name **/
     playername?: string;
+    originalSkinTexture?: string;
     authInterceptorEnabled?: boolean;
     /**@deprecated**/
     password?: string;

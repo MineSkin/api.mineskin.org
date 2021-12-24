@@ -265,6 +265,16 @@ export class Generator {
         console.log(debug(`Took ${ (Date.now() - start) }ms for account stats`));
     }
 
+    static async saveOriginalSkin(account: IAccountDocument): Promise<Maybe<string>> {
+        const skinData = await this.getSkinData(account);
+        if (skinData?.decodedValue?.textures?.SKIN?.url) {
+            account.originalSkinTexture = skinData.decodedValue.textures.SKIN.url;
+            await account.save();
+            console.log(debug(`Saved original skin texture for ${ account.id }/${ account.uuid } (${ account.originalSkinTexture })`))
+            return account.originalSkinTexture;
+        }
+        return undefined;
+    }
 
     /// SAVING
 
