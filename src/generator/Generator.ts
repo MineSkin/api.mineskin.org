@@ -269,16 +269,18 @@ export class Generator {
         const skinData = await this.getSkinData(account);
         if (skinData?.decodedValue?.textures?.SKIN?.url) {
             account.originalSkinTexture = skinData.decodedValue.textures.SKIN.url;
+            account.originalSkinVariant = skinData.decodedValue.textures.SKIN.metadata?.model as SkinVariant || SkinVariant.CLASSIC;
             await account.save();
-            console.log(debug(`Saved original skin texture for ${ account.id }/${ account.uuid } (${ account.originalSkinTexture })`))
+            console.log(debug(`Saved original skin texture for ${ account.id }/${ account.uuid } (${ account.originalSkinTexture }/${ account.originalSkinVariant })`))
             return account.originalSkinTexture;
         }
         return undefined;
     }
 
     static async restoreOriginalSkin(account: IAccountDocument): Promise<void> {
-        if(!account.originalSkinTexture) return;
-        //TODO
+        if (!account.originalSkinTexture) return;
+        await this.changeSkinUrl(account, account.originalSkinTexture, account.originalSkinVariant || SkinVariant.CLASSIC);
+        console.log(debug(`Restored original skin texture for ${ account.id }/${ account.uuid }`))
     }
 
     /// SAVING
@@ -802,7 +804,7 @@ export class Generator {
 
             account = await this.getAndAuthenticateAccount(options);
             await this.clearCapeIfRequired(account);
-            
+
             const skinResponse = await this.changeSkinUpload(account, tempFileValidation.buffer!, options.variant, options.breadcrumb);
             span?.finish();
             return this.handleSkinChangeResponse(skinResponse, GenerateType.UPLOAD, options, client, account, tempFileValidation);
@@ -817,7 +819,7 @@ export class Generator {
         }
     }
 
-    protected static async changeSkinUpload(account: IAccountDocument, file: ArrayBufferLike,variant: string,breadcrumb?: string): Promise<AxiosResponse> {
+    protected static async changeSkinUpload(account: IAccountDocument, file: ArrayBufferLike, variant: string, breadcrumb?: string): Promise<AxiosResponse> {
         const body = new FormData();
         body.append("variant", variant);
         body.append("file", file, {
