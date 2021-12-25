@@ -3,6 +3,7 @@ import { Maybe } from "../../util";
 import { MojangSecurityAnswer } from "../../generator/Authentication";
 import { Bread } from "../Bread";
 import { MicrosoftAuthInfo } from "../MicrosoftAuthInfo";
+import { SkinVariant } from "./ISkinDocument";
 
 export interface SecurityQuestion extends MojangSecurityAnswer {
 }
@@ -40,6 +41,7 @@ export interface IAccountDocument extends Document {
     /** player name **/
     playername?: string;
     originalSkinTexture?: string;
+    originalSkinVariant?: SkinVariant;
     authInterceptorEnabled?: boolean;
     /**@deprecated**/
     password?: string;

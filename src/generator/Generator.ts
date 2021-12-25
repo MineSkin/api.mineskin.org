@@ -276,11 +276,18 @@ export class Generator {
         const skinData = await this.getSkinData(account);
         if (skinData?.decodedValue?.textures?.SKIN?.url) {
             account.originalSkinTexture = skinData.decodedValue.textures.SKIN.url;
+            account.originalSkinVariant = skinData.decodedValue.textures.SKIN.metadata?.model as SkinVariant || SkinVariant.CLASSIC;
             await account.save();
-            console.log(debug(`Saved original skin texture for ${ account.id }/${ account.uuid } (${ account.originalSkinTexture })`))
+            console.log(debug(`Saved original skin texture for ${ account.id }/${ account.uuid } (${ account.originalSkinTexture }/${ account.originalSkinVariant })`))
             return account.originalSkinTexture;
         }
         return undefined;
+    }
+
+    static async restoreOriginalSkin(account: IAccountDocument): Promise<void> {
+        if (!account.originalSkinTexture) return;
+        await this.changeSkinUrl(account, account.originalSkinTexture, account.originalSkinVariant || SkinVariant.CLASSIC);
+        console.log(debug(`Restored original skin texture for ${ account.id }/${ account.uuid }`))
     }
 
     /// SAVING
@@ -667,25 +674,7 @@ export class Generator {
             account = await this.getAndAuthenticateAccount(options);
             await this.clearCapeIfRequired(account);
 
-            const body = {
-                variant: options.variant,
-                url: url
-            };
-            const skinResponse = await Requests.minecraftServicesSkinRequest({
-                method: "POST",
-                url: "/minecraft/profile/skins",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": account.authenticationHeader()
-                },
-                data: body
-            }, options.breadcrumb).catch(err => {
-                if (err.response) {
-                    let msg = (err.response as AxiosResponse).data?.errorMessage ?? "Failed to change skin";
-                    throw new GeneratorError(GenError.SKIN_CHANGE_FAILED, msg, (err.response as AxiosResponse).status, account, err);
-                }
-                throw err;
-            });
+            const skinResponse = await this.changeSkinUrl(account, url, options.variant, options.breadcrumb);
             span?.finish();
             return this.handleSkinChangeResponse(skinResponse, GenerateType.URL, options, client, account, tempFileValidation);
         } catch (e) {
@@ -698,6 +687,28 @@ export class Generator {
             }
         }
 
+    }
+
+    protected static async changeSkinUrl(account: IAccountDocument, url: string, variant: string, breadcrumb?: string): Promise<AxiosResponse> {
+        const body = {
+            variant: variant,
+            url: url
+        };
+        return await Requests.minecraftServicesSkinRequest({
+            method: "POST",
+            url: "/minecraft/profile/skins",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": account.authenticationHeader()
+            },
+            data: body
+        }, breadcrumb).catch(err => {
+            if (err.response) {
+                let msg = (err.response as AxiosResponse).data?.errorMessage ?? "Failed to change skin";
+                throw new GeneratorError(GenError.SKIN_CHANGE_FAILED, msg, (err.response as AxiosResponse).status, account, err);
+            }
+            throw err;
+        });
     }
 
     protected static rewriteUrl(urlStr: string, bread: Bread): string {
@@ -801,26 +812,7 @@ export class Generator {
             account = await this.getAndAuthenticateAccount(options);
             await this.clearCapeIfRequired(account);
 
-            const body = new FormData();
-            body.append("variant", options.variant);
-            body.append("file", tempFileValidation.buffer!, {
-                filename: "skin.png",
-                contentType: "image/png"
-            });
-            const skinResponse = await Requests.minecraftServicesSkinRequest({
-                method: "POST",
-                url: "/minecraft/profile/skins",
-                headers: body.getHeaders({
-                    "Authorization": account.authenticationHeader()
-                }),
-                data: body
-            }, options.breadcrumb).catch(err => {
-                if (err.response) {
-                    let msg = (err.response as AxiosResponse).data?.errorMessage ?? "Failed to change skin";
-                    throw new GeneratorError(GenError.SKIN_CHANGE_FAILED, msg, (err.response as AxiosResponse).status, account, err);
-                }
-                throw err;
-            });
+            const skinResponse = await this.changeSkinUpload(account, tempFileValidation.buffer!, options.variant, options.breadcrumb);
             span?.finish();
             return this.handleSkinChangeResponse(skinResponse, GenerateType.UPLOAD, options, client, account, tempFileValidation);
         } catch (e) {
@@ -832,6 +824,29 @@ export class Generator {
                 tempFile.remove();
             }
         }
+    }
+
+    protected static async changeSkinUpload(account: IAccountDocument, file: ArrayBufferLike, variant: string, breadcrumb?: string): Promise<AxiosResponse> {
+        const body = new FormData();
+        body.append("variant", variant);
+        body.append("file", file, {
+            filename: "skin.png",
+            contentType: "image/png"
+        });
+        return await Requests.minecraftServicesSkinRequest({
+            method: "POST",
+            url: "/minecraft/profile/skins",
+            headers: body.getHeaders({
+                "Authorization": account.authenticationHeader()
+            }),
+            data: body
+        }, breadcrumb).catch(err => {
+            if (err.response) {
+                let msg = (err.response as AxiosResponse).data?.errorMessage ?? "Failed to change skin";
+                throw new GeneratorError(GenError.SKIN_CHANGE_FAILED, msg, (err.response as AxiosResponse).status, account, err);
+            }
+            throw err;
+        });
     }
 
     static async handleSkinChangeResponse(skinResponse: AxiosResponse, type: GenerateType, options: GenerateOptions, client: ClientInfo, account: IAccountDocument, tempFileValidation: TempFileValidationResult): Promise<GenerateResult> {
