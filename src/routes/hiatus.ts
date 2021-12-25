@@ -4,6 +4,7 @@ import { IAccountDocument, MineSkinError } from "../typings";
 import { Account } from "../database/schemas";
 import { debug, warn } from "../util/colors";
 import { Discord } from "../util/Discord";
+import { Generator } from "../generator/Generator";
 
 export const register = (app: Application) => {
 
@@ -39,6 +40,7 @@ export const register = (app: Application) => {
             });
             if (!wasOnHiatus && account.isOnHiatus()) {
                 Discord.postDiscordMessage(`💤 Account ${ account.id }/${ account.uuid }/${ account.playername } put on hiatus due to game launch`);
+                Generator.restoreOriginalSkinASAP(account);
             }
         })
     });
@@ -100,6 +102,7 @@ export const register = (app: Application) => {
             })
             if (!wasOnHiatus && account.isOnHiatus()) {
                 Discord.postDiscordMessage(`💤 Account ${ account.id }/${ account.uuid }/${ account.playername } put on hiatus due to recent ping`);
+                Generator.restoreOriginalSkinASAP(account);
             }
         })
     });

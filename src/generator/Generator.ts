@@ -272,16 +272,26 @@ export class Generator {
         console.log(debug(`Took ${ (Date.now() - start) }ms for account stats`));
     }
 
-    static async saveOriginalSkin(account: IAccountDocument): Promise<Maybe<string>> {
+    static async saveOriginalSkin(account: IAccountDocument, save: boolean = true): Promise<Maybe<string>> {
         const skinData = await this.getSkinData(account);
         if (skinData?.decodedValue?.textures?.SKIN?.url) {
             account.originalSkinTexture = skinData.decodedValue.textures.SKIN.url;
             account.originalSkinVariant = skinData.decodedValue.textures.SKIN.metadata?.model as SkinVariant || SkinVariant.CLASSIC;
-            await account.save();
-            console.log(debug(`Saved original skin texture for ${ account.id }/${ account.uuid } (${ account.originalSkinTexture }/${ account.originalSkinVariant })`))
+            if (save) await account.save();
+            console.log(debug(`Saved original skin texture for ${ account.id }/${ account.uuid } (${ account.originalSkinTexture } / ${ account.originalSkinVariant })`))
             return account.originalSkinTexture;
         }
         return undefined;
+    }
+
+    static async restoreOriginalSkinASAP(account: IAccountDocument): Promise<void> {
+        let usedDiff = Math.round((Date.now() / 1000) - (account.lastUsed || 0));
+        if (usedDiff > MIN_ACCOUNT_DELAY) {
+            await Generator.restoreOriginalSkin(account);
+        } else {
+            await sleep(((MIN_ACCOUNT_DELAY - usedDiff) + 5) * 1000);
+            await Generator.restoreOriginalSkin(account);
+        }
     }
 
     static async restoreOriginalSkin(account: IAccountDocument): Promise<void> {

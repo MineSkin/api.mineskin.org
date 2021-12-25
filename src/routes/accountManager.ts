@@ -465,7 +465,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
                     Discord.postDiscordMessage("👤 Account " + account.id + "/" + account.uuid + " " + (account.enabled ? "enabled" : "disabled") + " (linked to " + account.email + "/<@" + account.discordUser + ">)");
 
                     if (account.enabled) {
-                        Generator.saveOriginalSkin(account); // save current skin before using the account again
+                        Generator.saveOriginalSkin(account, false); // save current skin before using the account again
                     }
                 }
                 break;
