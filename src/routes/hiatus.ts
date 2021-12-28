@@ -137,13 +137,14 @@ export const register = (app: Application) => {
         }
         if (!account.hiatus) return false;
         const expectedHash = sha256(account.email! + ":" + account.hiatus!.token!);
-        console.log("expected hash: " + expectedHash);
-        console.log("actual hash:   " + auth.hashedEmailAndToken);
         if (expectedHash !== auth.hashedEmailAndToken) {
             res.json({
                 success: false,
                 msg: "hash mismatch"
             });
+            console.warn(warn("[Hiatus] Hash mismatch " + account.uuid));
+            console.log("expected hash: " + expectedHash);
+            console.log("actual hash:   " + auth.hashedEmailAndToken);
             return false;
         }
 
