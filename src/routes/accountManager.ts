@@ -1,6 +1,6 @@
 import { Application, Request, Response } from "express";
 import { Authentication, AuthenticationError, AuthError, BasicMojangProfile, Microsoft, Mojang, MojangSecurityAnswer, XboxInfo } from "../generator/Authentication";
-import { base64decode, corsWithCredentialsMiddleware, getIp, Maybe, md5, sha256, sha512, stripUuid } from "../util";
+import { base64decode, corsWithCredentialsMiddleware, getIp, Maybe, md5, sha1, sha256, sha512, stripUuid } from "../util";
 import * as session from "express-session";
 import { Generator } from "../generator/Generator";
 import { Account } from "../database/schemas";
@@ -418,10 +418,15 @@ export const register = (app: Application, config: MineSkinConfig) => {
             sendEmails: !!account.sendEmails,
             hadSentMessage: hadSentMessage,
             hadErrors: hadErrors,
-            onHiatus: account.isOnHiatus(),
+            hiatus: {
+                enabled: account.hiatus?.enabled ?? false,
+                onHiatus: account.isOnHiatus(),
+                lastPing: account.hiatus?.lastPing ?? 0
+            },
             settings: {
                 enabled: account.enabled,
-                emails: account.sendEmails
+                emails: account.sendEmails,
+                hiatusToken: account.hiatus?.token
             }
         })
     })
@@ -456,7 +461,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
         const profileValidation = await getAndValidateMojangProfile(req.session.account!.token!, req.body["uuid"]);
         if (!profileValidation.valid || !profileValidation.profile) return;
 
-        let updater: (account: IAccountDocument) => void;
+        let updater: (account: IAccountDocument) => any;
         const setting = req.params["setting"];
         switch (setting) {
             case 'status':
@@ -468,6 +473,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
                     if (account.enabled) {
                         Generator.saveOriginalSkin(account, false); // save current skin before using the account again
                     }
+                    //TODO: restore skin
                 }
                 break;
             case 'emails':
@@ -478,6 +484,27 @@ export const register = (app: Application, config: MineSkinConfig) => {
             case 'email':
                 updater = account => {
                     account.email = req.body["email"];
+                }
+                break;
+            case 'hiatus':
+                updater = account => {
+                    if (!account.hiatus) {
+                        account.hiatus = {
+                            enabled: false,
+                            lastLaunch: 0,
+                            lastPing: 0,
+                            token: ""
+                        }
+                    }
+
+                    account.hiatus.enabled = !!req.body["enabled"];
+                    if (account.hiatus.enabled) {
+                        Discord.postDiscordMessage("👤 Hiatus enabled for account " + account.id + "/" + account.uuid);
+
+                        account.hiatus.token = sha1(randomUuid() + Math.random() + Date.now() + randomUuid());
+                        return account.hiatus.token;
+                    }
+                    return undefined;
                 }
                 break;
             default:
@@ -493,12 +520,16 @@ export const register = (app: Application, config: MineSkinConfig) => {
         if (!account) {
             return;
         }
-        updater(account);
+        let result = updater(account);
         await account.save();
-        res.json({
+        let resp: any = {
             success: true,
             msg: "updated"
-        });
+        };
+        if (result) {
+            resp.result = result;
+        }
+        res.json(resp);
     })
 
     app.post("/accountManager/confirmAccountSubmission", async (req: AccountManagerRequest, res: Response) => {
