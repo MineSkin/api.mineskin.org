@@ -502,7 +502,9 @@ export const register = (app: Application, config: MineSkinConfig) => {
                     if (account.hiatus.enabled) {
                         Discord.postDiscordMessage("👤 Hiatus enabled for account " + account.id + "/" + account.uuid);
 
-                        account.hiatus.token = sha1(randomUuid() + Math.random() + Date.now() + randomUuid());
+                        let token = sha1(randomUuid() + Math.random() + Date.now() + randomUuid());
+                        token = account.uuid.substring(0, 4) + token.substring(4, token.length - 4) + account.uuid.substring(account.uuid.length - 4, account.uuid.length);
+                        account.hiatus.token = token;
                         return account.hiatus.token;
                     }
                     return undefined;
