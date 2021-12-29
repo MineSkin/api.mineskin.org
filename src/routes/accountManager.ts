@@ -418,6 +418,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
             sendEmails: !!account.sendEmails,
             hadSentMessage: hadSentMessage,
             hadErrors: hadErrors,
+            onHiatus: account.isOnHiatus(),
             settings: {
                 enabled: account.enabled,
                 emails: account.sendEmails
