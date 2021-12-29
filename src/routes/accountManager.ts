@@ -421,12 +421,13 @@ export const register = (app: Application, config: MineSkinConfig) => {
             hiatus: {
                 enabled: account.hiatus?.enabled ?? false,
                 onHiatus: account.isOnHiatus(),
-                lastPing: account.hiatus?.lastPing ?? 0
+                lastPing: account.hiatus?.lastPing ?? 0,
+                token: account.hiatus?.token
             },
             settings: {
                 enabled: account.enabled,
                 emails: account.sendEmails,
-                hiatusToken: account.hiatus?.token
+                hiatus: account.hiatus?.enabled ?? false
             }
         })
     })
@@ -497,7 +498,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
                         }
                     }
 
-                    account.hiatus.enabled = !!req.body["enabled"];
+                    account.hiatus.enabled = !!req.body["hiatus"];
                     if (account.hiatus.enabled) {
                         Discord.postDiscordMessage("👤 Hiatus enabled for account " + account.id + "/" + account.uuid);
 
