@@ -285,13 +285,14 @@ export class Generator {
     }
 
     static async restoreOriginalSkinASAP(account: IAccountDocument): Promise<void> {
-        let usedDiff = Math.round((Date.now() / 1000) - (account.lastUsed || 0));
-        if (usedDiff > MIN_ACCOUNT_DELAY) {
-            await Generator.restoreOriginalSkin(account);
-        } else {
-            await sleep(((MIN_ACCOUNT_DELAY - usedDiff) + 5) * 1000);
-            await Generator.restoreOriginalSkin(account);
-        }
+        await Generator.restoreOriginalSkin(account);
+        // let usedDiff = Math.round((Date.now() / 1000) - (account.lastUsed || 0));
+        // if (usedDiff > MIN_ACCOUNT_DELAY) {
+        //     await Generator.restoreOriginalSkin(account);
+        // } else {
+        //     await sleep(((MIN_ACCOUNT_DELAY - usedDiff) + 5) * 1000);
+        //     await Generator.restoreOriginalSkin(account);
+        // }
     }
 
     static async restoreOriginalSkin(account: IAccountDocument): Promise<void> {
