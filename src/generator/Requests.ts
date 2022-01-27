@@ -59,7 +59,7 @@ export class Requests {
         = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, Requests.liveLoginInstance), Time.millis(200), 1);
 
     protected static readonly minecraftServicesSkinRequestThrottle: Throttle<AxiosRequestConfig, AxiosResponse>
-        = new Throttle<AxiosRequestConfig, AxiosResponse>(Time.seconds(3), request => Requests.runAxiosRequest(request, Requests.minecraftServicesInstance));
+        = new Throttle<AxiosRequestConfig, AxiosResponse>(Time.seconds(3), request => Requests.runAxiosRequest(request, Requests.minecraftServicesInstance)); // 2s is too fast already...
 
     protected static metricsCollector = setInterval(async () => {
         const config = await getConfig();
