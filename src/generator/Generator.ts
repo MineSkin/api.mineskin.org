@@ -705,7 +705,7 @@ export class Generator {
             variant: variant,
             url: url
         };
-        return await Requests.minecraftServicesSkinRequest({
+        return await Requests.minecraftServicesProfileRequest({
             method: "POST",
             url: "/minecraft/profile/skins",
             headers: {
@@ -844,7 +844,7 @@ export class Generator {
             filename: "skin.png",
             contentType: "image/png"
         });
-        return await Requests.minecraftServicesSkinRequest({
+        return await Requests.minecraftServicesProfileRequest({
             method: "POST",
             url: "/minecraft/profile/skins",
             headers: body.getHeaders({
@@ -1007,7 +1007,7 @@ export class Generator {
 
     protected static async clearCape(account: IAccountDocument): Promise<boolean> {
         console.log(info(`Clearing cape of ${ account.id }/${ account.uuid }`));
-        return Requests.minecraftServicesRequest({
+        return Requests.minecraftServicesProfileRequest({
             method: "DELETE",
             url: "/minecraft/profile/capes/active",
             headers: {

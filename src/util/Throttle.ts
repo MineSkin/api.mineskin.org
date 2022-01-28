@@ -29,7 +29,7 @@ export class Throttle<K, V> {
         if (now > this.next) {
             const next = this.queue.shift();
             if (next) {
-                this.last = now;
+                this.last = now; //TODO: move this below await maybe
                 const v = await this.runner(next.k);
                 next.consumer(v);
             }

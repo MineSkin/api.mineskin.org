@@ -126,7 +126,7 @@ export class Caching {
         .expireAfterWrite(Time.seconds(30))
         .expirationInterval(Time.seconds(30))
         .buildAsync<string, BasicMojangProfile>(accessToken => {
-            return Requests.minecraftServicesRequest({
+            return Requests.minecraftServicesProfileRequest({
                 method: "GET",
                 url: "/minecraft/profile",
                 headers: {
