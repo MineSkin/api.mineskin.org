@@ -25,6 +25,7 @@ import gitsha from "@inventivetalent/gitsha";
 import { GitConfig } from "@inventivetalent/gitconfig";
 import { GithubWebhook } from "@inventivetalent/express-github-webhook/dist/src";
 import { Stats } from "./generator/Stats";
+import { Requests } from "./generator/Requests";
 
 sourceMapSupport.install();
 
@@ -53,6 +54,8 @@ async function init() {
         GitConfig.axiosInstance.defaults.headers["Authorization"] = "token " + localConfig.gitconfig.token;
 
         config = await getConfig();
+
+        Requests.init(config);
     }
 
     {

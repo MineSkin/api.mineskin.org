@@ -5,7 +5,7 @@ import { URL } from "url";
 import { setInterval } from "timers";
 import { IPoint } from "influx";
 import * as Sentry from "@sentry/node";
-import { getConfig } from "../typings/Configs";
+import { getConfig, MineSkinConfig } from "../typings/Configs";
 import { MineSkinMetrics } from "../util/metrics";
 import { Transaction } from "@sentry/tracing";
 import { c } from "../util/colors";
@@ -92,6 +92,10 @@ export class Requests {
             Sentry.captureException(e);
         }
     }, 10000);
+
+    public static init(config: MineSkinConfig) {
+        axios.defaults.headers["User-Agent"] = "MineSkin/" + config.server;
+    }
 
     protected static async runAxiosRequest(request: AxiosRequestConfig, instance = this.axiosInstance): Promise<AxiosResponse> {
         const t = this.trackSentryStart(request);
