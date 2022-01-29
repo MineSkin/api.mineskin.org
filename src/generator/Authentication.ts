@@ -1,6 +1,7 @@
 import { Requests } from "./Requests";
 import * as Sentry from "@sentry/node";
-import XboxLiveAuth, { AuthenticateResponse, ExchangeRpsTicketResponse } from "@xboxreplay/xboxlive-auth";
+import * as XboxLiveAuth from "@xboxreplay/xboxlive-auth"
+import { AuthenticateResponse, ExchangeRpsTicketResponse } from "@xboxreplay/xboxlive-auth"
 import qs from "querystring";
 import { AxiosResponse } from "axios";
 import { getConfig } from "../typings/Configs";
