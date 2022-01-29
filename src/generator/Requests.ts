@@ -1,5 +1,6 @@
 import { JobQueue } from "jobqu";
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
+import rateLimit, { RateLimitedAxiosInstance } from 'axios-rate-limit';
 import { Time } from "@inventivetalent/time";
 import { URL } from "url";
 import { setInterval } from "timers";
@@ -10,7 +11,6 @@ import { MineSkinMetrics } from "../util/metrics";
 import { Transaction } from "@sentry/tracing";
 import { c } from "../util/colors";
 import { Maybe } from "../util";
-import { Throttle } from "../util/Throttle";
 
 axios.defaults.headers["User-Agent"] = "MineSkin";
 axios.defaults.headers["Content-Type"] = "application/json";
@@ -42,6 +42,13 @@ export class Requests {
         baseURL: "https://api.minecraftservices.com",
         headers: {}
     });
+    protected static readonly minecraftServicesProfileInstance: RateLimitedAxiosInstance = rateLimit(axios.create({
+        baseURL: "https://api.minecraftservices.com",
+        headers: {}
+    }), {
+        maxRequests: 20,
+        perMilliseconds: 60 * 1000
+    })
     protected static readonly liveLoginInstance: AxiosInstance = axios.create({
         baseURL: "https://login.live.com",
         headers: {}
@@ -55,11 +62,13 @@ export class Requests {
         = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, Requests.mojangSessionInstance), Time.millis(200), 1);
     protected static readonly minecraftServicesRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
         = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, Requests.minecraftServicesInstance), Time.millis(200), 1);
+    protected static readonly minecraftServicesProfileRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
+        = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, Requests.minecraftServicesProfileInstance), Time.millis(200), 1);
     protected static readonly liveLoginRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
         = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, Requests.liveLoginInstance), Time.millis(200), 1);
 
-    protected static readonly minecraftServicesProfileRequestThrottle: Throttle<AxiosRequestConfig, AxiosResponse>
-        = new Throttle<AxiosRequestConfig, AxiosResponse>(Time.seconds(3), request => Requests.runAxiosRequest(request, Requests.minecraftServicesInstance)); // 2s is too fast already...
+    // protected static readonly minecraftServicesProfileRequestThrottle: Throttle<AxiosRequestConfig, AxiosResponse>
+    //     = new Throttle<AxiosRequestConfig, AxiosResponse>(Time.seconds(3), request => Requests.runAxiosRequest(request, Requests.minecraftServicesInstance)); // 2s is too fast already...
 
     protected static metricsCollector = setInterval(async () => {
         const config = await getConfig();
@@ -68,7 +77,7 @@ export class Requests {
             ["mojangApi", Requests.mojangApiRequestQueue],
             ["mojangSession", Requests.mojangSessionRequestQueue],
             ["minecraftServices", Requests.minecraftServicesRequestQueue],
-            ["minecraftServicesProfile", Requests.minecraftServicesProfileRequestThrottle],
+            ["minecraftServicesProfile", Requests.minecraftServicesProfileRequestQueue],
             ["liveLogin", Requests.liveLoginRequestQueue]
         ]);
         const points: IPoint[] = [];
@@ -193,8 +202,8 @@ export class Requests {
     public static async minecraftServicesProfileRequest(request: AxiosRequestConfig, bread?: string): Promise<AxiosResponse> {
         this.addBreadcrumb(request, bread);
         const t = this.trackSentryQueued(request);
-        // const r = await this.minecraftServicesSkinRequestQueue.add(request);
-        const r = await this.minecraftServicesProfileRequestThrottle.submit(request);
+        const r = await this.minecraftServicesProfileRequestQueue.add(request);
+        // const r = await this.minecraftServicesProfileRequestThrottle.submit(request);
         t?.finish();
         return r;
     }
