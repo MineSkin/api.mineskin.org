@@ -46,8 +46,8 @@ export class Requests {
         baseURL: "https://api.minecraftservices.com",
         headers: {}
     }), {
-        maxRequests: 20,
-        perMilliseconds: 60 * 1000
+        maxRequests: 5,
+        perMilliseconds: 15 * 1000
     })
     protected static readonly liveLoginInstance: AxiosInstance = axios.create({
         baseURL: "https://login.live.com",
