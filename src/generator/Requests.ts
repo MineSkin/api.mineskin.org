@@ -28,23 +28,28 @@ export class Requests {
             // "Accept-Encoding": "gzip, deflate",
             // "Origin": "mojang://launcher",
             // "User-Agent": "Minecraft Launcher/2.1.2481 (bcb98e4a63) Windows (10.0; x86_64)"
-        }
+        },
+        timeout: 5000
     });
     protected static readonly mojangApiInstance: AxiosInstance = axios.create({
         baseURL: "https://api.mojang.com",
-        headers: {}
+        headers: {},
+        timeout: 5000
     });
     protected static readonly mojangSessionInstance: AxiosInstance = axios.create({
         baseURL: "https://sessionserver.mojang.com",
-        headers: {}
+        headers: {},
+        timeout: 5000
     });
     protected static readonly minecraftServicesInstance: AxiosInstance = axios.create({
         baseURL: "https://api.minecraftservices.com",
-        headers: {}
+        headers: {},
+        timeout: 5000
     });
     protected static readonly liveLoginInstance: AxiosInstance = axios.create({
         baseURL: "https://login.live.com",
-        headers: {}
+        headers: {},
+        timeout: 5000
     });
 
     protected static readonly mojangAuthRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
