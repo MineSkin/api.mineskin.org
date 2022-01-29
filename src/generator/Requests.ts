@@ -86,7 +86,9 @@ export class Requests {
         });
         try {
             MineSkinMetrics.get().then(metrics => {
-                metrics.metrics!.influx.writePoints(points);
+                metrics.metrics!.influx.writePoints(points, {
+                    precision: 's'
+                });
             })
         } catch (e) {
             Sentry.captureException(e);

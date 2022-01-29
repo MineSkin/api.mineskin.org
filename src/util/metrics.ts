@@ -111,7 +111,8 @@ export class MineSkinMetrics {
                     duration: duration
                 }
             }], {
-                database: 'mineskin'
+                database: 'mineskin',
+                precision: 'ms'
             });
         } catch (e) {
             Sentry.captureException(e);

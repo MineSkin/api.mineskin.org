@@ -229,7 +229,8 @@ AccountSchema.statics.findUsable = async function (this: IAccountModel, bread?: 
                         lastUsed: usedDiff
                     }
                 }], {
-                    database: 'mineskin'
+                    database: 'mineskin',
+                    precision: 'ms'
                 })
             } catch (e) {
                 Sentry.captureException(e);

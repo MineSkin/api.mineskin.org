@@ -104,7 +104,8 @@ export class Generator {
                     delay: delay
                 }
             }], {
-                database: 'mineskin'
+                database: 'mineskin',
+                precision: 's'
             })
         } catch (e) {
             Sentry.captureException(e);
@@ -245,7 +246,8 @@ export class Generator {
                     }
                 }
             ], {
-                database: 'mineskin'
+                database: 'mineskin',
+                precision: 's'
             })
 
             let accountsPerTypePoints: IPoint[] = [];
@@ -262,7 +264,8 @@ export class Generator {
                 })
             }
             await metrics.metrics!.influx.writePoints(accountsPerTypePoints, {
-                database: 'mineskin'
+                database: 'mineskin',
+                precision: 's'
             })
         } catch (e) {
             console.warn(e);

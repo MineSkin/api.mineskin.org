@@ -240,7 +240,9 @@ export class Caching {
             cache.stats.reset();
         });
         try {
-            metrics.metrics!.influx.writePoints(points);
+            metrics.metrics!.influx.writePoints(points, {
+                precision: 'ms'
+            });
         } catch (e) {
             Sentry.captureException(e);
         }
