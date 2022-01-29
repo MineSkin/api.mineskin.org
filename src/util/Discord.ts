@@ -4,7 +4,7 @@ import { getConfig } from "../typings/Configs";
 import { IAccountDocument } from "../typings";
 import { Request } from "express";
 import { getIp } from "./index";
-import * as FormData from "form-data";
+import FormData from "form-data";
 
 export const OWNER_CHANNEL = "636632020985839619";
 export const SUPPORT_CHANNEL = "482181024445497354";

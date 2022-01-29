@@ -6,7 +6,7 @@ import * as Sentry from "@sentry/node";
 import { Generator } from "../generator/Generator";
 import { imageSize } from "image-size";
 import * as fileType from "file-type";
-import * as readChunk from "read-chunk";
+import readChunk from "read-chunk";
 import * as crypto from "crypto";
 import { Caching } from "../generator/Caching";
 import { SkinModel, SkinVariant } from "../typings/db/ISkinDocument";

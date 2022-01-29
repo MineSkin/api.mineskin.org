@@ -5,7 +5,7 @@ import { Caching } from "./Caching";
 import { Authentication, AuthenticationError } from "./Authentication";
 import * as Sentry from "@sentry/node";
 import { Requests } from "./Requests";
-import * as FormData from "form-data";
+import FormData from "form-data";
 import { URL } from "url";
 import { MOJ_DIR, Temp, TempFile, UPL_DIR, URL_DIR } from "./Temp";
 import { AxiosResponse } from "axios";

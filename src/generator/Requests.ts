@@ -1,6 +1,6 @@
 import { JobQueue } from "jobqu";
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
-import rateLimit, { RateLimitedAxiosInstance } from 'axios-rate-limit';
+import rateLimit, { RateLimitedAxiosInstance } from "axios-rate-limit";
 import { Time } from "@inventivetalent/time";
 import { URL } from "url";
 import { setInterval } from "timers";

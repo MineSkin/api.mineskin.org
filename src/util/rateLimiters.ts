@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import * as rateLimit from "express-rate-limit";
+import rateLimit from "express-rate-limit";
 import { getIp } from "./index";
 import { debug } from "./colors";
 import { MineSkinMetrics } from "./metrics";

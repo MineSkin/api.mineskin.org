@@ -1,12 +1,12 @@
 import { Application, Request, Response } from "express";
 import { Authentication, AuthenticationError, AuthError, BasicMojangProfile, Microsoft, Mojang, MojangSecurityAnswer, XboxInfo } from "../generator/Authentication";
 import { base64decode, corsWithCredentialsMiddleware, getIp, Maybe, md5, sha1, sha256, sha512, stripUuid } from "../util";
-import * as session from "express-session";
+import session from "express-session";
 import { Generator } from "../generator/Generator";
 import { Account } from "../database/schemas";
 import { Caching } from "../generator/Caching";
 import { Requests } from "../generator/Requests";
-import * as qs from "querystring";
+import qs from "querystring";
 import { Discord } from "../util/Discord";
 import { getConfig, MineSkinConfig } from "../typings/Configs";
 import { AccessTokenSource, AccountType, IAccountDocument } from "../typings/db/IAccountDocument";

@@ -1,5 +1,4 @@
-import * as chalk from "chalk";
-import { Chalk } from "chalk";
+import chalk, { Chalk } from "chalk";
 
 export interface Bread {
     breadcrumb?: string;

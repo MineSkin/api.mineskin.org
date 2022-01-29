@@ -1,5 +1,4 @@
-import * as mongoose from "mongoose";
-import { ConnectOptions, Mongoose } from "mongoose";
+import mongoose, { ConnectOptions, Mongoose } from "mongoose";
 import * as Sentry from "@sentry/node";
 import { MineSkinConfig } from "../typings/Configs";
 import tunnel = require("tunnel-ssh");

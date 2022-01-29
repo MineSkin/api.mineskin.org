@@ -7,7 +7,7 @@ import { ApiKey } from "../database/schemas/ApiKey";
 import { Requests } from "../generator/Requests";
 import { getConfig } from "../typings/Configs";
 import { PendingDiscordApiKeyLink } from "../typings/DiscordAccountLink";
-import * as qs from "querystring";
+import qs from "querystring";
 import { Discord } from "../util/Discord";
 
 
