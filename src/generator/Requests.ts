@@ -15,7 +15,7 @@ import { Maybe } from "../util";
 axios.defaults.headers["User-Agent"] = "MineSkin";
 axios.defaults.headers["Content-Type"] = "application/json";
 axios.defaults.headers["Accept"] = "application/json";
-axios.defaults.timeout = 5000;
+axios.defaults.timeout = 10000;
 
 
 export class Requests {

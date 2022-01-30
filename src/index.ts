@@ -191,7 +191,7 @@ async function init() {
                 console.log("updating!")
                 updatingApp = true;
                 console.log(process.cwd());
-            }, updateDelay + 2000);
+            }, updateDelay + 5000);
         });
         app.use(function (req: Request, res: Response, next: NextFunction) {
             if (updatingApp) {
