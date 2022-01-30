@@ -20,7 +20,6 @@ export class Discord {
             url: "https://discordapp.com/api/channels/" + channel + "/messages",
             headers: {
                 "Authorization": "Bot " + config.discord.token,
-                "User-Agent": "MineSkin",
                 "Content-Type": "application/json"
             },
             data: JSON.stringify({ content: content })
@@ -55,8 +54,7 @@ export class Discord {
             method: "POST",
             url: "https://discordapp.com/api/channels/" + channel + "/messages",
             headers: body.getHeaders({
-                "Authorization": "Bot " + config.discord.token,
-                "User-Agent": "MineSkin"
+                "Authorization": "Bot " + config.discord.token
             }),
             data: body
         }).then(response => {
@@ -80,7 +78,6 @@ export class Discord {
             url: "https://discordapp.com/api/users/@me/channels",
             headers: {
                 "Authorization": "Bot " + config.discord.token,
-                "User-Agent": "MineSkin",
                 "Content-Type": "application/json"
             },
             data: JSON.stringify({ recipient_id: receiver })
