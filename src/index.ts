@@ -155,7 +155,7 @@ async function init() {
     {// Git Puller
         console.log("Setting up git puller");
 
-        const updateDelay = Math.ceil(Math.random() * 20000) + Math.ceil(Math.random() * 20000);
+        const updateDelay = ((Math.round(Math.random() * 10) * 5) * 1000) + Math.ceil(Math.random() * 20000);
         const puller = new Puller({
             ...{
                 events: ["push"],
