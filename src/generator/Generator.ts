@@ -715,6 +715,7 @@ export class Generator {
                 "Content-Type": "application/json",
                 "Authorization": account.authenticationHeader()
             },
+            timeout: 10000,
             data: body
         }, breadcrumb).catch(err => {
             if (err.response) {
@@ -853,6 +854,7 @@ export class Generator {
             headers: body.getHeaders({
                 "Authorization": account.authenticationHeader()
             }),
+            timeout: 10000,
             data: body
         }, breadcrumb).catch(err => {
             if (err.response) {
