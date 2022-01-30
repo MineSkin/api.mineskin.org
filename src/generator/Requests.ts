@@ -106,6 +106,17 @@ export class Requests {
 
     public static init(config: MineSkinConfig) {
         axios.defaults.headers["User-Agent"] = "MineSkin/" + config.server;
+        for (let instance of [
+            this.axiosInstance,
+            this.mojangAuthInstance,
+            this.mojangApiInstance,
+            this.mojangSessionInstance,
+            this.minecraftServicesInstance,
+            this.minecraftServicesProfileInstance,
+            this.liveLoginInstance
+        ]) {
+            instance.defaults.headers["User-Agent"] = "MineSkin/" + config.server;
+        }
     }
 
     protected static async runAxiosRequest(request: AxiosRequestConfig, instance = this.axiosInstance): Promise<AxiosResponse> {
