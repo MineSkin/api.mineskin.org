@@ -133,7 +133,10 @@ export class Requests {
         const metrics = await MineSkinMetrics.get();
         try {
             const m = metrics.requests
-                .tag("server", metrics.config.server);
+                .tag("server", metrics.config.server)
+                .tag("hasRequest", `${ typeof request !== "undefined" }`)
+                .tag("hasResponse", `${ typeof response !== "undefined" }`)
+                .tag("hasError", `${ typeof err !== "undefined" }`);
             if (request) {
                 const url = new URL(axios.getUri(request), instance?.defaults.baseURL);
                 m.tag("method", request.method || "GET")
