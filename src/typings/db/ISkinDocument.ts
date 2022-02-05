@@ -1,4 +1,4 @@
-import { Document, Model } from "mongoose";
+import { Document, Model, UpdateWriteOpResult } from "mongoose";
 import { SkinInfo } from "../SkinInfo";
 import { Maybe } from "../../util";
 
@@ -104,4 +104,6 @@ export interface ISkinModel extends Model<ISkinDocument> {
     findForUuid(uuid: string): Promise<Maybe<ISkinDocument>>;
 
     attachTesterResult(id: number, server: string, mismatchCount: number): Promise<ISkinDocument>;
+
+    incViews(uuid: string): Promise<UpdateWriteOpResult>;
 }

@@ -1,4 +1,4 @@
-import { model, Schema } from "mongoose";
+import { model, Schema, UpdateWriteOpResult } from "mongoose";
 import { modelToVariant, stripUuid } from "../../util";
 import { ISkinDocument } from "../../typings";
 import { ISkinModel, SkinVisibility } from "../../typings/db/ISkinDocument";
@@ -152,6 +152,10 @@ SkinSchema.statics.findForUuid = function ( uuid: string): Promise<ISkinDocument
 
 SkinSchema.statics.attachTesterResult = function ( id: number, server: string, mismatchCount: number): Promise<ISkinDocument | null> {
     return Skin.findOneAndUpdate({ id: id, server: server }, { testerRequest: true, testerMismatchCounter: mismatchCount }).exec();
+};
+
+SkinSchema.statics.incViews = function (uuid: string): Promise<UpdateWriteOpResult> {
+    return Skin.updateOne({ uuid: uuid }, { $inc: { views: 1 } }).exec();
 };
 
 export const Skin: ISkinModel = model<ISkinDocument, ISkinModel>("Skin", SkinSchema);

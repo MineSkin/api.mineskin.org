@@ -59,14 +59,10 @@ export const register = (app: Application) => {
             res.status(404).json({ error: "Skin not found" });
             return;
         }
-        skin.views++;
-        if (skin.model === "alex") {
-            skin.model = "slim";
-        }
         res
             .header("Cache-Control", "public, max-age=3600")
             .json(await skin.toResponseJson()); // this triggers the generation of a random uuid if it doesn't have one, so do that before saving
-        await skin.save();
+        await Skin.incViews(skin.uuid);
     })
 
     app.get("/get/uuid/:uuid", async (req: Request, res: Response) => {
@@ -80,14 +76,10 @@ export const register = (app: Application) => {
             res.status(404).json({ error: "Skin not found" });
             return;
         }
-        skin.views++;
-        if (skin.model === "alex") {
-            skin.model = "slim";
-        }
         res
             .header("Cache-Control", "public, max-age=3600")
             .json(await skin.toResponseJson());
-        await skin.save();
+        await Skin.incViews(skin.uuid);
     })
 
     // TODO: add route to get by hash
