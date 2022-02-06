@@ -155,7 +155,7 @@ SkinSchema.statics.attachTesterResult = function ( id: number, server: string, m
 };
 
 SkinSchema.statics.incViews = function (uuid: string): Promise<UpdateWriteOpResult> {
-    return Skin.updateOne({ uuid: uuid }, { $inc: { views: 1 } }).exec();
+    return Skin.updateOne({ skinUuid: uuid }, { $inc: { skinViews: 1 } }).exec();
 };
 
 export const Skin: ISkinModel = model<ISkinDocument, ISkinModel>("Skin", SkinSchema);
