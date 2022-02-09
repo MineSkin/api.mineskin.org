@@ -140,6 +140,10 @@ export class Requests {
                 const url = new URL(axios.getUri(request), instance?.defaults.baseURL);
                 m.tag("method", request.method || "GET")
                     .tag("host", url.hostname);
+
+                if (["api.minecraftservices.com", "api.mojang.com", "authserver.mojang.com", "sessionserver.mojang.com"].includes(url.hostname)) {
+                    m.tag("endpoint", url.pathname);
+                }
             }
             if (response) {
                 m.tag("statusCode", "" + response.status)
