@@ -684,17 +684,29 @@ export const register = (app: Application, config: MineSkinConfig) => {
             return;
         }
 
-        await account.deleteOne();
-        res.json({
-            success: true,
-            msg: "account removed"
-        });
+        const deleteResult = await Account.deleteOne({
+            type: "external",
+            uuid: profileValidation.profile.id
+        })
+        if ((deleteResult?.deletedCount || 0) < 1) {
+            res.json({
+                success: false,
+                msg: "failed to delete that account"
+            });
+
+            Discord.postDiscordMessage("👤 Account " + account.id + "/" + account.uuid + " failed to delete");
+        } else {
+            res.json({
+                success: true,
+                msg: "account removed"
+            });
+
+            Discord.postDiscordMessage("👤 Account " + account.id + "/" + account.uuid + " deleted (was linked to " + account.email + "/<@" + account.discordUser + ">)");
+        }
 
         if (account.discordUser) {
             Discord.sendDiscordDirectMessage("Your MineSkin account " + account.uuid + " has been deleted.", account.discordUser);
         }
-
-        Discord.postDiscordMessage("👤 Account " + account.id + "/" + account.uuid + " deleted (was linked to " + account.email + "/<@" + account.discordUser + ">)");
     })
 
 
