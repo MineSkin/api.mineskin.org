@@ -22,7 +22,7 @@ export class Requests {
 
     protected static readonly defaultRateLimit: { maxRequests?: number, perMilliseconds?: number, maxRPS?:number } = {
         maxRequests: 600,
-        perMilliseconds: 60 * 1000
+        perMilliseconds: 10 * 60 * 1000
     }
 
     static readonly axiosInstance: AxiosInstance = axios.create({});
