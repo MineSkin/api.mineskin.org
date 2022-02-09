@@ -691,6 +691,8 @@ export const register = (app: Application, config: MineSkinConfig) => {
 
         await sleep(1000);
 
+        await destroySession(req);
+
         if ((deleteResult?.deletedCount || 0) < 1) {
             res.json({
                 success: false,
