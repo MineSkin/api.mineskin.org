@@ -20,6 +20,11 @@ axios.defaults.timeout = 10000;
 
 export class Requests {
 
+    protected static readonly defaultRateLimit: { maxRequests?: number, perMilliseconds?: number, maxRPS?:number } = {
+        maxRequests: 600,
+        perMilliseconds: 60 * 1000
+    }
+
     static readonly axiosInstance: AxiosInstance = axios.create({});
     protected static readonly mojangAuthInstance: AxiosInstance = axios.create({
         baseURL: "https://authserver.mojang.com",
@@ -30,18 +35,18 @@ export class Requests {
             // "User-Agent": "Minecraft Launcher/2.1.2481 (bcb98e4a63) Windows (10.0; x86_64)"
         }
     });
-    protected static readonly mojangApiInstance: AxiosInstance = axios.create({
+    protected static readonly mojangApiInstance: AxiosInstance = rateLimit(axios.create({
         baseURL: "https://api.mojang.com",
         headers: {}
-    });
-    protected static readonly mojangSessionInstance: AxiosInstance = axios.create({
+    }), Requests.defaultRateLimit);
+    protected static readonly mojangSessionInstance: AxiosInstance = rateLimit(axios.create({
         baseURL: "https://sessionserver.mojang.com",
         headers: {}
-    });
-    protected static readonly minecraftServicesInstance: AxiosInstance = axios.create({
+    }), Requests.defaultRateLimit);
+    protected static readonly minecraftServicesInstance: AxiosInstance = rateLimit(axios.create({
         baseURL: "https://api.minecraftservices.com",
         headers: {}
-    });
+    }), Requests.defaultRateLimit);
     protected static readonly minecraftServicesProfileInstance: RateLimitedAxiosInstance = rateLimit(axios.create({
         baseURL: "https://api.minecraftservices.com",
         headers: {}
