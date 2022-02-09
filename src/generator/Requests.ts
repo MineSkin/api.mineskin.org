@@ -142,7 +142,21 @@ export class Requests {
                     .tag("host", url.hostname);
 
                 if (["api.minecraftservices.com", "api.mojang.com", "authserver.mojang.com", "sessionserver.mojang.com"].includes(url.hostname)) {
-                    m.tag("endpoint", url.pathname);
+                    let endpoint = url.pathname;
+                    if (url.hostname === "sessionserver.mojang.com") {
+                        if (url.hostname.startsWith("/session/minecraft/profile")) {
+                            endpoint = "/session/minecraft/profile/xxx";
+                        }
+                    }
+                    if (url.hostname === "api.mojang.com") {
+                        if (url.hostname.startsWith("/user/profiles") && url.hostname.endsWith("/names")) {
+                            endpoint = "/user/profiles/xxx/names";
+                        }
+                        if (url.hostname.startsWith("/users/profiles/minecraft")) {
+                            endpoint = "/users/profiles/minecraft/xxx";
+                        }
+                    }
+                    m.tag("endpoint", endpoint);
                 }
             }
             if (response) {
