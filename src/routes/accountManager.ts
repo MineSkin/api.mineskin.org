@@ -1,6 +1,6 @@
 import { Application, Request, Response } from "express";
 import { Authentication, AuthenticationError, AuthError, BasicMojangProfile, Microsoft, Mojang, MojangSecurityAnswer, XboxInfo } from "../generator/Authentication";
-import { base64decode, corsWithCredentialsMiddleware, getIp, Maybe, md5, sha1, sha256, sha512, stripUuid } from "../util";
+import { base64decode, corsWithCredentialsMiddleware, getIp, Maybe, md5, sha1, sha256, sha512, sleep, stripUuid } from "../util";
 import session from "express-session";
 import { Generator } from "../generator/Generator";
 import { Account } from "../database/schemas";
@@ -688,6 +688,9 @@ export const register = (app: Application, config: MineSkinConfig) => {
             type: "external",
             uuid: profileValidation.profile.id
         })
+
+        await sleep(1000);
+
         if ((deleteResult?.deletedCount || 0) < 1) {
             res.json({
                 success: false,
@@ -707,6 +710,8 @@ export const register = (app: Application, config: MineSkinConfig) => {
         if (account.discordUser) {
             Discord.sendDiscordDirectMessage("Your MineSkin account " + account.uuid + " has been deleted.", account.discordUser);
         }
+
+
     })
 
 
