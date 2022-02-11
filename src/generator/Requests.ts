@@ -39,6 +39,13 @@ export class Requests {
         baseURL: "https://api.mojang.com",
         headers: {}
     }), Requests.defaultRateLimit);
+    protected static readonly mojangApiProfileInstance: AxiosInstance = rateLimit(axios.create({
+        baseURL: "https://api.mojang.com",
+        headers: {}
+    }), {
+        maxRequests: 10,
+        perMilliseconds: 15 * 1000
+    });
     protected static readonly mojangSessionInstance: AxiosInstance = rateLimit(axios.create({
         baseURL: "https://sessionserver.mojang.com",
         headers: {}
@@ -63,6 +70,8 @@ export class Requests {
         = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, Requests.mojangAuthInstance), Time.millis(200), 1);
     protected static readonly mojangApiRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
         = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, Requests.mojangApiInstance), Time.millis(200), 1);
+    protected static readonly mojangApiProfileRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
+        = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, Requests.mojangApiProfileInstance), Time.millis(200), 1);
     protected static readonly mojangSessionRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
         = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, Requests.mojangSessionInstance), Time.millis(200), 1);
     protected static readonly minecraftServicesRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
@@ -80,6 +89,7 @@ export class Requests {
         const queues = new Map<string, ISize>([
             ["mojangAuth", Requests.mojangAuthRequestQueue],
             ["mojangApi", Requests.mojangApiRequestQueue],
+            ["mojangApiProfile", Requests.mojangApiProfileRequestQueue],
             ["mojangSession", Requests.mojangSessionRequestQueue],
             ["minecraftServices", Requests.minecraftServicesRequestQueue],
             ["minecraftServicesProfile", Requests.minecraftServicesProfileRequestQueue],
@@ -115,6 +125,7 @@ export class Requests {
             this.axiosInstance,
             this.mojangAuthInstance,
             this.mojangApiInstance,
+            this.mojangApiProfileInstance,
             this.mojangSessionInstance,
             this.minecraftServicesInstance,
             this.minecraftServicesProfileInstance,
@@ -218,6 +229,14 @@ export class Requests {
         this.addBreadcrumb(request, bread);
         const t = this.trackSentryQueued(request);
         const r = await this.mojangApiRequestQueue.add(request);
+        t?.finish();
+        return r;
+    }
+
+    public static async mojangApiProfileRequest(request: AxiosRequestConfig, bread?: string): Promise<AxiosResponse> {
+        this.addBreadcrumb(request, bread);
+        const t = this.trackSentryQueued(request);
+        const r = await this.mojangApiProfileRequestQueue.add(request);
         t?.finish();
         return r;
     }

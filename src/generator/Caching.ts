@@ -49,7 +49,7 @@ export class Caching {
         .expireAfterWrite(Time.minutes(5))
         .expirationInterval(Time.minutes(1))
         .buildAsync<string, User>(name => {
-            return Requests.mojangApiRequest({
+            return Requests.mojangApiProfileRequest({
                 url: "/users/profiles/minecraft/" + name,
 
             }).then(response => {
@@ -88,7 +88,7 @@ export class Caching {
         .expirationInterval(Time.minutes(1))
         .buildAsync<string, User>(uuid => {
             uuid = stripUuid(uuid);
-            return Requests.mojangApiRequest({
+            return Requests.mojangApiProfileRequest({
                 url: "/user/profiles/" + uuid + "/names"
             }).then(response => {
                 let d = {
