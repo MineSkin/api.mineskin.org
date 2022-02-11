@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import rateLimit from "express-rate-limit";
-import { getIp } from "./index";
+import { getAndValidateRequestApiKey, getIp } from "./index";
 import { debug } from "./colors";
 import { MineSkinMetrics } from "./metrics";
 import { Generator } from "../generator/Generator";
@@ -12,8 +12,9 @@ function keyGenerator(req: Request): string {
 const GEN_LIMIT_WINDOW = 10;
 export const generateLimiter = rateLimit({
     windowMs: GEN_LIMIT_WINDOW * 1000,
-    max: async () => {
-        return Math.floor(GEN_LIMIT_WINDOW / await Generator.getMinDelay())
+    max: async (req, res) => {
+        const delay = await Generator.getDelay(await getAndValidateRequestApiKey(req))
+        return Math.floor(GEN_LIMIT_WINDOW / delay.millis);
     },
     message: JSON.stringify({ error: "Too many requests" }),
     keyGenerator: keyGenerator,
