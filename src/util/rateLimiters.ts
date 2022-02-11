@@ -14,7 +14,7 @@ export const generateLimiter = rateLimit({
     windowMs: GEN_LIMIT_WINDOW * 1000,
     max: async (req, res) => {
         const delay = await Generator.getDelay(await getAndValidateRequestApiKey(req))
-        return Math.floor(GEN_LIMIT_WINDOW / delay.millis);
+        return Math.ceil(GEN_LIMIT_WINDOW / delay.seconds);
     },
     message: JSON.stringify({ error: "Too many requests" }),
     keyGenerator: keyGenerator,
