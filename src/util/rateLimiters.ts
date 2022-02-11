@@ -9,7 +9,7 @@ function keyGenerator(req: Request): string {
     return getIp(req);
 }
 
-const GEN_LIMIT_WINDOW = 30;
+const GEN_LIMIT_WINDOW = 10;
 export const generateLimiter = rateLimit({
     windowMs: GEN_LIMIT_WINDOW * 1000,
     max: async () => {
