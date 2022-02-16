@@ -177,6 +177,12 @@ export class Requests {
             }
             if (response) {
                 m.tag("statusCode", "" + response.status)
+
+                if (response.status !== 200) {
+                    if (request) {
+                        console.log(c.yellow(`${ this.getBreadcrumb(request) || '00000000' }   ${ response.status } ${ request.method || 'GET' } ${ request.baseURL || instance?.defaults?.baseURL || '' }${ request.url }`))
+                    }
+                }
             }
             if (err) {
                 m.tag("error", err.name);
