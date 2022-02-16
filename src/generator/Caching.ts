@@ -46,12 +46,11 @@ export class Caching {
         });
 
     protected static readonly userByNameCache: AsyncLoadingCache<string, User> = Caches.builder()
-        .expireAfterWrite(Time.minutes(5))
+        .expireAfterWrite(Time.minutes(10))
         .expirationInterval(Time.minutes(1))
         .buildAsync<string, User>(name => {
             return Requests.mojangApiProfileRequest({
                 url: "/users/profiles/minecraft/" + name,
-
             }).then(response => {
                 let d = {
                     valid: false,
@@ -84,7 +83,7 @@ export class Caching {
             });
         });
     protected static readonly userByUuidCache: AsyncLoadingCache<string, User> = Caches.builder()
-        .expireAfterWrite(Time.minutes(5))
+        .expireAfterWrite(Time.minutes(10))
         .expirationInterval(Time.minutes(1))
         .buildAsync<string, User>(uuid => {
             uuid = stripUuid(uuid);
