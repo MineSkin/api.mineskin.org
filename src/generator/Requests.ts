@@ -43,8 +43,8 @@ export class Requests {
         baseURL: "https://api.mojang.com",
         headers: {}
     }), {
-        maxRequests: 6,
-        perMilliseconds: 10 * 1000
+        maxRequests: 12,
+        perMilliseconds: 30 * 1000
     });
     protected static readonly mojangSessionInstance: AxiosInstance = rateLimit(axios.create({
         baseURL: "https://sessionserver.mojang.com",
