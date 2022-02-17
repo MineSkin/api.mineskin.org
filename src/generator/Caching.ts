@@ -57,15 +57,17 @@ export class Caching {
                     uuid: undefined,
                     name: name
                 } as User;
-                if (Requests.isOk(response) && (response.data && response.data.hasOwnProperty("id"))) {
-                    const body = response.data;
-                    d = {
-                        valid: true,
-                        uuid: body["id"],
-                        name: body["name"]
-                    } as User;
-                    // update other cache
-                    Caching.userByUuidCache.put(d.uuid!, d);
+                if (Requests.isOk(response)) {
+                    if (response.data && response.data.hasOwnProperty("id")) {
+                        const body = response.data;
+                        d = {
+                            valid: true,
+                            uuid: body["id"],
+                            name: body["name"]
+                        } as User;
+                        // update other cache
+                        Caching.userByUuidCache.put(d.uuid!, d);
+                    }
                 } else {
                     console.warn(response)
                 }
@@ -97,15 +99,17 @@ export class Caching {
                     uuid: uuid,
                     name: undefined
                 } as User;
-                if (Requests.isOk(response) && (response.data && response.data.length > 0)) {
-                    const body = response.data;
-                    d = {
-                        valid: true,
-                        uuid: uuid,
-                        name: body[body.length - 1]["name"]
-                    } as User;
-                    // update other cache
-                    Caching.userByNameCache.put(d.name!.toLowerCase(), d);
+                if (Requests.isOk(response)) {
+                    if (response.data && response.data.length > 0) {
+                        const body = response.data;
+                        d = {
+                            valid: true,
+                            uuid: uuid,
+                            name: body[body.length - 1]["name"]
+                        } as User;
+                        // update other cache
+                        Caching.userByNameCache.put(d.name!.toLowerCase(), d);
+                    }
                 } else {
                     console.warn(response)
                 }
