@@ -66,6 +66,8 @@ export class Caching {
                     } as User;
                     // update other cache
                     Caching.userByUuidCache.put(d.uuid!, d);
+                } else {
+                    console.warn(response)
                 }
                 return d;
             }).catch(err => {
@@ -104,6 +106,8 @@ export class Caching {
                     } as User;
                     // update other cache
                     Caching.userByNameCache.put(d.name!.toLowerCase(), d);
+                } else {
+                    console.warn(response)
                 }
                 return d;
             }).catch(err => {
