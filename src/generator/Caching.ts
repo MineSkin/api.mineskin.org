@@ -73,6 +73,7 @@ export class Caching {
                 }
                 return d;
             }).catch(err => {
+                console.warn(err);
                 Sentry.captureException(err, {
                     level: Severity.Warning,
                     tags: {
@@ -115,6 +116,7 @@ export class Caching {
                 }
                 return d;
             }).catch(err => {
+                console.warn(err);
                 Sentry.captureException(err, {
                     level: Severity.Warning,
                     tags: {
