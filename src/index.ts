@@ -86,7 +86,11 @@ async function init() {
             tracesSampleRate: 0.1,
             sampleRate: 0.8,
             ignoreErrors: [
-                "No duplicate found"
+                "No duplicate found",
+                "Invalid image file size",
+                "Invalid image dimensions",
+                "Failed to find image from url",
+                "Invalid file size"
             ]
         });
 
