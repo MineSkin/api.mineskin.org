@@ -15,7 +15,6 @@ import { Account } from "../database/schemas";
 import { epochSeconds, Maybe, toEpochSeconds } from "../util";
 import { MineSkinMetrics } from "../util/metrics";
 import { MicrosoftAuthInfo } from "../typings/MicrosoftAuthInfo";
-import { Caching } from "./Caching";
 
 const ACCESS_TOKEN_EXPIRATION_MOJANG = 86360;
 const ACCESS_TOKEN_EXPIRATION_MICROSOFT = 86360;
@@ -315,15 +314,15 @@ export class Microsoft {
 
         try {
             // Try to use the access token
-            // if (await Microsoft.checkGameOwnership(account.accessToken)) {
-            //     // Still valid!
-            //     return account;
-            // }
-            const profile = await Caching.getProfileByAccessToken(account.accessToken);
-            if (profile && profile.id?.length >= 32) {
+            if (await Microsoft.checkGameOwnership(account.accessToken)) {
                 // Still valid!
                 return account;
             }
+            // const profile = await Caching.getProfileByAccessToken(account.accessToken);
+            // if (profile && profile.id?.length >= 32) {
+            //     // Still valid!
+            //     return account;
+            // }
         } catch (e) {
             Sentry.captureException(e);
         }
