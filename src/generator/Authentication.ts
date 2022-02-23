@@ -565,8 +565,8 @@ export class Microsoft {
             }
         });
         const entitlementsBody = entitlementsResponse.data;
-        console.log("entitlements");
-        console.log(entitlementsBody)
+        // console.log("entitlements");
+        // console.log(entitlementsBody)
         return entitlementsBody.hasOwnProperty("items") && entitlementsBody["items"].length > 0;
     }
 
