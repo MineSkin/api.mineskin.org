@@ -39,8 +39,8 @@ import { DelayInfo } from "../typings/DelayInfo";
 import { FilterQuery } from "mongoose";
 
 
-// minimum delay for accounts to be used - don't set lower than 60
-export const MIN_ACCOUNT_DELAY = 70;
+// minimum delay for accounts to be used
+export const MIN_ACCOUNT_DELAY = 40;
 
 const MAX_ID_TRIES = 10;
 
