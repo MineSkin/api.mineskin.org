@@ -199,8 +199,8 @@ export class Caching {
         .build();
 
     protected static readonly recentAccountsLock: SimpleCache<number, string> = Caches.builder()
-        .expireAfterWrite(Time.minutes(1))
-        .expirationInterval(Time.seconds(20))
+        .expireAfterWrite(Time.seconds(30))
+        .expirationInterval(Time.seconds(10))
         .build();
 
     protected static readonly hashCache: LoadingCache<string, string> = Caches.builder()
