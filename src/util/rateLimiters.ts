@@ -16,6 +16,10 @@ export const generateLimiter = rateLimit({
         const delay = await Generator.getDelay(await getAndValidateRequestApiKey(req))
         return Math.ceil(GEN_LIMIT_WINDOW / delay.seconds);
     },
+    skip: (req, res) => {
+        if (req.path.includes("user")) return false; // always limit user, doesn't have check-only option
+        return !!(req.body["checkOnly"] || req.query["checkOnly"])
+    },
     message: JSON.stringify({ error: "Too many requests" }),
     keyGenerator: keyGenerator,
     onLimitReached: (req: Request, res: Response) => {
