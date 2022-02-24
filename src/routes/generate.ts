@@ -208,6 +208,11 @@ export const register = (app: Application) => {
     }
 
     function getAndValidateOptions(type: GenerateType, req: GenerateRequest, res: Response): GenerateOptions {
+        const transaction = Sentry.getCurrentHub().getScope()?.getTransaction();
+        const span = transaction?.startChild({
+            op: "generate_getAndValidateOptions"
+        })
+
         let model = validateModel(req.body["model"] || req.query["model"]);
         let variant = validateVariant(req.body["variant"] || req.query["variant"]);
         // Convert & make sure both are set
@@ -243,6 +248,7 @@ export const register = (app: Application) => {
         });
         Sentry.setExtra("generate_breadcrumb", breadcrumbId);
 
+        span?.finish();
         return {
             model,
             variant,

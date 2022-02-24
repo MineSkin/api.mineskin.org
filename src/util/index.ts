@@ -21,6 +21,11 @@ export function getIp(req: Request): string {
 }
 
 export async function checkTraffic(req: Request, res: Response): Promise<boolean> {
+    const transaction = Sentry.getCurrentHub().getScope()?.getTransaction();
+    const span = transaction?.startChild({
+        op: "generate_checkTraffic"
+    })
+
     const ip = getIp(req);
     console.log(debug("IP: " + ip));
 
@@ -30,6 +35,7 @@ export async function checkTraffic(req: Request, res: Response): Promise<boolean
 
     const lastRequest = await Caching.getTrafficRequestTimeByIp(ip);
     if (!lastRequest) { // First request
+        span?.finish();
         return true;
     }
     const time = Date.now();
@@ -62,14 +68,21 @@ export async function checkTraffic(req: Request, res: Response): Promise<boolean
                 .tag("limiter", "mongo")
                 .inc();
         })
+        span?.finish();
         return false;
     }
+    span?.finish();
     return true;
 }
 
 export async function updateTraffic(req: Request | ClientInfo, time: Date = new Date()): Promise<void> {
+    const transaction = Sentry.getCurrentHub().getScope()?.getTransaction();
+    const span = transaction?.startChild({
+        op: "generate_updateTraffic"
+    })
     const ip = req.ip ?? getIp(req as Request);
-    return await Caching.updateTrafficRequestTime(ip, time);
+    await Caching.updateTrafficRequestTime(ip, time);
+    span?.finish();
 }
 
 
