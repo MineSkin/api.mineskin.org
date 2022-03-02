@@ -1,6 +1,6 @@
 import { JobQueue } from "jobqu";
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
-import rateLimit, { RateLimitedAxiosInstance } from "axios-rate-limit";
+import rateLimit, { RateLimitedAxiosInstance, rateLimitOptions } from "@inventivetalent/axios-rate-limit";
 import { Time } from "@inventivetalent/time";
 import { URL } from "url";
 import { setInterval } from "timers";
@@ -20,7 +20,7 @@ axios.defaults.timeout = 10000;
 
 export class Requests {
 
-    protected static readonly defaultRateLimit: { maxRequests?: number, perMilliseconds?: number, maxRPS?:number } = {
+    protected static readonly defaultRateLimit: rateLimitOptions = {
         maxRequests: 600,
         perMilliseconds: 10 * 60 * 1000
     }
