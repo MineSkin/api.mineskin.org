@@ -11,6 +11,7 @@ import { MineSkinMetrics } from "../util/metrics";
 import { Transaction } from "@sentry/tracing";
 import { c } from "../util/colors";
 import { Maybe } from "../util";
+import * as https from "https";
 
 axios.defaults.headers["User-Agent"] = "MineSkin";
 axios.defaults.headers["Content-Type"] = "application/json";
@@ -41,7 +42,10 @@ export class Requests {
     }), Requests.defaultRateLimit);
     protected static readonly mojangApiProfileInstance: AxiosInstance = rateLimit(axios.create({
         baseURL: "https://api.mojang.com",
-        headers: {}
+        headers: {},
+        httpsAgent: new https.Agent({
+
+        })
     }), {
         maxRequests: 600,
         perMilliseconds: 10 * 60 * 1000
