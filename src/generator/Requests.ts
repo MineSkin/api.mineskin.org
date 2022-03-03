@@ -41,6 +41,8 @@ export class Requests {
 
     static readonly axiosInstance: AxiosInstance = axios.create({});
 
+    private static readonly requestQueues: { [k: string]: { [sk: string]: JobQueue<AxiosRequestConfig, AxiosResponse> }; } = {};
+
     // protected static readonly mojangAuthInstance: AxiosInstance = axios.create({
     //     baseURL: "https://authserver.mojang.com",
     //     headers: {
@@ -82,48 +84,64 @@ export class Requests {
     //     headers: {}
     // });
 
-    protected static readonly mojangAuthRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
-        = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, MOJANG_AUTH), Time.millis(200), 1);
-    protected static readonly mojangApiRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
-        = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, MOJANG_API), Time.millis(200), 1);
-    protected static readonly mojangApiProfileRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
-        = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, MOJANG_API_PROFILE), Time.millis(400), 1);
-    protected static readonly mojangSessionRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
-        = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, MOJANG_SESSION), Time.millis(200), 1);
-    protected static readonly minecraftServicesRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
-        = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, MINECRAFT_SERVICES), Time.millis(200), 1);
-    protected static readonly minecraftServicesProfileRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
-        = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, MINECRAFT_SERVICES_PROFILE), Time.millis(200), 1);
-    protected static readonly liveLoginRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
-        = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, LIVE_LOGIN), Time.millis(200), 1);
+    // protected static readonly mojangAuthRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
+    //     = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, MOJANG_AUTH), Time.millis(200), 1);
+    // protected static readonly mojangApiRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
+    //     = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, MOJANG_API), Time.millis(200), 1);
+    // protected static readonly mojangApiProfileRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
+    //     = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, MOJANG_API_PROFILE), Time.millis(400), 1);
+    // protected static readonly mojangSessionRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
+    //     = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, MOJANG_SESSION), Time.millis(200), 1);
+    // protected static readonly minecraftServicesRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
+    //     = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, MINECRAFT_SERVICES), Time.millis(200), 1);
+    // protected static readonly minecraftServicesProfileRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
+    //     = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, MINECRAFT_SERVICES_PROFILE), Time.millis(200), 1);
+    // protected static readonly liveLoginRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
+    //     = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, LIVE_LOGIN), Time.millis(200), 1);
 
     // protected static readonly minecraftServicesProfileRequestThrottle: Throttle<AxiosRequestConfig, AxiosResponse>
     //     = new Throttle<AxiosRequestConfig, AxiosResponse>(Time.seconds(3), request => Requests.runAxiosRequest(request, Requests.minecraftServicesInstance)); // 2s is too fast already...
 
     protected static metricsCollector = setInterval(async () => {
         const config = await getConfig();
-        const queues = new Map<string, ISize>([
-            ["mojangAuth", Requests.mojangAuthRequestQueue],
-            ["mojangApi", Requests.mojangApiRequestQueue],
-            ["mojangApiProfile", Requests.mojangApiProfileRequestQueue],
-            ["mojangSession", Requests.mojangSessionRequestQueue],
-            ["minecraftServices", Requests.minecraftServicesRequestQueue],
-            ["minecraftServicesProfile", Requests.minecraftServicesProfileRequestQueue],
-            ["liveLogin", Requests.liveLoginRequestQueue]
-        ]);
+        // const queues = new Map<string, ISize>([
+        //     ["mojangAuth", Requests.mojangAuthRequestQueue],
+        //     ["mojangApi", Requests.mojangApiRequestQueue],
+        //     ["mojangApiProfile", Requests.mojangApiProfileRequestQueue],
+        //     ["mojangSession", Requests.mojangSessionRequestQueue],
+        //     ["minecraftServices", Requests.minecraftServicesRequestQueue],
+        //     ["minecraftServicesProfile", Requests.minecraftServicesProfileRequestQueue],
+        //     ["liveLogin", Requests.liveLoginRequestQueue]
+        // ]);
         const points: IPoint[] = [];
-        queues.forEach((queue, name) => {
-            points.push({
-                measurement: "queues",
-                tags: {
-                    queue: name,
-                    server: config.server
-                },
-                fields: {
-                    size: queue.size
-                }
-            });
-        });
+        for (let key in Requests.requestQueues) {
+            for (let skey in Requests.requestQueues[key]) {
+                let queue = Requests.requestQueues[key][skey];
+                points.push({
+                    measurement: "queues",
+                    tags: {
+                        queue: key,
+                        instance: skey,
+                        server: config.server
+                    },
+                    fields: {
+                        size: queue.size
+                    }
+                });
+            }
+        }
+        // queues.forEach((queue, name) => {
+        //     points.push({
+        //         measurement: "queues",
+        //         tags: {
+        //             queue: name,
+        //             server: config.server
+        //         },
+        //         fields: {
+        //             size: queue.size
+        //         }
+        //     });
+        // });
         try {
             MineSkinMetrics.get().then(metrics => {
                 metrics.metrics!.influx.writePoints(points, {
@@ -139,13 +157,18 @@ export class Requests {
         axios.defaults.headers["User-Agent"] = "MineSkin/" + config.server;
 
         this.setupMultiProxiedAxiosInstance(GENERIC, config, {});
+
         this.setupMultiProxiedAxiosInstance(MOJANG_AUTH, config, {
             baseURL: "https://authserver.mojang.com"
         });
+        this.setupMultiRequestQueue(MOJANG_AUTH, config, Time.millis(200), 1);
+
         this.setupMultiProxiedAxiosInstance(MOJANG_API, config, {
             baseURL: "https://api.mojang.com",
             headers: {}
         }, c => rateLimit(axios.create(c), Requests.defaultRateLimit));
+        this.setupMultiRequestQueue(MOJANG_API, config, Time.millis(200), 1);
+
         this.setupMultiProxiedAxiosInstance(MOJANG_API_PROFILE, config, {
             baseURL: "https://api.mojang.com",
             headers: {}
@@ -153,14 +176,20 @@ export class Requests {
             maxRequests: 600,
             perMilliseconds: 10 * 60 * 1000
         }));
+        this.setupMultiRequestQueue(MOJANG_API_PROFILE, config, Time.millis(400), 1);
+
         this.setupMultiProxiedAxiosInstance(MOJANG_SESSION, config, {
             baseURL: "https://sessionserver.mojang.com",
             headers: {}
         }, c => rateLimit(axios.create(c), Requests.defaultRateLimit));
+        this.setupMultiRequestQueue(MOJANG_SESSION, config, Time.millis(200), 1);
+
         this.setupMultiProxiedAxiosInstance(MINECRAFT_SERVICES, config, {
             baseURL: "https://api.minecraftservices.com",
             headers: {}
         }, c => rateLimit(axios.create(c), Requests.defaultRateLimit));
+        this.setupMultiRequestQueue(MINECRAFT_SERVICES, config, Time.millis(200), 1);
+
         this.setupMultiProxiedAxiosInstance(MINECRAFT_SERVICES_PROFILE, config, {
             baseURL: "https://api.minecraftservices.com",
             headers: {}
@@ -168,10 +197,13 @@ export class Requests {
             maxRequests: 8,
             perMilliseconds: 30 * 1000
         }));
+        this.setupMultiRequestQueue(MINECRAFT_SERVICES_PROFILE, config, Time.millis(200), 1);
+
         this.setupMultiProxiedAxiosInstance(LIVE_LOGIN, config, {
             baseURL: "https://login.live.com",
             headers: {}
         });
+        this.setupMultiRequestQueue(MINECRAFT_SERVICES_PROFILE, config, Time.millis(200), 1);
     }
 
     private static setupAxiosInstance(key: string, subkey: string, config: AxiosRequestConfig, constr: AxiosConstructor = (c) => axios.create(c)): void {
@@ -195,14 +227,12 @@ export class Requests {
             let proxy = proxyConfig.available[proxyKey];
             if (!proxy.enabled) continue;
             let proxyType = proxy["type"]; //TODO
-            delete proxy["enabled"];
-            delete proxy["type"];
 
             this.setupProxiedAxiosInstance(key, proxyKey, proxy, requestConfig, constr);
         }
     }
 
-    private static getAxiosInstance(key: string, subkey: string): Maybe<AxiosInstance> {
+    private static getAxiosInstance(key: string, subkey: string): AxiosInstance {
         if (key in this.axiosInstances) {
             if (subkey && subkey in this.axiosInstances[key]) {
                 return this.axiosInstances[key][subkey];
@@ -212,10 +242,48 @@ export class Requests {
         return this.axiosInstances[key]["default"]; // fallback to default
     }
 
-    private static getAxiosInstanceForRequest(key: string, request: AxiosRequestConfig): Maybe<AxiosInstance> {
+    private static getAxiosInstanceForRequest(key: string, request: AxiosRequestConfig): AxiosInstance {
         const subkey = this.getInstanceSubkey(request);
         return this.getAxiosInstance(key, subkey);
     }
+
+
+    private static setupRequestQueue(key: string, subkey: string, interval: number, maxPerRun: number): void {
+        if (!(key in this.requestQueues)) {
+            this.axiosInstances[key] = {};
+        }
+        this.requestQueues[key][subkey] = new JobQueue<AxiosRequestConfig, AxiosResponse>(request => this.runAxiosRequest(request, key), interval, maxPerRun);
+    }
+
+    private static setupMultiRequestQueue(key: string, mineskinConfig: MineSkinConfig, interval: number, maxPerRun: number): void {
+        this.setupRequestQueue(key, "default", interval, maxPerRun); // default instance without a proxy
+
+        if (!mineskinConfig.proxies.enabled) return;
+        const proxyConfig = mineskinConfig.proxies;
+        for (let proxyKey in proxyConfig.available) {
+            let proxy = proxyConfig.available[proxyKey];
+            if (!proxy.enabled) continue;
+
+            this.setupRequestQueue(key, proxyKey, interval, maxPerRun);
+        }
+    }
+
+    private static getRequestQueue(key: string, subkey: string): JobQueue<AxiosRequestConfig, AxiosResponse> {
+        if (key in this.requestQueues) {
+            if (subkey && subkey in this.requestQueues[key]) {
+                return this.requestQueues[key][subkey];
+            }
+        }
+        console.warn(warn("could not find request queue " + key + "/" + subkey));
+        return this.requestQueues[key]["default"]; // fallback to default
+    }
+
+    private static getRequestQueueForRequest(key: string, request: AxiosRequestConfig): JobQueue<AxiosRequestConfig, AxiosResponse> {
+        const subkey = this.getInstanceSubkey(request);
+        return this.getRequestQueue(key, subkey);
+    }
+
+
 
     private static getInstanceSubkey(request: AxiosRequestConfig): string {
         return request.headers["x-mineskin-request-instance"] || "default";
@@ -230,6 +298,9 @@ export class Requests {
             this.putInstanceSubkey(request, account.requestProxy);
         }
     }
+
+
+
 
     protected static async runAxiosRequest(request: AxiosRequestConfig, inst: AxiosInstance | string = this.axiosInstance): Promise<AxiosResponse> {
         let instance: AxiosInstance;
@@ -319,6 +390,15 @@ export class Requests {
 
     /// API REQUESTS
 
+    public static async dynamicRequest(type: string,request: AxiosRequestConfig, bread?: string): Promise<AxiosResponse> {
+        this.addBreadcrumb(request, bread);
+        const t = this.trackSentryQueued(request);
+        const q = this.getRequestQueueForRequest(type, request);
+        const r = await q.add(request);
+        t?.finish();
+        return r;
+    }
+
     public static async genericRequest(request: AxiosRequestConfig, bread?: string): Promise<AxiosResponse> {
         this.addBreadcrumb(request, bread);
         const t = this.trackSentryQueued(request);
@@ -328,60 +408,67 @@ export class Requests {
     }
 
     public static async mojangAuthRequest(request: AxiosRequestConfig, bread?: string): Promise<AxiosResponse> {
-        this.addBreadcrumb(request, bread);
-        const t = this.trackSentryQueued(request);
-        const r = await this.mojangAuthRequestQueue.add(request);
-        t?.finish();
-        return r;
+        return this.dynamicRequest(MOJANG_AUTH, request, bread);
+        // this.addBreadcrumb(request, bread);
+        // const t = this.trackSentryQueued(request);
+        // const r = await this.mojangAuthRequestQueue.add(request);
+        // t?.finish();
+        // return r;
     }
 
     public static async mojangApiRequest(request: AxiosRequestConfig, bread?: string): Promise<AxiosResponse> {
-        this.addBreadcrumb(request, bread);
-        const t = this.trackSentryQueued(request);
-        const r = await this.mojangApiRequestQueue.add(request);
-        t?.finish();
-        return r;
+        return this.dynamicRequest(MOJANG_API, request, bread);
+        // this.addBreadcrumb(request, bread);
+        // const t = this.trackSentryQueued(request);
+        // const r = await this.mojangApiRequestQueue.add(request);
+        // t?.finish();
+        // return r;
     }
 
     public static async mojangApiProfileRequest(request: AxiosRequestConfig, bread?: string): Promise<AxiosResponse> {
-        this.addBreadcrumb(request, bread);
-        const t = this.trackSentryQueued(request);
-        const r = await this.mojangApiProfileRequestQueue.add(request);
-        t?.finish();
-        return r;
+        return this.dynamicRequest(MOJANG_API_PROFILE, request, bread);
+        // this.addBreadcrumb(request, bread);
+        // const t = this.trackSentryQueued(request);
+        // const r = await this.mojangApiProfileRequestQueue.add(request);
+        // t?.finish();
+        // return r;
     }
 
     public static async mojangSessionRequest(request: AxiosRequestConfig, bread?: string): Promise<AxiosResponse> {
-        this.addBreadcrumb(request, bread);
-        const t = this.trackSentryQueued(request);
-        const r = await this.mojangSessionRequestQueue.add(request);
-        t?.finish();
-        return r;
+        return this.dynamicRequest(MOJANG_SESSION, request, bread);
+        // this.addBreadcrumb(request, bread);
+        // const t = this.trackSentryQueued(request);
+        // const r = await this.mojangSessionRequestQueue.add(request);
+        // t?.finish();
+        // return r;
     }
 
     public static async minecraftServicesRequest(request: AxiosRequestConfig, bread?: string): Promise<AxiosResponse> {
-        this.addBreadcrumb(request, bread);
-        const t = this.trackSentryQueued(request);
-        const r = await this.minecraftServicesRequestQueue.add(request);
-        t?.finish();
-        return r;
+        return this.dynamicRequest(MINECRAFT_SERVICES, request, bread);
+        // this.addBreadcrumb(request, bread);
+        // const t = this.trackSentryQueued(request);
+        // const r = await this.minecraftServicesRequestQueue.add(request);
+        // t?.finish();
+        // return r;
     }
 
     public static async minecraftServicesProfileRequest(request: AxiosRequestConfig, bread?: string): Promise<AxiosResponse> {
-        this.addBreadcrumb(request, bread);
-        const t = this.trackSentryQueued(request);
-        const r = await this.minecraftServicesProfileRequestQueue.add(request);
-        // const r = await this.minecraftServicesProfileRequestThrottle.submit(request);
-        t?.finish();
-        return r;
+        return this.dynamicRequest(MINECRAFT_SERVICES_PROFILE, request, bread);
+        // this.addBreadcrumb(request, bread);
+        // const t = this.trackSentryQueued(request);
+        // const r = await this.minecraftServicesProfileRequestQueue.add(request);
+        // // const r = await this.minecraftServicesProfileRequestThrottle.submit(request);
+        // t?.finish();
+        // return r;
     }
 
     public static async liveLoginRequest(request: AxiosRequestConfig, bread?: string): Promise<AxiosResponse> {
-        this.addBreadcrumb(request, bread);
-        const t = this.trackSentryQueued(request);
-        const r = await this.liveLoginRequestQueue.add(request);
-        t?.finish();
-        return r;
+        return this.dynamicRequest(LIVE_LOGIN, request, bread);
+        // this.addBreadcrumb(request, bread);
+        // const t = this.trackSentryQueued(request);
+        // const r = await this.liveLoginRequestQueue.add(request);
+        // t?.finish();
+        // return r;
     }
 
     private static trackSentryQueued(request: AxiosRequestConfig) {
@@ -390,6 +477,7 @@ export class Requests {
             op: "request_queued",
             description: `${ request.method || "GET" } ${ request.url }`
         });
+        //TODO: instance tag
         if (t) {
             if (!request.headers) request.headers = {};
             request.headers["x-mineskin-sentry-transaction"] = t;
@@ -413,11 +501,11 @@ export class Requests {
     }
 
     public static end() {
-        this.mojangAuthRequestQueue.end();
-        this.mojangApiRequestQueue.end();
-        this.mojangSessionRequestQueue.end();
-        this.minecraftServicesRequestQueue.end();
-        this.liveLoginRequestQueue.end();
+        // this.mojangAuthRequestQueue.end();
+        // this.mojangApiRequestQueue.end();
+        // this.mojangSessionRequestQueue.end();
+        // this.minecraftServicesRequestQueue.end();
+        // this.liveLoginRequestQueue.end();
 
         clearInterval(this.metricsCollector);
     }
