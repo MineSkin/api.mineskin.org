@@ -117,7 +117,7 @@ export class Requests {
         } catch (e) {
             Sentry.captureException(e);
         }
-    }, 10000);
+    }, 5000);
 
     public static init(config: MineSkinConfig) {
         axios.defaults.headers["User-Agent"] = "MineSkin/" + config.server;
