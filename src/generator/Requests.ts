@@ -301,6 +301,7 @@ export class Requests {
     }
 
     static putInstanceSubkey(request: AxiosRequestConfig, subkey: string): void {
+        if (!request.headers) request.headers = {};
         request.headers["x-mineskin-request-proxy"] = subkey;
     }
 
@@ -322,7 +323,7 @@ export class Requests {
         }
 
         const t = this.trackSentryStart(request);
-        console.log(c.gray(`${ this.getBreadcrumb(request) || '00000000' } ${ request.method || 'GET' } ${ request.baseURL || instance.defaults.baseURL || '' }${ request.url } ${instanceSubkey ? 'via ' + instanceSubkey : ''}`))
+        console.log(c.gray(`${ this.getBreadcrumb(request) || '00000000' } ${ request.method || 'GET' } ${ request.baseURL || instance.defaults.baseURL || '' }${ request.url } ${ instanceSubkey ? 'via ' + instanceSubkey : '' }`))
         const r = await instance.request(request)
             .then(async (response) => this.processRequestMetric(response, request, response, instance))
             .catch(err => this.processRequestMetric(err, request, err.response, instance, err));
