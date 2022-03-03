@@ -39,6 +39,8 @@ const MINESKIN_TESTER_FAIL = "mineskintester.fail";
 
 export class Stats {
 
+    //TODO: stats for hiatus accounts
+
     static async get(into: AllStats): Promise<AllStats> {
         const promises: Promise<void>[] = [
             Stat.get(ACCOUNTS_TOTAL).then(n => {
