@@ -44,76 +44,8 @@ export class Requests {
 
     private static readonly requestQueues: { [k: string]: { [sk: string]: JobQueue<AxiosRequestConfig, AxiosResponse> }; } = {};
 
-    // protected static readonly mojangAuthInstance: AxiosInstance = axios.create({
-    //     baseURL: "https://authserver.mojang.com",
-    //     headers: {
-    //         // "Accept": "application/json, text/plain, */*",
-    //         // "Accept-Encoding": "gzip, deflate",
-    //         // "Origin": "mojang://launcher",
-    //         // "User-Agent": "Minecraft Launcher/2.1.2481 (bcb98e4a63) Windows (10.0; x86_64)"
-    //     }
-    // });
-    // protected static readonly mojangApiInstance: AxiosInstance = rateLimit(axios.create({
-    //     baseURL: "https://api.mojang.com",
-    //     headers: {}
-    // }), Requests.defaultRateLimit);
-    // protected static readonly mojangApiProfileInstance: AxiosInstance = rateLimit(axios.create({
-    //     baseURL: "https://api.mojang.com",
-    //     headers: {},
-    //     httpsAgent: new HttpsProxyAgent({})
-    // }), {
-    //     maxRequests: 600,
-    //     perMilliseconds: 10 * 60 * 1000
-    // });
-    // protected static readonly mojangSessionInstance: AxiosInstance = rateLimit(axios.create({
-    //     baseURL: "https://sessionserver.mojang.com",
-    //     headers: {}
-    // }), Requests.defaultRateLimit);
-    // protected static readonly minecraftServicesInstance: AxiosInstance = rateLimit(axios.create({
-    //     baseURL: "https://api.minecraftservices.com",
-    //     headers: {}
-    // }), Requests.defaultRateLimit);
-    // protected static readonly minecraftServicesProfileInstance: RateLimitedAxiosInstance = rateLimit(axios.create({
-    //     baseURL: "https://api.minecraftservices.com",
-    //     headers: {}
-    // }), {
-    //     maxRequests: 8,
-    //     perMilliseconds: 30 * 1000
-    // })
-    // protected static readonly liveLoginInstance: AxiosInstance = axios.create({
-    //     baseURL: "https://login.live.com",
-    //     headers: {}
-    // });
-
-    // protected static readonly mojangAuthRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
-    //     = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, MOJANG_AUTH), Time.millis(200), 1);
-    // protected static readonly mojangApiRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
-    //     = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, MOJANG_API), Time.millis(200), 1);
-    // protected static readonly mojangApiProfileRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
-    //     = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, MOJANG_API_PROFILE), Time.millis(400), 1);
-    // protected static readonly mojangSessionRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
-    //     = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, MOJANG_SESSION), Time.millis(200), 1);
-    // protected static readonly minecraftServicesRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
-    //     = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, MINECRAFT_SERVICES), Time.millis(200), 1);
-    // protected static readonly minecraftServicesProfileRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
-    //     = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, MINECRAFT_SERVICES_PROFILE), Time.millis(200), 1);
-    // protected static readonly liveLoginRequestQueue: JobQueue<AxiosRequestConfig, AxiosResponse>
-    //     = new JobQueue<AxiosRequestConfig, AxiosResponse>((request: AxiosRequestConfig) => Requests.runAxiosRequest(request, LIVE_LOGIN), Time.millis(200), 1);
-
-    // protected static readonly minecraftServicesProfileRequestThrottle: Throttle<AxiosRequestConfig, AxiosResponse>
-    //     = new Throttle<AxiosRequestConfig, AxiosResponse>(Time.seconds(3), request => Requests.runAxiosRequest(request, Requests.minecraftServicesInstance)); // 2s is too fast already...
-
     protected static metricsCollector = setInterval(async () => {
         const config = await getConfig();
-        // const queues = new Map<string, ISize>([
-        //     ["mojangAuth", Requests.mojangAuthRequestQueue],
-        //     ["mojangApi", Requests.mojangApiRequestQueue],
-        //     ["mojangApiProfile", Requests.mojangApiProfileRequestQueue],
-        //     ["mojangSession", Requests.mojangSessionRequestQueue],
-        //     ["minecraftServices", Requests.minecraftServicesRequestQueue],
-        //     ["minecraftServicesProfile", Requests.minecraftServicesProfileRequestQueue],
-        //     ["liveLogin", Requests.liveLoginRequestQueue]
-        // ]);
         const points: IPoint[] = [];
         for (let key in Requests.requestQueues) {
             for (let skey in Requests.requestQueues[key]) {
@@ -122,7 +54,7 @@ export class Requests {
                     measurement: "queues",
                     tags: {
                         queue: key,
-                        instance: skey,
+                        proxy: skey,
                         server: config.server
                     },
                     fields: {
