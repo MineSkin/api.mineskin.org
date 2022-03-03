@@ -296,6 +296,7 @@ export class Requests {
 
 
     private static getInstanceSubkey(request: AxiosRequestConfig): string {
+        if (!request.headers) return "default";
         return request.headers["x-mineskin-request-proxy"] || "default";
     }
 
@@ -513,6 +514,7 @@ export class Requests {
             }
         });
         delete request.headers["x-mineskin-sentry-transaction"];
+        delete request.headers["x-mineskin-request-proxy"];
         return s;
     }
 
