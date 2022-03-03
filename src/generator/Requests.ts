@@ -296,11 +296,11 @@ export class Requests {
 
 
     private static getInstanceSubkey(request: AxiosRequestConfig): string {
-        return request.headers["x-mineskin-request-instance"] || "default";
+        return request.headers["x-mineskin-request-proxy"] || "default";
     }
 
     static putInstanceSubkey(request: AxiosRequestConfig, subkey: string): void {
-        request.headers["x-mineskin-request-instance"] = subkey;
+        request.headers["x-mineskin-request-proxy"] = subkey;
     }
 
     static putInstanceSubkeyForAccount(request: AxiosRequestConfig, account: IAccountDocument): void {
@@ -338,7 +338,7 @@ export class Requests {
                 .tag("hasResponse", `${ typeof response !== "undefined" }`);
             if (request) {
                 const url = new URL(axios.getUri(request), instance?.defaults.baseURL);
-                m.tag("instance", this.getInstanceSubkey(request))
+                m.tag("proxy", this.getInstanceSubkey(request))
                     .tag("method", request.method || "GET")
                     .tag("host", url.hostname);
 
@@ -490,9 +490,12 @@ export class Requests {
         const t = Sentry.getCurrentHub().getScope()?.getTransaction();
         const s = t?.startChild({
             op: "request_queued",
-            description: `${ request.method || "GET" } ${ request.url }`
+            description: `${ request.method || "GET" } ${ request.url }`,
+            tags: {
+                server: SERVER,
+                proxy: this.getInstanceSubkey(request)
+            }
         });
-        //TODO: instance tag
         if (t) {
             if (!request.headers) request.headers = {};
             request.headers["x-mineskin-sentry-transaction"] = t;
@@ -504,8 +507,13 @@ export class Requests {
         const s = (request.headers["x-mineskin-sentry-transaction"] as Transaction)?.startChild({
             op: "request_start",
             description: `${ request.method || "GET" } ${ request.url }`,
+            tags: {
+                server: SERVER,
+                proxy: this.getInstanceSubkey(request)
+            }
         });
         delete request.headers["x-mineskin-sentry-transaction"];
+        delete request.headers["x-mineskin-request-proxy"];
         return s;
     }
 
