@@ -515,7 +515,6 @@ export class Requests {
             }
         });
         delete request.headers["x-mineskin-sentry-transaction"];
-        delete request.headers["x-mineskin-request-proxy"];
         return s;
     }
 
