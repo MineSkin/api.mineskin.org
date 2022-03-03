@@ -3,6 +3,7 @@ import { ISingleHostConfig } from "influx";
 import { Config as SshTunnelConfig } from "tunnel-ssh";
 import { Options as EmailOptions } from "nodemailer/lib/smtp-transport";
 import { GitConfig } from "@inventivetalent/gitconfig";
+import { HttpsProxyAgentOptions } from "https-proxy-agent";
 
 interface OptimusConfig {
     prime: number;
@@ -73,6 +74,11 @@ interface MicrosoftConfig {
     clientSecret: string;
 }
 
+export interface ProxyConfig {
+    ips: {[id:string]: string};
+    available: {[id: string]: Partial<HttpsProxyAgentOptions&{type?: string;enabled?: boolean}>}
+}
+
 export interface MineSkinConfig {
     port: number;
     server: string;
@@ -84,6 +90,8 @@ export interface MineSkinConfig {
     testerToken: string;
     sessionSecret: string;
     statsServers: string[];
+
+    proxies: ProxyConfig;
 
     optimus: OptimusConfig;
     mongo: MongoConfig;
