@@ -3,7 +3,7 @@
 
 /node_modules/
 /todo.txt
-/config.js
+/*config.js
 /access.log
 /id_rsa*
 *.log

@@ -105,6 +105,13 @@ export const AccountSchema: Schema<IAccountDocument, IAccountModel> = new Schema
     lastRequestServer: {
         type: String
     },
+    requestProxy: {
+        type: String,
+        index: true
+    },
+    lastRequestProxy: {
+        type: String
+    },
     type: {
         type: String,
         enum: ["internal", "external"],
