@@ -28,6 +28,7 @@ axios.defaults.headers["Content-Type"] = "application/json";
 axios.defaults.headers["Accept"] = "application/json";
 axios.defaults.timeout = 10000;
 
+let SERVER = "???";
 
 export class Requests {
 
@@ -154,6 +155,7 @@ export class Requests {
     }, 10000);
 
     public static init(config: MineSkinConfig) {
+        SERVER = config.server;
         axios.defaults.headers["User-Agent"] = "MineSkin/" + config.server;
 
         this.setupMultiProxiedAxiosInstance(GENERIC, config, {});
@@ -214,7 +216,11 @@ export class Requests {
     }
 
     private static setupProxiedAxiosInstance(key: string, subkey: string, proxyConfig: HttpsProxyAgentOptions, requestConfig: AxiosRequestConfig, constr?: AxiosConstructor): void {
+        proxyConfig.headers = Object.assign({}, {
+            "X-MineSkin-Server": SERVER
+        }, proxyConfig.headers);
         requestConfig.httpsAgent = new HttpsProxyAgent(proxyConfig);
+        requestConfig.headers["User-Agent"] = "MineSkin/" + SERVER + "/" + subkey;
         this.setupAxiosInstance(key, subkey, requestConfig, constr);
     }
 
@@ -284,7 +290,6 @@ export class Requests {
     }
 
 
-
     private static getInstanceSubkey(request: AxiosRequestConfig): string {
         return request.headers["x-mineskin-request-instance"] || "default";
     }
@@ -298,8 +303,6 @@ export class Requests {
             this.putInstanceSubkey(request, account.requestProxy);
         }
     }
-
-
 
 
     protected static async runAxiosRequest(request: AxiosRequestConfig, inst: AxiosInstance | string = this.axiosInstance): Promise<AxiosResponse> {
@@ -390,13 +393,18 @@ export class Requests {
 
     /// API REQUESTS
 
-    public static async dynamicRequest(type: string,request: AxiosRequestConfig, bread?: string): Promise<AxiosResponse> {
+    public static async dynamicRequest(type: string, request: AxiosRequestConfig, bread?: string): Promise<AxiosResponse> {
         this.addBreadcrumb(request, bread);
         const t = this.trackSentryQueued(request);
         const q = this.getRequestQueueForRequest(type, request);
         const r = await q.add(request);
         t?.finish();
         return r;
+    }
+
+    public static async dynamicRequestWithAccount(type: string, request: AxiosRequestConfig, account: IAccountDocument, bread?: string): Promise<AxiosResponse> {
+        this.putInstanceSubkeyForAccount(request, account);
+        return this.dynamicRequest(type, request, bread);
     }
 
     public static async genericRequest(request: AxiosRequestConfig, bread?: string): Promise<AxiosResponse> {
