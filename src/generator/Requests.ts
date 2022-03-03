@@ -12,6 +12,7 @@ import { MineSkinMetrics } from "../util/metrics";
 import { Transaction } from "@sentry/tracing";
 import { c, warn } from "../util/colors";
 import { Maybe } from "../util";
+import { IAccountDocument } from "../typings";
 
 const GENERIC = "generic";
 const MOJANG_AUTH = "mojangAuth";
@@ -222,6 +223,12 @@ export class Requests {
 
     static putInstanceSubkey(request: AxiosRequestConfig, subkey: string): void {
         request.headers["x-mineskin-request-instance"] = subkey;
+    }
+
+    static putInstanceSubkeyForAccount(request: AxiosRequestConfig, account: IAccountDocument): void {
+        if (account.requestProxy && account.requestProxy.length > 0) {
+            this.putInstanceSubkey(request, account.requestProxy);
+        }
     }
 
     protected static async runAxiosRequest(request: AxiosRequestConfig, inst: AxiosInstance | string = this.axiosInstance): Promise<AxiosResponse> {
