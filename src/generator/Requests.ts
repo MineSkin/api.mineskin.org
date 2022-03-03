@@ -63,18 +63,6 @@ export class Requests {
                 });
             }
         }
-        // queues.forEach((queue, name) => {
-        //     points.push({
-        //         measurement: "queues",
-        //         tags: {
-        //             queue: name,
-        //             server: config.server
-        //         },
-        //         fields: {
-        //             size: queue.size
-        //         }
-        //     });
-        // });
         try {
             MineSkinMetrics.get().then(metrics => {
                 metrics.metrics!.influx.writePoints(points, {
@@ -358,66 +346,30 @@ export class Requests {
 
     public static async mojangAuthRequest(request: AxiosRequestConfig, bread?: string): Promise<AxiosResponse> {
         return this.dynamicRequest(MOJANG_AUTH, request, bread);
-        // this.addBreadcrumb(request, bread);
-        // const t = this.trackSentryQueued(request);
-        // const r = await this.mojangAuthRequestQueue.add(request);
-        // t?.finish();
-        // return r;
     }
 
     public static async mojangApiRequest(request: AxiosRequestConfig, bread?: string): Promise<AxiosResponse> {
         return this.dynamicRequest(MOJANG_API, request, bread);
-        // this.addBreadcrumb(request, bread);
-        // const t = this.trackSentryQueued(request);
-        // const r = await this.mojangApiRequestQueue.add(request);
-        // t?.finish();
-        // return r;
     }
 
     public static async mojangApiProfileRequest(request: AxiosRequestConfig, bread?: string): Promise<AxiosResponse> {
         return this.dynamicRequest(MOJANG_API_PROFILE, request, bread);
-        // this.addBreadcrumb(request, bread);
-        // const t = this.trackSentryQueued(request);
-        // const r = await this.mojangApiProfileRequestQueue.add(request);
-        // t?.finish();
-        // return r;
     }
 
     public static async mojangSessionRequest(request: AxiosRequestConfig, bread?: string): Promise<AxiosResponse> {
         return this.dynamicRequest(MOJANG_SESSION, request, bread);
-        // this.addBreadcrumb(request, bread);
-        // const t = this.trackSentryQueued(request);
-        // const r = await this.mojangSessionRequestQueue.add(request);
-        // t?.finish();
-        // return r;
     }
 
     public static async minecraftServicesRequest(request: AxiosRequestConfig, bread?: string): Promise<AxiosResponse> {
         return this.dynamicRequest(MINECRAFT_SERVICES, request, bread);
-        // this.addBreadcrumb(request, bread);
-        // const t = this.trackSentryQueued(request);
-        // const r = await this.minecraftServicesRequestQueue.add(request);
-        // t?.finish();
-        // return r;
     }
 
     public static async minecraftServicesProfileRequest(request: AxiosRequestConfig, bread?: string): Promise<AxiosResponse> {
         return this.dynamicRequest(MINECRAFT_SERVICES_PROFILE, request, bread);
-        // this.addBreadcrumb(request, bread);
-        // const t = this.trackSentryQueued(request);
-        // const r = await this.minecraftServicesProfileRequestQueue.add(request);
-        // // const r = await this.minecraftServicesProfileRequestThrottle.submit(request);
-        // t?.finish();
-        // return r;
     }
 
     public static async liveLoginRequest(request: AxiosRequestConfig, bread?: string): Promise<AxiosResponse> {
         return this.dynamicRequest(LIVE_LOGIN, request, bread);
-        // this.addBreadcrumb(request, bread);
-        // const t = this.trackSentryQueued(request);
-        // const r = await this.liveLoginRequestQueue.add(request);
-        // t?.finish();
-        // return r;
     }
 
     private static trackSentryQueued(request: AxiosRequestConfig) {
@@ -457,11 +409,6 @@ export class Requests {
     }
 
     public static end() {
-        // this.mojangAuthRequestQueue.end();
-        // this.mojangApiRequestQueue.end();
-        // this.mojangSessionRequestQueue.end();
-        // this.minecraftServicesRequestQueue.end();
-        // this.liveLoginRequestQueue.end();
 
         clearInterval(this.metricsCollector);
     }
