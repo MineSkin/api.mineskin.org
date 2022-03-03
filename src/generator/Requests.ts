@@ -256,7 +256,7 @@ export class Requests {
 
     private static setupRequestQueue(key: string, subkey: string, interval: number, maxPerRun: number): void {
         if (!(key in this.requestQueues)) {
-            this.axiosInstances[key] = {};
+            this.requestQueues[key] = {};
         }
         this.requestQueues[key][subkey] = new JobQueue<AxiosRequestConfig, AxiosResponse>(request => this.runAxiosRequest(request, key), interval, maxPerRun);
     }
