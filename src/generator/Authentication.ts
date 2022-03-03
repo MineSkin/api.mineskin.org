@@ -1,4 +1,4 @@
-import { Requests } from "./Requests";
+import { MOJANG_AUTH, Requests } from "./Requests";
 import * as Sentry from "@sentry/node";
 import * as XboxLiveAuth from "@xboxreplay/xboxlive-auth"
 import { AuthenticateResponse, ExchangeRpsTicketResponse } from "@xboxreplay/xboxlive-auth"
@@ -121,11 +121,11 @@ export class Mojang {
             requestUser: true
         };
         try {
-            const validateResponse = await Requests.mojangAuthRequest({
+            const validateResponse = await Requests.dynamicRequestWithAccount(MOJANG_AUTH, {
                 method: "POST",
                 url: "/validate",
                 data: JSON.stringify(body)
-            }, bread?.breadcrumb);
+            }, account, bread?.breadcrumb);
             return Requests.isOk(validateResponse);
         } catch (e) {
             return false;
@@ -158,11 +158,11 @@ export class Mojang {
             clientToken: account.getOrCreateClientToken(),
             requestUser: true
         };
-        const refreshResponse = await Requests.mojangAuthRequest({
+        const refreshResponse = await Requests.dynamicRequestWithAccount(MOJANG_AUTH, {
             method: "POST",
             url: "/refresh",
             data: JSON.stringify(body)
-        }, bread?.breadcrumb).catch(err => {
+        }, account, bread?.breadcrumb).catch(err => {
             if (err.response) {
                 console.warn(err);
                 Sentry.captureException(err);

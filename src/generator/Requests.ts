@@ -10,18 +10,18 @@ import * as Sentry from "@sentry/node";
 import { getConfig, MineSkinConfig } from "../typings/Configs";
 import { MineSkinMetrics } from "../util/metrics";
 import { Transaction } from "@sentry/tracing";
-import { c, warn } from "../util/colors";
+import { c, debug, warn } from "../util/colors";
 import { Maybe } from "../util";
 import { IAccountDocument } from "../typings";
 
-const GENERIC = "generic";
-const MOJANG_AUTH = "mojangAuth";
-const MOJANG_API = "mojangApi";
-const MOJANG_API_PROFILE = "mojangApiProfile";
-const MOJANG_SESSION = "mojangSession";
-const MINECRAFT_SERVICES = "minecraftServices";
-const MINECRAFT_SERVICES_PROFILE = "minecraftServicesProfile";
-const LIVE_LOGIN = "liveLogin";
+export const GENERIC = "generic";
+export const MOJANG_AUTH = "mojangAuth";
+export const MOJANG_API = "mojangApi";
+export const MOJANG_API_PROFILE = "mojangApiProfile";
+export const MOJANG_SESSION = "mojangSession";
+export const MINECRAFT_SERVICES = "minecraftServices";
+export const MINECRAFT_SERVICES_PROFILE = "minecraftServicesProfile";
+export const LIVE_LOGIN = "liveLogin";
 
 axios.defaults.headers["User-Agent"] = "MineSkin";
 axios.defaults.headers["Content-Type"] = "application/json";
@@ -213,6 +213,7 @@ export class Requests {
             this.axiosInstances[key] = {};
         }
         this.axiosInstances[key][subkey] = constr(config);
+        console.log(debug("set up axios instance " + key + "/" + subkey));
     }
 
     private static setupProxiedAxiosInstance(key: string, subkey: string, proxyConfig: HttpsProxyAgentOptions, requestConfig: AxiosRequestConfig, constr?: AxiosConstructor): void {
@@ -220,6 +221,9 @@ export class Requests {
             "X-MineSkin-Server": SERVER
         }, proxyConfig.headers);
         requestConfig.httpsAgent = new HttpsProxyAgent(proxyConfig);
+        if (!requestConfig.headers) {
+            requestConfig.headers = {};
+        }
         requestConfig.headers["User-Agent"] = "MineSkin/" + SERVER + "/" + subkey;
         this.setupAxiosInstance(key, subkey, requestConfig, constr);
     }
@@ -259,6 +263,7 @@ export class Requests {
             this.requestQueues[key] = {};
         }
         this.requestQueues[key][subkey] = new JobQueue<AxiosRequestConfig, AxiosResponse>(request => this.runAxiosRequest(request, key), interval, maxPerRun);
+        console.log(debug("set up request queue " + key + "/" + subkey));
     }
 
     private static setupMultiRequestQueue(key: string, mineskinConfig: MineSkinConfig, interval: number, maxPerRun: number): void {
@@ -306,15 +311,17 @@ export class Requests {
 
 
     protected static async runAxiosRequest(request: AxiosRequestConfig, inst: AxiosInstance | string = this.axiosInstance): Promise<AxiosResponse> {
+        let instanceSubkey;
         let instance: AxiosInstance;
         if (typeof inst === "string") {
-            instance = this.getAxiosInstanceForRequest(inst, request)!;
+            instanceSubkey = this.getInstanceSubkey(request);
+            instance = this.getAxiosInstance(inst, instanceSubkey);
         } else {
             instance = inst as AxiosInstance;
         }
 
         const t = this.trackSentryStart(request);
-        console.log(c.gray(`${ this.getBreadcrumb(request) || '00000000' } ${ request.method || 'GET' } ${ request.baseURL || instance.defaults.baseURL || '' }${ request.url }`))
+        console.log(c.gray(`${ this.getBreadcrumb(request) || '00000000' } ${ request.method || 'GET' } ${ request.baseURL || instance.defaults.baseURL || '' }${ request.url } ${instanceSubkey ? 'via ' + instanceSubkey : ''}`))
         const r = await instance.request(request)
             .then(async (response) => this.processRequestMetric(response, request, response, instance))
             .catch(err => this.processRequestMetric(err, request, err.response, instance, err));

@@ -4,7 +4,7 @@ import { base64decode, getHashFromMojangTextureUrl, hasOwnProperty, imgHash, lon
 import { Caching } from "./Caching";
 import { Authentication, AuthenticationError } from "./Authentication";
 import * as Sentry from "@sentry/node";
-import { Requests } from "./Requests";
+import { MINECRAFT_SERVICES_PROFILE, Requests } from "./Requests";
 import FormData from "form-data";
 import { URL } from "url";
 import { MOJ_DIR, Temp, TempFile, UPL_DIR, URL_DIR } from "./Temp";
@@ -708,7 +708,7 @@ export class Generator {
             variant: variant,
             url: url
         };
-        return await Requests.minecraftServicesProfileRequest({
+        return await Requests.dynamicRequestWithAccount(MINECRAFT_SERVICES_PROFILE, {
             method: "POST",
             url: "/minecraft/profile/skins",
             headers: {
@@ -716,7 +716,7 @@ export class Generator {
                 "Authorization": account.authenticationHeader()
             },
             data: body
-        }, breadcrumb).catch(err => {
+        }, account, breadcrumb).catch(err => {
             if (err.response) {
                 let msg = (err.response as AxiosResponse).data?.errorMessage ?? "Failed to change skin";
                 throw new GeneratorError(GenError.SKIN_CHANGE_FAILED, msg, (err.response as AxiosResponse).status, account, err);
@@ -847,14 +847,14 @@ export class Generator {
             filename: "skin.png",
             contentType: "image/png"
         });
-        return await Requests.minecraftServicesProfileRequest({
+        return await Requests.dynamicRequestWithAccount(MINECRAFT_SERVICES_PROFILE, {
             method: "POST",
             url: "/minecraft/profile/skins",
             headers: body.getHeaders({
                 "Authorization": account.authenticationHeader()
             }),
             data: body
-        }, breadcrumb).catch(err => {
+        }, account, breadcrumb).catch(err => {
             if (err.response) {
                 let msg = (err.response as AxiosResponse).data?.errorMessage ?? "Failed to change skin";
                 throw new GeneratorError(GenError.SKIN_CHANGE_FAILED, msg, (err.response as AxiosResponse).status, account, err);
@@ -1010,13 +1010,13 @@ export class Generator {
 
     protected static async clearCape(account: IAccountDocument): Promise<boolean> {
         console.log(info(`Clearing cape of ${ account.id }/${ account.uuid }`));
-        return Requests.minecraftServicesProfileRequest({
+        return Requests.dynamicRequestWithAccount(MINECRAFT_SERVICES_PROFILE, {
             method: "DELETE",
             url: "/minecraft/profile/capes/active",
             headers: {
                 Authorization: `Bearer ${ account.accessToken }`
             }
-        }).then(res => res.status === 200);
+        }, account).then(res => res.status === 200);
     }
 
     protected static async clearCapeIfRequired(account: IAccountDocument): Promise<boolean> {
