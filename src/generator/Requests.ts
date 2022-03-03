@@ -10,7 +10,7 @@ import * as Sentry from "@sentry/node";
 import { getConfig, MineSkinConfig } from "../typings/Configs";
 import { MineSkinMetrics } from "../util/metrics";
 import { Transaction } from "@sentry/tracing";
-import { c } from "../util/colors";
+import { c, warn } from "../util/colors";
 import { Maybe } from "../util";
 
 const GENERIC = "generic";
@@ -188,6 +188,7 @@ export class Requests {
     private static setupMultiProxiedAxiosInstance(key: string, mineskinConfig: MineSkinConfig, requestConfig: AxiosRequestConfig, constr?: AxiosConstructor): void {
         this.setupAxiosInstance(key, "default", requestConfig); // default instance without a proxy
 
+        if (!mineskinConfig.proxies.enabled) return;
         const proxyConfig = mineskinConfig.proxies;
         for (let proxyKey in proxyConfig.available) {
             let proxy = proxyConfig.available[proxyKey];
@@ -201,19 +202,26 @@ export class Requests {
     }
 
     private static getAxiosInstance(key: string, subkey: string): Maybe<AxiosInstance> {
-        if (!(key in this.axiosInstances)) return undefined;
-        if (!(subkey in this.axiosInstances[key])) return undefined;
-        return this.axiosInstances[key][subkey];
+        if (key in this.axiosInstances) {
+            if (subkey && subkey in this.axiosInstances[key]) {
+                return this.axiosInstances[key][subkey];
+            }
+        }
+        console.warn(warn("could not find axios instance " + key + "/" + subkey));
+        return this.axiosInstances[key]["default"]; // fallback to default
     }
 
     private static getAxiosInstanceForRequest(key: string, request: AxiosRequestConfig): Maybe<AxiosInstance> {
         const subkey = this.getInstanceSubkey(request);
-        if (!subkey) return;
         return this.getAxiosInstance(key, subkey);
     }
 
     private static getInstanceSubkey(request: AxiosRequestConfig): string {
-        return request.headers["x-mineskin-request-instance-subkey"] || "default";
+        return request.headers["x-mineskin-request-instance"] || "default";
+    }
+
+    static putInstanceSubkey(request: AxiosRequestConfig, subkey: string): void {
+        request.headers["x-mineskin-request-instance"] = subkey;
     }
 
     protected static async runAxiosRequest(request: AxiosRequestConfig, inst: AxiosInstance | string = this.axiosInstance): Promise<AxiosResponse> {

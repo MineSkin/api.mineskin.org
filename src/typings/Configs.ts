@@ -75,6 +75,7 @@ interface MicrosoftConfig {
 }
 
 export interface ProxyConfig {
+    enabled: boolean;
     ips: {[id:string]: string};
     available: {[id: string]: Partial<HttpsProxyAgentOptions&{type?: string;enabled?: boolean}>}
 }
