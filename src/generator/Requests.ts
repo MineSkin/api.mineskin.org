@@ -35,22 +35,22 @@ export class Requests {
             // "User-Agent": "Minecraft Launcher/2.1.2481 (bcb98e4a63) Windows (10.0; x86_64)"
         }
     });
-    protected static readonly mojangApiInstance: AxiosInstance = rateLimit(axios.create({
+    protected static readonly mojangApiInstance: RateLimitedAxiosInstance = rateLimit(axios.create({
         baseURL: "https://api.mojang.com",
         headers: {}
     }), Requests.defaultRateLimit);
-    protected static readonly mojangApiProfileInstance: AxiosInstance = rateLimit(axios.create({
+    protected static readonly mojangApiProfileInstance: RateLimitedAxiosInstance = rateLimit(axios.create({
         baseURL: "https://api.mojang.com",
         headers: {}
     }), {
         maxRequests: 600,
         perMilliseconds: 10 * 60 * 1000
     });
-    protected static readonly mojangSessionInstance: AxiosInstance = rateLimit(axios.create({
+    protected static readonly mojangSessionInstance: RateLimitedAxiosInstance = rateLimit(axios.create({
         baseURL: "https://sessionserver.mojang.com",
         headers: {}
     }), Requests.defaultRateLimit);
-    protected static readonly minecraftServicesInstance: AxiosInstance = rateLimit(axios.create({
+    protected static readonly minecraftServicesInstance: RateLimitedAxiosInstance = rateLimit(axios.create({
         baseURL: "https://api.minecraftservices.com",
         headers: {}
     }), Requests.defaultRateLimit);
@@ -111,7 +111,7 @@ export class Requests {
         });
 
 
-        const rateLimiters = new Map<string, ILength>([
+        const rateLimiters = new Map<string, ISize>([
             ["mojangApi", Requests.mojangApiInstance],
             ["mojangApiProfile", Requests.mojangApiProfileInstance],
             ["mojangSession", Requests.mojangSessionInstance],
@@ -119,6 +119,7 @@ export class Requests {
             ["minecraftServicesProfile", Requests.minecraftServicesProfileInstance]
         ]);
         rateLimiters.forEach((limiter, name)=>{
+            if (!isRateLimitedAxiosInstance(limiter)) return;
             points.push({
                 measurement: "request_ratelimiters",
                 tags: {
@@ -126,7 +127,7 @@ export class Requests {
                     server: config.server
                 },
                 fields: {
-                    size: limiter.length
+                    size: limiter.size
                 }
             });
         })
@@ -348,6 +349,6 @@ interface ISize {
     size: number;
 }
 
-interface ILength {
-    length: number;
+function isRateLimitedAxiosInstance(obj: any): obj is RateLimitedAxiosInstance {
+    return "setRateLimitOptions" in obj;
 }
