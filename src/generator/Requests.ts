@@ -75,7 +75,7 @@ export class Requests {
                         server: config.server
                     },
                     fields: {
-                        size: instance.size
+                        size: instance.size || 0
                     }
                 });
             }
