@@ -125,7 +125,7 @@ export class Requests {
             baseURL: "https://login.live.com",
             headers: {}
         });
-        this.setupMultiRequestQueue(MINECRAFT_SERVICES_PROFILE, config, Time.millis(200), 1);
+        this.setupMultiRequestQueue(LIVE_LOGIN, config, Time.millis(200), 1);
     }
 
     private static setupAxiosInstance(key: string, subkey: string, config: AxiosRequestConfig, constr: AxiosConstructor = (c) => axios.create(c)): void {
