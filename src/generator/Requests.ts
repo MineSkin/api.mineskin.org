@@ -86,6 +86,8 @@ export class Requests {
 
     protected static metricsCollector = setInterval(async () => {
         const config = await getConfig();
+        const points: IPoint[] = [];
+
         const queues = new Map<string, ISize>([
             ["mojangAuth", Requests.mojangAuthRequestQueue],
             ["mojangApi", Requests.mojangApiRequestQueue],
@@ -95,7 +97,6 @@ export class Requests {
             ["minecraftServicesProfile", Requests.minecraftServicesProfileRequestQueue],
             ["liveLogin", Requests.liveLoginRequestQueue]
         ]);
-        const points: IPoint[] = [];
         queues.forEach((queue, name) => {
             points.push({
                 measurement: "queues",
@@ -108,6 +109,29 @@ export class Requests {
                 }
             });
         });
+
+
+        const rateLimiters = new Map<string, ILength>([
+            ["mojangApi", Requests.mojangApiInstance],
+            ["mojangApiProfile", Requests.mojangApiProfileInstance],
+            ["mojangSession", Requests.mojangSessionInstance],
+            ["minecraftServices", Requests.minecraftServicesInstance],
+            ["minecraftServicesProfile", Requests.minecraftServicesProfileInstance]
+        ]);
+        rateLimiters.forEach((limiter, name)=>{
+            points.push({
+                measurement: "request_ratelimiters",
+                tags: {
+                    limiter: name,
+                    server: config.server
+                },
+                fields: {
+                    size: limiter.length
+                }
+            });
+        })
+
+
         try {
             MineSkinMetrics.get().then(metrics => {
                 metrics.metrics!.influx.writePoints(points, {
@@ -322,4 +346,8 @@ export class Requests {
 
 interface ISize {
     size: number;
+}
+
+interface ILength {
+    length: number;
 }
