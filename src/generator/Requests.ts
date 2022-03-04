@@ -111,7 +111,7 @@ export class Requests {
         });
 
 
-        const rateLimiters = new Map<string, ISize>([
+        const rateLimiters = new Map<string, IWaitingSize>([
             ["mojangApi", Requests.mojangApiInstance],
             ["mojangApiProfile", Requests.mojangApiProfileInstance],
             ["mojangSession", Requests.mojangSessionInstance],
@@ -127,7 +127,8 @@ export class Requests {
                     server: config.server
                 },
                 fields: {
-                    size: limiter.size || 0
+                    size: limiter.size || 0,
+                    waiting: limiter.waiting || 0
                 }
             });
         })
@@ -347,6 +348,9 @@ export class Requests {
 
 interface ISize {
     size: number;
+}
+interface IWaitingSize extends ISize{
+    waiting: number;
 }
 
 function isRateLimitedAxiosInstance(obj: any): obj is RateLimitedAxiosInstance {
