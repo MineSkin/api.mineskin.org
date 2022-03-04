@@ -63,6 +63,23 @@ export class Requests {
                 });
             }
         }
+        for (let key in Requests.axiosInstances) {
+            for (let skey in Requests.axiosInstances[key]) {
+                let instance = Requests.axiosInstances[key][skey];
+                if (!("setRateLimitOptions" in instance)) continue;
+                points.push({
+                    measurement: "request_ratelimiters",
+                    tags: {
+                        limiter: key,
+                        proxy: skey,
+                        server: config.server
+                    },
+                    fields: {
+                        size: instance.length
+                    }
+                });
+            }
+        }
         try {
             MineSkinMetrics.get().then(metrics => {
                 metrics.metrics!.influx.writePoints(points, {
