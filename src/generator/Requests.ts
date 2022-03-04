@@ -149,7 +149,7 @@ export class Requests {
     }
 
     private static setupMultiProxiedAxiosInstance(key: string, mineskinConfig: MineSkinConfig, requestConfig: AxiosRequestConfig, constr?: AxiosConstructor): void {
-        this.setupAxiosInstance(key, "default", requestConfig); // default instance without a proxy
+        this.setupAxiosInstance(key, SERVER, requestConfig); // default instance without a proxy
 
         if (!mineskinConfig.proxies.enabled) return;
         const proxyConfig = mineskinConfig.proxies;
@@ -169,7 +169,7 @@ export class Requests {
             }
         }
         console.warn(warn("could not find axios instance " + key + "/" + subkey));
-        return this.axiosInstances[key]["default"]; // fallback to default
+        return this.axiosInstances[key][SERVER]; // fallback to default
     }
 
     private static getAxiosInstanceForRequest(key: string, request: AxiosRequestConfig): AxiosInstance {
@@ -187,7 +187,7 @@ export class Requests {
     }
 
     private static setupMultiRequestQueue(key: string, mineskinConfig: MineSkinConfig, interval: number, maxPerRun: number): void {
-        this.setupRequestQueue(key, "default", interval, maxPerRun); // default instance without a proxy
+        this.setupRequestQueue(key, SERVER, interval, maxPerRun); // default instance without a proxy
 
         if (!mineskinConfig.proxies.enabled) return;
         const proxyConfig = mineskinConfig.proxies;
@@ -206,7 +206,7 @@ export class Requests {
             }
         }
         console.warn(warn("could not find request queue " + key + "/" + subkey));
-        return this.requestQueues[key]["default"]; // fallback to default
+        return this.requestQueues[key][SERVER]; // fallback to default
     }
 
     private static getRequestQueueForRequest(key: string, request: AxiosRequestConfig): JobQueue<AxiosRequestConfig, AxiosResponse> {
@@ -216,8 +216,8 @@ export class Requests {
 
 
     private static getInstanceSubkey(request: AxiosRequestConfig): string {
-        if (!request.headers) return "default";
-        return request.headers["x-mineskin-request-proxy"] || "default";
+        if (!request.headers) return SERVER;
+        return request.headers["x-mineskin-request-proxy"] || SERVER;
     }
 
     static putInstanceSubkey(request: AxiosRequestConfig, subkey: string): void {
