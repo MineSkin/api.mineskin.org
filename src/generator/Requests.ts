@@ -1,6 +1,6 @@
 import { JobQueue } from "jobqu";
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
-import rateLimit, { rateLimitOptions } from "@inventivetalent/axios-rate-limit";
+import rateLimit, { RateLimitedAxiosInstance, rateLimitOptions } from "@inventivetalent/axios-rate-limit";
 import { HttpsProxyAgent, HttpsProxyAgentOptions } from "https-proxy-agent"
 import { Time } from "@inventivetalent/time";
 import { URL } from "url";
@@ -75,7 +75,7 @@ export class Requests {
                         server: config.server
                     },
                     fields: {
-                        size: instance.length
+                        size: instance.size
                     }
                 });
             }
@@ -433,15 +433,6 @@ export class Requests {
 }
 
 type AxiosConstructor = (config: AxiosRequestConfig) => AxiosInstance;
-
-
-interface ISize {
-    size: number;
-}
-
-interface ILength {
-    length: number;
-}
 
 function isRateLimitedAxiosInstance(obj: any): obj is RateLimitedAxiosInstance {
     return "setRateLimitOptions" in obj;
