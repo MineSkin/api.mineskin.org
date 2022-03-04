@@ -66,7 +66,7 @@ export class Requests {
         for (let key in Requests.axiosInstances) {
             for (let skey in Requests.axiosInstances[key]) {
                 let instance = Requests.axiosInstances[key][skey];
-                if (!("setRateLimitOptions" in instance)) continue;
+                if (!isRateLimitedAxiosInstance(instance)) continue;
                 points.push({
                     measurement: "request_ratelimiters",
                     tags: {
@@ -441,4 +441,8 @@ interface ISize {
 
 interface ILength {
     length: number;
+}
+
+function isRateLimitedAxiosInstance(obj: any): obj is RateLimitedAxiosInstance {
+    return "setRateLimitOptions" in obj;
 }
