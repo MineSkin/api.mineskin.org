@@ -907,6 +907,7 @@ export class Generator {
                 "  Mojang: " + mojangHash.hash + "\n" +
                 data.decodedValue!.textures!.SKIN!.url,
                 tempFileValidation!.buffer!, "image.png");
+            //TODO: maybe retry getting the skin data if the urls don't match
         }
 
         await this.handleGenerateSuccess(type, options, client, account);
@@ -1222,7 +1223,7 @@ export class Generator {
         return decoded;
     }
 
-    public static async getMojangHash(url: string, options?: GenerateOptions, t = 1): Promise<MojangHashInfo> {
+    public static async getMojangHash(url: string, options?: GenerateOptions, t = 2): Promise<MojangHashInfo> {
         const transaction = Sentry.getCurrentHub().getScope()?.getTransaction();
         const span = transaction?.startChild({
             op: "generate_getMojangHash"
@@ -1249,7 +1250,8 @@ export class Generator {
         } catch (e) {
             console.warn(warn("Failed to get hash from mojang skin " + url + " (" + t + ")"));
             if (t > 0) {
-                return this.getMojangHash(url, options, t - 1);
+                await sleep(100);
+                return await this.getMojangHash(url, options, t - 1);
             }
             throw e;
         } finally {
