@@ -25,6 +25,7 @@ import { GithubWebhook } from "@inventivetalent/express-github-webhook/dist/src"
 import { Stats } from "./generator/Stats";
 import { Requests } from "./generator/Requests";
 import { info, warn } from "./util/colors";
+import { Discord } from "./util/Discord";
 
 sourceMapSupport.install();
 
@@ -195,6 +196,7 @@ async function init() {
                 console.log("updating!")
                 updatingApp = true;
                 console.log(process.cwd());
+                Discord.postDiscordMessage("[" + config.server + "] updating!");
             }, updateDelay + 5000);
         });
         app.use(function (req: Request, res: Response, next: NextFunction) {
