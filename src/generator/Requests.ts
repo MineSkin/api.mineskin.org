@@ -127,8 +127,7 @@ export class Requests {
                     server: config.server
                 },
                 fields: {
-                    size: limiter.getSize() || 0,
-                    waiting: limiter.getWaiting() || 0
+                    size: limiter.getSize() || 0
                 }
             });
         })
@@ -351,7 +350,6 @@ interface ISize {
 }
 interface IRateLimited {
     getSize(): number;
-    getWaiting(): number;
 }
 
 function isRateLimitedAxiosInstance(obj: any): obj is RateLimitedAxiosInstance {
