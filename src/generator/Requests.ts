@@ -72,7 +72,7 @@ export class Requests {
         } catch (e) {
             Sentry.captureException(e);
         }
-    }, 10000);
+    }, 5000);
 
     public static init(config: MineSkinConfig) {
         SERVER = config.server;
@@ -420,4 +420,8 @@ type AxiosConstructor = (config: AxiosRequestConfig) => AxiosInstance;
 
 interface ISize {
     size: number;
+}
+
+interface ILength {
+    length: number;
 }
