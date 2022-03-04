@@ -127,7 +127,7 @@ export class Requests {
                     server: config.server
                 },
                 fields: {
-                    size: limiter.size
+                    size: limiter.size || 0
                 }
             });
         })
