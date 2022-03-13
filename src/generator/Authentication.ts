@@ -121,11 +121,11 @@ export class Mojang {
             requestUser: true
         };
         try {
-            const validateResponse = await Requests.dynamicRequestWithAccount(MOJANG_AUTH, {
+            const validateResponse = await Requests.dynamicRequest(MOJANG_AUTH, {
                 method: "POST",
                 url: "/validate",
                 data: JSON.stringify(body)
-            }, account, bread?.breadcrumb);
+            }, bread?.breadcrumb);
             return Requests.isOk(validateResponse);
         } catch (e) {
             return false;
@@ -158,11 +158,11 @@ export class Mojang {
             clientToken: account.getOrCreateClientToken(),
             requestUser: true
         };
-        const refreshResponse = await Requests.dynamicRequestWithAccount(MOJANG_AUTH, {
+        const refreshResponse = await Requests.dynamicRequest(MOJANG_AUTH, {
             method: "POST",
             url: "/refresh",
             data: JSON.stringify(body)
-        }, account, bread?.breadcrumb).catch(err => {
+        }, bread?.breadcrumb).catch(err => {
             if (err.response) {
                 console.warn(err);
                 Sentry.captureException(err);
