@@ -105,11 +105,11 @@ export const AccountSchema: Schema<IAccountDocument, IAccountModel> = new Schema
     lastRequestServer: {
         type: String
     },
-    requestProxy: {
+    requestProxy: { //TODO: yeet
         type: String,
         index: true
     },
-    lastRequestProxy: {
+    lastRequestProxy: { //TODO: yeet
         type: String
     },
     type: {

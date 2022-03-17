@@ -160,7 +160,7 @@ export class Generator {
                 {
                     $or: [
                         { requestServer: { $exists: false } },
-                        { requestServer: { $in: ["default", config.server] } },
+                        { requestServer: { $in: ["default", config.server] } }, //TODO: include all available proxies for this server in query
                         { requestServer: null }
                     ]
                 },
