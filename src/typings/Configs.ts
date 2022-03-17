@@ -76,7 +76,6 @@ interface MicrosoftConfig {
 
 export interface ProxyConfig {
     enabled: boolean;
-    ips: {[id:string]: string};
     available: {[id: string]: Partial<HttpsProxyAgentOptions&{type?: string;enabled?: boolean}>}
 }
 
@@ -92,6 +91,7 @@ export interface MineSkinConfig {
     sessionSecret: string;
     statsServers: string[];
 
+    requestServers: {[k: string]: string[]};
     proxies: ProxyConfig;
 
     optimus: OptimusConfig;
