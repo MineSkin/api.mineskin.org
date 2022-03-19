@@ -2,21 +2,93 @@ import { getConfig, MineSkinConfig } from "../typings/Configs";
 import { Requests } from "./Requests";
 import { Account } from "../database/schemas";
 import { debug, info, warn } from "../util/colors";
+import { AccountType } from "../typings/db/IAccountDocument";
+import { sleep } from "../util";
 
 export class Balancer {
+
 
     static async balance(): Promise<void> {
         console.log(info("Balancing servers..."));
         const config: MineSkinConfig = await getConfig();
-        //TODO: move accounts
+        await this.balanceAccounts(config);
+        await sleep(1000);
         await this.updateLoadBalancer(config);
     }
 
-    private static async updateLoadBalancer(config: MineSkinConfig): Promise<void> {
-        const accountsPerServer = await this.getAccountsPerServer();
-        let totalAccounts = 0;
+    private static async balanceAccounts(config: MineSkinConfig): Promise<void> {
+        const accountsPerServer = await this.getAccountsPerServer(config);
+
+        let lowest = {
+            name: "",
+            count: 1000
+        };
+        let highest = {
+            name: "",
+            count: 0
+        };
         for (let k in accountsPerServer) {
-            totalAccounts += accountsPerServer[k];
+            let c = accountsPerServer[k];
+            if (c < lowest.count) {
+                lowest.count = c;
+                lowest.name = k;
+            }
+            if (c > highest.count) {
+                highest.count = c;
+                highest.name = k;
+            }
+        }
+
+        console.log(debug("Account Balance:"));
+        console.log(debug("highest: " + highest.count + ": " + highest.name + ""))
+        console.log(debug("lowest:  " + lowest.count + ": " + lowest.name + ""))
+        if (highest.name === "" || lowest.name === "") {
+            console.log(debug("not balancing because no servers"));
+            return;
+        }
+        if (highest.count - lowest.count <= 1) {
+            console.log(debug("not balancing because diff <= 1"));
+            return;
+        }
+
+        let toMove = Math.round((highest.count - lowest.count) * 0.3);
+        toMove = Math.max(1, toMove);
+        console.log(debug("moving " + toMove + " account(s) from " + highest.name + " to " + lowest.name));
+
+        for (let i = 0; i < toMove; i++) {
+            await Account.updateOne({
+                enabled: true,
+                requestServer: highest.name,
+                errorCounter: { $lt: config.errorThreshold },
+                accountType: AccountType.MICROSOFT
+            }, {
+                $set: {
+                    requestServer: lowest.name,
+                    lastRequestServer: highest.name
+                }
+            }).exec();
+        }
+    }
+
+    private static async updateLoadBalancer(config: MineSkinConfig): Promise<void> {
+        const accountsPerServer = await this.getAccountsPerServer(config);
+        const requestServers = config.requestServers;
+        const accountsPerPool: { [k: string]: number; } = {};
+        // group by pool
+        a: for (let k in accountsPerServer) {
+            for (let rk in requestServers) {
+                if (requestServers[rk].includes(k)) {
+                    accountsPerPool[rk] = (accountsPerPool[rk] || 0) + accountsPerServer[k];
+                    continue a;
+                }
+            }
+            // didn't find a requestServer alias, default to just the server name
+            accountsPerPool[k] = accountsPerServer[k];
+        }
+        console.log(accountsPerPool)
+        let totalAccounts = 0;
+        for (let k in accountsPerPool) {
+            totalAccounts += accountsPerPool[k];
         }
         for (let poolId of config.cloudflare.pools) {
             try {
@@ -31,12 +103,12 @@ export class Balancer {
                 let madeChanges = false;
                 const newOriginConfig = [];
                 for (let origin of currentOriginConfig) {
-                    if (!origin.enabled || !(origin.name in accountsPerServer)) continue;
+                    if (!origin.enabled || !(origin.name in accountsPerPool)) continue;
                     let newOrigin: Origin = {
                         name: origin.name,
                         address: origin.address,
                         enabled: origin.enabled,
-                        weight: this.max2Decimals(accountsPerServer[origin.name] / totalAccounts)
+                        weight: this.max2Decimals(accountsPerPool[origin.name] / totalAccounts)
                     }
                     newOriginConfig.push(newOrigin);
                     if (Math.abs(newOrigin.weight - origin.weight) > 0.02) {
@@ -57,7 +129,7 @@ export class Balancer {
                 console.warn(warn("exception while updating pool config for " + poolId));
                 if ("response" in e) {
                     console.warn(e.response);
-                    if("data" in e.response) {
+                    if ("data" in e.response) {
                         console.warn(JSON.stringify(e.response.data));
                     }
                 }
@@ -67,12 +139,12 @@ export class Balancer {
         console.log(debug("Updated Cloudflare load balancer pools!"))
     }
 
-    private static async getAccountsPerServer(): Promise<{ [k: string]: number }> {
+    private static async getAccountsPerServer(config: MineSkinConfig): Promise<{ [k: string]: number }> {
         const res: { _id: number; count: number; }[] = await Account.aggregate([
             {
                 $match: {
                     enabled: true,
-                    errorCounter: { $lt: 10 },
+                    errorCounter: { $lt: config.errorThreshold },
                     $and: [
                         { lastSelected: { $ne: 0 } },
                         { lastSelected: { $gt: (Date.now() / 1000) - (60 * 60) } }
