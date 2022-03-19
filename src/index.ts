@@ -26,6 +26,7 @@ import { Stats } from "./generator/Stats";
 import { Requests } from "./generator/Requests";
 import { info, warn } from "./util/colors";
 import { Discord } from "./util/Discord";
+import { Balancer } from "./generator/Balancer";
 
 sourceMapSupport.install();
 
@@ -307,6 +308,18 @@ async function init() {
         }
     }
     app.use(errorHandler);
+
+    if (config.balanceServers?.includes(config.server)) {
+        console.log("Starting balancing task");
+        Balancer.balance()//TODO: remove
+        setInterval(() => {
+            try {
+                Balancer.balance();
+            } catch (e) {
+                Sentry.captureException(e);
+            }
+        }, 1000 * 60 * 15);
+    }
 
     if (config.statsServers?.includes(config.server)) {
         console.log("Starting stats task");

@@ -79,6 +79,12 @@ export interface ProxyConfig {
     available: {[id: string]: Partial<HttpsProxyAgentOptions&{type?: string;enabled?: boolean}>}
 }
 
+export interface CloudflareConfig {
+    token: string;
+    account: string;
+    pools: string[];
+}
+
 export interface MineSkinConfig {
     port: number;
     server: string;
@@ -90,6 +96,7 @@ export interface MineSkinConfig {
     testerToken: string;
     sessionSecret: string;
     statsServers: string[];
+    balanceServers: string[];
 
     requestServers: {[k: string]: string[]};
     proxies: ProxyConfig;
@@ -107,6 +114,7 @@ export interface MineSkinConfig {
     gitconfig: GitConfigConfig;
     delays: DelaysConfig;
     microsoft: MicrosoftConfig;
+    cloudflare: CloudflareConfig;
 }
 
 export function getLocalConfig(): MineSkinConfig {
