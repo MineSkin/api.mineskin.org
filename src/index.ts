@@ -311,7 +311,6 @@ async function init() {
 
     if (config.balanceServers?.includes(config.server)) {
         console.log("Starting balancing task");
-        Balancer.balance()//TODO: remove
         setInterval(() => {
             try {
                 Balancer.balance();
