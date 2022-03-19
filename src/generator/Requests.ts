@@ -171,7 +171,7 @@ export class Requests {
         if (!mineskinConfig.proxies.enabled) return;
         const proxyConfig = mineskinConfig.proxies;
         for (let proxyKey in proxyConfig.available) {
-            if (!(proxyKey in mineskinConfig.requestServers[mineskinConfig.server])) continue;
+            if (!mineskinConfig.requestServers[mineskinConfig.server].includes(proxyKey)) continue;
             let proxy = proxyConfig.available[proxyKey];
             if (!proxy.enabled) continue;
             let proxyType = proxy["type"]; //TODO
@@ -210,7 +210,7 @@ export class Requests {
         if (!mineskinConfig.proxies.enabled) return;
         const proxyConfig = mineskinConfig.proxies;
         for (let proxyKey in proxyConfig.available) {
-            if (!(proxyKey in mineskinConfig.requestServers[mineskinConfig.server])) continue;
+            if (!mineskinConfig.requestServers[mineskinConfig.server].includes(proxyKey)) continue;
             let proxy = proxyConfig.available[proxyKey];
             if (!proxy.enabled) continue;
 
@@ -277,6 +277,7 @@ export class Requests {
                 .tag("hasResponse", `${ typeof response !== "undefined" }`);
             if (request) {
                 const url = new URL(axios.getUri(request), instance?.defaults.baseURL);
+                console.log(this.getInstanceSubkey(request))
                 m.tag("proxy", this.getInstanceSubkey(request))
                     .tag("method", request.method || "GET")
                     .tag("host", url.hostname);

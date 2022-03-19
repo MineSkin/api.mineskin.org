@@ -150,17 +150,18 @@ export class Generator {
         return await Stats.get(stats);
     }
 
+    public static async getRequestServers(): Promise<string[]> {
+        const config = await getConfig();
+        if (config.server in config.requestServers) {
+            return [...config.requestServers[config.server]];
+        }
+        return [config.server];
+    }
+
     public static async usableAccountsQuery(): Promise<FilterQuery<IAccountDocument>> {
         const time = Math.floor(Date.now() / 1000);
         const config = await getConfig();
-        let allowedRequestServers: string[] = ["default"];
-        if (config.server in config.requestServers) {
-            for (let s of config.requestServers[config.server]) {
-                allowedRequestServers.push(s);
-            }
-        } else {
-            allowedRequestServers.push(config.server);
-        }
+        let allowedRequestServers: string[] = ["default", ...await this.getRequestServers()];
         return {
             enabled: true,
             id: { $nin: Caching.getLockedAccounts() },
@@ -1011,7 +1012,9 @@ export class Generator {
         account = await Authentication.authenticate(account, bread);
 
         account.lastUsed = Math.floor(Date.now() / 1000);
-        account.updateRequestServer(metrics.config.server);
+        if (!(await Generator.getRequestServers()).includes(metrics.config.server)) {
+            account.updateRequestServer(metrics.config.server);
+        }
 
         span?.finish();
         return account;
