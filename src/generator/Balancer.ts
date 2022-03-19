@@ -73,23 +73,25 @@ export class Balancer {
     private static async updateLoadBalancer(config: MineSkinConfig): Promise<void> {
         const accountsPerServer = await this.getAccountsPerServer(config);
         const requestServers = config.requestServers;
-        const accountsPerPool: { [k: string]: number; } = {};
-        // group by pool
+        const accountsPerOrigin: { [k: string]: number; } = {};
+        // group by origin
         a: for (let k in accountsPerServer) {
             for (let rk in requestServers) {
                 if (requestServers[rk].includes(k)) {
-                    accountsPerPool[rk] = (accountsPerPool[rk] || 0) + accountsPerServer[k];
+                    accountsPerOrigin[rk] = (accountsPerOrigin[rk] || 0) + accountsPerServer[k];
                     continue a;
                 }
             }
             // didn't find a requestServer alias, default to just the server name
-            accountsPerPool[k] = accountsPerServer[k];
+            accountsPerOrigin[k] = accountsPerServer[k];
         }
-        console.log(accountsPerPool)
+        console.log(accountsPerOrigin)
         let totalAccounts = 0;
-        for (let k in accountsPerPool) {
-            totalAccounts += accountsPerPool[k];
+        for (let k in accountsPerOrigin) {
+            totalAccounts += accountsPerOrigin[k];
         }
+
+        let weightChanges: { [k: string]: { old: number; new: number; } } = {};
         for (let poolId of config.cloudflare.pools) {
             try {
                 const currentPoolConfigResponse = await this.getPoolDetails(config, poolId);
@@ -103,17 +105,21 @@ export class Balancer {
                 let madeChanges = false;
                 const newOriginConfig = [];
                 for (let origin of currentOriginConfig) {
-                    if (!origin.enabled || !(origin.name in accountsPerPool)) continue;
+                    if (!origin.enabled || !(origin.name in accountsPerOrigin)) continue;
                     let newOrigin: Origin = {
                         name: origin.name,
                         address: origin.address,
                         enabled: origin.enabled,
-                        weight: this.max2Decimals(accountsPerPool[origin.name] / totalAccounts)
+                        weight: this.max2Decimals(accountsPerOrigin[origin.name] / totalAccounts)
                     }
                     newOriginConfig.push(newOrigin);
                     if (Math.abs(newOrigin.weight - origin.weight) > 0.02) {
                         madeChanges = true;
                     }
+                    weightChanges[origin.name] = {
+                        old: origin.weight,
+                        new: newOrigin.weight
+                    };
                 }
 
                 if (madeChanges && newOriginConfig.length === currentOriginConfig.length) {
@@ -136,7 +142,10 @@ export class Balancer {
                 continue;
             }
         }
-        console.log(debug("Updated Cloudflare load balancer pools!"))
+        console.log(debug("Updated Cloudflare load balancer pools! New weights:"))
+        for (let c in weightChanges) {
+            console.log(debug(`${ weightChanges[c].old } -> ${ weightChanges[c].new }`))
+        }
     }
 
     private static async getAccountsPerServer(config: MineSkinConfig): Promise<{ [k: string]: number }> {
