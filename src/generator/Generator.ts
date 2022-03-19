@@ -153,6 +153,14 @@ export class Generator {
     public static async usableAccountsQuery(): Promise<FilterQuery<IAccountDocument>> {
         const time = Math.floor(Date.now() / 1000);
         const config = await getConfig();
+        let allowedRequestServers: string[] = ["default"];
+        if (config.server in config.requestServers) {
+            for (let s of config.requestServers[config.server]) {
+                allowedRequestServers.push(s);
+            }
+        } else {
+            allowedRequestServers.push(config.server);
+        }
         return {
             enabled: true,
             id: { $nin: Caching.getLockedAccounts() },
@@ -160,7 +168,7 @@ export class Generator {
                 {
                     $or: [
                         { requestServer: { $exists: false } },
-                        { requestServer: { $in: ["default", config.server] } }, //TODO: include all available proxies for this server in query
+                        { requestServer: { $in: allowedRequestServers } },
                         { requestServer: null }
                     ]
                 },
@@ -192,7 +200,7 @@ export class Generator {
             ],
             errorCounter: { $lt: (config.errorThreshold || 10) },
             timeAdded: { $lt: (time - 60) }
-        }
+        };
     }
 
 

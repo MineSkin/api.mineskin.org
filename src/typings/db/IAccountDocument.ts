@@ -89,8 +89,6 @@ export interface IAccountDocument extends Document {
     requestIp: string;
     requestServer?: string | null;
     lastRequestServer: string;
-    requestProxy?: string | null; //TODO: yeet
-    lastRequestProxy: string;
     type: string;
     discordUser?: string;
     discordMessageSent?: boolean;
