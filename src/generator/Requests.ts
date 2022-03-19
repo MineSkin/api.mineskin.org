@@ -243,9 +243,7 @@ export class Requests {
     }
 
     static putInstanceSubkeyForAccount(request: AxiosRequestConfig, account: IAccountDocument): void {
-        if (account.requestServer && account.requestServer.length > 0) {
-            this.putInstanceSubkey(request, account.requestServer);
-        }
+        this.putInstanceSubkey(request, account.requestServer || SERVER);
     }
 
 
