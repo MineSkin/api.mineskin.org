@@ -42,7 +42,7 @@ export class Balancer {
         console.log(debug("Account Balance:"));
         console.log(debug("highest: " + highest.count + ": " + highest.name + ""))
         console.log(debug("lowest:  " + lowest.count + ": " + lowest.name + ""))
-        if (highest.name === "" || lowest.name === "") {
+        if (!highest.name || highest.name.length <= 0 || !lowest.name || lowest.name.length <= 0) {
             console.log(debug("not balancing because no servers"));
             return;
         }
