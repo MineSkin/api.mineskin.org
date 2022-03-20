@@ -286,16 +286,18 @@ export const register = (app: Application, config: MineSkinConfig) => {
         req.session.destroy(() => res.status(200).end());
     })
 
-    app.get("/accountManager/preferredAccountServer", (req: Request, res: Response) => {
-        Generator.getPreferredAccountServer(req.query["type"] as string).then(server => {
+    app.get("/accountManager/preferredAccountServer", async (req: Request, res: Response) => {
+        try {
+            let server = await Generator.getPreferredAccountServer(req.query["type"] as string);
+            server = await Generator.getServerFromProxy(server);
             res.json({
                 server: server,
                 host: `${ server }.api.mineskin.org`
             });
-        }).catch(err => {
-            Sentry.captureException(err);
+        } catch (e) {
+            Sentry.captureException(e);
             res.status(404).json({ error: "failed to get server" });
-        })
+        }
     })
 
     // Stuff that requires being logged in

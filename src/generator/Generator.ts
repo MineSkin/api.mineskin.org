@@ -158,6 +158,19 @@ export class Generator {
         return [config.server];
     }
 
+    public static async getServerFromProxy(proxy: string): Promise<string> {
+        const config = await getConfig();
+        if (config.server === proxy) {
+            return config.server;
+        }
+        for (let s in config.requestServers) {
+            if (config.requestServers[s].includes(proxy)) {
+                return s;
+            }
+        }
+        return proxy;
+    }
+
     public static async usableAccountsQuery(): Promise<FilterQuery<IAccountDocument>> {
         const time = Math.floor(Date.now() / 1000);
         const config = await getConfig();
