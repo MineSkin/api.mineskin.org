@@ -142,9 +142,11 @@ export class Balancer {
                 continue;
             }
         }
-        console.log(debug("Updated Cloudflare load balancer pools! New weights:"))
-        for (let c in weightChanges) {
-            console.log(debug(`${ weightChanges[c].old } -> ${ weightChanges[c].new }`))
+        if (Object.keys(weightChanges).length > 0) {
+            console.log(debug("Updated Cloudflare load balancer pools! New weights:"))
+            for (let c in weightChanges) {
+                console.log(debug(`${ c } ${ weightChanges[c].old } -> ${ weightChanges[c].new }`))
+            }
         }
     }
 

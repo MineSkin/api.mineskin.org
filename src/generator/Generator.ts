@@ -218,13 +218,22 @@ export class Generator {
         }).exec();
         this.serverAccounts = serverAccounts;
 
-        const usableAccounts = await Account.countDocuments(await this.usableAccountsQuery()).exec();
+        const usableAccountDocs = await Account.find(await this.usableAccountsQuery(), {
+            _id:0,
+            requestServer: 1
+        }).exec();
+        let usableAccounts = usableAccountDocs.length;
         this.usableAccounts = usableAccounts;
+
+        let accountsPerProxy: {[k: string]: number} = {};
+        for (let acc of usableAccountDocs) {
+            accountsPerProxy[acc.requestServer!] = (accountsPerProxy[acc.requestServer!] || 0) + 1;
+        }
 
         const accountTypes = await Account.aggregate([
             {
                 "$match": {
-                    requestServer: { $in: ["default", config.server] }
+                    requestServer: { $in: ["default", ...await this.getRequestServers()] }
                 }
             }, {
                 "$group":
@@ -258,6 +267,23 @@ export class Generator {
                 database: 'mineskin',
                 precision: 's'
             })
+            for (let p in accountsPerProxy) {
+                await metrics.metrics!.influx.writePoints([
+                    {
+                        measurement: 'proxy_accounts',
+                        tags: {
+                            server: metrics.config.server,
+                            proxy: p
+                        },
+                        fields: {
+                            useable: accountsPerProxy[p]
+                        }
+                    }
+                ], {
+                    database: 'mineskin',
+                    precision: 's'
+                })
+            }
 
             let accountsPerTypePoints: IPoint[] = [];
             for (let accountType in accountTypes) {
