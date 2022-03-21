@@ -1,4 +1,4 @@
-import { Requests } from "./Requests";
+import { MOJANG_API, Requests } from "./Requests";
 import { AsyncLoadingCache, Caches, CacheStats, ICacheBase, LoadingCache, SimpleCache } from "@inventivetalent/loading-cache";
 import * as Sentry from "@sentry/node";
 import { Severity } from "@sentry/node";
@@ -49,7 +49,7 @@ export class Caching {
         .expireAfterWrite(Time.minutes(10))
         .expirationInterval(Time.minutes(1))
         .buildAsync<string, User>(name => {
-            return Requests.mojangApiProfileRequest({
+            return Requests.dynamicRequestWithRandomProxy(MOJANG_API, {
                 url: "/users/profiles/minecraft/" + name,
             }).then(response => {
                 let d = {
@@ -92,7 +92,7 @@ export class Caching {
         .expirationInterval(Time.minutes(1))
         .buildAsync<string, User>(uuid => {
             uuid = stripUuid(uuid);
-            return Requests.mojangApiProfileRequest({
+            return Requests.dynamicRequestWithRandomProxy(MOJANG_API, {
                 url: "/user/profiles/" + uuid + "/names"
             }).then(response => {
                 let d = {

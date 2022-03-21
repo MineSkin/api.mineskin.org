@@ -29,6 +29,8 @@ axios.defaults.headers["Accept"] = "application/json";
 axios.defaults.timeout = 10000;
 
 let SERVER = "???";
+let PROXIES: string[] = [];//TODO
+let PROXY_INDEX: { [k: string]: number } = {};
 
 export class Requests {
 
@@ -93,6 +95,10 @@ export class Requests {
 
     public static init(config: MineSkinConfig) {
         SERVER = config.server;
+        PROXIES = [config.server];
+        if (config.server in config.requestServers) {
+            PROXIES = config.requestServers[config.server];
+        }
         axios.defaults.headers["User-Agent"] = "MineSkin/" + config.server;
 
         this.setupMultiProxiedAxiosInstance(GENERIC, config, {});
@@ -248,7 +254,6 @@ export class Requests {
         this.putInstanceSubkey(request, account.requestServer || SERVER);
     }
 
-
     protected static async runAxiosRequest(request: AxiosRequestConfig, inst: AxiosInstance | string = this.axiosInstance): Promise<AxiosResponse> {
         let instanceSubkey;
         let instance: AxiosInstance;
@@ -350,6 +355,16 @@ export class Requests {
 
     public static async dynamicRequestWithAccount(type: string, request: AxiosRequestConfig, account: IAccountDocument, bread?: string): Promise<AxiosResponse> {
         this.putInstanceSubkeyForAccount(request, account);
+        return this.dynamicRequest(type, request, bread);
+    }
+
+    public static async dynamicRequestWithRandomProxy(type: string, request: AxiosRequestConfig, bread?: string): Promise<AxiosResponse> {
+        let i = PROXY_INDEX[type] || 0;
+        if (i > PROXIES.length) {
+            i = 0;
+        }
+        this.putInstanceSubkey(request, PROXIES[i]);
+        PROXY_INDEX[type] = i + 1;
         return this.dynamicRequest(type, request, bread);
     }
 
