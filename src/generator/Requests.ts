@@ -276,7 +276,7 @@ export class Requests {
                 .tag("hasRequest", `${ typeof request !== "undefined" }`)
                 .tag("hasResponse", `${ typeof response !== "undefined" }`);
             if (request) {
-                const url = new URL(axios.getUri(request), instance?.defaults.baseURL);
+                const url = new URL(axios.getUri(request), instance?.defaults.baseURL || request.baseURL);
                 m.tag("proxy", this.getInstanceSubkey(request))
                     .tag("method", request.method || "GET")
                     .tag("host", url.hostname);
