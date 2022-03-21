@@ -360,7 +360,7 @@ export class Requests {
 
     public static async dynamicRequestWithRandomProxy(type: string, request: AxiosRequestConfig, bread?: string): Promise<AxiosResponse> {
         let i = PROXY_INDEX[type] || 0;
-        if (i > PROXIES.length) {
+        if (i >= PROXIES.length) {
             i = 0;
         }
         this.putInstanceSubkey(request, PROXIES[i]);
