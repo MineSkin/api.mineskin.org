@@ -28,6 +28,7 @@ export class Balancer {
             count: 0
         };
         for (let k in accountsPerServer) {
+            if (k === "null") continue;
             let c = accountsPerServer[k];
             if (c < lowest.count) {
                 lowest.count = c;
@@ -44,6 +45,10 @@ export class Balancer {
         console.log(debug("lowest:  " + lowest.count + ": " + lowest.name + ""))
         if (!highest.name || highest.name.length <= 0 || !lowest.name || lowest.name.length <= 0) {
             console.log(debug("not balancing because no servers"));
+            return;
+        }
+        if (lowest.name === "null") {
+            console.log(warn("null lowest server"));
             return;
         }
         if (highest.count - lowest.count <= 1) {

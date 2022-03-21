@@ -152,10 +152,15 @@ export class Generator {
 
     public static async getRequestServers(): Promise<string[]> {
         const config = await getConfig();
+        let servers = [config.server];
         if (config.server in config.requestServers) {
-            return [...config.requestServers[config.server]];
+            for (let s of config.requestServers[config.server]) {
+                if (!servers.includes(s)) {
+                    servers.push(s);
+                }
+            }
         }
-        return [config.server];
+        return servers;
     }
 
     public static async getServerFromProxy(proxy: string): Promise<string> {
@@ -182,8 +187,8 @@ export class Generator {
                 {
                     $or: [
                         { requestServer: { $exists: false } },
-                        { requestServer: { $in: allowedRequestServers } },
-                        { requestServer: null }
+                        { requestServer: null },
+                        { requestServer: { $in: allowedRequestServers } }
                     ]
                 },
                 {
