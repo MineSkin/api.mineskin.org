@@ -228,7 +228,7 @@ async function init() {
         app.get("/openapi", (req, res) => {
             res.redirect("https://rest.wiki/?https://api.mineskin.org/openapi.yml");
         });
-        app.get("/robots.txt", (req,res)=>{
+        app.get("/robots.txt", (req, res) => {
             res.send("User-Agent: *\n" +
                 "Disallow: /generate\n" +
                 "Disallow: /account\n")

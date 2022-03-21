@@ -232,13 +232,13 @@ export class Generator {
         this.serverAccounts = serverAccounts;
 
         const usableAccountDocs = await Account.find(await this.usableAccountsQuery(), {
-            _id:0,
+            _id: 0,
             requestServer: 1
         }).exec();
         let usableAccounts = usableAccountDocs.length;
         this.usableAccounts = usableAccounts;
 
-        let accountsPerProxy: {[k: string]: number} = {};
+        let accountsPerProxy: { [k: string]: number } = {};
         for (let acc of usableAccountDocs) {
             accountsPerProxy[acc.requestServer!] = (accountsPerProxy[acc.requestServer!] || 0) + 1;
         }
