@@ -7,6 +7,7 @@ import { debug } from "../util/colors";
 
 const ACCOUNTS_TOTAL = "accounts.total";
 const ACCOUNTS_HEALTHY = "accounts.healthy";
+const ACCOUNTS_USABLE = "accounts.healthy";
 const ACCOUNTS_TYPE_PREFIX = "accounts.type.";
 
 const GENERATED_UPLOAD_COUNT = "generated.upload.count";
@@ -50,6 +51,10 @@ export class Stats {
             Stat.get(ACCOUNTS_HEALTHY).then(n => {
                 into.healthyAccounts = n;
                 into.account.global.healthy = n;
+            }),
+            Stat.get(ACCOUNTS_USABLE).then(n => {
+                into.useableAccounts = n;
+                into.account.global.usable = n;
             }),
 
             Promise.all([
@@ -147,7 +152,11 @@ export class Stats {
         //     enabled: true,
         //     requestServer: config.server
         // }).exec();
-        const healthyAccounts = await Account.countGlobalUsable();
+        const healthyAccounts = await Account.countDocuments({
+            enabled: true,
+            errorCounter: { $lt: config.errorThreshold }
+        })
+        const usableAccounts = await Account.countGlobalUsable();
 
         try {
             const metrics = await MineSkinMetrics.get();
@@ -160,6 +169,7 @@ export class Stats {
                     fields: {
                         total: enabledAccounts,
                         healthy: healthyAccounts,
+                        usable: usableAccounts
                     }
                 }
             ], {
@@ -174,7 +184,8 @@ export class Stats {
 
         return Promise.all([
             Stat.set(ACCOUNTS_TOTAL, enabledAccounts),
-            Stat.set(ACCOUNTS_HEALTHY, healthyAccounts)
+            Stat.set(ACCOUNTS_HEALTHY, healthyAccounts),
+            Stat.set(ACCOUNTS_USABLE, usableAccounts)
         ]).then((ignored: any) => {
         });
     }

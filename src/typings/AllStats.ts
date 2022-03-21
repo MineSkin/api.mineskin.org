@@ -7,6 +7,7 @@ export interface AllStats extends AccountStats, DurationStats, TimeFrameStats {
         global: {
             total?: number;
             healthy?: number;
+            usable?: number;
         }
         local: {
             total?: number;
