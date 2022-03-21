@@ -1,4 +1,4 @@
-import { MOJANG_API, Requests } from "./Requests";
+import { MOJANG_API, MOJANG_SESSION, Requests } from "./Requests";
 import { AsyncLoadingCache, Caches, CacheStats, ICacheBase, LoadingCache, SimpleCache } from "@inventivetalent/loading-cache";
 import * as Sentry from "@sentry/node";
 import { Severity } from "@sentry/node";
@@ -26,7 +26,7 @@ export class Caching {
         .expireAfterWrite(Time.seconds(30))
         .expirationInterval(Time.seconds(10))
         .buildAsync<string, SkinData>(uuid => {
-            return Requests.mojangSessionRequest({
+            return Requests.dynamicRequestWithRandomProxy(MOJANG_SESSION, {
                 url: "/session/minecraft/profile/" + uuid + "?unsigned=false"
             }).then(response => {
                 if (!Requests.isOk(response) || !response.data.hasOwnProperty("properties")) {
