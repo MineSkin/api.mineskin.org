@@ -245,6 +245,7 @@ export class Generator {
 
         let accountsPerProxy: { [k: string]: number } = {};
         for (let acc of usableAccountDocs) {
+            if (!acc.requestServer || acc.requestServer === "null") continue;
             accountsPerProxy[acc.requestServer!] = (accountsPerProxy[acc.requestServer!] || 0) + 1;
         }
 
