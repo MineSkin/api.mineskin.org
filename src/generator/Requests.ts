@@ -118,8 +118,10 @@ export class Requests {
             baseURL: "https://api.mojang.com",
             headers: {}
         }, c => rateLimit(axios.create(c), {
-            maxRequests: 600,
-            perMilliseconds: 10 * 60 * 1000
+            // maxRequests: 600,
+            // perMilliseconds: 10 * 60 * 1000
+            maxRequests: 40,
+            perMilliseconds: 60 * 1000
         }));
         this.setupMultiRequestQueue(MOJANG_API_PROFILE, config, Time.millis(400), 1);
 
