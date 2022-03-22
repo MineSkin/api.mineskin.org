@@ -40,7 +40,7 @@ import { FilterQuery } from "mongoose";
 
 
 // minimum delay for accounts to be used
-export const MIN_ACCOUNT_DELAY = 60;
+export const MIN_ACCOUNT_DELAY = 20;
 
 const MAX_ID_TRIES = 10;
 
