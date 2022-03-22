@@ -310,6 +310,9 @@ export class Requests {
                 if (![2, 3].includes(Math.floor(response.status / 100))) {
                     if (request) {
                         console.log(c.yellow(`${ this.getBreadcrumb(request) || '00000000' }   ${ response.status } ${ request.method || 'GET' } ${ request.baseURL || instance?.defaults?.baseURL || '' }${ request.url }`))
+                        if (response.data) {
+                            console.log(response.data);
+                        }
                     }
                 }
             }
