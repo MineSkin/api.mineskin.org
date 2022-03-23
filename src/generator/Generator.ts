@@ -437,7 +437,7 @@ export class Generator {
             account: result.account?.id,
             breadcrumb: options.breadcrumb,
             type: type,
-            server: config.server,
+            server: result.account?.requestServer || config.server,
 
             via: client.via,
             ua: client.userAgent,
