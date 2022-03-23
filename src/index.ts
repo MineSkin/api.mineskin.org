@@ -59,6 +59,10 @@ async function init() {
         Requests.init(config);
     }
 
+    const version = await gitsha();
+    console.log(info("Version: " + version));
+    Discord.postDiscordMessage('[' + config.server + '] Version: ' + version);
+
     {
         console.log("Creating temp directories");
         try {
@@ -79,7 +83,7 @@ async function init() {
         console.log("Initializing Sentry")
         Sentry.init({
             dsn: config.sentry.dsn,
-            release: await gitsha(),
+            release: version,
             integrations: [
                 new Sentry.Integrations.Http({ tracing: true }),
                 new Tracing.Integrations.Express({ app })
