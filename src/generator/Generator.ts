@@ -393,7 +393,7 @@ export class Generator {
                 m.inc()
 
                 if (t > 0) {
-                    await sleep(200);
+                    await sleep(1000);
                     return await this.getSkinDataWithRetry(accountOrUuid, type, expectedUrl, breadcrumb, t - 1);
                 }
             }
@@ -959,6 +959,13 @@ export class Generator {
             expectedUrl = skinChangeResponse.skins[0].url;
         }
         const data = await this.getSkinDataWithRetry(account, type, expectedUrl, options.breadcrumb);
+        if (expectedUrl && expectedUrl !== data.decodedValue!.textures!.SKIN!.url) {
+            Discord.postDiscordMessage("⚠ URL mismatch\n" +
+                "  Server:       " + config.server + "\n" +
+                "  Account:      " + account.id + "/" + account.uuid + "\n" +
+                "  Changed to:   " + skinChangeResponse.skins[0].url + "\n" +
+                "  Texture Data: " + data.decodedValue!.textures!.SKIN!.url);
+        }
         const mojangHash = await this.getMojangHash(data.decodedValue!.textures!.SKIN!.url, options);
 
         const hashesMatch = await this.compareImageAndMojangHash(tempFileValidation.hash!, mojangHash!.hash!, type, options, account);
