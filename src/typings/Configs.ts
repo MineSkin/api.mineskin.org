@@ -114,6 +114,7 @@ export interface MineSkinConfig {
     proxies: ProxyConfig;
 
     optimus: OptimusConfig;
+    cookie: { secret: string };
     mongo: MongoConfig;
     crypto: CryptoConfig;
     email: EmailConfig;

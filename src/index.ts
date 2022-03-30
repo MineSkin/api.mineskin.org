@@ -11,6 +11,7 @@ import RotatingFileStream from "rotating-file-stream";
 import morgan from "morgan";
 import * as bodyParser from "body-parser";
 import fileUpload from "express-fileupload";
+import cookieParser from "cookie-parser";
 import { accountManagerRoute, accountRoute, apiKeyRoute, generateRoute, getRoute, hiatusRoute, renderRoute, testerRoute, utilRoute } from "./routes";
 import { MOJ_DIR, UPL_DIR, URL_DIR } from "./generator/Temp";
 import { getConfig, getLocalConfig, MineSkinConfig } from "./typings/Configs";
@@ -132,6 +133,7 @@ async function init() {
         app.use(bodyParser.urlencoded({ extended: true, limit: '50kb' }));
         app.use(bodyParser.json({ limit: '20kb' }));
         app.use(fileUpload());
+        app.use(cookieParser(config.cookie.secret));
         app.use((req, res, next) => {
             res.header("X-MineSkin-Server", config.server || "default");
             next();

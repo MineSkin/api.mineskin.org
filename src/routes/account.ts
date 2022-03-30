@@ -85,7 +85,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
             domain: 'mineskin.org',
             secure: true,
             httpOnly: true,
-            maxAge: 60 * 60
+            signed: true
         })
 
         res.redirect('https://mineskin.org/account');
