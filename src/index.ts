@@ -363,8 +363,8 @@ init().then(() => {
             }, 1000);
         });
         const timeout = 20000;
-        server.setTimeout(timeout, function (){
-            console.warn(warn(`A request timed out after ${timeout}ms!`))
+        server.setTimeout(timeout, function () {
+            console.warn(warn(`A request timed out after ${ timeout }ms!`))
         })
     }, 1000);
 });
