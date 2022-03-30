@@ -82,10 +82,8 @@ export const register = (app: Application, config: MineSkinConfig) => {
 
         const token = jwt.sign({
             sub: user,
-            email: email,
-            act: {
-                sub: userId
-            }
+            gid: userId,
+            email: email
         }, jwtPrivateKey, {
             algorithm: 'HS512',
             issuer: "https://api.mineskin.org",
