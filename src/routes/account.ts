@@ -76,7 +76,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
                 sub: userId
             }
         }, jwtPrivateKey, {
-            algorithm: 'ES512',
+            algorithm: 'HS512',
             issuer: "https://api.mineskin.org",
             jwtid: tokenId,
             expiresIn: '1h'
@@ -84,7 +84,8 @@ export const register = (app: Application, config: MineSkinConfig) => {
         res.cookie("mineskin_account", token, {
             domain: 'mineskin.org',
             secure: true,
-            httpOnly: true
+            httpOnly: true,
+            maxAge: 60 * 60
         })
 
         res.redirect('https://mineskin.org/account');
