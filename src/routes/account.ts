@@ -139,6 +139,14 @@ export const register = (app: Application, config: MineSkinConfig) => {
         res.json(user);
     })
 
+    app.get("/account/minecraftAccounts", async (req,res)=>{
+        const user = await validateAuth(req, res);
+        if (!user) {
+            return;
+        }
+
+    })
+
     function sign(payload: string | Buffer | object, options: SignOptions): Promise<string | undefined> {
         return new Promise((resolve, reject) => {
             jwt.sign(payload, jwtPrivateKey, options, (err, token) => {
