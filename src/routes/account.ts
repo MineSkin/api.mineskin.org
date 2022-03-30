@@ -1,11 +1,15 @@
 import { Application, Request, Response } from "express";
 import { MineSkinConfig } from "../typings/Configs";
-import { corsWithCredentialsMiddleware, getIp, stripUuid } from "../util";
-import jwt, { Jwt, JwtPayload, SignOptions, VerifyOptions } from "jsonwebtoken";
+import { corsWithCredentialsMiddleware, getIp, Maybe, stripUuid } from "../util";
+import jwt, { JsonWebTokenError, Jwt, JwtPayload, SignOptions, VerifyOptions } from "jsonwebtoken";
 import { LoginTicket, OAuth2Client } from "google-auth-library";
 import { v4 as randomUuid } from "uuid";
 import * as fs from "fs";
 import { Caching } from "../generator/Caching";
+import { User } from "../database/schemas"
+import { IUserDocument } from "../typings/db/IUserDocument";
+import { debug, info } from "../util/colors";
+import { Time } from "@inventivetalent/time";
 
 export const register = (app: Application, config: MineSkinConfig) => {
 
@@ -73,32 +77,66 @@ export const register = (app: Application, config: MineSkinConfig) => {
             return;
         }
         const userId = payload['sub'];
-        const email = payload['email'];
+        const email = payload['email']!;
 
-        const user = randomUuid(); //TODO
+
+        let user: Maybe<IUserDocument> = await User.findForGoogleIdAndEmail(userId, email);
+        if (!user) {
+            // create new user
+            user = await new User(<IUserDocument>{
+                uuid: stripUuid(randomUuid()),
+                googleId: userId,
+                email: email,
+                created: new Date(),
+                lastUsed: new Date(),
+                sessions: {},
+                minecraftAccounts: <string[]>[]
+            }).save();
+            console.log(info(`Created new user account for ${ user.email } ${ getIp(req) }`));
+        }
+
         const tokenId = randomUuid();
+        if (!user.sessions) {
+            user.sessions = {};
+        }
+        user.sessions[tokenId] = new Date();
+        user.markModified('sessions');
+        //TODO: expire old sessions
+
+        user.lastUsed = new Date();
+        await user.save();
 
         //TODO: should probably have a nonce
 
         const token = await sign({
-            sub: user,
+            sub: user.uuid,
             gid: userId,
             email: email
-        },{
+        }, {
             algorithm: 'HS512',
             issuer: 'https://api.mineskin.org',
             jwtid: tokenId,
             expiresIn: '1h'
         });
         res.cookie("mineskin_account", token, {
-            domain: 'mineskin.org',
+            domain: '.mineskin.org', //TODO: url
             secure: true,
             httpOnly: true,
-            signed: true,
-            maxAge: 1000 * 60 * 60
+            // signed: true,
+            maxAge: Time.hours(1)
         })
 
+        console.log(debug(`Created new session for ${ user.uuid }/${ user.email } ${ getIp(req) }`));
+
         res.redirect('https://mineskin.org/account');
+    })
+
+    app.get("/account", async (req, res) => {
+        const user = await validateAuth(req, res);
+        if (!user) {
+            return;
+        }
+        res.json(user);
     })
 
     function sign(payload: string | Buffer | object, options: SignOptions): Promise<string | undefined> {
@@ -113,32 +151,77 @@ export const register = (app: Application, config: MineSkinConfig) => {
         })
     }
 
-    function verify(token: string, options: VerifyOptions): Promise<Jwt | JwtPayload | string | undefined> {
+    function verify(token: string, options: VerifyOptions): Promise<Jwt> {
         return new Promise((resolve, reject) => {
+            options.complete = true;
             jwt.verify(token, jwtPrivateKey, options, (err, jwt) => {
-                if (err) {
+                if (err || !jwt) {
                     reject(err);
                     return;
                 }
-                resolve(jwt);
+                resolve(jwt as Jwt);
             })
         })
     }
 
-    async function validateAuth(req: Request, res: Response): Promise<boolean> {
-        const cookie = req.signedCookies['mineskin_account'];
+    async function validateAuth(req: Request, res: Response): Promise<boolean | IUserDocument> {
+        const cookie = req.cookies['mineskin_account'];
         console.log(cookie);
         if (!cookie || cookie.length <= 0) {
-            res.status(400);
+            res.status(400).json({ error: 'invalid auth (1)' })
             return false;
         }
-       const jwt = await verify(cookie,{
-           algorithms: ['HS512'],
-           issuer: ['https://api.mineskin.org'],
-           maxAge: '1h'
-       });
+        let jwt;
+        try {
+            jwt = await verify(cookie, {
+                algorithms: ['HS512'],
+                issuer: ['https://api.mineskin.org'],
+                maxAge: '1h'
+            });
+        } catch (e) {
+            console.warn(e);
+            if (e instanceof JsonWebTokenError) {
+                res.status(400).json({ error: 'invalid auth (2)'})
+            }
+            return false;
+        }
         console.log(jwt);
-        return false;
+        const payload = jwt.payload as JwtPayload;
+        if (!jwt || !payload) {
+            res.status(400).json({ error: 'invalid auth (3)' })
+            return false;
+        }
+        if (!payload['sub'] || !payload['gid'] || !payload['email'] || !payload['jti']) {
+            res.status(400).json({ error: 'invalid auth (4)' })
+            return false;
+        }
+
+        const user = await User.findForIdGoogleIdAndEmail(payload['sub'], payload['gid'], payload['email']);
+        if (!user) {
+            res.status(400).json({ error: 'user not found' });
+            return false;
+        }
+
+        if (!user.sessions) {
+            // has no sessions
+            res.status(400).json({ error: 'invalid session (1)' })
+            return false;
+        }
+        const sessionDate = user.sessions[payload['jti']!];
+        if (!sessionDate) {
+            // invalid/expired session
+            res.status(400).json({ error: 'invalid session (2)' })
+            return false;
+        }
+        if (Date.now() - sessionDate.getTime() > Time.hours(1)) {
+            // expired session
+            res.status(400).json({ error: 'session expired' })
+            return false;
+        }
+
+        user.lastUsed = new Date();
+
+        return await user.save();
     }
 
 };

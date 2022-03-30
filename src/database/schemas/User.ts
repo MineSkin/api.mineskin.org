@@ -1,7 +1,7 @@
 import { model, Schema } from "mongoose";
 import { IUserDocument, IUserModel } from "../../typings/db/IUserDocument";
 
-export const schema: Schema<IUserDocument, IUserModel> = new Schema(
+export const UserSchema: Schema<IUserDocument, IUserModel> = new Schema(
     {
         uuid: {
             type: String,
@@ -21,19 +21,24 @@ export const schema: Schema<IUserDocument, IUserModel> = new Schema(
         lastUsed: {
             type: Date
         },
-        sessions: [{
-            token: String,
-            date: Date
-        }],
+        sessions: Schema.Types.Mixed, // session id => creation date
         minecraftAccounts: [String]
     }
 )
 
-schema.statics.findForGoogleIdAndEmail = function(this: IUserModel, googleId: string, email: string): Promise<IUserDocument | null> {
+UserSchema.statics.findForGoogleIdAndEmail = function(this: IUserModel, googleId: string, email: string): Promise<IUserDocument | null> {
     return this.findOne({
         googleId: googleId,
         email: email
     }).exec();
 }
 
-export const User: IUserModel = model<IUserDocument, IUserModel>("User", schema);
+UserSchema.statics.findForIdGoogleIdAndEmail = function(this: IUserModel, uuid: string, googleId: string, email: string): Promise<IUserDocument | null> {
+    return this.findOne({
+        uuid: uuid,
+        googleId: googleId,
+        email: email
+    }).exec();
+}
+
+export const User: IUserModel = model<IUserDocument, IUserModel>("User", UserSchema);
