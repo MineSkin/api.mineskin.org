@@ -1,10 +1,11 @@
-import { Application } from "express";
+import { Application, Request, Response } from "express";
 import { MineSkinConfig } from "../typings/Configs";
-import { corsWithCredentialsMiddleware } from "../util";
+import { corsWithCredentialsMiddleware, getIp, stripUuid } from "../util";
 import jwt from "jsonwebtoken";
 import { LoginTicket, OAuth2Client } from "google-auth-library";
 import { v4 as randomUuid } from "uuid";
 import * as fs from "fs";
+import { Caching } from "../generator/Caching";
 
 export const register = (app: Application, config: MineSkinConfig) => {
 
@@ -21,6 +22,16 @@ export const register = (app: Application, config: MineSkinConfig) => {
     //         domain: "api.mineskin.org"
     //     }
     // }))
+
+    app.post("/account/google/init", async (req, res) => {
+        const nonce = stripUuid(randomUuid());
+        Caching.putLoginNonce(getIp(req), nonce);
+        //TODO client id, maybe
+        res.json({
+            login_uri: `https://${ config.server }.api.mineskin.org/account/google/callback`,
+            nonce: nonce
+        });
+    })
 
     app.post("/account/google/callback", async (req, res) => {
         console.log(req.cookies);
@@ -91,5 +102,10 @@ export const register = (app: Application, config: MineSkinConfig) => {
 
         res.redirect('https://mineskin.org/account');
     })
+
+    function validateAuth(req: Request, res: Response) {
+        const cookie = req.signedCookies['mineskin_account'];
+        console.log(cookie);
+    }
 
 };
