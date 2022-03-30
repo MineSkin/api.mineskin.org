@@ -208,10 +208,6 @@ export class Caching {
         .expirationInterval(Time.seconds(10))
         .build(key => sha512(key));
 
-    protected static readonly loginNonceCache: SimpleCache<string, string> = Caches.builder()
-        .expireAfterWrite(Time.minutes(2))
-        .build();
-
     ////
 
     protected static metricsCollector = setInterval(async () => {
@@ -342,16 +338,6 @@ export class Caching {
 
     public static cachedSha512(str: string): string {
         return this.hashCache.get(str)!;
-    }
-
-    public static putLoginNonce(k: string, v: string) {
-        this.loginNonceCache.put(k, v);
-    }
-
-    public static getLoginNonce(k: string): Maybe<string> {
-        const v = this.loginNonceCache.getIfPresent(k);
-        this.loginNonceCache.invalidate(k);
-        return v;
     }
 
     ///
