@@ -355,13 +355,16 @@ function addErrorDetailsToSentry(err: AuthenticationError | GeneratorError): voi
 init().then(() => {
     setTimeout(() => {
         console.log("Starting app");
-        app.listen(port, function () {
+        const server = app.listen(port, function () {
             console.log(info(" ==> listening on *:" + port + "\n"));
             setTimeout(() => {
                 updatingApp = false;
                 console.log(info("Accepting connections."));
             }, 1000);
         });
+        server.setTimeout(20000, function (){
+            console.warn(warn("A request timed out!"))
+        })
     }, 1000);
 });
 
