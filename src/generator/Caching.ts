@@ -209,7 +209,7 @@ export class Caching {
         .build(key => sha512(key));
 
     protected static readonly loginNonceCache: SimpleCache<string, string> = Caches.builder()
-        .expireAfterWrite(Time.seconds(30))
+        .expireAfterWrite(Time.minutes(2))
         .build();
 
     ////
