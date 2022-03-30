@@ -292,6 +292,52 @@ export function sleep(duration: number): Promise<void> {
     });
 }
 
+export function timeout<U>(promise: Promise<U>, t: number): Promise<U> {
+    return new Promise<U>((resolve, reject) => {
+        let timedOut = false;
+        let timer = setTimeout(() => {
+            timedOut = true;
+            reject(new Error(`Promise timed out after ${ t }ms`));
+        }, t);
+
+        promise
+            .then(v => {
+                if (timedOut) return;
+                clearTimeout(timer);
+                resolve(v);
+            })
+            .catch(e => {
+                if (timedOut) return;
+                clearTimeout(timer);
+                reject(e);
+            })
+    })
+}
+
+export function timeoutWrap<T extends Array<any>, U>(func: (...args: T) => Promise<U>, t: number): (...args: T) => Promise<U> {
+    return (...args: T): Promise<U> => {
+        return new Promise<U>((resolve, reject) => {
+            let timedOut = false;
+            let timer = setTimeout(() => {
+                timedOut = true;
+                reject(new Error(`Promise timed out after ${ t }ms`));
+            }, t);
+
+            func(...args)
+                .then(v => {
+                    if (timedOut) return;
+                    clearTimeout(timer);
+                    resolve(v);
+                })
+                .catch(e => {
+                    if (timedOut) return;
+                    clearTimeout(timer);
+                    reject(e);
+                })
+        })
+    }
+}
+
 export const POW_2_32 = Math.pow(2, 32);
 
 export function random32BitNumber(): Promise<number> {

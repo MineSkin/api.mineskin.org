@@ -377,6 +377,29 @@ export class Generator {
         return newId;
     }
 
+    static async getSkinDataWithRetry(accountOrUuid: IAccountDocument | { uuid: string }, type: string, expectedUrl?: string, breadcrumb?: string, t: number = 2): Promise<SkinData> {
+        let skinData = await this.getSkinData(accountOrUuid);
+        if (expectedUrl) {
+            if (expectedUrl !== skinData.decodedValue!.textures!.SKIN!.url) {
+                console.warn(warn(breadcrumb + " Skin url returned by skin change does not match url returned by data query (" + t + ") (" + expectedUrl + " != " + skinData.decodedValue!.textures!.SKIN!.url + ")"));
+
+                const metrics = await MineSkinMetrics.get();
+                let m = metrics.urlMismatch
+                    .tag('server', metrics.config.server)
+                    .tag('type', type);
+                if ('id' in accountOrUuid) {
+                    m.tag('account', accountOrUuid.id)
+                }
+                m.inc()
+
+                if (t > 0) {
+                    await sleep(1000);
+                    return await this.getSkinDataWithRetry(accountOrUuid, type, expectedUrl, breadcrumb, t - 1);
+                }
+            }
+        }
+        return skinData;
+    }
 
     static async getSkinData(accountOrUuid: IAccountDocument | { uuid: string }): Promise<SkinData> {
         const transaction = Sentry.getCurrentHub().getScope()?.getTransaction();
@@ -931,26 +954,17 @@ export class Generator {
 
         await sleep(200);
 
-        const data = await this.getSkinData(account);
+        let expectedUrl = undefined;
         if (skinChangeResponse && skinChangeResponse.skins && skinChangeResponse.skins.length > 0) {
-            if (skinChangeResponse.skins[0].url !== data.decodedValue!.textures!.SKIN!.url) {
-                console.warn(warn(options.breadcrumb + " Skin url returned by skin change does not match url returned by data query (" + skinChangeResponse.skins[0].url + " != " + data.decodedValue!.textures!.SKIN!.url + ")"));
-                //TODO: figure out why this happens
-                // TODO: maybe retry a few seconds later
-
-                const metrics = await MineSkinMetrics.get();
-                metrics.urlMismatch
-                    .tag('server', metrics.config.server)
-                    .tag('type', type)
-                    .tag('account', account.id)
-                    .inc();
-
-                Discord.postDiscordMessage("⚠ URL mismatch\n" +
-                    "  Server:       " + config.server + "\n" +
-                    "  Account:      " + account.id + "/" + account.uuid + "\n" +
-                    "  Changed to:   " + skinChangeResponse.skins[0].url + "\n" +
-                    "  Texture Data: " + data.decodedValue!.textures!.SKIN!.url);
-            }
+            expectedUrl = skinChangeResponse.skins[0].url;
+        }
+        const data = await this.getSkinDataWithRetry(account, type, expectedUrl, options.breadcrumb);
+        if (expectedUrl && expectedUrl !== data.decodedValue!.textures!.SKIN!.url) {
+            Discord.postDiscordMessage("⚠ URL mismatch\n" +
+                "  Server:       " + config.server + "\n" +
+                "  Account:      " + account.id + "/" + account.uuid + "\n" +
+                "  Changed to:   " + skinChangeResponse.skins[0].url + "\n" +
+                "  Texture Data: " + data.decodedValue!.textures!.SKIN!.url);
         }
         const mojangHash = await this.getMojangHash(data.decodedValue!.textures!.SKIN!.url, options);
 
