@@ -23,6 +23,7 @@ export const MINECRAFT_SERVICES = "minecraftServices";
 export const MINECRAFT_SERVICES_PROFILE = "minecraftServicesProfile";
 export const LIVE_LOGIN = "liveLogin";
 
+const MAX_QUEUE_SIZE = 100;
 const TIMEOUT = 10000;
 
 axios.defaults.headers["User-Agent"] = "MineSkin";
@@ -353,6 +354,10 @@ export class Requests {
         this.addBreadcrumb(request, bread);
         const t = this.trackSentryQueued(request);
         const q = this.getRequestQueueForRequest(type, request);
+        if (q.size > MAX_QUEUE_SIZE) {
+            console.warn(warn(`Rejecting new request as queue for ${ type } is full (${ q.size })! `))
+            throw new Error("Request queue is full!");
+        }
         const r = await timeout(q.add(request), TIMEOUT);
         t?.finish();
         return r;
