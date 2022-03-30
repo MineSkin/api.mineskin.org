@@ -11,7 +11,7 @@ import { getConfig, MineSkinConfig } from "../typings/Configs";
 import { MineSkinMetrics } from "../util/metrics";
 import { Transaction } from "@sentry/tracing";
 import { c, debug, warn } from "../util/colors";
-import { Maybe } from "../util";
+import { Maybe, timeout } from "../util";
 import { IAccountDocument } from "../typings";
 
 export const GENERIC = "generic";
@@ -23,10 +23,12 @@ export const MINECRAFT_SERVICES = "minecraftServices";
 export const MINECRAFT_SERVICES_PROFILE = "minecraftServicesProfile";
 export const LIVE_LOGIN = "liveLogin";
 
+const TIMEOUT = 10000;
+
 axios.defaults.headers["User-Agent"] = "MineSkin";
 axios.defaults.headers["Content-Type"] = "application/json";
 axios.defaults.headers["Accept"] = "application/json";
-axios.defaults.timeout = 10000;
+axios.defaults.timeout = TIMEOUT;
 
 let SERVER = "???";
 let PROXIES: string[] = [];//TODO
@@ -206,7 +208,7 @@ export class Requests {
         if (!(key in this.requestQueues)) {
             this.requestQueues[key] = {};
         }
-        this.requestQueues[key][subkey] = new JobQueue<AxiosRequestConfig, AxiosResponse>(request => this.runAxiosRequest(request, key), interval, maxPerRun);
+        this.requestQueues[key][subkey] = new JobQueue<AxiosRequestConfig, AxiosResponse>(request => timeout(this.runAxiosRequest(request, key), TIMEOUT), interval, maxPerRun);
         console.log(debug("set up request queue " + key + "/" + subkey));
     }
 
@@ -351,7 +353,7 @@ export class Requests {
         this.addBreadcrumb(request, bread);
         const t = this.trackSentryQueued(request);
         const q = this.getRequestQueueForRequest(type, request);
-        const r = await q.add(request);
+        const r = await timeout(q.add(request), TIMEOUT);
         t?.finish();
         return r;
     }
