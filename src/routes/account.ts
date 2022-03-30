@@ -1,7 +1,7 @@
 import { Application, Request, Response } from "express";
 import { MineSkinConfig } from "../typings/Configs";
 import { corsWithCredentialsMiddleware, getIp, stripUuid } from "../util";
-import jwt from "jsonwebtoken";
+import jwt, { Jwt, JwtPayload, SignOptions, VerifyOptions } from "jsonwebtoken";
 import { LoginTicket, OAuth2Client } from "google-auth-library";
 import { v4 as randomUuid } from "uuid";
 import * as fs from "fs";
@@ -80,13 +80,13 @@ export const register = (app: Application, config: MineSkinConfig) => {
 
         //TODO: should probably have a nonce
 
-        const token = jwt.sign({
+        const token = await sign({
             sub: user,
             gid: userId,
             email: email
-        }, jwtPrivateKey, {
+        },{
             algorithm: 'HS512',
-            issuer: "https://api.mineskin.org",
+            issuer: 'https://api.mineskin.org',
             jwtid: tokenId,
             expiresIn: '1h'
         });
@@ -101,9 +101,44 @@ export const register = (app: Application, config: MineSkinConfig) => {
         res.redirect('https://mineskin.org/account');
     })
 
-    function validateAuth(req: Request, res: Response) {
+    function sign(payload: string | Buffer | object, options: SignOptions): Promise<string | undefined> {
+        return new Promise((resolve, reject) => {
+            jwt.sign(payload, jwtPrivateKey, options, (err, token) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                resolve(token);
+            })
+        })
+    }
+
+    function verify(token: string, options: VerifyOptions): Promise<Jwt | JwtPayload | string | undefined> {
+        return new Promise((resolve, reject) => {
+            jwt.verify(token, jwtPrivateKey, options, (err, jwt) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                resolve(jwt);
+            })
+        })
+    }
+
+    async function validateAuth(req: Request, res: Response): Promise<boolean> {
         const cookie = req.signedCookies['mineskin_account'];
         console.log(cookie);
+        if (!cookie || cookie.length <= 0) {
+            res.status(400);
+            return false;
+        }
+       const jwt = await verify(cookie,{
+           algorithms: ['HS512'],
+           issuer: ['https://api.mineskin.org'],
+           maxAge: '1h'
+       });
+        console.log(jwt);
+        return false;
     }
 
 };
