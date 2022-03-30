@@ -362,8 +362,9 @@ init().then(() => {
                 console.log(info("Accepting connections."));
             }, 1000);
         });
-        server.setTimeout(20000, function (){
-            console.warn(warn("A request timed out!"))
+        const timeout = 20000;
+        server.setTimeout(timeout, function (){
+            console.warn(warn(`A request timed out after ${timeout}ms!`))
         })
     }, 1000);
 });
