@@ -35,6 +35,7 @@
     "express-session": "^1.17.1",
     "file-type": "^16.1.0",
     "form-data": "^3.0.0",
+    "google-auth-library": "^7.14.1",
     "hasha": "^5.1.0",
     "https-proxy-agent": "^5.0.0",
     "image-size": "^0.9.3",

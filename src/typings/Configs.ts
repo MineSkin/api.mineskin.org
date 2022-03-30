@@ -85,6 +85,18 @@ export interface CloudflareConfig {
     pools: string[];
 }
 
+export interface GoogleConfig {
+    id: string;
+    secret: string;
+}
+
+export interface JwtConfig {
+    keys: {
+        private: string;
+        public: string;
+    }
+}
+
 export interface MineSkinConfig {
     port: number;
     server: string;
@@ -115,6 +127,8 @@ export interface MineSkinConfig {
     delays: DelaysConfig;
     microsoft: MicrosoftConfig;
     cloudflare: CloudflareConfig;
+    google: GoogleConfig;
+    jwt: JwtConfig;
 }
 
 export function getLocalConfig(): MineSkinConfig {
