@@ -137,7 +137,13 @@ export const register = (app: Application, config: MineSkinConfig) => {
         if (!user) {
             return;
         }
-        res.json(user);
+        res.json({
+            uuid: user.uuid,
+            email: user.email,
+            created: user.created,
+            lastUsed: user.lastUsed,
+            sessions: user.sessions.length
+        });
     })
 
     app.get("/account/minecraftAccounts", async (req, res) => {
