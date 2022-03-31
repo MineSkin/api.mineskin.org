@@ -215,7 +215,8 @@ export const register = (app: Application, config: MineSkinConfig) => {
             res.status(400).json({ error: 'invalid session (1)' })
             return false;
         }
-        const sessionDate = user.sessions[payload['jti']!];
+        const sessionId = payload['jti']!;
+        const sessionDate = user.sessions[sessionId];
         if (!sessionDate) {
             // invalid/expired session
             res.status(400).json({ error: 'invalid session (2)' })
@@ -223,7 +224,10 @@ export const register = (app: Application, config: MineSkinConfig) => {
         }
         if (Date.now() - sessionDate.getTime() > Time.hours(1)) {
             // expired session
-            res.status(400).json({ error: 'session expired' })
+            res.status(400).json({ error: 'session expired' });
+            delete user.sessions[sessionId];
+            user.markModified('sessions');
+            await user.save();
             return false;
         }
 
