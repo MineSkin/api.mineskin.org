@@ -3,7 +3,8 @@ import { Maybe } from "../../util";
 
 export interface IApiKeyDocument extends Document {
     name: string;
-    owner: string;
+    owner?: string; // deprecated
+    user?: string;
     key: string;
     secret: string;
     createdAt: Date;

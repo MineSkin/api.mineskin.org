@@ -8,9 +8,13 @@ const ApiKeySchema: Schema<IApiKeyDocument, IApiKeyModel> = new Schema(
             type: String,
             required: true
         },
-        owner: {
+        owner: { // deprecated
             type: String,
             required: true
+        },
+        user: {
+            type: String,
+            index: true
         },
         key: {
             type: String,

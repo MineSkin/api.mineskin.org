@@ -10,6 +10,7 @@ import { Account, User } from "../database/schemas"
 import { IUserDocument } from "../typings/db/IUserDocument";
 import { debug, info } from "../util/colors";
 import { Time } from "@inventivetalent/time";
+import { ApiKey } from "../database/schemas/ApiKey";
 
 export const register = (app: Application, config: MineSkinConfig) => {
 
@@ -155,6 +156,18 @@ export const register = (app: Application, config: MineSkinConfig) => {
         }, 'uuid email playername accountType enabled').exec();
         res.json(accounts);
     })
+
+    app.get("/account/apiKeys", async (req, res) => {
+        const user = await validateAuth(req, res);
+        if (!user) {
+            return;
+        }
+        let keys = await ApiKey.find({
+            user: user.uuid
+        }, 'name').exec();
+        res.json(keys);
+    })
+
 
     function sign(payload: string | Buffer | object, options: SignOptions): Promise<string | undefined> {
         return new Promise((resolve, reject) => {
