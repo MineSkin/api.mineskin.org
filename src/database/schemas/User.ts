@@ -22,7 +22,8 @@ export const UserSchema: Schema<IUserDocument, IUserModel> = new Schema(
             type: Date
         },
         sessions: Schema.Types.Mixed, // session id => creation date
-        minecraftAccounts: [String]
+        minecraftAccounts: [String],
+        skins: [String]
     }
 )
 

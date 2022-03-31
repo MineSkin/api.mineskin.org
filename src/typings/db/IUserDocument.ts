@@ -10,6 +10,7 @@ export interface IUserDocument extends Document {
     lastUsed: Date;
     sessions: {[token: string]: Date};
     minecraftAccounts: string[];
+    skins: string[];
 }
 
 export interface IUserModel extends Model<IUserDocument> {
