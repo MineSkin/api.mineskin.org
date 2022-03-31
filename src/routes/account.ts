@@ -150,6 +150,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
             return;
         }
         let accounts = await Account.find({
+            user: user.uuid,
             uuid: { $in: accountIds }
         }, 'uuid email playername accountType enabled').exec();
         res.json(accounts);

@@ -38,6 +38,8 @@ export interface IAccountDocument extends Document {
     email?: string;
     /** player uuid **/
     uuid: string;
+    /** user id of the owner **/
+    user?: string;
     /** player name **/
     playername?: string;
     originalSkinTexture?: string;

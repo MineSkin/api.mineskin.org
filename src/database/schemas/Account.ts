@@ -30,6 +30,10 @@ export const AccountSchema: Schema<IAccountDocument, IAccountModel> = new Schema
         type: String,
         index: true
     },
+    user: {
+        type: String,
+        index: true
+    },
     playername: String,
     originalSkinTexture: String,
     originalSkinVariant: String,
