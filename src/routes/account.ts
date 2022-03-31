@@ -184,13 +184,16 @@ export const register = (app: Application, config: MineSkinConfig) => {
         res.json(skins);
     });
 
-    app.post("/account/skins", async(req,res)=>{
+    app.post("/account/skins", async (req, res) => {
         const user = await validateAuth(req, res);
         if (!user) {
             return;
         }
-        user.skins.push(stripUuid(req.body['uuid'].substr(0, 36)));
-        await user.save();
+        const id = stripUuid(req.body['uuid'].substr(0, 36));
+        if (!user.skins.includes(id)) {
+            user.skins.push(id);
+            await user.save();
+        }
         res.end();
     })
 
