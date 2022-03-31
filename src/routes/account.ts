@@ -6,7 +6,7 @@ import { LoginTicket, OAuth2Client } from "google-auth-library";
 import { v4 as randomUuid } from "uuid";
 import * as fs from "fs";
 import { Caching } from "../generator/Caching";
-import { User } from "../database/schemas"
+import { Account, User } from "../database/schemas"
 import { IUserDocument } from "../typings/db/IUserDocument";
 import { debug, info } from "../util/colors";
 import { Time } from "@inventivetalent/time";
@@ -139,12 +139,20 @@ export const register = (app: Application, config: MineSkinConfig) => {
         res.json(user);
     })
 
-    app.get("/account/minecraftAccounts", async (req,res)=>{
+    app.get("/account/minecraftAccounts", async (req, res) => {
         const user = await validateAuth(req, res);
         if (!user) {
             return;
         }
-
+        let accountIds = user.minecraftAccounts || [];
+        if (accountIds.length === 0) {
+            res.json([]);
+            return;
+        }
+        let accounts = await Account.find({
+            uuid: { $in: accountIds }
+        }, 'uuid email playername accountType enabled').exec();
+        res.json(accounts);
     })
 
     function sign(payload: string | Buffer | object, options: SignOptions): Promise<string | undefined> {
@@ -172,12 +180,12 @@ export const register = (app: Application, config: MineSkinConfig) => {
         })
     }
 
-    async function validateAuth(req: Request, res: Response): Promise<boolean | IUserDocument> {
+    async function validateAuth(req: Request, res: Response): Promise<IUserDocument | undefined> {
         const cookie = req.cookies['mineskin_account'];
         console.log(cookie);
         if (!cookie || cookie.length <= 0) {
             res.status(400).json({ error: 'invalid auth (1)' })
-            return false;
+            return;
         }
         let jwt;
         try {
@@ -189,38 +197,38 @@ export const register = (app: Application, config: MineSkinConfig) => {
         } catch (e) {
             console.warn(e);
             if (e instanceof JsonWebTokenError) {
-                res.status(400).json({ error: 'invalid auth (2)'})
+                res.status(400).json({ error: 'invalid auth (2)' })
             }
-            return false;
+            return;
         }
         console.log(jwt);
         const payload = jwt.payload as JwtPayload;
         if (!jwt || !payload) {
             res.status(400).json({ error: 'invalid auth (3)' })
-            return false;
+            return;
         }
         if (!payload['sub'] || !payload['gid'] || !payload['email'] || !payload['jti']) {
             res.status(400).json({ error: 'invalid auth (4)' })
-            return false;
+            return;
         }
 
         const user = await User.findForIdGoogleIdAndEmail(payload['sub'], payload['gid'], payload['email']);
         if (!user) {
             res.status(400).json({ error: 'user not found' });
-            return false;
+            return;
         }
 
         if (!user.sessions) {
             // has no sessions
             res.status(400).json({ error: 'invalid session (1)' })
-            return false;
+            return;
         }
         const sessionId = payload['jti']!;
         const sessionDate = user.sessions[sessionId];
         if (!sessionDate) {
             // invalid/expired session
             res.status(400).json({ error: 'invalid session (2)' })
-            return false;
+            return;
         }
         if (Date.now() - sessionDate.getTime() > Time.hours(1)) {
             // expired session
@@ -228,7 +236,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
             delete user.sessions[sessionId];
             user.markModified('sessions');
             await user.save();
-            return false;
+            return;
         }
 
         user.lastUsed = new Date();
