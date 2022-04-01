@@ -12,6 +12,7 @@ import { nextBreadColor } from "../typings/Bread";
 import { GenerateRequest } from "../typings";
 import { Caching } from "../generator/Caching";
 import { isApiKeyRequest } from "../typings/ApiKeyRequest";
+import { getUserFromRequest } from "./account";
 
 export const register = (app: Application) => {
 
@@ -176,11 +177,18 @@ export const register = (app: Application) => {
 
     async function sendSkin(req: Request, res: Response, skin: SavedSkin): Promise<void> {
         const delayInfo = await Generator.getDelay(await getAndValidateRequestApiKey(req));
-        res.json(await skin.toResponseJson(skin.duplicate ? { seconds: 0, millis: 100 } : delayInfo)); //TODO: adjust delay for duplicate
+        const json = await skin.toResponseJson(skin.duplicate ? { seconds: 0, millis: 100 } : delayInfo); //TODO: adjust delay for duplicate
+        res.json(json);
 
         if (skin.duplicate) {
             await updateTraffic(req, new Date(Date.now() - delayInfo.millis))
         }
+
+        getUserFromRequest(req, res, false).then(user => {
+            if (!user) return;
+            user.skins.push(json.uuid);
+            user.save();
+        })
     }
 
     function getClientInfo(req: GenerateRequest): ClientInfo {
