@@ -379,7 +379,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
         }
 
         const user = await getUserFromRequest(req, res, false);
-        if (!!user && user.uuid) {
+        if (!!user && user.uuid) { //TODO: should probably reject request if there's a linked user on the account but not in the request
             if (!account.user) {
                 account.user = user.uuid;
                 if (!user.minecraftAccounts.includes(account.uuid)) {
