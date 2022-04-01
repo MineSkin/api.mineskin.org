@@ -121,7 +121,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
             jwtid: tokenId,
             expiresIn: '1h'
         });
-        res.cookie("mineskin_account", token, {
+        res.cookie('access_token', token, {
             domain: '.mineskin.org', //TODO: url
             secure: true,
             httpOnly: true,
@@ -131,8 +131,20 @@ export const register = (app: Application, config: MineSkinConfig) => {
 
         console.log(debug(`Created new session for ${ user.uuid }/${ user.email } ${ getIp(req) }`));
 
-        // res.redirect('https://mineskin.org/account');
-        res.json({})
+        res.end();
+    })
+
+    app.get("/account/logout", async (req, res) => {
+        const user = await getUserFromRequest(req, res);
+        if (user && user.session) {
+            delete user.sessions[user.session];
+            user.markModified('sessions');
+            await user.save();
+        }
+
+        res.clearCookie('access_token');
+
+        res.end();
     })
 
     app.get("/account", async (req, res) => {
@@ -244,8 +256,8 @@ function verify(token: string, options: VerifyOptions): Promise<Jwt> {
     })
 }
 
-export async function getUserFromRequest(req: Request, res: Response, reject: boolean = true): Promise<IUserDocument | undefined> {
-    const cookie = req.cookies['mineskin_account'];
+export async function getUserFromRequest(req: Request, res: Response, reject: boolean = true): Promise<IUserDocument & { session?: string; } | undefined> {
+    const cookie = req.cookies['access_token'];
     console.log(cookie);
     if (!cookie || cookie.length <= 0) {
         if (reject) res.status(401).json({ error: 'invalid auth (1)' })
@@ -311,5 +323,7 @@ export async function getUserFromRequest(req: Request, res: Response, reject: bo
 
     user.lastUsed = new Date();
 
-    return await user.save();
+    const u: IUserDocument & { session?: string; } = await user.save();
+    u.session = sessionId;
+    return u;
 }
