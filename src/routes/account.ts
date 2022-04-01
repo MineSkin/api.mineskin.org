@@ -159,10 +159,21 @@ export const register = (app: Application, config: MineSkinConfig) => {
             res.json([]);
             return;
         }
-        let accounts = await Account.find({
+        let docs = await Account.find({
             user: user.uuid,
             uuid: { $in: accountIds }
-        }, 'uuid email playername accountType enabled').exec();
+        }, 'uuid email playername accountType enabled errorCounter').exec();
+        let accounts = [];
+        for (let doc of docs) {
+            accounts.push({
+                uuid: doc.uuid,
+                email: doc.email,
+                playername: doc.playername,
+                accountType: doc.accountType,
+                enabled: doc.enabled,
+                hasErrors: doc.errorCounter > 0
+            })
+        }
         res.json(accounts);
     })
 
