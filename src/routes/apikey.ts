@@ -105,7 +105,7 @@ export const register = (app: Application) => {
         if (owner) {
             apiKey.owner = owner; // deprecated
         }
-        if (user) {
+        if (user && user.uuid) {
             apiKey.user = user.uuid;
         }
 
@@ -159,6 +159,8 @@ export const register = (app: Application) => {
             return;
         }
 
+        const user = await getUserFromRequest(req, res, false);
+
         const name: string = req.body["name"];
         if (name) {
             apiKey.name = name.substr(0, 64);
@@ -176,6 +178,12 @@ export const register = (app: Application) => {
             apiKey.allowedAgents = allowedAgents.map(s => s.trim().toLowerCase()).filter(s => s.length > 5 && s.length < 30);
         }
 
+        if (user && user.uuid) {
+            if (!apiKey.user) {
+                apiKey.user = user.uuid;
+            }
+        }
+
         apiKey.updatedAt = new Date();
 
         await apiKey.save();
@@ -183,6 +191,7 @@ export const register = (app: Application) => {
         Discord.postDiscordMessage("🔑 API Key updated\n" +
             "Name:      " + apiKey.name + "\n" +
             "Owner:     <@" + apiKey.owner + ">\n" +
+            "User:      " + apiKey.user + "\n" +
             "Origins:   " + apiKey.allowedOrigins + "\n" +
             "IPs:       " + apiKey.allowedIps + "\n" +
             "Agents:    " + apiKey.allowedAgents + "\n");
@@ -223,6 +232,7 @@ export const register = (app: Application) => {
         Discord.postDiscordMessage("🔑 API Key deleted\n" +
             "Name:      " + apiKey.name + "\n" +
             "Owner:     <@" + apiKey.owner + ">\n" +
+            "User:      " + apiKey.user + "\n" +
             "Origins:   " + apiKey.allowedOrigins + "\n" +
             "IPs:       " + apiKey.allowedIps + "\n" +
             "Agents:    " + apiKey.allowedAgents + "\n");
@@ -233,7 +243,7 @@ export const register = (app: Application) => {
         })
     });
 
-
+    //TODO: remove discord auth
     app.get("/apikey/discord/oauth/start", async (req: Request, res: Response) => {
         const config = await getConfig();
         if (!config.discordApiKey) {

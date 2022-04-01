@@ -402,7 +402,10 @@ export const corsWithAuthMiddleware = (req: Request, res: Response, next: NextFu
     }
 };
 export const corsWithCredentialsMiddleware = (req: Request, res: Response, next: NextFunction) => {
-    res.header('Access-Control-Allow-Origin', 'https://testing.mineskin.org'); //TODO
+    res.header('Access-Control-Allow-Origin', 'https://mineskin.org');
+    if (req.headers.origin === "https://testing.mineskin.org") {
+        res.header('Access-Control-Allow-Origin', 'https://testing.mineskin.org');
+    }
     res.header("Access-Control-Allow-Credentials", "true");
     if (req.method === 'OPTIONS') {
         res.header("Access-Control-Allow-Methods", "POST, GET, OPTIONS, DELETE, PUT");
