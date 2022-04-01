@@ -6,6 +6,7 @@ export interface IUserDocument extends Document {
     uuid: string;
     googleId: string;
     email: string;
+    discordId?: string;
     created: Date;
     lastUsed: Date;
     sessions: {[token: string]: Date};

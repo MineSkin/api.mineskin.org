@@ -15,12 +15,9 @@ export const UserSchema: Schema<IUserDocument, IUserModel> = new Schema(
             type: String,
             index: true
         },
-        created: {
-            type: Date
-        },
-        lastUsed: {
-            type: Date
-        },
+        discordId: String,
+        created: Date,
+        lastUsed: Date,
         sessions: Schema.Types.Mixed, // session id => creation date
         skins: [String]
     }
