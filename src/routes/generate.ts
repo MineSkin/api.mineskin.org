@@ -187,6 +187,7 @@ export const register = (app: Application) => {
         getUserFromRequest(req, res, false).then(user => {
             if (!user) return;
             user.skins.push(json.uuid);
+            //TODO: limit this
             user.save();
         })
     }
