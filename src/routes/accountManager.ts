@@ -382,9 +382,6 @@ export const register = (app: Application, config: MineSkinConfig) => {
         if (!!user && user.uuid) { //TODO: should probably reject request if there's a linked user on the account but not in the request
             if (!account.user) {
                 account.user = user.uuid;
-                if (!user.minecraftAccounts.includes(account.uuid)) {
-                    user.minecraftAccounts.push(account.uuid);
-                }
                 await user.save();
                 Discord.postDiscordMessage(`👤 [${ config.server }] Account ${ account.id }/${ account.uuid } linked to user ${ user.uuid }/${ user.email }`);
             } else if (account.user && account.user !== user.uuid) {
