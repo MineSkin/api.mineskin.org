@@ -89,8 +89,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
                 email: email,
                 created: new Date(),
                 lastUsed: new Date(),
-                sessions: {},
-                minecraftAccounts: <string[]>[]
+                sessions: {}
             }).save();
             console.log(info(`Created new user account for ${ user.email } ${ getIp(req) }`));
         }
@@ -100,8 +99,16 @@ export const register = (app: Application, config: MineSkinConfig) => {
             user.sessions = {};
         }
         user.sessions[tokenId] = new Date();
+        let expiredIds = [];
+        for (let k in user.sessions) {
+            if (Date.now() - user.sessions[k].getTime() > Time.hours(1)) {
+                expiredIds.push(k);
+            }
+        }
+        for (let k of expiredIds) {
+            delete user.sessions[k];
+        }
         user.markModified('sessions');
-        //TODO: expire old sessions
 
         user.lastUsed = new Date();
         await user.save();
@@ -119,7 +126,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
             expiresIn: '1h'
         });
         res.cookie('access_token', token, {
-            domain: '.mineskin.org', //TODO: url
+            domain: '.mineskin.org',
             secure: true,
             httpOnly: true,
             // signed: true,
@@ -163,14 +170,8 @@ export const register = (app: Application, config: MineSkinConfig) => {
         if (!user) {
             return;
         }
-        let accountIds = user.minecraftAccounts || [];
-        if (accountIds.length === 0) {
-            res.json([]);
-            return;
-        }
         let docs = await Account.find({
-            user: user.uuid,
-            uuid: { $in: accountIds }
+            user: user.uuid
         }, 'uuid email playername accountType enabled errorCounter').exec();
         let accounts = [];
         for (let doc of docs) {

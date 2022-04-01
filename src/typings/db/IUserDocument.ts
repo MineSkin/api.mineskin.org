@@ -9,7 +9,6 @@ export interface IUserDocument extends Document {
     created: Date;
     lastUsed: Date;
     sessions: {[token: string]: Date};
-    minecraftAccounts: string[];
     skins: string[];
 }
 
