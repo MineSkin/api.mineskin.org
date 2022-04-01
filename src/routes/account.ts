@@ -12,9 +12,11 @@ import { debug, info } from "../util/colors";
 import { Time } from "@inventivetalent/time";
 import { ApiKey } from "../database/schemas/ApiKey";
 
+let jwtPrivateKey: Buffer;
+
 export const register = (app: Application, config: MineSkinConfig) => {
 
-    const jwtPrivateKey = fs.readFileSync(config.jwt.keys.private);
+    jwtPrivateKey = fs.readFileSync(config.jwt.keys.private);
     const googleClient = new OAuth2Client(config.google.id, config.google.secret);
 
     app.use("/account", corsWithCredentialsMiddleware);
@@ -134,7 +136,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
     })
 
     app.get("/account", async (req, res) => {
-        const user = await validateAuth(req, res);
+        const user = await getUserFromRequest(req, res);
         if (!user) {
             return;
         }
@@ -148,7 +150,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
     })
 
     app.get("/account/minecraftAccounts", async (req, res) => {
-        const user = await validateAuth(req, res);
+        const user = await getUserFromRequest(req, res);
         if (!user) {
             return;
         }
@@ -165,7 +167,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
     })
 
     app.get("/account/apiKeys", async (req, res) => {
-        const user = await validateAuth(req, res);
+        const user = await getUserFromRequest(req, res);
         if (!user) {
             return;
         }
@@ -176,7 +178,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
     })
 
     app.get("/account/skins", async (req, res) => {
-        const user = await validateAuth(req, res);
+        const user = await getUserFromRequest(req, res);
         if (!user) {
             return;
         }
@@ -185,7 +187,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
     });
 
     app.post("/account/skins", async (req, res) => {
-        const user = await validateAuth(req, res);
+        const user = await getUserFromRequest(req, res);
         if (!user) {
             return;
         }
@@ -197,104 +199,106 @@ export const register = (app: Application, config: MineSkinConfig) => {
         res.end();
     })
 
-    function sign(payload: string | Buffer | object, options: SignOptions): Promise<string | undefined> {
-        return new Promise((resolve, reject) => {
-            jwt.sign(payload, jwtPrivateKey, options, (err, token) => {
-                if (err) {
+
+};
+
+
+function sign(payload: string | Buffer | object, options: SignOptions): Promise<string | undefined> {
+    return new Promise((resolve, reject) => {
+        jwt.sign(payload, jwtPrivateKey, options, (err, token) => {
+            if (err) {
+                reject(err);
+                return;
+            }
+            resolve(token);
+        })
+    })
+}
+
+function verify(token: string, options: VerifyOptions): Promise<Jwt> {
+    return new Promise((resolve, reject) => {
+        options.complete = true;
+        try {
+            jwt.verify(token, jwtPrivateKey, options, (err, jwt) => {
+                if (err || !jwt) {
                     reject(err);
                     return;
                 }
-                resolve(token);
+                resolve(jwt as Jwt);
             })
-        })
-    }
-
-    function verify(token: string, options: VerifyOptions): Promise<Jwt> {
-        return new Promise((resolve, reject) => {
-            options.complete = true;
-            try {
-                jwt.verify(token, jwtPrivateKey, options, (err, jwt) => {
-                    if (err || !jwt) {
-                        reject(err);
-                        return;
-                    }
-                    resolve(jwt as Jwt);
-                })
-            } catch (e) {
-                console.warn(e);
-                reject(e);
-            }
-        })
-    }
-
-    async function validateAuth(req: Request, res: Response): Promise<IUserDocument | undefined> {
-        const cookie = req.cookies['mineskin_account'];
-        console.log(cookie);
-        if (!cookie || cookie.length <= 0) {
-            res.status(401).json({ error: 'invalid auth (1)' })
-            return;
-        }
-
-        if (!req.headers.origin || (!req.headers.origin.startsWith('https://mineskin.org') && !req.headers.origin.startsWith('https://testing.mineskin.org'))) { //TODO
-            res.status(400).json({ error: 'origin not allowed' });
-            return;
-        }
-
-        let jwt;
-        try {
-            jwt = await verify(cookie, {
-                algorithms: ['HS512'],
-                issuer: ['https://api.mineskin.org'],
-                maxAge: '1h'
-            });
         } catch (e) {
             console.warn(e);
-            if (e instanceof JsonWebTokenError) {
-                res.status(401).json({ error: 'invalid auth (2)' })
-            }
-            return;
+            reject(e);
         }
-        console.log(jwt);
-        const payload = jwt.payload as JwtPayload;
-        if (!jwt || !payload) {
-            res.status(401).json({ error: 'invalid auth (3)' })
-            return;
-        }
-        if (!payload['sub'] || !payload['gid'] || !payload['email'] || !payload['jti']) {
-            res.status(401).json({ error: 'invalid auth (4)' })
-            return;
-        }
+    })
+}
 
-        const user = await User.findForIdGoogleIdAndEmail(payload['sub'], payload['gid'], payload['email']);
-        if (!user) {
-            res.status(401).json({ error: 'user not found' });
-            return;
-        }
-
-        if (!user.sessions) {
-            // has no sessions
-            res.status(401).json({ error: 'invalid session (1)' })
-            return;
-        }
-        const sessionId = payload['jti']!;
-        const sessionDate = user.sessions[sessionId];
-        if (!sessionDate) {
-            // invalid/expired session
-            res.status(401).json({ error: 'invalid session (2)' })
-            return;
-        }
-        if (Date.now() - sessionDate.getTime() > Time.hours(1)) {
-            // expired session
-            res.status(401).json({ error: 'session expired' });
-            delete user.sessions[sessionId];
-            user.markModified('sessions');
-            await user.save();
-            return;
-        }
-
-        user.lastUsed = new Date();
-
-        return await user.save();
+export async function getUserFromRequest(req: Request, res: Response, reject: boolean = true): Promise<IUserDocument | undefined> {
+    const cookie = req.cookies['mineskin_account'];
+    console.log(cookie);
+    if (!cookie || cookie.length <= 0) {
+        if (reject) res.status(401).json({ error: 'invalid auth (1)' })
+        return;
     }
 
-};
+    if (!req.headers.origin || (!req.headers.origin.startsWith('https://mineskin.org') && !req.headers.origin.startsWith('https://testing.mineskin.org'))) { //TODO
+        if (reject) res.status(400).json({ error: 'origin not allowed' });
+        return;
+    }
+
+    let jwt;
+    try {
+        jwt = await verify(cookie, {
+            algorithms: ['HS512'],
+            issuer: ['https://api.mineskin.org'],
+            maxAge: '1h'
+        });
+    } catch (e) {
+        console.warn(e);
+        if (e instanceof JsonWebTokenError) {
+            if (reject) res.status(401).json({ error: 'invalid auth (2)' })
+        }
+        return;
+    }
+    console.log(jwt);
+    const payload = jwt.payload as JwtPayload;
+    if (!jwt || !payload) {
+        if (reject) res.status(401).json({ error: 'invalid auth (3)' })
+        return;
+    }
+    if (!payload['sub'] || !payload['gid'] || !payload['email'] || !payload['jti']) {
+        if (reject) res.status(401).json({ error: 'invalid auth (4)' })
+        return;
+    }
+
+    const user = await User.findForIdGoogleIdAndEmail(payload['sub'], payload['gid'], payload['email']);
+    if (!user) {
+        if (reject) res.status(401).json({ error: 'user not found' });
+        return;
+    }
+
+    if (!user.sessions) {
+        // has no sessions
+        if (reject) res.status(401).json({ error: 'invalid session (1)' })
+        return;
+    }
+    const sessionId = payload['jti']!;
+    const sessionDate = user.sessions[sessionId];
+    if (!sessionDate) {
+        // invalid/expired session
+        if (reject) res.status(401).json({ error: 'invalid session (2)' })
+        return;
+    }
+    if (Date.now() - sessionDate.getTime() > Time.hours(1)) {
+        // expired session
+        if (reject) res.status(401).json({ error: 'session expired' });
+        delete user.sessions[sessionId];
+        user.markModified('sessions');
+        await user.save();
+        return;
+    }
+
+    user.lastUsed = new Date();
+
+    return await user.save();
+}

@@ -20,6 +20,7 @@ import { v4 as randomUuid } from "uuid"
 import { Buffer } from "buffer";
 import { randomBytes } from "crypto";
 import { MicrosoftAuthInfo } from "../typings/MicrosoftAuthInfo";
+import { getUserFromRequest } from "./account";
 
 export const register = (app: Application, config: MineSkinConfig) => {
 
@@ -377,6 +378,20 @@ export const register = (app: Application, config: MineSkinConfig) => {
             }
         }
 
+        const user = await getUserFromRequest(req, res, false);
+        if (!!user && user.uuid) {
+            if (!account.user) {
+                account.user = user.uuid;
+                if (!user.minecraftAccounts.includes(account.uuid)) {
+                    user.minecraftAccounts.push(account.uuid);
+                }
+                await user.save();
+                Discord.postDiscordMessage(`👤 [${ config.server }] Account ${ account.id }/${ account.uuid } linked to user ${ user.uuid }/${ user.email }`);
+            } else if (account.user && account.user !== user.uuid) {
+                Discord.postDiscordMessage(`👤 [${ config.server }] Got account login for ${ account.id }/${ account.uuid } by different user that linked one; linked: ${ account.user } request: ${ user.uuid }`);
+            }
+        }
+
         const hadSentMessage = account.discordMessageSent || account.emailSent || false;
         account.discordMessageSent = false;
         account.emailSent = false;
@@ -409,6 +424,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
             email: account.email || account.username,
             gamerTag: account.microsoftAuth?.identities?.xbox?.claims.gtg,
             uuid: account.uuid,
+            user: user?.uuid,
             lastUsed: account.lastUsed,
             enabled: account.enabled,
             usable: account.errorCounter < config.errorThreshold,
