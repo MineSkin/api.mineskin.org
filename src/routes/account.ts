@@ -196,7 +196,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
         }
         let keys = await ApiKey.find({
             user: user.uuid
-        }, 'name').exec();
+        }, 'name lastUsed').exec();
         res.json(keys);
     })
 
