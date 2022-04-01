@@ -9,6 +9,7 @@ import { getConfig } from "../typings/Configs";
 import { PendingDiscordApiKeyLink } from "../typings/DiscordAccountLink";
 import qs from "querystring";
 import { Discord } from "../util/Discord";
+import { getUserFromRequest } from "./account";
 
 
 export const register = (app: Application) => {
@@ -57,11 +58,16 @@ export const register = (app: Application) => {
         }
 
         const owner = (Caching.getPendingDiscordLink(ownerState) as Maybe<PendingDiscordApiKeyLink>)?.user;
-        if (!owner) {
+        if (owner) {
+            Caching.invalidatePendingDiscordLink(ownerState);
+        }
+
+        const user = await getUserFromRequest(req, res, false);
+
+        if (!owner && !user) {
             res.status(400).json({ error: "invalid owner" });
             return;
         }
-        Caching.invalidatePendingDiscordLink(ownerState);
 
         const config = await getConfig();
 
@@ -69,7 +75,7 @@ export const register = (app: Application) => {
         const allowedIps: string[] = (req.body["ips"] || []).map((s: string) => s.trim()).filter((s: string) => s.length > 7 && s.length < 40);
         const allowedAgents: string[] = (req.body["agents"] || []).map((s: string) => s.trim().toLowerCase()).filter((s: string) => s.length > 5 && s.length < 30);
 
-        console.log(info(`Generating new API Key "${ name }" for ${ owner }`));
+        console.log(info(`Generating new API Key "${ name }" for ${ user?.uuid || owner }`));
         console.log(debug(`Origins: ${ allowedOrigins }`));
         console.log(debug(`IPs:     ${ allowedIps }`));
         console.log(debug(`Agents:  ${ allowedAgents }`));
@@ -88,7 +94,6 @@ export const register = (app: Application) => {
 
         const apiKey: IApiKeyDocument = new ApiKey(<IApiKeyDocument>{
             name: name.substr(0, 64),
-            owner: owner,
             key: keyHash,
             secret: secretHash,
             createdAt: date,
@@ -97,12 +102,19 @@ export const register = (app: Application) => {
             allowedIps: allowedIps,
             allowedAgents: allowedAgents
         });
+        if (owner) {
+            apiKey.owner = owner; // deprecated
+        }
+        if (user) {
+            apiKey.user = user.uuid;
+        }
 
         await apiKey.save();
 
         Discord.postDiscordMessage("🔑 New API Key created\n" +
             "Name:      " + apiKey.name + "\n" +
-            "Owner:     <@" + apiKey.owner + ">\n" +
+            "Owner:     <@" + apiKey.owner + ">\n" + // deprecated
+            "User:      " + apiKey.user + "\n" +
             "Origins:   " + apiKey.allowedOrigins + "\n" +
             "IPs:       " + apiKey.allowedIps + "\n" +
             "Agents:    " + apiKey.allowedAgents + "\n");
@@ -111,7 +123,8 @@ export const register = (app: Application) => {
             success: true,
             msg: "key created",
             name: apiKey.name,
-            owner: apiKey.owner,
+            owner: apiKey.owner, // deprecated
+            user: apiKey.user,
             key: key,
             secret: secret,
             createdAt: apiKey.createdAt,
