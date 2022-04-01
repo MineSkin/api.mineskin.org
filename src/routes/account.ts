@@ -41,9 +41,6 @@ export const register = (app: Application, config: MineSkinConfig) => {
     })
 
     app.post("/account/google/callback", async (req, res) => {
-        console.log(req.cookies);
-        console.log(req.body)
-
         //TODO: enable this on prod, doesn't seem to add the cookie on the testing subdomain
         /*
         const csrfCookie = req.cookies['g_csrf_token'];
@@ -258,7 +255,6 @@ function verify(token: string, options: VerifyOptions): Promise<Jwt> {
 
 export async function getUserFromRequest(req: Request, res: Response, reject: boolean = true): Promise<IUserDocument & { session?: string; } | undefined> {
     const cookie = req.cookies['access_token'];
-    console.log(cookie);
     if (!cookie || cookie.length <= 0) {
         if (reject) res.status(401).json({ error: 'invalid auth (1)' })
         return;
@@ -283,7 +279,6 @@ export async function getUserFromRequest(req: Request, res: Response, reject: bo
         }
         return;
     }
-    console.log(jwt);
     const payload = jwt.payload as JwtPayload;
     if (!jwt || !payload) {
         if (reject) res.status(401).json({ error: 'invalid auth (3)' })
