@@ -9,6 +9,7 @@ export interface IApiKeyDocument extends Document {
     secret: string;
     createdAt: Date;
     updatedAt?: Date;
+    lastUsed?: Date;
     minDelay?: number;
     allowedOrigins?: string[];
     allowedIps?: string[];

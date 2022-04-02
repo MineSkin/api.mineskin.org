@@ -172,7 +172,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
         }
         let docs = await Account.find({
             user: user.uuid
-        }, 'uuid email playername accountType enabled errorCounter').exec();
+        }, 'uuid email playername accountType enabled errorCounter').lean().exec();
         let accounts = [];
         for (let doc of docs) {
             accounts.push({
@@ -192,9 +192,16 @@ export const register = (app: Application, config: MineSkinConfig) => {
         if (!user) {
             return;
         }
-        let keys = await ApiKey.find({
+        let docs = await ApiKey.find({
             user: user.uuid
-        }, 'name lastUsed').exec();
+        }, 'name lastUsed').lean().exec();
+        let keys = [];
+        for (let doc of docs) {
+            keys.push({
+                name: doc.name,
+                lastUsed: doc.lastUsed
+            })
+        }
         res.json(keys);
     })
 
