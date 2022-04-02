@@ -129,7 +129,6 @@ export const register = (app: Application, config: MineSkinConfig) => {
             domain: '.mineskin.org',
             secure: true,
             httpOnly: true,
-            // signed: true,
             maxAge: Time.hours(1)
         })
 
