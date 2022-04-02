@@ -382,7 +382,6 @@ export const register = (app: Application, config: MineSkinConfig) => {
         if (!!user && user.uuid) { //TODO: should probably reject request if there's a linked user on the account but not in the request
             if (!account.user) {
                 account.user = user.uuid;
-                await user.save();
                 Discord.postDiscordMessage(`👤 [${ config.server }] Account ${ account.id }/${ account.uuid } linked to user ${ user.uuid }/${ user.email }`);
             } else if (account.user && account.user !== user.uuid) {
                 Discord.postDiscordMessage(`👤 [${ config.server }] Got account login for ${ account.id }/${ account.uuid } by different user that linked one; linked: ${ account.user } request: ${ user.uuid }`);
@@ -642,6 +641,12 @@ export const register = (app: Application, config: MineSkinConfig) => {
             account.email = req.session.account.email;
             account.sendEmails = true;
             account.username = req.session.account.email;
+        }
+
+        const user = await getUserFromRequest(req, res, false);
+        if (!!user && user.uuid) {
+            account.user = user.uuid;
+            Discord.postDiscordMessage(`👤 [${ config.server }] Account ${ account.id }/${ account.uuid } linked to user ${ user.uuid }/${ user.email }`);
         }
 
         console.log(info("Saving new " + (req.session.account.type) + " account #" + account.id + " " + req.body["uuid"]));
