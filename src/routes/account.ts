@@ -11,6 +11,7 @@ import { IUserDocument } from "../typings/db/IUserDocument";
 import { debug, info } from "../util/colors";
 import { Time } from "@inventivetalent/time";
 import { ApiKey } from "../database/schemas/ApiKey";
+import { Discord } from "../util/Discord";
 
 let jwtPrivateKey: Buffer;
 
@@ -92,6 +93,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
                 sessions: {}
             }).save();
             console.log(info(`Created new user account for ${ user.email } ${ getIp(req) }`));
+            Discord.postDiscordMessage(`👤 [${ config.server }] Created new user account for ${ user.email }`);
         }
 
         const tokenId = randomUuid();
