@@ -3,8 +3,9 @@ export interface IPendingDiscordLink {
 }
 
 export interface PendingDiscordAccountLink extends IPendingDiscordLink{
-    account: number;
-    uuid: string;
+    account?: number;
+    uuid?: string;
+    user?: string;
     email: string;
 }
 

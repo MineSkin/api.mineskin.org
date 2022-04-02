@@ -101,12 +101,37 @@ export class Discord {
         })
     }
 
+    static async addDiscordUserRole(userId: string): Promise<boolean> {
+        const config = await getConfig();
+        if (!config.discord || !config.discord.token || !config.discord.guild) return false;
+        return Requests.genericRequest({
+            method: "PUT",
+            url: "https://discordapp.com/api/guilds/" + config.discord.guild + "/members/" + userId + "/roles/" + config.discord.userRole,
+            headers: {
+                "Authorization": "Bot " + config.discord.token
+            }
+        }).then(response => {
+            if (response.status !== 200) {
+                console.warn("addDiscordUserRole")
+                console.warn(response.status);
+                console.warn(response.data);
+                return false;
+            } else {
+                console.log("Added Mineskin user role to discord user #" + userId);
+                return true;
+            }
+        }).catch(err => {
+            Sentry.captureException(err);
+            return false;
+        })
+    }
+
     static async addDiscordAccountOwnerRole(userId: string): Promise<boolean> {
         const config = await getConfig();
         if (!config.discord || !config.discord.token || !config.discord.guild) return false;
         return Requests.genericRequest({
             method: "PUT",
-            url: "https://discordapp.com/api/guilds/" + config.discord.guild + "/members/" + userId + "/roles/" + config.discord.role,
+            url: "https://discordapp.com/api/guilds/" + config.discord.guild + "/members/" + userId + "/roles/" + config.discord.ownerRole,
             headers: {
                 "Authorization": "Bot " + config.discord.token
             }
@@ -117,7 +142,7 @@ export class Discord {
                 console.warn(response.data);
                 return false;
             } else {
-                console.log("Added Mineskin role to discord user #" + userId);
+                console.log("Added Mineskin account owner role to discord user #" + userId);
                 return true;
             }
         }).catch(err => {
@@ -131,7 +156,7 @@ export class Discord {
         if (!config.discord || !config.discord.token || !config.discord.guild) return false;
         return Requests.genericRequest({
             method: "DELETE",
-            url: "https://discordapp.com/api/guilds/" + config.discord.guild + "/members/" + userId + "/roles/" + config.discord.role,
+            url: "https://discordapp.com/api/guilds/" + config.discord.guild + "/members/" + userId + "/roles/" + config.discord.ownerRole,
             headers: {
                 "Authorization": "Bot " + config.discord.token
             }

@@ -35,7 +35,9 @@ interface DiscordConfig {
     token: string;
     channel?: string;
     guild?: string;
-    role?: string;
+    role?: string; //deprecated
+    ownerRole?: string;
+    userRole?: string;
     oauth?: DiscordOAUthConfig;
 }
 

@@ -1,6 +1,6 @@
 import { Application, Request, Response } from "express";
-import { MineSkinConfig } from "../typings/Configs";
-import { corsWithCredentialsMiddleware, getIp, Maybe, stripUuid } from "../util";
+import { getConfig, MineSkinConfig } from "../typings/Configs";
+import { corsWithCredentialsMiddleware, getIp, Maybe, sha256, stripUuid } from "../util";
 import jwt, { JsonWebTokenError, Jwt, JwtPayload, SignOptions, VerifyOptions } from "jsonwebtoken";
 import { LoginTicket, OAuth2Client } from "google-auth-library";
 import { v4 as randomUuid } from "uuid";
@@ -8,10 +8,13 @@ import * as fs from "fs";
 import { Caching } from "../generator/Caching";
 import { Account, User } from "../database/schemas"
 import { IUserDocument } from "../typings/db/IUserDocument";
-import { debug, info } from "../util/colors";
+import { debug, info, warn } from "../util/colors";
 import { Time } from "@inventivetalent/time";
 import { ApiKey } from "../database/schemas/ApiKey";
 import { Discord } from "../util/Discord";
+import { PendingDiscordAccountLink } from "../typings/DiscordAccountLink";
+import { Requests } from "../generator/Requests";
+import qs from "querystring";
 
 let jwtPrivateKey: Buffer;
 
@@ -218,45 +221,25 @@ export const register = (app: Application, config: MineSkinConfig) => {
 
     //// DISCORD LINKING TODO
 
-    /*
     app.get("/account/discord/oauth/start", async (req: Request, res: Response) => {
         const config = await getConfig();
         if (!config.discordAccount) {
             res.status(400).json({ error: "server can't handle discord auth" });
             return;
         }
-        if (!req.session || !req.session.account) {
-            res.status(400).json({ error: "invalid session (account)" });
-            return;
-        }
-        if (!req.session.account.token) {
-            res.status(400).json({ error: "invalid session (token)" });
-            return;
-        }
-        if (!req.session || !req.session.account) {
-            res.status(400).json({ error: "invalid session (account)" });
-            return;
-        }
-        const profileValidation = await getAndValidateMojangProfile(req.session.account!.token!, req.query["uuid"] as string);
-        if (!profileValidation.valid || !profileValidation.profile) return;
-
-        const account = await findAccountForSession({
-            type: "external",
-            accountType: req.session.account.type
-        }, profileValidation, req, res);
-        if (!account) {
+        const user = await getUserFromRequest(req, res);
+        if (!user) {
             return;
         }
 
         const clientId = config.discordAccount.id;
-        const redirect = encodeURIComponent(`https://${ config.server }.api.mineskin.org/accountManager/discord/oauth/callback`);
-        const state = sha256(`${ account.getAccountType() }${ account.uuid }${ Math.random() }${ req.session.account.email! }${ Date.now() }${ account.id }`);
+        const redirect = encodeURIComponent(`https://${ config.server }.api.mineskin.org/account/discord/oauth/callback`);
+        const state = sha256(`${ user.uuid }${ Math.random() }${ user.email }${ Date.now() }${ Math.random() }`);
 
         Caching.storePendingDiscordLink(<PendingDiscordAccountLink>{
             state: state,
-            account: account.id,
-            uuid: account.uuid,
-            email: req.session.account.email!
+            user: user.uuid,
+            email: user.email
         });
 
         res.redirect(`https://discordapp.com/api/oauth2/authorize?client_id=${ clientId }&scope=identify&response_type=code&state=${ state }&redirect_uri=${ redirect }`);
@@ -281,18 +264,18 @@ export const register = (app: Application, config: MineSkinConfig) => {
         }
         Caching.invalidatePendingDiscordLink(req.query["state"] as string);
 
-        // Make sure the session isn't doing anything weird
-        if (!req.session || !req.session.account) {
-            console.warn("discord account link callback had invalid session");
-            res.status(400).json({ error: "invalid session (account)" });
+        const user = await getUserFromRequest(req, res);
+        if (!user) {
             return;
         }
-        const profileValidation = await getAndValidateMojangProfile(req.session.account.token!, pendingLink.uuid);
-        if (!profileValidation.valid || !profileValidation.profile) return;
+        if (user.uuid !== pendingLink.user || user.email !== pendingLink.email) {
+            res.status(401).json({ error: 'invalid state'});
+            return;
+        }
 
         const clientId = config.discordAccount.id;
         const clientSecret = config.discordAccount.secret;
-        const redirect = `https://${ config.server }.api.mineskin.org/accountManager/discord/oauth/callback`;
+        const redirect = `https://${ config.server }.api.mineskin.org/account/discord/oauth/callback`;
 
         // Exchange code for token
         const form: any = {
@@ -333,44 +316,30 @@ export const register = (app: Application, config: MineSkinConfig) => {
         });
         const userBody = userResponse.data;
 
-        const discordId = userBody["id"];
+        const discordId = userBody['id'];
         if (!discordId) {
             console.warn("Discord response did not have an id field")
             res.status(404).json({ error: "Discord API error" });
             return;
         }
 
-        const account = await findAccountForSession({
-            id: pendingLink.account
-        }, profileValidation, req, res);
-        if (!account) {
-            console.warn("account for discord linking callback not found");
-            return;
-        }
 
-        if (account.discordUser) {
-            console.warn(warn("Account #" + account.id + " already has a linked discord user (#" + account.discordUser + "), changing to " + discordId));
-        }
-        account.discordUser = discordId;
-        await account.save();
 
-        console.log(info("Discord User " + userBody["username"] + "#" + userBody["discriminator"] + " linked to Mineskin account #" + account.id + "/" + account.uuid + " - adding roles!"));
-        const roleAdded = await Discord.addDiscordAccountOwnerRole(discordId);
-        Discord.sendDiscordDirectMessage("Thanks for linking your Discord account to Mineskin! :)", discordId);
-        Discord.postDiscordMessage("👤 " + userBody.username + "#" + userBody.discriminator + " <@" + discordId + "> linked to account #" + account.id + "/" + account.uuid);
-        if (roleAdded) {
-            res.json({
-                success: true,
-                msg: "Successfully linked Mineskin Account " + account.uuid + " to Discord User " + userBody.username + "#" + userBody.discriminator + ", yay! You can close this window now :)"
-            });
-        } else {
-            res.json({
-                success: false,
-                msg: "Account " + account.uuid + " was linked to " + userBody.username + "#" + userBody.discriminator + ", but there was an issue updating your server roles :( - Make sure you've joined inventivetalent's discord server! (this may also happen if you've linked multiple accounts)"
-            })
+        if (user.discordId) {
+            console.warn(warn("User Account " + user.uuid + " already has a linked discord user (#" + user.discordId + "), changing to " + discordId));
         }
+        user.discordId = discordId;
+        await user.save();
+
+        console.log(info("Discord User " + userBody["username"] + "#" + userBody["discriminator"] + " linked to Mineskin user " + user.uuid + "/" + user.email + " - adding roles!"));
+        const roleAdded = await Discord.addDiscordUserRole(discordId);
+        // Discord.sendDiscordDirectMessage("Thanks for linking your Discord account to Mineskin! :)", discordId);
+        Discord.postDiscordMessage("👤 " + userBody.username + "#" + userBody.discriminator + " <@" + discordId + "> linked to user " + user.uuid + "/" + user.email);
+        res.json({
+            success: true,
+            msg: "Successfully linked your Discord account to Mineskin, yay! You can close this window now :)"
+        });
     })
-    */
 
 };
 
