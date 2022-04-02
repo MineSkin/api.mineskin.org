@@ -295,9 +295,10 @@ export function sleep(duration: number): Promise<void> {
 export function timeout<U>(promise: Promise<U>, t: number): Promise<U> {
     return new Promise<U>((resolve, reject) => {
         let timedOut = false;
+        const err = new Error(`Promise timed out after ${ t }ms`);
         let timer = setTimeout(() => {
             timedOut = true;
-            reject(new Error(`Promise timed out after ${ t }ms`));
+            reject(err);
         }, t);
 
         promise
@@ -318,9 +319,10 @@ export function timeoutWrap<T extends Array<any>, U>(func: (...args: T) => Promi
     return (...args: T): Promise<U> => {
         return new Promise<U>((resolve, reject) => {
             let timedOut = false;
+            const err = new Error(`Promise timed out after ${ t }ms`);
             let timer = setTimeout(() => {
                 timedOut = true;
-                reject(new Error(`Promise timed out after ${ t }ms`));
+                reject(err);
             }, t);
 
             func(...args)
