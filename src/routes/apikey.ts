@@ -104,7 +104,7 @@ export const register = (app: Application) => {
 
         res.json({
             success: true,
-            msg: "key created",
+            msg: "key created - make sure to save it!",
             name: apiKey.name,
             user: apiKey.user,
             key: key,
