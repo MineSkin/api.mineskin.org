@@ -207,19 +207,162 @@ export const register = (app: Application, config: MineSkinConfig) => {
         res.json(skins);
     });
 
-    app.post("/account/skins", async (req, res) => {
-        const user = await getUserFromRequest(req, res);
-        if (!user) {
+
+    //// DISCORD LINKING TODO
+
+    /*
+    app.get("/account/discord/oauth/start", async (req: Request, res: Response) => {
+        const config = await getConfig();
+        if (!config.discordAccount) {
+            res.status(400).json({ error: "server can't handle discord auth" });
             return;
         }
-        const id = stripUuid(req.body['uuid'].substr(0, 36));
-        if (!user.skins.includes(id)) {
-            user.skins.push(id);
-            await user.save();
+        if (!req.session || !req.session.account) {
+            res.status(400).json({ error: "invalid session (account)" });
+            return;
         }
-        res.end();
+        if (!req.session.account.token) {
+            res.status(400).json({ error: "invalid session (token)" });
+            return;
+        }
+        if (!req.session || !req.session.account) {
+            res.status(400).json({ error: "invalid session (account)" });
+            return;
+        }
+        const profileValidation = await getAndValidateMojangProfile(req.session.account!.token!, req.query["uuid"] as string);
+        if (!profileValidation.valid || !profileValidation.profile) return;
+
+        const account = await findAccountForSession({
+            type: "external",
+            accountType: req.session.account.type
+        }, profileValidation, req, res);
+        if (!account) {
+            return;
+        }
+
+        const clientId = config.discordAccount.id;
+        const redirect = encodeURIComponent(`https://${ config.server }.api.mineskin.org/accountManager/discord/oauth/callback`);
+        const state = sha256(`${ account.getAccountType() }${ account.uuid }${ Math.random() }${ req.session.account.email! }${ Date.now() }${ account.id }`);
+
+        Caching.storePendingDiscordLink(<PendingDiscordAccountLink>{
+            state: state,
+            account: account.id,
+            uuid: account.uuid,
+            email: req.session.account.email!
+        });
+
+        res.redirect(`https://discordapp.com/api/oauth2/authorize?client_id=${ clientId }&scope=identify&response_type=code&state=${ state }&redirect_uri=${ redirect }`);
     })
 
+    app.get("/account/discord/oauth/callback", async (req: Request, res: Response) => {
+        if (!req.query["code"] || !req.query["state"]) {
+            res.status(400).end();
+            return;
+        }
+        const config = await getConfig();
+        if (!config.discordAccount) {
+            res.status(400).json({ error: "server can't handle discord auth" });
+            return;
+        }
+
+        const pendingLink: Maybe<PendingDiscordAccountLink> = Caching.getPendingDiscordLink(req.query["state"] as string);
+        if (!pendingLink) {
+            console.warn("Got a discord OAuth callback but the API wasn't expecting that linking request");
+            res.status(400).json({ error: "invalid state" });
+            return;
+        }
+        Caching.invalidatePendingDiscordLink(req.query["state"] as string);
+
+        // Make sure the session isn't doing anything weird
+        if (!req.session || !req.session.account) {
+            console.warn("discord account link callback had invalid session");
+            res.status(400).json({ error: "invalid session (account)" });
+            return;
+        }
+        const profileValidation = await getAndValidateMojangProfile(req.session.account.token!, pendingLink.uuid);
+        if (!profileValidation.valid || !profileValidation.profile) return;
+
+        const clientId = config.discordAccount.id;
+        const clientSecret = config.discordAccount.secret;
+        const redirect = `https://${ config.server }.api.mineskin.org/accountManager/discord/oauth/callback`;
+
+        // Exchange code for token
+        const form: any = {
+            client_id: clientId,
+            client_secret: clientSecret,
+            grant_type: "authorization_code",
+            code: req.query["code"],
+            redirect_uri: redirect,
+            scope: "identify"
+        };
+        const tokenResponse = await Requests.genericRequest({
+            method: "POST",
+            url: "https://discordapp.com/api/oauth2/token",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Accept": "application/json",
+                "Accept-Encoding": "gzip"
+            },
+            data: qs.stringify(form)
+        });
+        const tokenBody = tokenResponse.data;
+        const accessToken = tokenBody["access_token"];
+        if (!accessToken) {
+            console.warn("Failed to get access token from discord");
+            res.status(500).json({ error: "Discord API error" });
+            return;
+        }
+
+        // Get user profile
+        const userResponse = await Requests.genericRequest({
+            method: "GET",
+            url: "https://discordapp.com/api/users/@me",
+            headers: {
+                "Authorization": `Bearer ${ accessToken }`,
+                "Accept": "application/json",
+                "Accept-Encoding": "gzip"
+            }
+        });
+        const userBody = userResponse.data;
+
+        const discordId = userBody["id"];
+        if (!discordId) {
+            console.warn("Discord response did not have an id field")
+            res.status(404).json({ error: "Discord API error" });
+            return;
+        }
+
+        const account = await findAccountForSession({
+            id: pendingLink.account
+        }, profileValidation, req, res);
+        if (!account) {
+            console.warn("account for discord linking callback not found");
+            return;
+        }
+
+        if (account.discordUser) {
+            console.warn(warn("Account #" + account.id + " already has a linked discord user (#" + account.discordUser + "), changing to " + discordId));
+        }
+        account.discordUser = discordId;
+        await account.save();
+
+        console.log(info("Discord User " + userBody["username"] + "#" + userBody["discriminator"] + " linked to Mineskin account #" + account.id + "/" + account.uuid + " - adding roles!"));
+        const roleAdded = await Discord.addDiscordAccountOwnerRole(discordId);
+        Discord.sendDiscordDirectMessage("Thanks for linking your Discord account to Mineskin! :)", discordId);
+        Discord.postDiscordMessage("👤 " + userBody.username + "#" + userBody.discriminator + " <@" + discordId + "> linked to account #" + account.id + "/" + account.uuid);
+        if (roleAdded) {
+            res.json({
+                success: true,
+                msg: "Successfully linked Mineskin Account " + account.uuid + " to Discord User " + userBody.username + "#" + userBody.discriminator + ", yay! You can close this window now :)"
+            });
+        } else {
+            res.json({
+                success: false,
+                msg: "Account " + account.uuid + " was linked to " + userBody.username + "#" + userBody.discriminator + ", but there was an issue updating your server roles :( - Make sure you've joined inventivetalent's discord server! (this may also happen if you've linked multiple accounts)"
+            })
+        }
+    })
+    */
 
 };
 
