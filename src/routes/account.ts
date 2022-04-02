@@ -269,7 +269,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
             return;
         }
         if (user.uuid !== pendingLink.user || user.email !== pendingLink.email) {
-            res.status(401).json({ error: 'invalid state'});
+            res.status(401).json({ error: 'invalid state' });
             return;
         }
 
@@ -322,7 +322,6 @@ export const register = (app: Application, config: MineSkinConfig) => {
             res.status(404).json({ error: "Discord API error" });
             return;
         }
-
 
 
         if (user.discordId) {
@@ -381,9 +380,19 @@ export async function getUserFromRequest(req: Request, res: Response, reject: bo
         return;
     }
 
-    if (!req.headers.origin || (!req.headers.origin.startsWith('https://mineskin.org') && !req.headers.origin.startsWith('https://testing.mineskin.org'))) { //TODO
-        if (reject) res.status(400).json({ error: 'origin not allowed' });
-        return;
+
+    // if (!req.headers.origin) {
+    //     if (reject) res.status(400).json({ error: 'origin not allowed' });
+    //     return;
+    // }
+    if(!!req.headers.origin) {
+        let originAllowed = req.headers.origin.startsWith('https://mineskin.org') ||
+            req.headers.origin.startsWith('https://www.mineskin.org') ||
+            req.headers.origin.startsWith('https://testing.mineskin.org') ;
+        if (!originAllowed) {
+            if (reject) res.status(400).json({ error: 'origin not allowed' });
+            return;
+        }
     }
 
     let jwt;

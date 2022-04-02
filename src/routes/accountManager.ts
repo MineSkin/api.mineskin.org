@@ -649,6 +649,8 @@ export const register = (app: Application, config: MineSkinConfig) => {
             Discord.postDiscordMessage(`👤 [${ config.server }] Account ${ account.id }/${ account.uuid } linked to user ${ user.uuid }/${ user.email }`);
         }
 
+        //TODO: give discord role if the user has discord linked
+
         console.log(info("Saving new " + (req.session.account.type) + " account #" + account.id + " " + req.body["uuid"]));
         await account.save();
         res.json({
@@ -807,7 +809,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
             res.status(400).json({ error: "invalid session (account)" });
             return;
         }
-        const profileValidation = await getAndValidateMojangProfile(req.session.account.token!, pendingLink.uuid);
+        const profileValidation = await getAndValidateMojangProfile(req.session.account.token!, pendingLink.uuid!);
         if (!profileValidation.valid || !profileValidation.profile) return;
 
         const clientId = config.discordAccount.id;
