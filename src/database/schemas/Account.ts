@@ -256,11 +256,35 @@ AccountSchema.statics.countGlobalUsable = async function (this: IAccountModel): 
     const config = await getConfig();
     return this.countDocuments({
         enabled: true,
+        $and: [
+            {
+                $or: [
+                    { lastSelected: { $exists: false } },
+                    { lastSelected: { $lt: (time - MIN_ACCOUNT_DELAY) } }
+                ]
+            },
+            {
+                $or: [
+                    { lastUsed: { $exists: false } },
+                    { lastUsed: { $lt: (time - MIN_ACCOUNT_DELAY) } }
+                ]
+            },
+            {
+                $or: [
+                    { forcedTimeoutAt: { $exists: false } },
+                    { forcedTimeoutAt: { $lt: (time - 500) } }
+                ]
+            },
+            {
+                $or: [
+                    { hiatus: { $exists: false } },
+                    { 'hiatus.enabled': false },
+                    { 'hiatus.lastPing': { $lt: (time - 900) } }
+                ]
+            }
+        ],
         errorCounter: { $lt: (config.errorThreshold || 10) },
-        $or: [
-            { lastSelected: { $exists: false } },
-            { lastSelected: { $lt: (time - 50) } }
-        ]
+        timeAdded: { $lt: (time - 60) }
     }).exec();
 };
 
