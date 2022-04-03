@@ -225,7 +225,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
         });
 
         const scopes = ["XboxLive.signin", "offline_access"].join("%20");
-        const redirect = `https://api.mineskin.org/accountManager/microsoft/oauth/callback`;
+        const redirect = `https://${ config.server }.api.mineskin.org/accountManager/microsoft/oauth/callback`;
         let url = `https://login.live.com/oauth20_authorize.srf?client_id=${ config.microsoft.clientId }&response_type=code&redirect_uri=${ redirect }&scope=${ scopes }&state=${ state }`;
         if (!req.query["email"]) {
             url += '&prompt=select_account';
@@ -764,7 +764,6 @@ export const register = (app: Application, config: MineSkinConfig) => {
                 Discord.removeDiscordAccountOwnerRole(account.discordUser);
             }
         }
-
 
 
     })
