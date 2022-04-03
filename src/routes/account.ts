@@ -165,6 +165,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
             email: user.email,
             created: user.created,
             lastUsed: user.lastUsed,
+            discordLinked: !!user.discordId,
             sessions: user.sessions.length
         });
     })
