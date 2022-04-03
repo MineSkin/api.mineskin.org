@@ -135,7 +135,8 @@ export class Stats {
             this.queryAccountStats(),
             this.queryDurationStats(),
             // this.queryCountDuplicateViewStats(),
-            this.queryTimeFrameStats()
+            this.queryTimeFrameStats(),
+            this.pushCountDuplicateViewStats(),
         ]).then((ignored: any) => {
             console.log(debug(`Complete stats query took ${ (Date.now() - queryStart) / 1000 }s`));
         });
@@ -203,6 +204,31 @@ export class Stats {
         ]).exec().then((res: any[]) => {
             return Stat.set(GENERATED_DURATION_AVG, res[0]["avgGenTime"] as number)
         });
+    }
+
+    protected static async pushCountDuplicateViewStats(): Promise<void> {
+        const unique = await Stat.get(SKINS_UNIQUE);
+        const duplicate = await Stat.get(SKINS_DUPLICATE);
+        try {
+            const metrics = await MineSkinMetrics.get();
+            await metrics.metrics!.influx.writePoints([
+                {
+                    measurement: 'skins',
+                    fields: {
+                        total: (unique || 0) + (duplicate || 0),
+                        unique: unique || 0,
+                        duplicate: duplicate || 0
+                    }
+                }
+            ], {
+                database: 'mineskin',
+                retentionPolicy: 'one_year',
+                precision: 's'
+            })
+        } catch (e) {
+            console.warn(e);
+            Sentry.captureException(e);
+        }
     }
 
     protected static async queryCountDuplicateViewStats(): Promise<void> {
