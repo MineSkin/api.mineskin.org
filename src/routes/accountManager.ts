@@ -887,6 +887,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
         }
 
         const roleAdded = await addDiscordOwnerRole(account, discordId, userBody.username + "#" + userBody.discriminator);
+        await account.save();
         if (roleAdded) {
             res.json({
                 success: true,
@@ -905,12 +906,11 @@ export const register = (app: Application, config: MineSkinConfig) => {
             console.warn(warn("Account #" + account.id + " already has a linked discord user (#" + account.discordUser + "), changing to " + discordId));
         }
         account.discordUser = discordId;
-        await account.save();
 
         console.log(info("Discord User " + discordUsername + " linked to Mineskin account #" + account.id + "/" + account.uuid + " - adding roles!"));
         const roleAdded = await Discord.addDiscordAccountOwnerRole(discordId);
         Discord.sendDiscordDirectMessage("Thanks for linking your Discord account to Mineskin! :)", discordId);
-        Discord.postDiscordMessage("👤 " + discordUsername + " <@" + discordId + "> linked to account #" + account.id + "/" + account.uuid);
+        Discord.postDiscordMessage("👤 Discord " + discordUsername + " <@" + discordId + "> linked to account #" + account.id + "/" + account.uuid);
         return roleAdded;
     }
 
