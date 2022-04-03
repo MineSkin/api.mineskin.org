@@ -45,8 +45,6 @@ export const register = (app: Application, config: MineSkinConfig) => {
     })
 
     app.post("/account/google/callback", async (req, res) => {
-        //TODO: enable this on prod, doesn't seem to add the cookie on the testing subdomain
-        /*
         const csrfCookie = req.cookies['g_csrf_token'];
         if (!csrfCookie || csrfCookie.length <= 0) {
             res.status(400);
@@ -61,7 +59,6 @@ export const register = (app: Application, config: MineSkinConfig) => {
             res.status(400);
             return;
         }
-         */
 
         let ticket: LoginTicket;
         try {
