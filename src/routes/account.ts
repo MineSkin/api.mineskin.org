@@ -24,15 +24,6 @@ export const register = (app: Application, config: MineSkinConfig) => {
     const googleClient = new OAuth2Client(config.google.id, config.google.secret);
 
     app.use("/account", corsWithCredentialsMiddleware);
-    // app.use("/account", session({
-    //     secret: config.sessionSecret,
-    //     resave: false,
-    //     saveUninitialized: true,
-    //     cookie: {
-    //         maxAge: Time.minutes(30),
-    //         domain: "api.mineskin.org"
-    //     }
-    // }))
 
     app.post("/account/google/init", async (req, res) => {
         const nonce = stripUuid(randomUuid());
@@ -218,7 +209,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
     });
 
 
-    //// DISCORD LINKING TODO
+    //// DISCORD LINKING
 
     app.get("/account/discord/oauth/start", async (req: Request, res: Response) => {
         const config = await getConfig();
