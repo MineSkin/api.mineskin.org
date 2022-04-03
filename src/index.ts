@@ -336,7 +336,7 @@ async function init() {
             } catch (e) {
                 Sentry.captureException(e);
             }
-        }, 1000 * 60 * 2);
+        }, 1000 * 60 * 5);
     }
 }
 
