@@ -16,7 +16,7 @@ export class Notifications {
         if (account.discordUser && !account.discordMessageSent) {
             try {
                 await Discord.sendDiscordDirectMessage(simpleMessage(account, false), account.discordUser, async () => {
-                    if (publicMessage) {
+                    if (publicMessage && (!account.sendEmails || !account.email)) {
                         await Discord.postDiscordMessage(publicMessage(account), OWNER_CHANNEL);
 
                         (await MineSkinMetrics.get()).accountNotifications
