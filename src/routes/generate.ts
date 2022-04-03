@@ -50,6 +50,9 @@ export const register = (app: Application) => {
         }
 
         console.log(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`));
+        if (req.headers['origin']) {
+            console.log(debug(`${ options.breadcrumb } Origin:      ${ req.headers['origin'] }`));
+        }
         console.log(debug(`${ options.breadcrumb } Key:         ${ req.apiKey?.name ?? "none" }`));
         console.log(debug(`${ options.breadcrumb } URL:         ${ url }`));
 
@@ -86,6 +89,9 @@ export const register = (app: Application) => {
         }
 
         console.log(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`));
+        if (req.headers['origin']) {
+            console.log(debug(`${ options.breadcrumb } Origin:      ${ req.headers['origin'] }`));
+        }
         console.log(debug(`${ options.breadcrumb } Key:         ${ req.apiKey?.name ?? "none" }`));
         console.log(debug(`${ options.breadcrumb } FILE:        "${ file.name }" ${ file.md5 }`))
 
@@ -129,6 +135,9 @@ export const register = (app: Application) => {
         }
 
         console.log(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`));
+        if (req.headers['origin']) {
+            console.log(debug(`${ options.breadcrumb } Origin:      ${ req.headers['origin'] }`));
+        }
         console.log(debug(`${ options.breadcrumb } Key:         ${ req.apiKey?.name ?? "none" }`));
         console.log(debug(`${ options.breadcrumb } USER:        ${ uuids.long }`))
 
@@ -166,6 +175,9 @@ export const register = (app: Application) => {
         }
 
         console.log(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`));
+        if (req.headers['origin']) {
+            console.log(debug(`${ options.breadcrumb } Origin:      ${ req.headers['origin'] }`));
+        }
         console.log(debug(`${ options.breadcrumb } Key:         ${ req.apiKey?.name ?? "none" }`));
         console.log(debug(`${ options.breadcrumb } USER:        ${ uuids.long }`))
 
