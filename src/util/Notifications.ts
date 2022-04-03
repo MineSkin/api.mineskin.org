@@ -100,7 +100,7 @@ ${ this.accountInfo(acc, false) }
 
 The account won't be used for skin generation until the issues are resolved.
 
-Please log back in to your account at https://mineskin.org/account?email=${account.email}
+Please log back in to your account at https://mineskin.org/account/minecraft?email=${account.email}
 
 ${ account.getAccountType() === AccountType.MICROSOFT ? "You should also check https://account.live.com/Activity" : "" }
 ${ this.supportLink(email) }
@@ -109,7 +109,7 @@ ${ this.supportLink(email) }
 ${ this.publicPrefix(acc) }
 MineSkin just lost access to one of your accounts (${ acc.getAccountType() })\n
 ${ this.trimmedAccountInfo(acc) }
-Please log back in at https://mineskin.org/account\n
+Please log back in at https://mineskin.org/account/minecraft\n
             `,
             acc => `
 <p><b>Hi there!</b></p>
@@ -118,7 +118,7 @@ ${ this.accountInfo(acc, true) }
 <p></p>
 <p>The account won't be used for skin generation until the issues are resolved.</p>
 <br/>
-<p><strong>Please log back in to your account at <a href="https://mineskin.org/account?email=${account.email}">mineskin.org/account</a></strong></p>
+<p><strong>Please log back in to your account at <a href="https://mineskin.org/account/minecraft?email=${account.email}">mineskin.org/account</a></strong></p>
 <br/>
 ${ account.getAccountType() === AccountType.MICROSOFT ? "<p>You should also check <a href='https://account.live.com/Activity'>account.live.com/Activity</a></p>" : "" }
 <p>${ this.supportLink(true) }</p>
@@ -154,7 +154,7 @@ ${ this.supportLink(email) }
 ${ this.publicPrefix(acc) }
 MineSkin just failed to login to one of your accounts (${ acc.getAccountType() })\n
 ${ this.trimmedAccountInfo(acc) } 
-Please log back in at https://mineskin.org/account\n
+Please log back in at https://mineskin.org/account/minecraft\n
             `,
             acc => `
 <p><b>Hi there!</b></p>
@@ -200,7 +200,7 @@ ${ this.supportLink(email) }
 ${ this.publicPrefix(acc) }
 One of your accounts (${ acc.getAccountType() }) was just disabled since it failed to properly generate skin data recently. 
 ${ this.trimmedAccountInfo(acc) }
-Please log back in at https://mineskin.org/account
+Please log back in at https://mineskin.org/account/minecraft
             `,
             acc => `
 <p><b>Hi there!</b></p>
