@@ -166,7 +166,8 @@ export const register = (app: Application, config: MineSkinConfig) => {
             created: user.created,
             lastUsed: user.lastUsed,
             discordLinked: !!user.discordId,
-            sessions: user.sessions.length
+            sessions: user.sessions.length,
+            sessionTimeout: Math.floor((user.sessions[user.session!].getTime() - Date.now()) / 1000)
         });
     })
 
@@ -386,10 +387,10 @@ export async function getUserFromRequest(req: Request, res: Response, reject: bo
     //     if (reject) res.status(400).json({ error: 'origin not allowed' });
     //     return;
     // }
-    if(!!req.headers.origin) {
+    if (!!req.headers.origin) {
         let originAllowed = req.headers.origin.startsWith('https://mineskin.org') ||
             req.headers.origin.startsWith('https://www.mineskin.org') ||
-            req.headers.origin.startsWith('https://testing.mineskin.org') ;
+            req.headers.origin.startsWith('https://testing.mineskin.org');
         if (!originAllowed) {
             if (reject) res.status(400).json({ error: 'origin not allowed' });
             return;
