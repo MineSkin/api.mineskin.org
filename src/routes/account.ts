@@ -246,7 +246,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
         let stateSplit = (req.query['state'] as string).split('_');
         if (config.server != stateSplit[0]) {
             // redirect to correct server
-            res.redirect(`https://api.mineskin.org/account/discord/oauth/callback?code=${ req.query['code'] }&state=${ req.query['state'] }`);
+            res.redirect(`https://${stateSplit[0]}.api.mineskin.org/account/discord/oauth/callback?code=${ req.query['code'] }&state=${ req.query['state'] }`);
             return;
         }
         if (!config.discordAccount) {

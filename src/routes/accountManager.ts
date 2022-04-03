@@ -216,7 +216,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
             return;
         }
 
-        const state = sha256(Buffer.concat([Buffer.from(randomUuid(), 'utf8'), randomBytes(16)]).toString('base64'));
+        const state = config.server + '_' + sha256(Buffer.concat([Buffer.from(randomUuid(), 'utf8'), randomBytes(16)]).toString('base64'));
 
         Caching.storePendingMicrosoftLink(state, {
             state: state,
@@ -247,6 +247,13 @@ export const register = (app: Application, config: MineSkinConfig) => {
         }
         if (!req.query["code"]) {
             res.status(400).json({ error: "missing code" });
+            return;
+        }
+
+        let stateSplit = (req.query['state'] as string).split('_');
+        if (config.server != stateSplit[0]) {
+            // redirect to correct server
+            res.redirect(`https://${ stateSplit[0] }.api.mineskin.org/accountManager/microsoft/oauth/callback?code=${ req.query['code'] }&state=${ req.query['state'] }`);
             return;
         }
 
@@ -809,7 +816,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
         let stateSplit = (req.query['state'] as string).split('_');
         if (config.server != stateSplit[0]) {
             // redirect to correct server
-            res.redirect(`https://api.mineskin.org/accountManager/discord/oauth/callback?code=${ req.query['code'] }&state=${ req.query['state'] }`);
+            res.redirect(`https://${ stateSplit[0] }.api.mineskin.org/accountManager/discord/oauth/callback?code=${ req.query['code'] }&state=${ req.query['state'] }`);
             return;
         }
         if (!config.discordAccount) {
