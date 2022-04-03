@@ -167,7 +167,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
             lastUsed: user.lastUsed,
             discordLinked: !!user.discordId,
             sessions: user.sessions.length,
-            sessionTimeout: Math.floor((user.sessions[user.session!].getTime() - Date.now()) / 1000)
+            sessionTimeout: Math.floor(((user.sessions[user.session!].getTime() + Time.hours(1)) - Date.now()) / 1000)
         });
     })
 
