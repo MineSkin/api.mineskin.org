@@ -5,35 +5,35 @@ import * as Sentry from "@sentry/node";
 import { MineSkinMetrics } from "../util/metrics";
 import { debug } from "../util/colors";
 
-const ACCOUNTS_TOTAL = "accounts.total";
-const ACCOUNTS_HEALTHY = "accounts.healthy";
-const ACCOUNTS_USABLE = "accounts.healthy";
-const ACCOUNTS_TYPE_PREFIX = "accounts.type.";
+export const ACCOUNTS_TOTAL = "accounts.total";
+export const ACCOUNTS_HEALTHY = "accounts.healthy";
+export const ACCOUNTS_USABLE = "accounts.healthy";
+export const ACCOUNTS_TYPE_PREFIX = "accounts.type.";
 
-const GENERATED_UPLOAD_COUNT = "generated.upload.count";
-const GENERATED_UPLOAD_DUPLICATE = "generated.upload.duplicate";
-const GENERATED_UPLOAD_VIEWS = "generated.upload.views";
-const GENERATED_URL_COUNT = "generated.url.count";
-const GENERATED_URL_DUPLICATE = "generated.url.duplicate";
-const GENERATED_URL_VIEWS = "generated.url.views";
-const GENERATED_USER_COUNT = "generated.user.count";
-const GENERATED_USER_DUPLICATE = "generated.user.duplicate";
-const GENERATED_USER_VIEWS = "generated.user.views";
+export const GENERATED_UPLOAD_COUNT = "generated.upload.count";
+export const GENERATED_UPLOAD_DUPLICATE = "generated.upload.duplicate";
+export const GENERATED_UPLOAD_VIEWS = "generated.upload.views";
+export const GENERATED_URL_COUNT = "generated.url.count";
+export const GENERATED_URL_DUPLICATE = "generated.url.duplicate";
+export const GENERATED_URL_VIEWS = "generated.url.views";
+export const GENERATED_USER_COUNT = "generated.user.count";
+export const GENERATED_USER_DUPLICATE = "generated.user.duplicate";
+export const GENERATED_USER_VIEWS = "generated.user.views";
 
-const SKINS_TOTAL = "skins.total";
-const SKINS_UNIQUE = "skins.unique";
-const SKINS_DUPLICATE = "skins.duplicate";
-const SKINS_VIEWS = "skins.views";
+export const SKINS_TOTAL = "skins.total";
+export const SKINS_UNIQUE = "skins.unique";
+export const SKINS_DUPLICATE = "skins.duplicate";
+export const SKINS_VIEWS = "skins.views";
 
-const GENERATED_LAST_YEAR = "generated.time.year"
-const GENERATED_LAST_MONTH = "generated.time.month";
-const GENERATED_LAST_DAY = "generated.time.day";
-const GENERATED_LAST_HOUR = "generated.time.hour";
+export const GENERATED_LAST_YEAR = "generated.time.year"
+export const GENERATED_LAST_MONTH = "generated.time.month";
+export const GENERATED_LAST_DAY = "generated.time.day";
+export const GENERATED_LAST_HOUR = "generated.time.hour";
 
-const GENERATED_DURATION_AVG = "generated.duration.avg";
+export const GENERATED_DURATION_AVG = "generated.duration.avg";
 
-const GENERATE_SUCCESS = "generate.success";
-const GENERATE_FAIL = "generate.fail";
+export const GENERATE_SUCCESS = "generate.success";
+export const GENERATE_FAIL = "generate.fail";
 
 const MINESKIN_TESTER_SUCCESS = "mineskintester.success";
 const MINESKIN_TESTER_FAIL = "mineskintester.fail";
@@ -134,7 +134,7 @@ export class Stats {
         return Promise.all([
             this.queryAccountStats(),
             this.queryDurationStats(),
-            this.queryCountDuplicateViewStats(),
+            // this.queryCountDuplicateViewStats(),
             this.queryTimeFrameStats()
         ]).then((ignored: any) => {
             console.log(debug(`Complete stats query took ${ (Date.now() - queryStart) / 1000 }s`));

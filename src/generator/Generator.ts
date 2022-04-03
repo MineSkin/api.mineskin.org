@@ -1,4 +1,4 @@
-import { Account, Skin } from "../database/schemas";
+import { Account, Skin, Stat } from "../database/schemas";
 import { MemoizeExpiring } from "@inventivetalent/typescript-memoize";
 import { base64decode, getHashFromMojangTextureUrl, hasOwnProperty, imgHash, longAndShortUuid, Maybe, random32BitNumber, sleep, stripUuid } from "../util";
 import { Caching } from "./Caching";
@@ -33,7 +33,7 @@ import stripUserAgent from "user-agent-stripper";
 import { MineSkinMetrics } from "../util/metrics";
 import { MineSkinOptimus } from "../util/optimus";
 import { Discord } from "../util/Discord";
-import { Stats } from "./Stats";
+import { GENERATE_FAIL, GENERATE_SUCCESS, GENERATED_UPLOAD_COUNT, GENERATED_UPLOAD_DUPLICATE, GENERATED_URL_COUNT, GENERATED_URL_DUPLICATE, GENERATED_USER_COUNT, GENERATED_USER_DUPLICATE, SKINS_DUPLICATE, SKINS_TOTAL, SKINS_UNIQUE, Stats } from "./Stats";
 import { IPoint } from "influx";
 import { DelayInfo } from "../typings/DelayInfo";
 import { FilterQuery } from "mongoose";
@@ -470,6 +470,7 @@ export class Generator {
             views: 0,
             hv: HASH_VERSION
         })
+
         return skin.save().then(skin => {
             //TODO: fix this message for user generate
             console.log(info(options.breadcrumb + " New skin saved #" + skin.id + " - generated in " + duration + "ms by " + result.account?.getAccountType() + " account #" + result.account?.id));
@@ -481,6 +482,23 @@ export class Generator {
     protected static async getDuplicateOrSaved(result: GenerateResult, options: GenerateOptions, client: ClientInfo, type: GenerateType, start: number): Promise<SavedSkin> {
         const metrics = await MineSkinMetrics.get();
         if (result.duplicate) {
+            const statPromises = [];
+            statPromises.push(Stat.inc(SKINS_DUPLICATE));
+            statPromises.push(Stat.inc(SKINS_TOTAL));
+            // stats for duplicate
+            switch (type) {
+                case GenerateType.UPLOAD:
+                    statPromises.push(Stat.inc(GENERATED_UPLOAD_DUPLICATE));
+                    break;
+                case GenerateType.URL:
+                    statPromises.push(Stat.inc(GENERATED_URL_DUPLICATE));
+                    break;
+                case GenerateType.USER:
+                    statPromises.push(Stat.inc(GENERATED_USER_DUPLICATE));
+                    break;
+            }
+            await Promise.all(statPromises);
+
             return new SavedSkin(result.duplicate, true);
         }
         if (result.data) {
@@ -494,6 +512,24 @@ export class Generator {
                 Sentry.captureException(e);
             }
             const doc = await this.saveSkin(result, options, client, type, start)
+
+            const statPromises = [];
+            // stats for newly generated, not duplicate
+            statPromises.push(Stat.inc(SKINS_UNIQUE));
+            statPromises.push(Stat.inc(SKINS_TOTAL));
+            switch (type) {
+                case GenerateType.UPLOAD:
+                    statPromises.push(Stat.inc(GENERATED_UPLOAD_COUNT));
+                    break;
+                case GenerateType.URL:
+                    statPromises.push(Stat.inc(GENERATED_URL_COUNT));
+                    break;
+                case GenerateType.USER:
+                    statPromises.push(Stat.inc(GENERATED_USER_COUNT));
+                    break;
+            }
+            await Promise.all(statPromises);
+
             return new SavedSkin(doc, false);
         }
         // shouldn't ever get here
@@ -1121,6 +1157,7 @@ export class Generator {
             .tag("accountType", account.accountType || "unknown")
             .tag("apiKey", client.apiKey || "none")
             .inc();
+        await Stat.inc(GENERATE_SUCCESS);
         if (!account) return;
         try {
             account.errorCounter = 0;
@@ -1148,6 +1185,8 @@ export class Generator {
                 account = e.account;
             }
         }
+
+        await Stat.inc(GENERATE_FAIL);
 
         let m = metrics.successFail
             .tag("state", "fail")

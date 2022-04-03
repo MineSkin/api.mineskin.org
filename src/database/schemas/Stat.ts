@@ -15,6 +15,7 @@ const schema: Schema<IStatDocument, IStatModel> = new Schema(
     });
 
 schema.statics.inc = function (this: IStatModel, key: string, amount = 1): Promise<Maybe<IStatDocument>> {
+    //TODO
     return this.findOne({ key: key }).exec().then((stat: IStatDocument) => {
         if (!stat) {
             console.warn("Invalid stat key " + key);

@@ -1,9 +1,12 @@
 import { Application, Request, Response } from "express";
 import { Generator } from "../generator/Generator";
 import { Caching } from "../generator/Caching";
-import { Skin } from "../database/schemas";
+import { Skin, Stat } from "../database/schemas";
 import { corsWithAuthMiddleware, getAndValidateRequestApiKey, getIp, stripUuid } from "../util";
 import * as Sentry from "@sentry/node";
+import { ISkinDocument } from "../typings";
+import { GenerateType } from "../typings/db/ISkinDocument";
+import { GENERATED_UPLOAD_VIEWS, GENERATED_URL_VIEWS, GENERATED_USER_VIEWS, SKINS_VIEWS } from "../generator/Stats";
 
 export const register = (app: Application) => {
 
@@ -62,7 +65,7 @@ export const register = (app: Application) => {
         res
             .header("Cache-Control", "public, max-age=3600")
             .json(await skin.toResponseJson()); // this triggers the generation of a random uuid if it doesn't have one, so do that before saving
-        await Skin.incViews(skin.uuid);
+        await incSkinViews(skin);
     })
 
     app.get("/get/uuid/:uuid", async (req: Request, res: Response) => {
@@ -79,7 +82,7 @@ export const register = (app: Application) => {
         res
             .header("Cache-Control", "public, max-age=3600")
             .json(await skin.toResponseJson());
-        await Skin.incViews(skin.uuid);
+        await incSkinViews(skin);
     })
 
     // TODO: add route to get by hash
@@ -160,5 +163,24 @@ export const register = (app: Application) => {
         }
         res.json(await skin.toResponseJson());
     })
+
+    async function incSkinViews(skin: ISkinDocument) {
+        await Skin.incViews(skin.uuid);
+
+        const statPromises = [];
+        statPromises.push(Stat.inc(SKINS_VIEWS));
+        switch (skin.type) {
+            case GenerateType.UPLOAD:
+                statPromises.push(Stat.inc(GENERATED_UPLOAD_VIEWS));
+                break;
+            case GenerateType.URL:
+                statPromises.push(Stat.inc(GENERATED_URL_VIEWS));
+                break;
+            case GenerateType.USER:
+                statPromises.push(Stat.inc(GENERATED_USER_VIEWS));
+                break;
+        }
+        await Promise.all(statPromises);
+    }
 
 }
