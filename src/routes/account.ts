@@ -36,6 +36,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
     })
 
     app.post("/account/google/callback", async (req, res) => {
+        /*
         const csrfCookie = req.cookies['g_csrf_token'];
         if (!csrfCookie || csrfCookie.length <= 0) {
             res.status(400);
@@ -50,6 +51,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
             res.status(400);
             return;
         }
+         */
 
         let ticket: LoginTicket;
         try {
