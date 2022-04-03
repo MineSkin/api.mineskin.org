@@ -386,6 +386,15 @@ export const register = (app: Application, config: MineSkinConfig) => {
             } else if (account.user && account.user !== user.uuid) {
                 Discord.postDiscordMessage(`👤 [${ config.server }] Got account login for ${ account.id }/${ account.uuid } by different user that linked one; linked: ${ account.user } request: ${ user.uuid }`);
             }
+
+            if (!account.email && user.email) {
+                account.email = user.email;
+            }
+            if (!account.discordUser && user.discordId) {
+                account.discordUser = user.discordId;
+
+                addDiscordOwnerRole(account, user.discordId, "user:" + user.uuid);
+            }
         }
 
         const hadSentMessage = account.discordMessageSent || account.emailSent || false;
