@@ -226,7 +226,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
 
         const clientId = config.discordAccount.id;
         const redirect = encodeURIComponent(`https://api.mineskin.org/account/discord/oauth/callback`);
-        const state = config.server + ':' + sha256(`${ user.uuid }${ Math.random() }${ user.email }${ Date.now() }${ Math.random() }`);
+        const state = config.server + '_' + sha256(`${ user.uuid }${ Math.random() }${ user.email }${ Date.now() }${ Math.random() }`);
 
         Caching.storePendingDiscordLink(<PendingDiscordAccountLink>{
             state: state,
@@ -243,7 +243,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
             return;
         }
         const config = await getConfig();
-        let stateSplit = (req.query['state'] as string).split(':');
+        let stateSplit = (req.query['state'] as string).split('_');
         if (config.server != stateSplit[0]) {
             // redirect to correct server
             res.redirect(`https://api.mineskin.org/account/discord/oauth/callback?code=${ req.query['code'] }&state=${ req.query['state'] }`);
