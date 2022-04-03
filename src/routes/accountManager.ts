@@ -756,7 +756,15 @@ export const register = (app: Application, config: MineSkinConfig) => {
 
         if (account.discordUser) {
             Discord.sendDiscordDirectMessage("Your MineSkin account " + account.uuid + " has been deleted.", account.discordUser);
+
+            const discordUserCount = await Account.countDocuments({
+                discordUser: account.discordUser
+            }).exec();
+            if (discordUserCount <= 0) {
+                Discord.removeDiscordAccountOwnerRole(account.discordUser);
+            }
         }
+
 
 
     })
