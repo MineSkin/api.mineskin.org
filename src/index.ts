@@ -368,6 +368,7 @@ init().then(() => {
         const timeout = 30000;
         server.setTimeout(timeout, function () {
             console.warn(warn(`A request timed out after ${ timeout }ms!`))
+            Sentry.captureException(new Error('request timeout'));
         })
     }, 1000);
 });
