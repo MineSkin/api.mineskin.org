@@ -2,6 +2,12 @@ openapi: 3.0.3
 info:
   title: MineSkin API
   version: 0.0.0
+  description: |
+    Client implementations: 
+    Java: https://github.com/InventivetalentDev/MineskinClient
+    NodeJS: https://github.com/InventivetalentDev/mineskin-client
+    
+    Examples: https://github.com/MineSkin/examples
   contact:
     name: inventivetalent
     url: https://discord.gg/nzAdvPc
