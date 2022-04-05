@@ -25,10 +25,10 @@ export const SKINS_UNIQUE = "skins.unique";
 export const SKINS_DUPLICATE = "skins.duplicate";
 export const SKINS_VIEWS = "skins.views";
 
-export const GENERATED_LAST_YEAR = "generated.time.year"
-export const GENERATED_LAST_MONTH = "generated.time.month";
-export const GENERATED_LAST_DAY = "generated.time.day";
-export const GENERATED_LAST_HOUR = "generated.time.hour";
+export const GENERATED_LAST_YEAR = "generated.time.year.v2"
+export const GENERATED_LAST_MONTH = "generated.time.month.v2";
+export const GENERATED_LAST_DAY = "generated.time.day.v2";
+export const GENERATED_LAST_HOUR = "generated.time.hour.v2";
 
 export const GENERATED_DURATION_AVG = "generated.duration.avg";
 
@@ -346,10 +346,10 @@ export class Stats {
 
 
         return Promise.all([
-            Stat.incWithExpiration(GENERATED_LAST_HOUR + "v2", nextHour),
-            Stat.incWithExpiration(GENERATED_LAST_DAY + "v2", nextDay),
-            Stat.incWithExpiration(GENERATED_LAST_MONTH + "v2", nextMonth),
-            Stat.incWithExpiration(GENERATED_LAST_YEAR + "v2", nextYear)
+            Stat.incWithExpiration(GENERATED_LAST_HOUR, nextHour),
+            Stat.incWithExpiration(GENERATED_LAST_DAY, nextDay),
+            Stat.incWithExpiration(GENERATED_LAST_MONTH, nextMonth),
+            Stat.incWithExpiration(GENERATED_LAST_YEAR, nextYear)
         ]).then(r => {
         });
     }

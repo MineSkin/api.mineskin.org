@@ -33,6 +33,7 @@ schema.statics.incWithExpiration = function (this: IStatModel, key: string, expi
         if (!stat) {
             stat = new Stat();
             stat.key = key;
+            stat.value = 0;
         }
         stat.expire = expire;
         stat.value += amount;
