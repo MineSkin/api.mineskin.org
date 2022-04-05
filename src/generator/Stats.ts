@@ -309,6 +309,51 @@ export class Stats {
         });
     }
 
+    public static async incTimeFrame(): Promise<void> {
+        const nextHour = new Date();
+        {
+            nextHour.setMinutes(0);
+            nextHour.setSeconds(0);
+            nextHour.setHours(nextHour.getHours() + 1);
+        }
+
+        const nextDay = new Date();
+        {
+            nextDay.setHours(0);
+            nextDay.setMinutes(0);
+            nextDay.setSeconds(0);
+            nextDay.setDate(nextDay.getDate() + 1);
+        }
+
+        const nextMonth = new Date();
+        {
+            nextMonth.setHours(0);
+            nextMonth.setMinutes(0);
+            nextMonth.setSeconds(0);
+            nextMonth.setDate(1);
+            nextMonth.setMonth(nextMonth.getMonth() + 1);
+        }
+
+        const nextYear = new Date();
+        {
+            nextYear.setHours(0);
+            nextYear.setMinutes(0);
+            nextYear.setSeconds(0);
+            nextYear.setDate(1);
+            nextYear.setMonth(0);
+            nextYear.setFullYear(nextYear.getFullYear() + 1);
+        }
+
+
+        return Promise.all([
+            Stat.incWithExpiration(GENERATED_LAST_HOUR + "v2", nextHour),
+            Stat.incWithExpiration(GENERATED_LAST_DAY + "v2", nextDay),
+            Stat.incWithExpiration(GENERATED_LAST_MONTH + "v2", nextMonth),
+            Stat.incWithExpiration(GENERATED_LAST_YEAR + "v2", nextYear)
+        ]).then(r => {
+        });
+    }
+
     protected static async queryTimeFrameStats(): Promise<void> {
         const now = Date.now();
         const lastHour = new Date(now - 3.6e+6).getTime() / 1000;
