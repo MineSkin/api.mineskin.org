@@ -135,7 +135,7 @@ export class Stats {
             this.queryAccountStats(),
             this.queryDurationStats(),
             // this.queryCountDuplicateViewStats(),
-            this.queryTimeFrameStats(),
+            // this.queryTimeFrameStats(),
             this.pushCountDuplicateViewStats(),
         ]).then((ignored: any) => {
             console.log(debug(`Complete stats query took ${ (Date.now() - queryStart) / 1000 }s`));
