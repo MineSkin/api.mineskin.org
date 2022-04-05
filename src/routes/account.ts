@@ -178,7 +178,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
                 accountType: doc.accountType,
                 enabled: doc.enabled,
                 hasErrors: doc.errorCounter > 0,
-                successCount: Math.round(doc.successCounter / 1000) * 1000,
+                successCount: Math.round(doc.successCounter / 100) * 100,
             })
         }
         res.json(accounts);
