@@ -355,8 +355,6 @@ export class Stats {
     }
 
     static async queryTimeFrameStats(): Promise<void> {
-        // console.log("Running time frame stats query!")
-
         const now = Date.now();
         const lastHour = new Date(now - 3.6e+6).getTime() / 1000;
         const lastDay = new Date(now - 8.64e+7).getTime() / 1000;
@@ -369,7 +367,6 @@ export class Stats {
             Skin.count({ time: { $gte: lastDay } }).exec().then(c => Stat.set(GENERATED_LAST_DAY, c)),
             Skin.count({ time: { $gte: lastHour } }).exec().then(c => Stat.set(GENERATED_LAST_HOUR, c)),
         ]).then(r=>{
-            console.log("time frame stats query too " + ((Date.now() - now) / 1000) + "s");
         })
 
         // return Skin.aggregate([
