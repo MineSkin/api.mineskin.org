@@ -485,7 +485,7 @@ export class Generator {
             const statPromises = [];
             statPromises.push(Stat.inc(SKINS_DUPLICATE));
             statPromises.push(Stat.inc(SKINS_TOTAL));
-            statPromises.push(Stats.incTimeFrame());
+            // statPromises.push(Stats.incTimeFrame());
             // stats for duplicate
             switch (type) {
                 case GenerateType.UPLOAD:

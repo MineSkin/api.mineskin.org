@@ -337,6 +337,26 @@ async function init() {
                 Sentry.captureException(e);
             }
         }, 1000 * 60 * 2);
+
+        // const nextHour = new Date();
+        // {
+        //     nextHour.setMinutes(0);
+        //     nextHour.setSeconds(0);
+        //     nextHour.setHours(nextHour.getHours() + 1);
+        // }
+        // const untilNextHour = (nextHour.getTime()-Date.now());
+        // setTimeout(() => {
+        //     Stats.queryTimeFrameStats();
+        // }, 30000);
+        // setTimeout(() => {
+        //     try {
+        //         setInterval(() => {
+        //             Stats.queryTimeFrameStats();
+        //         }, Time.hours(1));
+        //     } catch (e) {
+        //         Sentry.captureException(e);
+        //     }
+        // }, untilNextHour + 1000 * 30);
     }
 }
 

@@ -135,7 +135,7 @@ export class Stats {
             this.queryAccountStats(),
             this.queryDurationStats(),
             // this.queryCountDuplicateViewStats(),
-            // this.queryTimeFrameStats(),
+            this.queryTimeFrameStats(),
             this.pushCountDuplicateViewStats(),
         ]).then((ignored: any) => {
             console.log(debug(`Complete stats query took ${ (Date.now() - queryStart) / 1000 }s`));
@@ -354,32 +354,43 @@ export class Stats {
         });
     }
 
-    protected static async queryTimeFrameStats(): Promise<void> {
+    static async queryTimeFrameStats(): Promise<void> {
+        // console.log("Running time frame stats query!")
+
         const now = Date.now();
         const lastHour = new Date(now - 3.6e+6).getTime() / 1000;
         const lastDay = new Date(now - 8.64e+7).getTime() / 1000;
         const lastMonth = new Date(now - 2.628e+9).getTime() / 1000;
         const lastYear = new Date(now - 3.154e+10).getTime() / 1000;
 
-        return Skin.aggregate([
-            {
-                $group: {
-                    _id: null,
-                    lastYear: { $sum: { $cond: [{ $gte: ["$time", lastYear] }, 1, 0] } },
-                    lastMonth: { $sum: { $cond: [{ $gte: ["$time", lastMonth] }, 1, 0] } },
-                    lastDay: { $sum: { $cond: [{ $gte: ["$time", lastDay] }, 1, 0] } },
-                    lastHour: { $sum: { $cond: [{ $gte: ["$time", lastHour] }, 1, 0] } }
-                }
-            }
-        ]).exec().then((res: any[]) => {
-            return Promise.all([
-                Stat.set(GENERATED_LAST_YEAR, res[0]["lastYear"] as number),
-                Stat.set(GENERATED_LAST_MONTH, res[0]["lastMonth"] as number),
-                Stat.set(GENERATED_LAST_DAY, res[0]["lastDay"] as number),
-                Stat.set(GENERATED_LAST_HOUR, res[0]["lastHour"] as number)
-            ]).then((ignored: any) => {
-            });
+        return Promise.all([
+            Skin.count({ time: { $gte: lastYear } }).exec().then(c => Stat.set(GENERATED_LAST_YEAR, c)),
+            Skin.count({ time: { $gte: lastMonth } }).exec().then(c => Stat.set(GENERATED_LAST_MONTH, c)),
+            Skin.count({ time: { $gte: lastDay } }).exec().then(c => Stat.set(GENERATED_LAST_DAY, c)),
+            Skin.count({ time: { $gte: lastHour } }).exec().then(c => Stat.set(GENERATED_LAST_HOUR, c)),
+        ]).then(r=>{
+            console.log("time frame stats query too " + ((Date.now() - now) / 1000) + "s");
         })
+
+        // return Skin.aggregate([
+        //     {
+        //         $group: {
+        //             _id: null,
+        //             lastYear: { $sum: { $cond: [{ $gte: ["$time", lastYear] }, 1, 0] } },
+        //             lastMonth: { $sum: { $cond: [{ $gte: ["$time", lastMonth] }, 1, 0] } },
+        //             lastDay: { $sum: { $cond: [{ $gte: ["$time", lastDay] }, 1, 0] } },
+        //             lastHour: { $sum: { $cond: [{ $gte: ["$time", lastHour] }, 1, 0] } }
+        //         }
+        //     }
+        // ]).exec().then((res: any[]) => {
+        //     return Promise.all([
+        //         Stat.set(GENERATED_LAST_YEAR, res[0]["lastYear"] as number),
+        //         Stat.set(GENERATED_LAST_MONTH, res[0]["lastMonth"] as number),
+        //         Stat.set(GENERATED_LAST_DAY, res[0]["lastDay"] as number),
+        //         Stat.set(GENERATED_LAST_HOUR, res[0]["lastHour"] as number)
+        //     ]).then((ignored: any) => {
+        //     });
+        // })
     }
 
 
