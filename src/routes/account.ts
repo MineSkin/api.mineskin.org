@@ -168,7 +168,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
         }
         let docs = await Account.find({
             user: user.uuid
-        }, 'uuid email playername accountType enabled errorCounter').lean().exec();
+        }, 'uuid email playername accountType enabled errorCounter successCounter').lean().exec();
         let accounts = [];
         for (let doc of docs) {
             accounts.push({
@@ -177,7 +177,8 @@ export const register = (app: Application, config: MineSkinConfig) => {
                 playername: doc.playername,
                 accountType: doc.accountType,
                 enabled: doc.enabled,
-                hasErrors: doc.errorCounter > 0
+                hasErrors: doc.errorCounter > 0,
+                successCount: Math.round(doc.successCounter / 1000) * 1000,
             })
         }
         res.json(accounts);
