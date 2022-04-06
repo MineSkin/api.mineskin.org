@@ -368,26 +368,6 @@ export class Stats {
             Skin.count({ time: { $gte: lastHour } }).exec().then(c => Stat.set(GENERATED_LAST_HOUR, c)),
         ]).then(r=>{
         })
-
-        // return Skin.aggregate([
-        //     {
-        //         $group: {
-        //             _id: null,
-        //             lastYear: { $sum: { $cond: [{ $gte: ["$time", lastYear] }, 1, 0] } },
-        //             lastMonth: { $sum: { $cond: [{ $gte: ["$time", lastMonth] }, 1, 0] } },
-        //             lastDay: { $sum: { $cond: [{ $gte: ["$time", lastDay] }, 1, 0] } },
-        //             lastHour: { $sum: { $cond: [{ $gte: ["$time", lastHour] }, 1, 0] } }
-        //         }
-        //     }
-        // ]).exec().then((res: any[]) => {
-        //     return Promise.all([
-        //         Stat.set(GENERATED_LAST_YEAR, res[0]["lastYear"] as number),
-        //         Stat.set(GENERATED_LAST_MONTH, res[0]["lastMonth"] as number),
-        //         Stat.set(GENERATED_LAST_DAY, res[0]["lastDay"] as number),
-        //         Stat.set(GENERATED_LAST_HOUR, res[0]["lastHour"] as number)
-        //     ]).then((ignored: any) => {
-        //     });
-        // })
     }
 
 

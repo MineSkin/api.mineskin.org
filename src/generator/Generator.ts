@@ -725,6 +725,8 @@ export class Generator {
             Sentry.captureException(e);
         }
 
+        //TODO: filter out requests for localhost 127.0.0.1 etc.
+
         let account: Maybe<IAccountDocument> = undefined;
         let tempFile: Maybe<TempFile> = undefined;
         try {
