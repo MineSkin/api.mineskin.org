@@ -63,6 +63,7 @@ export const register = (app: Application) => {
             return;
         }
         const json = await skin.toResponseJson();
+        // @ts-ignore
         json['_deprecated'] = "use /get/uuid/:uuid instead. see https://api.mineskin.org/openapi for details"
         res
             .header("Cache-Control", "public, max-age=3600")
