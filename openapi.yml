@@ -342,6 +342,7 @@ paths:
         - name: page
           in: path
           required: false
+          description: For reference pagination, the uuid of the last skin in the previous page. For numeric pagination (deprecated), the page number or 'start'.
         - $ref: '#/components/parameters/userAgent'
       responses:
         200:
