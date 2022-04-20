@@ -62,9 +62,11 @@ export const register = (app: Application) => {
             res.status(404).json({ error: "Skin not found" });
             return;
         }
+        const json = await skin.toResponseJson();
+        json['_deprecated'] = "use /get/uuid/:uuid instead. see https://api.mineskin.org/openapi for details"
         res
             .header("Cache-Control", "public, max-age=3600")
-            .json(await skin.toResponseJson()); // this triggers the generation of a random uuid if it doesn't have one, so do that before saving
+            .json(json); // this triggers the generation of a random uuid if it doesn't have one, so do that before saving
         await incSkinViews(skin);
     })
 
@@ -138,6 +140,7 @@ export const register = (app: Application) => {
         querySpan?.finish();
 
         res.json({
+            _deprecated: "use list by reference instead. see https://api.mineskin.org/openapi for details",
             skins: skins.map(s => {
                 s.uuid = s.skinUuid || s.uuid;
                 // delete s.skinUuid;
