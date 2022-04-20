@@ -186,6 +186,7 @@ export const register = (app: Application) => {
                 });
                 return;
             }
+            startTime = anchor.time;
 
             res.header("Cache-Control", "public, max-age=3600")
         }
