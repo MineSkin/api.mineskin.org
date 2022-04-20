@@ -163,26 +163,34 @@ export const register = (app: Application) => {
 
         const transaction = Sentry.getCurrentHub().getScope()?.getTransaction();
 
-        let anchorQuerySpan = transaction?.startChild({
-            op: "skin_pagination_after_anchor_query",
-            description: "Skin Pagination After Anchor Query"
-        });
-        const anchor = await Caching.getSkinByUuid(after);
-        anchorQuerySpan?.finish();
-        if (!anchor) {
-            res.status(404).json({
-                msg: 'anchor not found',
-                skins: [],
-                page: {
-                    anchor: after
-                },
-                filter: req.query["filter"]
+        let startTime;
+        if ('start' === after) {
+            startTime = Math.floor(Date.now() / 1000);
+
+            res.header("Cache-Control", "public, max-age=120")
+        } else {
+            let anchorQuerySpan = transaction?.startChild({
+                op: "skin_pagination_after_anchor_query",
+                description: "Skin Pagination After Anchor Query"
             });
-            return;
+            const anchor = await Caching.getSkinByUuid(after);
+            anchorQuerySpan?.finish();
+            if (!anchor) {
+                res.status(404).json({
+                    msg: 'anchor not found',
+                    skins: [],
+                    page: {
+                        anchor: after
+                    },
+                    filter: req.query["filter"]
+                });
+                return;
+            }
+
+            res.header("Cache-Control", "public, max-age=3600")
         }
 
-        query['time'] = { $lt: anchor.time };
-
+        query['time'] = { $lt: startTime };
 
         let querySpan = transaction?.startChild({
             op: "skin_pagination_after_query",
