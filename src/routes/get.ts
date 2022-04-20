@@ -100,7 +100,7 @@ export const register = (app: Application) => {
         res.json(await skin.toResponseJson());
     })
 
-    app.get("/get/list/:page?", async (req: Request, res: Response) => {
+    app.get("/get/list/:page(\\d+)?", async (req: Request, res: Response) => {
         const page = Math.max(Number(req.params.hasOwnProperty("page") ? parseInt(req.params["page"]) : 1), 1);
         const size = Math.min(Math.max(Number(req.query.hasOwnProperty("size") ? parseInt(req.query["size"] as string) : 16)), 64)
 
@@ -140,12 +140,82 @@ export const register = (app: Application) => {
         res.json({
             skins: skins.map(s => {
                 s.uuid = s.skinUuid || s.uuid;
+                // delete s.skinUuid;
                 return s;
             }),
             page: {
                 index: page,
                 amount: Math.round(count / size),
                 total: count
+            },
+            filter: req.query["filter"]
+        });
+    })
+
+    app.get("/get/list/:after(\\w+)?", async (req: Request, res: Response) => {
+        const after = req.params['after'];
+        const size = Math.min(Math.max(Number(req.query.hasOwnProperty("size") ? parseInt(req.query["size"] as string) : 16)), 64)
+
+        const query: any = { visibility: 0 };
+        if (req.query.hasOwnProperty("filter") && (req.query["filter"]?.length || 0) > 0) {
+            query["$text"] = { $search: `${ req.query.filter }`.substr(0, 32) };
+        }
+
+        const transaction = Sentry.getCurrentHub().getScope()?.getTransaction();
+
+        // let countSpan = transaction?.startChild({
+        //     op: "skin_pagination_after_count",
+        //     description: "Skin Pagination After Count"
+        // });
+        // const count = await Caching.getSkinDocumentCount(query);
+        // countSpan?.finish();
+
+        let anchorQuerySpan = transaction?.startChild({
+            op: "skin_pagination_after_anchor_query",
+            description: "Skin Pagination After Anchor Query"
+        });
+        const anchor = await Caching.getSkinByUuid(after);
+        anchorQuerySpan?.finish();
+        if (!anchor) {
+            res.status(404).json({
+                msg: 'anchor not found',
+                skins: [],
+                page: {
+                    anchor: after
+                },
+                filter: req.query["filter"]
+            });
+            return;
+        }
+
+        query['time'] = { $lte: anchor.time };
+
+
+        let querySpan = transaction?.startChild({
+            op: "skin_pagination_after_query",
+            description: "Skin Pagination After Query",
+            data: {
+                filter: req.query.filter,
+                size: size
+            }
+        });
+        const skins = await Skin
+            .find(query)
+            .limit(size)
+            .select({ '_id': 0, id: 1, uuid: 1, skinUuid: 1, name: 1, url: 1, time: 1 })
+            .sort({ time: -1 })
+            .lean()
+            .exec();
+        querySpan?.finish();
+
+        res.json({
+            skins: skins.map(s => {
+                s.uuid = s.skinUuid || s.uuid;
+                delete s.skinUuid;
+                return s;
+            }),
+            page: {
+                anchor: after
             },
             filter: req.query["filter"]
         });
