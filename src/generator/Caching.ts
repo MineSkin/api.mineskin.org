@@ -27,7 +27,7 @@ export class Caching {
         .expirationInterval(Time.seconds(10))
         .buildAsync<string, SkinData>(uuid => {
             return Requests.dynamicRequestWithRandomProxy(MOJANG_SESSION, {
-                url: "/session/minecraft/profile/" + uuid + "?unsigned=false"
+                url: "/session/minecraft/profile/" + uuid + "?unsigned=false&t=" + Date.now(),
             }).then(response => {
                 if (!Requests.isOk(response) || !response.data.hasOwnProperty("properties")) {
                     return undefined;

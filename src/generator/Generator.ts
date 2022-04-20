@@ -396,7 +396,7 @@ export class Generator {
                 m.inc()
 
                 if (t > 0) {
-                    await sleep(1000);
+                    await sleep(5000);
                     return await this.getSkinDataWithRetry(accountOrUuid, type, expectedUrl, breadcrumb, t - 1);
                 }
             }
