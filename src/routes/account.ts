@@ -66,7 +66,6 @@ export const register = (app: Application, config: MineSkinConfig) => {
         }
 
         const payload = ticket.getPayload();
-        console.log(payload)
         if (!payload) {
             return;
         }
