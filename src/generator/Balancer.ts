@@ -111,11 +111,12 @@ export class Balancer {
                 const newOriginConfig = [];
                 for (let origin of currentOriginConfig) {
                     if (!origin.enabled || !(origin.name in accountsPerOrigin)) continue;
+                    let weight = Math.max(accountsPerOrigin[origin.name] / totalAccounts, 0.01);
                     let newOrigin: Origin = {
                         name: origin.name,
                         address: origin.address,
                         enabled: origin.enabled,
-                        weight: this.max2Decimals(accountsPerOrigin[origin.name] / totalAccounts)
+                        weight: this.max2Decimals(weight)
                     }
                     newOriginConfig.push(newOrigin);
                     if (Math.abs(newOrigin.weight - origin.weight) > 0.02) {
