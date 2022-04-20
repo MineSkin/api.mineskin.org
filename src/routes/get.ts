@@ -163,13 +163,6 @@ export const register = (app: Application) => {
 
         const transaction = Sentry.getCurrentHub().getScope()?.getTransaction();
 
-        // let countSpan = transaction?.startChild({
-        //     op: "skin_pagination_after_count",
-        //     description: "Skin Pagination After Count"
-        // });
-        // const count = await Caching.getSkinDocumentCount(query);
-        // countSpan?.finish();
-
         let anchorQuerySpan = transaction?.startChild({
             op: "skin_pagination_after_anchor_query",
             description: "Skin Pagination After Anchor Query"
@@ -188,7 +181,7 @@ export const register = (app: Application) => {
             return;
         }
 
-        query['time'] = { $lte: anchor.time };
+        query['time'] = { $lt: anchor.time };
 
 
         let querySpan = transaction?.startChild({
