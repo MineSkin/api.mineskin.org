@@ -206,7 +206,7 @@ async function init() {
                 updatingApp = true;
                 console.log(process.cwd());
                 Discord.postDiscordMessage("[" + config.server + "] updating!");
-            }, updateDelay + 5000);
+            }, updateDelay + 10000);
         });
         puller.on("error",(err: any)=>{
             console.warn(err);
