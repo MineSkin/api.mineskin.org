@@ -1114,7 +1114,7 @@ export class Generator {
         account = await Authentication.authenticate(account, bread);
 
         account.lastUsed = Math.floor(Date.now() / 1000);
-        if (!(await Generator.getRequestServers()).includes(metrics.config.server)) {
+        if (!account.requestServer || !(await Generator.getRequestServers()).includes(account.requestServer)) {
             account.updateRequestServer(metrics.config.server);
         }
 

@@ -103,7 +103,7 @@ export class Mojang {
         account.accessToken = authBody.accessToken;
         account.accessTokenExpiration = Math.round(Date.now() / 1000) + ACCESS_TOKEN_EXPIRATION_MOJANG;
         account.accessTokenSource = AccessTokenSource.LOGIN_MOJANG;
-        if (!(await Generator.getRequestServers()).includes(config.server)) {
+        if (!account.requestServer || !(await Generator.getRequestServers()).includes(account.requestServer)) {
             account.updateRequestServer(config.server);
         }
         console.log(debug(bread?.breadcrumb + " [Auth] (#" + account.id + ") Request server set to " + account.requestServer));
@@ -182,7 +182,7 @@ export class Mojang {
         account.accessToken = refreshBody["accessToken"];
         account.accessTokenExpiration = Math.round(Date.now() / 1000) + ACCESS_TOKEN_EXPIRATION_MOJANG;
         account.accessTokenSource = AccessTokenSource.REFRESH_MOJANG;
-        if (!(await Generator.getRequestServers()).includes(config.server)) {
+        if (!account.requestServer || !(await Generator.getRequestServers()).includes(account.requestServer)) {
             account.updateRequestServer(config.server);
         }
         console.log(debug(bread?.breadcrumb + " [Auth] (#" + account.id + ") Request server set to " + account.requestServer));
@@ -368,7 +368,7 @@ export class Microsoft {
         account.accessToken = minecraftAccessToken;
         account.accessTokenExpiration = Math.round(Date.now() / 1000) + ACCESS_TOKEN_EXPIRATION_MICROSOFT;
         account.accessTokenSource = AccessTokenSource.LOGIN_MICROSOFT;
-        if (!(await Generator.getRequestServers()).includes(config.server)) {
+        if (!account.requestServer || !(await Generator.getRequestServers()).includes(account.requestServer)) {
             account.updateRequestServer(config.server);
         }
         console.log(debug(bread?.breadcrumb + " [Auth] (#" + account.id + ") Request server set to " + account.requestServer));
@@ -417,7 +417,7 @@ export class Microsoft {
         account.accessToken = newMinecraftAccessToken;
         account.accessTokenExpiration = Math.round(Date.now() / 1000) + ACCESS_TOKEN_EXPIRATION_MICROSOFT;
         account.accessTokenSource = AccessTokenSource.REFRESH_MICROSOFT;
-        if (!(await Generator.getRequestServers()).includes(config.server)) {
+        if (!account.requestServer || !(await Generator.getRequestServers()).includes(account.requestServer)) {
             account.updateRequestServer(config.server);
         }
         console.log(debug(bread?.breadcrumb + " [Auth] (#" + account.id + ") Request server set to " + account.requestServer));

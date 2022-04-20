@@ -64,6 +64,8 @@ async function init() {
     console.log(info("Version: " + version));
     Discord.postDiscordMessage('[' + config.server + '] Version: ' + version);
 
+    console.log('request servers:', await Generator.getRequestServers());
+
     {
         console.log("Creating temp directories");
         try {
