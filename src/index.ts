@@ -206,6 +206,11 @@ async function init() {
                 Discord.postDiscordMessage("[" + config.server + "] updating!");
             }, updateDelay + 5000);
         });
+        puller.on("error",(err: any)=>{
+            console.warn(err);
+            updatingApp = false;
+            Discord.postDiscordMessage("[" + config.server + "] update errored! " + err);
+        });
         app.use(function (req: Request, res: Response, next: NextFunction) {
             if (updatingApp) {
                 res.status(503).send({ err: "app is updating" });
