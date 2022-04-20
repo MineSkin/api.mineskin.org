@@ -245,8 +245,11 @@ export class Generator {
 
         let accountsPerProxy: { [k: string]: number } = {};
         for (let acc of usableAccountDocs) {
-            if (!acc.requestServer || acc.requestServer === "null") continue;
-            accountsPerProxy[acc.requestServer!] = (accountsPerProxy[acc.requestServer!] || 0) + 1;
+            let key = acc.requestServer;
+            if (!key || key === "null") {
+                key = "default";
+            }
+            accountsPerProxy[key] = (accountsPerProxy[key] || 0) + 1;
         }
 
         const accountTypes = await Account.aggregate([
