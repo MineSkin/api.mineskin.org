@@ -165,7 +165,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
         if (!user) {
             return;
         }
-        if (!req.body['confirm']) {
+        if (req.query['confirm'] !== 'true') {
             res.status(400).json({
                 error: 'not confirmed'
             });
