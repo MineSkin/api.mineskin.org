@@ -175,6 +175,9 @@ export const register = (app: Application, config: MineSkinConfig) => {
         res.clearCookie('access_token');
 
         await user.deleteOne();
+
+        console.log(info(`Deleted user account for ${ user.email } ${ getIp(req) }`));
+
         res.json({
             msg: 'account removed'
         });
