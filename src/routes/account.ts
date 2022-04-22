@@ -158,6 +158,24 @@ export const register = (app: Application, config: MineSkinConfig) => {
             sessions: user.sessions.length,
             sessionTimeout: Math.floor(((user.sessions[user.session!].getTime() + Time.hours(1)) - Date.now()) / 1000)
         });
+    });
+
+    app.delete('/account', async (req, res) => {
+        const user = await getUserFromRequest(req, res);
+        if (!user) {
+            return;
+        }
+        if (!req.body['confirm']) {
+            res.status(400).json({
+                error: 'not confirmed'
+            });
+            return;
+        }
+
+        await user.deleteOne();
+        res.json({
+            msg: 'account removed'
+        });
     })
 
     app.get("/account/minecraftAccounts", async (req, res) => {
