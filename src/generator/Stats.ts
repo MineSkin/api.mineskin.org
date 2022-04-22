@@ -362,10 +362,10 @@ export class Stats {
         const lastYear = new Date(now - 3.154e+10).getTime() / 1000;
 
         return Promise.all([
-            Skin.count({ time: { $gte: lastYear } }).exec().then(c => Stat.set(GENERATED_LAST_YEAR, c)),
-            Skin.count({ time: { $gte: lastMonth } }).exec().then(c => Stat.set(GENERATED_LAST_MONTH, c)),
-            Skin.count({ time: { $gte: lastDay } }).exec().then(c => Stat.set(GENERATED_LAST_DAY, c)),
-            Skin.count({ time: { $gte: lastHour } }).exec().then(c => Stat.set(GENERATED_LAST_HOUR, c)),
+            Skin.countDocuments({ time: { $gte: lastYear } }).exec().then(c => Stat.set(GENERATED_LAST_YEAR, c)),
+            Skin.countDocuments({ time: { $gte: lastMonth } }).exec().then(c => Stat.set(GENERATED_LAST_MONTH, c)),
+            Skin.countDocuments({ time: { $gte: lastDay } }).exec().then(c => Stat.set(GENERATED_LAST_DAY, c)),
+            Skin.countDocuments({ time: { $gte: lastHour } }).exec().then(c => Stat.set(GENERATED_LAST_HOUR, c)),
         ]).then(r=>{
         })
     }
