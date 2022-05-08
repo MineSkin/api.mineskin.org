@@ -1,4 +1,4 @@
-import { Account, Skin, Stat } from "../database/schemas";
+import { Account, Skin, Stat, User } from "../database/schemas";
 import { MemoizeExpiring } from "@inventivetalent/typescript-memoize";
 import { base64decode, getHashFromMojangTextureUrl, hasOwnProperty, imgHash, longAndShortUuid, Maybe, random32BitNumber, sleep, stripUuid } from "../util";
 import { Caching } from "./Caching";
@@ -1230,6 +1230,10 @@ export class Generator {
                 }
 
                 await account.save();
+
+                if (account.user) {
+                    User.updateMinecraftAccounts(account.user);
+                }
             } catch (e1) {
                 Sentry.captureException(e1);
             }

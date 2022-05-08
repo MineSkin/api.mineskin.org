@@ -11,9 +11,12 @@ export interface IUserDocument extends Document {
     lastUsed: Date;
     sessions: {[token: string]: Date};
     skins: string[];
+    minecraftAccounts: number;
 }
 
 export interface IUserModel extends Model<IUserDocument> {
     findForGoogleIdAndEmail(googleId: string, email: string): Promise<Maybe<IUserDocument>>;
     findForIdGoogleIdAndEmail(uuid: string, googleId: string, email: string): Promise<Maybe<IUserDocument>>;
+
+    updateMinecraftAccounts(uuid: string): Promise<void>;
 }

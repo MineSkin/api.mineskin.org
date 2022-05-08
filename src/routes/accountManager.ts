@@ -3,7 +3,7 @@ import { Authentication, AuthenticationError, AuthError, BasicMojangProfile, Mic
 import { base64decode, corsWithCredentialsMiddleware, getIp, Maybe, md5, sha1, sha256, sha512, sleep, stripUuid } from "../util";
 import session from "express-session";
 import { Generator } from "../generator/Generator";
-import { Account } from "../database/schemas";
+import { Account, User } from "../database/schemas";
 import { Caching } from "../generator/Caching";
 import { Requests } from "../generator/Requests";
 import qs from "querystring";
@@ -492,6 +492,8 @@ export const register = (app: Application, config: MineSkinConfig) => {
         const profileValidation = await getAndValidateMojangProfile(req.session.account!.token!, req.body["uuid"]);
         if (!profileValidation.valid || !profileValidation.profile) return;
 
+        const user = await getUserFromRequest(req, res, false);
+
         let updater: (account: IAccountDocument) => any;
         const setting = req.params["setting"];
         switch (setting) {
@@ -563,6 +565,10 @@ export const register = (app: Application, config: MineSkinConfig) => {
             resp.result = result;
         }
         res.json(resp);
+
+        if (account?.user) {
+            User.updateMinecraftAccounts(account.user);
+        }
     })
 
     app.post("/accountManager/confirmAccountSubmission", async (req: AccountManagerRequest, res: Response) => {
@@ -697,6 +703,10 @@ export const register = (app: Application, config: MineSkinConfig) => {
             if (updateResult.nModified > 0) {
                 Discord.postDiscordMessage(`Disabled ${ updateResult.nModified } account with the same uuid (${ account.uuid }) as a newly added ${ account.accountType } account (#${ account.id })`);
             }
+
+            if (user?.uuid) {
+                User.updateMinecraftAccounts(user.uuid);
+            }
         })
 
         await Generator.saveOriginalSkin(account);
@@ -765,6 +775,10 @@ export const register = (app: Application, config: MineSkinConfig) => {
             }
         }
 
+        const user = await getUserFromRequest(req, res, false);
+        if (user?.uuid) {
+            User.updateMinecraftAccounts(user.uuid);
+        }
 
     })
 
