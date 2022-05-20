@@ -143,6 +143,8 @@ components:
       example: "ExampleApp/v1.0"
       in: header
       required: true
+      schema:
+        type: string
 
 
   responses:
@@ -310,6 +312,9 @@ paths:
         - name: id
           in: path
           required: true
+          schema:
+            type: number
+            format: integer
         - $ref: '#/components/parameters/userAgent'
       responses:
         200:
@@ -326,6 +331,9 @@ paths:
         - name: uuid
           in: path
           required: true
+          schema:
+            type: string
+            format: uuid
         - $ref: '#/components/parameters/userAgent'
       responses:
         200:
@@ -341,8 +349,11 @@ paths:
       parameters:
         - name: page
           in: path
-          required: false
+          required: true
           description: For reference pagination, the uuid of the last skin in the previous page. For numeric pagination (deprecated), the page number or 'start'.
+          schema:
+            type: number
+            format: integer
         - $ref: '#/components/parameters/userAgent'
       responses:
         200:
@@ -376,6 +387,8 @@ paths:
         - name: name
           in: path
           required: true
+          schema:
+            type: string
         - $ref: '#/components/parameters/userAgent'
       responses:
         200:
@@ -392,6 +405,8 @@ paths:
         - name: uuid
           in: path
           required: true
+          schema:
+            type: string
         - $ref: '#/components/parameters/userAgent'
       responses:
         200:
