@@ -382,10 +382,10 @@ export type Maybe<T> = T | undefined;
 
 export const corsMiddleware = (req: Request, res: Response, next: NextFunction) => {
     res.header('Access-Control-Allow-Origin', '*');
+    res.header("Access-Control-Allow-Methods", "POST, GET, OPTIONS, DELETE, PUT");
+    res.header("Access-Control-Allow-Headers", "X-Requested-With, Accept, Content-Type, Origin");
+    res.header("Access-Control-Request-Headers", "X-Requested-With, Accept, Content-Type, Origin");
     if (req.method === 'OPTIONS') {
-        res.header("Access-Control-Allow-Methods", "POST, GET, OPTIONS, DELETE, PUT");
-        res.header("Access-Control-Allow-Headers", "X-Requested-With, Accept, Content-Type, Origin");
-        res.header("Access-Control-Request-Headers", "X-Requested-With, Accept, Content-Type, Origin");
         return res.sendStatus(200);
     } else {
         return next();
@@ -394,10 +394,10 @@ export const corsMiddleware = (req: Request, res: Response, next: NextFunction) 
 export const corsWithAuthMiddleware = (req: Request, res: Response, next: NextFunction) => {
     res.header('Access-Control-Allow-Origin', '*');
     res.header("Access-Control-Allow-Credentials", "true");
+    res.header("Access-Control-Allow-Methods", "POST, GET, OPTIONS, DELETE, PUT");
+    res.header("Access-Control-Allow-Headers", "X-Requested-With, Accept, Content-Type, Origin, Authorization, Cookie");
+    res.header("Access-Control-Request-Headers", "X-Requested-With, Accept, Content-Type, Origin, Authorization, Cookie");
     if (req.method === 'OPTIONS') {
-        res.header("Access-Control-Allow-Methods", "POST, GET, OPTIONS, DELETE, PUT");
-        res.header("Access-Control-Allow-Headers", "X-Requested-With, Accept, Content-Type, Origin, Authorization, Cookie");
-        res.header("Access-Control-Request-Headers", "X-Requested-With, Accept, Content-Type, Origin, Authorization, Cookie");
         return res.sendStatus(200);
     } else {
         return next();
@@ -409,10 +409,10 @@ export const corsWithCredentialsMiddleware = (req: Request, res: Response, next:
         res.header('Access-Control-Allow-Origin', 'https://testing.mineskin.org');
     }
     res.header("Access-Control-Allow-Credentials", "true");
+    res.header("Access-Control-Allow-Methods", "POST, GET, OPTIONS, DELETE, PUT");
+    res.header("Access-Control-Allow-Headers", "X-Requested-With, Accept, Content-Type, Origin, Authorization, Cookie");
+    res.header("Access-Control-Request-Headers", "X-Requested-With, Accept, Content-Type, Origin, Authorization, Cookie");
     if (req.method === 'OPTIONS') {
-        res.header("Access-Control-Allow-Methods", "POST, GET, OPTIONS, DELETE, PUT");
-        res.header("Access-Control-Allow-Headers", "X-Requested-With, Accept, Content-Type, Origin, Authorization, Cookie");
-        res.header("Access-Control-Request-Headers", "X-Requested-With, Accept, Content-Type, Origin, Authorization, Cookie");
         return res.sendStatus(200);
     } else {
         return next();
