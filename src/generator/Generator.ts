@@ -592,12 +592,14 @@ export class Generator {
         if (!!minecraftTextureResult && minecraftTextureResult.length >= 2) {
             const textureUrl = minecraftTextureResult[0];
             const textureHash = minecraftTextureResult[1];
-            const existingSkin = await Skin.findOne({
+            const textureQuery = {
                 $or: [
                     { url: textureUrl },
                     { minecraftTextureHash: textureHash }
                 ]
-            });
+            };
+            this.appendOptionsToDuplicateQuery(options, textureQuery);
+            const existingSkin = await Skin.findOne(textureQuery);
             if (existingSkin) {
                 console.log(debug(options.breadcrumb + " Found existing skin with same minecraft texture url/hash"));
                 existingSkin.duplicate++;
