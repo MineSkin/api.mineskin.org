@@ -994,6 +994,7 @@ export class Generator {
         const skinChangeResponse = skinResponse.data as SkinChangeResponse;
         const minecraftSkinId = skinChangeResponse?.skins[0]?.id;
 
+
         const config = await getConfig();
 
         await sleep(200);
@@ -1020,8 +1021,10 @@ export class Generator {
                 "  Image:  " + tempFileValidation.hash + "\n" +
                 "  Mojang: " + mojangHash.hash + "\n" +
                 "  Expected: " + expectedUrl + "\n" +
-                "  Got: " + data.decodedValue!.textures!.SKIN!.url,
+                "  Got: " + data.decodedValue!.textures!.SKIN!.url + "\n" +
+                "  Account's Last URL: " + account.lastTextureUrl,
                 tempFileValidation!.buffer!, "image.png");
+            console.log(skinChangeResponse);
             //TODO: maybe retry getting the skin data if the urls don't match
         }
 
