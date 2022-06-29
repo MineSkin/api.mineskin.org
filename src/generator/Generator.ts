@@ -1018,7 +1018,8 @@ export class Generator {
                 "  Server: " + config.server + "\n" +
                 "  Image:  " + tempFileValidation.hash + "\n" +
                 "  Mojang: " + mojangHash.hash + "\n" +
-                data.decodedValue!.textures!.SKIN!.url,
+                "  Expected: " + expectedUrl + "\n" +
+                "  Got: " + data.decodedValue!.textures!.SKIN!.url,
                 tempFileValidation!.buffer!, "image.png");
             //TODO: maybe retry getting the skin data if the urls don't match
         }
