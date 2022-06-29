@@ -1028,9 +1028,9 @@ export class Generator {
             //TODO: maybe retry getting the skin data if the urls don't match
         }
 
-        await this.handleGenerateSuccess(type, options, client, account);
-
         account.lastTextureUrl = data.decodedValue!.textures!.SKIN!.url;
+
+        await this.handleGenerateSuccess(type, options, client, account);
 
         span?.finish()
         return {
