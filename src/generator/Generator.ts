@@ -1016,6 +1016,7 @@ export class Generator {
         if (!hashesMatch) {
             Discord.postDiscordMessageWithAttachment("⚠ Hash mismatch\n" +
                 "  Server: " + config.server + "\n" +
+                "  Account: " + account.id + "/" + account.uuid + "\n" +
                 "  Image:  " + tempFileValidation.hash + "\n" +
                 "  Mojang: " + mojangHash.hash + "\n" +
                 "  Expected: " + expectedUrl + "\n" +
