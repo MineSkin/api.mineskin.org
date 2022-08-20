@@ -4,6 +4,7 @@ import { Account } from "../database/schemas";
 import { debug, info, warn } from "../util/colors";
 import { AccountType } from "../typings/db/IAccountDocument";
 import { sleep } from "../util";
+import { Discord } from "../util/Discord";
 
 export class Balancer {
 
@@ -59,6 +60,9 @@ export class Balancer {
         let toMove = Math.round((highest.count - lowest.count) * 0.3);
         toMove = Math.max(1, toMove);
         console.log(debug("moving " + toMove + " account(s) from " + highest.name + " to " + lowest.name));
+        if (toMove > 1) {
+            Discord.postDiscordMessage("moving " + toMove + " account(s) from " + highest.name + " to " + lowest.name);
+        }
 
         for (let i = 0; i < toMove; i++) {
             await Account.updateOne({
