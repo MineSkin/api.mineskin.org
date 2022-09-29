@@ -92,8 +92,8 @@ export class Caching {
         .expirationInterval(Time.minutes(1))
         .buildAsync<string, User>(uuid => {
             uuid = stripUuid(uuid);
-            return Requests.dynamicRequestWithRandomProxy(MOJANG_API, {
-                url: "/user/profiles/" + uuid + "/names"
+            return Requests.dynamicRequestWithRandomProxy(MOJANG_SESSION, {
+                url: "/session/minecraft/profile/" + uuid
             }).then(response => {
                 let d = {
                     valid: false,
@@ -106,7 +106,7 @@ export class Caching {
                         d = {
                             valid: true,
                             uuid: uuid,
-                            name: body[body.length - 1]["name"]
+                            name: body["name"]
                         } as User;
                         // update other cache
                         Caching.userByNameCache.put(d.name!.toLowerCase(), d);
