@@ -101,7 +101,7 @@ export class Caching {
                     name: undefined
                 } as User;
                 if (Requests.isOk(response)) {
-                    if (response.data && response.data.length > 0) {
+                    if (response.data && response.data.hasOwnProperty("name")) {
                         const body = response.data;
                         d = {
                             valid: true,
