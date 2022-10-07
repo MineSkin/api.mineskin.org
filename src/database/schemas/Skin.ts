@@ -1,7 +1,7 @@
 import { model, Schema, UpdateWriteOpResult } from "mongoose";
 import { modelToVariant, stripUuid } from "../../util";
 import { ISkinDocument } from "../../typings";
-import { ISkinModel, SkinVisibility } from "../../typings/db/ISkinDocument";
+import { ISkinModel, SkinModel, SkinVariant, SkinVisibility } from "../../typings/db/ISkinDocument";
 import { SkinInfo } from "../../typings/SkinInfo";
 import { v4 as randomUuid } from "uuid";
 import { Generator, HASH_VERSION } from "../../generator/Generator";
@@ -109,6 +109,16 @@ SkinSchema.methods.getHash = async function (this: ISkinDocument): Promise<strin
     return this.hash;
 }
 
+SkinSchema.methods.getVariant = function (this: ISkinDocument): SkinVariant {
+    if (this.variant && this.variant !== SkinVariant.UNKNOWN) {
+        return this.variant;
+    }
+    if (this.model && this.model !== SkinModel.UNKNOWN) {
+        return this.variant = modelToVariant(this.model);
+    }
+    return SkinVariant.UNKNOWN;
+}
+
 SkinSchema.methods.toResponseJson = async function (this: ISkinDocument): Promise<SkinInfo> {
     return {
         id: this.id,
@@ -117,7 +127,7 @@ SkinSchema.methods.toResponseJson = async function (this: ISkinDocument): Promis
         hash: await this.getHash(),
         name: this.name || "",
         model: this.model,
-        variant: modelToVariant(this.model),
+        variant: this.getVariant(),
         data: {
             uuid: this.uuid,
             texture: {

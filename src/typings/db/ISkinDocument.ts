@@ -95,6 +95,8 @@ export interface ISkinDocument extends Document {
 
     getHash(): Promise<string>;
 
+    getVariant(): SkinVariant;
+
     toResponseJson(delay?: number): SkinInfo;
 }
 

@@ -5,7 +5,7 @@ import { Skin, Stat } from "../database/schemas";
 import { corsWithAuthMiddleware, getAndValidateRequestApiKey, getIp, stripUuid } from "../util";
 import * as Sentry from "@sentry/node";
 import { ISkinDocument } from "../typings";
-import { GenerateType } from "../typings/db/ISkinDocument";
+import { GenerateType, SkinVariant } from "../typings/db/ISkinDocument";
 import { GENERATED_UPLOAD_VIEWS, GENERATED_URL_VIEWS, GENERATED_USER_VIEWS, SKINS_VIEWS } from "../generator/Stats";
 
 export const register = (app: Application) => {
@@ -208,7 +208,7 @@ export const register = (app: Application) => {
         const skins = await Skin
             .find(query)
             .limit(size)
-            .select({ '_id': 0, id: 1, uuid: 1, skinUuid: 1, name: 1, url: 1, time: 1, variant: 1 })
+            .select({ '_id': 0, id: 1, uuid: 1, skinUuid: 1, name: 1, url: 1, time: 1, variant: 1, model: 1 })
             .sort({ time: -1 })
             .lean()
             .exec();
@@ -218,6 +218,8 @@ export const register = (app: Application) => {
             skins: skins.map(s => {
                 s.uuid = s.skinUuid || s.uuid;
                 delete s.skinUuid;
+                s.variant = s.getVariant() as SkinVariant;
+                delete s.model;
                 return s;
             }),
             page: {
