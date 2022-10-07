@@ -219,7 +219,6 @@ export const register = (app: Application) => {
                 s.uuid = s.skinUuid || s.uuid;
                 delete s.skinUuid;
                 s.variant = s.getVariant() as SkinVariant;
-                delete s.model;
                 return s;
             }),
             page: {
