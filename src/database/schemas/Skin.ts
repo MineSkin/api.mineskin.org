@@ -1,7 +1,7 @@
 import { model, Schema, UpdateWriteOpResult } from "mongoose";
-import { modelToVariant, stripUuid } from "../../util";
+import { getVariant, stripUuid } from "../../util";
 import { ISkinDocument } from "../../typings";
-import { ISkinModel, SkinModel, SkinVariant, SkinVisibility } from "../../typings/db/ISkinDocument";
+import { ISkinModel, SkinVariant, SkinVisibility } from "../../typings/db/ISkinDocument";
 import { SkinInfo } from "../../typings/SkinInfo";
 import { v4 as randomUuid } from "uuid";
 import { Generator, HASH_VERSION } from "../../generator/Generator";
@@ -110,13 +110,7 @@ SkinSchema.methods.getHash = async function (this: ISkinDocument): Promise<strin
 }
 
 SkinSchema.methods.getVariant = function (this: ISkinDocument): SkinVariant {
-    if (this.variant && this.variant !== SkinVariant.UNKNOWN) {
-        return this.variant;
-    }
-    if (this.model && this.model !== SkinModel.UNKNOWN) {
-        return this.variant = modelToVariant(this.model);
-    }
-    return SkinVariant.UNKNOWN;
+    return getVariant(this);
 }
 
 SkinSchema.methods.toResponseJson = async function (this: ISkinDocument): Promise<SkinInfo> {

@@ -9,12 +9,13 @@ import * as fileType from "file-type";
 import readChunk from "read-chunk";
 import * as crypto from "crypto";
 import { Caching } from "../generator/Caching";
-import { SkinModel, SkinVariant } from "../typings/db/ISkinDocument";
+import { ISkinDocument, SkinModel, SkinVariant } from "../typings/db/ISkinDocument";
 import { MineSkinMetrics } from "./metrics";
 import { IApiKeyDocument } from "../typings/db/IApiKeyDocument";
 import { MineSkinError, MineSkinRequest } from "../typings";
 import { imageHash } from "@inventivetalent/imghash";
 import { ClientInfo } from "../typings/ClientInfo";
+import { LeanDocument } from "mongoose";
 
 export function getIp(req: Request): string {
     return req.get('cf-connecting-ip') || req.get('x-forwarded-for') || req.get("x-real-ip") || req.connection.remoteAddress || req.ip;
@@ -190,6 +191,16 @@ export function variantToModel(variant?: string): SkinModel {
         return SkinModel.SLIM;
     }
     return SkinModel.CLASSIC;
+}
+
+export function getVariant(skin: ISkinDocument | LeanDocument<ISkinDocument>) {
+    if (skin.variant && skin.variant !== SkinVariant.UNKNOWN) {
+        return skin.variant;
+    }
+    if ("model" in skin && skin.model && skin.model !== SkinModel.UNKNOWN) {
+        return skin.variant = modelToVariant("model" in skin ? skin.model : "unknown");
+    }
+    return SkinVariant.UNKNOWN;
 }
 
 // https://coderwall.com/p/_g3x9q/how-to-check-if-javascript-object-is-empty
