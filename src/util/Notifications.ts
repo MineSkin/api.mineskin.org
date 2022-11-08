@@ -6,6 +6,8 @@ import { Discord, OWNER_CHANNEL, SUPPORT_CHANNEL } from "./Discord";
 import { Email } from "./Email";
 import { MineSkinMetrics } from "./metrics";
 
+const ERROR_THRESHOLD = 3;
+
 export class Notifications {
 
     protected static async sendEmailAndDiscord(account: IAccountDocument,
@@ -88,9 +90,12 @@ export class Notifications {
         Discord.postDiscordMessage("⚠️ 👤 Account #" + account.id + " just lost its access token\n" +
             "  Current Server: " + account.lastRequestServer + "/" + account.requestServer + "\n" +
             "  Account Type: " + account.getAccountType() + "\n" +
+            "  Current Success/Error: " + account.successCounter + "/" + account.errorCounter + "\n" +
             "  Total Success/Error: " + account.totalSuccessCounter + "/" + account.totalErrorCounter + "\n" +
             "  Account Added: " + new Date((account.timeAdded || 0) * 1000).toUTCString() + "\n" +
             "  Linked to " + account.email + "/<@" + account.discordUser + ">");
+
+        if (account.errorCounter < ERROR_THRESHOLD) return;
 
         this.sendEmailAndDiscord(account,
             (acc, email) => `
@@ -180,8 +185,11 @@ ${ account.getAccountType() === AccountType.MICROSOFT ? "<p>You should also chec
             "  Latest Type: " + lastType + "\n" +
             "  Latest Cause: " + (err.code || err.msg || "n/a") + "\n" +
             "  Total Success/Error: " + account.totalSuccessCounter + "/" + account.totalErrorCounter + "\n" +
+            "  Total Success/Error: " + account.totalSuccessCounter + "/" + account.totalErrorCounter + "\n" +
             "  Account Added: " + new Date((account.timeAdded || 0) * 1000).toUTCString() + "\n" +
             "  Linked to " + account.email + "/<@" + account.discordUser + ">");
+
+        if (account.errorCounter < ERROR_THRESHOLD) return;
 
         this.sendEmailAndDiscord(account,
             (acc, email) => `
