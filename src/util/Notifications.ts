@@ -105,6 +105,9 @@ ${ this.accountInfo(acc, false) }
 
 The account won't be used for skin generation until the issues are resolved.
 
+It's recommended to check if Mojang/Microsoft is having issues. If that's the case, you're probably fine ignoring this message for the time being.
+https://downdetector.com/status/minecraft/
+
 Please log back in to your account at https://mineskin.org/account/minecraft?email=${account.email}
 
 ${ account.getAccountType() === AccountType.MICROSOFT ? "You should also check https://account.live.com/Activity" : "" }
