@@ -130,7 +130,7 @@ export class Requests {
             baseURL: "https://sessionserver.mojang.com",
             headers: {}
         }, c => rateLimit(axios.create(c), Requests.defaultRateLimit));
-        this.setupMultiRequestQueue(MOJANG_SESSION, config, Time.millis(200), 1);
+        this.setupMultiRequestQueue(MOJANG_SESSION, config, Time.millis(300), 1);
 
         this.setupMultiProxiedAxiosInstance(MINECRAFT_SERVICES, config, {
             baseURL: "https://api.minecraftservices.com",
