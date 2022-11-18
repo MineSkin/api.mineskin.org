@@ -293,7 +293,11 @@ export class Requests {
                     let endpoint = url.pathname;
                     if (url.hostname === "sessionserver.mojang.com") {
                         if (endpoint.startsWith("/session/minecraft/profile")) {
+                            let unsigned = endpoint.includes("?unsigned=false")
                             endpoint = "/session/minecraft/profile/xxx";
+                            if (unsigned) {
+                                endpoint += "?unsigned=false";
+                            }
                         }
                     }
                     if (url.hostname === "api.mojang.com") {
