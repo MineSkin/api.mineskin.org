@@ -479,7 +479,7 @@ export class Generator {
         return skin.save().then(skin => {
             //TODO: fix this message for user generate
             console.log(info(options.breadcrumb + " New skin saved #" + skin.id + " - generated in " + duration + "ms by " + result.account?.getAccountType() + " account #" + result.account?.id));
-            this.lastSave = Date.now();
+            Generator.lastSave = Date.now();
             span?.finish();
             return skin;
         })
