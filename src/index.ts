@@ -346,8 +346,9 @@ async function init() {
 
     setInterval(() => {
         try {
-            if (Date.now() - Generator.lastSave > 60 * 1000) {
-                Discord.postDiscordMessage(config.server + " hasn't saved any new skins for >1m");
+            let diff = Date.now() - Generator.lastSave;
+            if (diff > 60 * 1000 * 2) {
+                Discord.postDiscordMessage(config.server + " hasn't saved any new skins for " + (diff / 1000 / 60) + "m");
             }
         } catch (e) {
             Sentry.captureException(e);
