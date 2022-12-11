@@ -206,7 +206,7 @@ async function init() {
                 Discord.postDiscordMessage("[" + config.server + "] updating!");
             }, updateDelay + 9000);
         });
-        puller.on("error",(err: any)=>{
+        puller.on("error", (err: any) => {
             console.warn(err);
             updatingApp = false;
             Discord.postDiscordMessage("[" + config.server + "] update errored! " + err);
@@ -343,6 +343,16 @@ async function init() {
             }
         }, 1000 * 60 * 2);
     }
+
+    setInterval(() => {
+        try {
+            if (Date.now() - Generator.lastSave > 60 * 1000) {
+                Discord.postDiscordMessage(config.server + " hasn't saved any new skins for >1m");
+            }
+        } catch (e) {
+            Sentry.captureException(e);
+        }
+    }, 60 * 1000);
 }
 
 function addErrorDetailsToSentry(err: AuthenticationError | GeneratorError): void {

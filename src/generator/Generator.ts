@@ -73,6 +73,8 @@ export class Generator {
 
     private static accountStatsTimer = setInterval(() => Generator.queryAccountStats(), 1000 * 10);
 
+    static lastSave: number = 0;
+
     static async getDelay(apiKey?: IApiKeyDocument): Promise<DelayInfo> {
         const config = await getConfig();
         const minDelay = await this.getMinDelay();
@@ -477,6 +479,7 @@ export class Generator {
         return skin.save().then(skin => {
             //TODO: fix this message for user generate
             console.log(info(options.breadcrumb + " New skin saved #" + skin.id + " - generated in " + duration + "ms by " + result.account?.getAccountType() + " account #" + result.account?.id));
+            this.lastSave = Date.now();
             span?.finish();
             return skin;
         })
