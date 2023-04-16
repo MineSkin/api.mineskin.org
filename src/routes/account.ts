@@ -213,10 +213,11 @@ export const register = (app: Application, config: MineSkinConfig) => {
         }
         let docs = await ApiKey.find({
             user: user.uuid
-        }, 'name lastUsed').lean().exec();
+        }, '_id name lastUsed').lean().exec();
         let keys = [];
         for (let doc of docs) {
             keys.push({
+                id: ("" + doc._id),
                 name: doc.name,
                 lastUsed: doc.lastUsed
             })
