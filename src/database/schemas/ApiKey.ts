@@ -1,6 +1,6 @@
-import { model, Schema } from "mongoose";
-import { IApiKeyDocument, IApiKeyModel } from "../../typings/db/IApiKeyDocument";
-import { getConfig } from "../../typings/Configs";
+import {model, Schema} from "mongoose";
+import {IApiKeyDocument, IApiKeyModel} from "../../typings/db/IApiKeyDocument";
+import {getConfig} from "../../typings/Configs";
 
 const ApiKeySchema: Schema<IApiKeyDocument, IApiKeyModel> = new Schema(
     {
@@ -54,7 +54,7 @@ ApiKeySchema.methods.getMinDelay = async function (this: IApiKeyDocument): Promi
 }
 
 ApiKeySchema.methods.updateLastUsed = async function (this: IApiKeyDocument, date: Date): Promise<void> {
-    return ApiKey.updateOne({ key: this.key }, { $set: { lastUsed: date } }).exec().then(ignored => {
+    return ApiKey.updateOne({ key: this.key }, { $set: { lastUsed: date }, $inc: { requestCount: 1 } }).exec().then(ignored => {
     });
 }
 
