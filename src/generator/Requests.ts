@@ -7,6 +7,7 @@ import { URL } from "url";
 import { setInterval } from "timers";
 import { IPoint } from "influx";
 import * as Sentry from "@sentry/node";
+import { Severity } from "@sentry/node";
 import { getConfig, MineSkinConfig } from "../typings/Configs";
 import { MineSkinMetrics } from "../util/metrics";
 import { Transaction } from "@sentry/tracing";
