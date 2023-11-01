@@ -319,6 +319,7 @@ export function timeout<U>(promise: Promise<U>, t: number): Promise<U> {
                 resolve(v);
             })
             .catch(e => {
+                Sentry.captureException(e);
                 if (timedOut) return;
                 clearTimeout(timer);
                 reject(e);
@@ -343,6 +344,7 @@ export function timeoutWrap<T extends Array<any>, U>(func: (...args: T) => Promi
                     resolve(v);
                 })
                 .catch(e => {
+                    Sentry.captureException(e);
                     if (timedOut) return;
                     clearTimeout(timer);
                     reject(e);
