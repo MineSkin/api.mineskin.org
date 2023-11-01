@@ -331,6 +331,14 @@ export class Requests {
             Sentry.captureException(e);
         }
         if (err) {
+            Sentry.captureException(err, {
+                level: Severity.Error,
+                tags: {
+                    server: metrics.config.server,
+                    proxy: request ? this.getInstanceSubkey(request) : "unknown",
+                    method: request?.method || "GET"
+                }
+            });
             throw err;
         }
         return responseOrError;
