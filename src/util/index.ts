@@ -305,6 +305,7 @@ export function sleep(duration: number): Promise<void> {
 
 export function timeout<U>(promise: Promise<U>, t: number): Promise<U> {
     return new Promise<U>((resolve, reject) => {
+        let start = Date.now();
         let timedOut = false;
         const err = new Error(`Promise timed out after ${ t }ms`);
         let timer = setTimeout(() => {
@@ -314,13 +315,19 @@ export function timeout<U>(promise: Promise<U>, t: number): Promise<U> {
 
         promise
             .then(v => {
-                if (timedOut) return;
+                if (timedOut) {
+                    console.log(`timed out succeeded after ${ Date.now() - start }ms`)
+                    return;
+                }
                 clearTimeout(timer);
                 resolve(v);
             })
             .catch(e => {
                 Sentry.captureException(e);
-                if (timedOut) return;
+                if (timedOut) {
+                    console.log(`timed out errored after ${ Date.now() - start }ms`)
+                    return;
+                }
                 clearTimeout(timer);
                 reject(e);
             })
