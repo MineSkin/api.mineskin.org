@@ -7,7 +7,6 @@ import { URL } from "url";
 import { setInterval } from "timers";
 import { IPoint } from "influx";
 import * as Sentry from "@sentry/node";
-import { Severity } from "@sentry/node";
 import { getConfig, MineSkinConfig } from "../typings/Configs";
 import { MineSkinMetrics } from "../util/metrics";
 import { Transaction } from "@sentry/tracing";
@@ -48,9 +47,7 @@ export class Requests {
 
     static readonly axiosInstance: AxiosInstance = axios.create({});
 
-    private static readonly requestQueues: {
-        [k: string]: { [sk: string]: JobQueue<AxiosRequestConfig, AxiosResponse> };
-    } = {};
+    private static readonly requestQueues: { [k: string]: { [sk: string]: JobQueue<AxiosRequestConfig, AxiosResponse> }; } = {};
 
     protected static metricsCollector = setInterval(async () => {
         const config = await getConfig();
