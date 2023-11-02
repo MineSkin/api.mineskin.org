@@ -433,10 +433,10 @@ export class Microsoft {
         // https://login.live.com/oauth20_authorize.srf
         const preAuthResponse = await XboxLiveAuth.preAuth();
         console.log("preAuth")
-        console.log(JSON.stringify(preAuthResponse))
+        // console.log(JSON.stringify(preAuthResponse))
         const loginResponse = await XboxLiveAuth.logUser(preAuthResponse, { email, password });
         console.log("logUser")
-        console.log(JSON.stringify(loginResponse));
+        // console.log(JSON.stringify(loginResponse));
 
         const xboxUserId = loginResponse.user_id;
         const xboxAccessToken = loginResponse.access_token;
@@ -444,7 +444,7 @@ export class Microsoft {
 
         const identityResponses: MicrosoftIdentities = await Microsoft.exchangeRpsTicketForIdentities(xboxAccessToken);
         console.log("identities");
-        console.log(identityResponses)
+        // console.log(identityResponses)
         const mcIdentity = identityResponses.mc;
         const xboxIdentity = identityResponses.xbox;
 
@@ -623,7 +623,7 @@ export class Microsoft {
 
         const identityResponses = await Microsoft.exchangeRpsTicketForIdentities(xboxAccessToken);
         console.log("identities");
-        console.log(identityResponses)
+        // console.log(identityResponses)
         const mcIdentity = identityResponses.mc;
         const xboxIdentity = identityResponses.xbox;
 
