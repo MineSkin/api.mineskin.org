@@ -48,7 +48,9 @@ export class Requests {
 
     static readonly axiosInstance: AxiosInstance = axios.create({});
 
-    private static readonly requestQueues: { [k: string]: { [sk: string]: JobQueue<AxiosRequestConfig, AxiosResponse> }; } = {};
+    private static readonly requestQueues: {
+        [k: string]: { [sk: string]: JobQueue<AxiosRequestConfig, AxiosResponse> };
+    } = {};
 
     protected static metricsCollector = setInterval(async () => {
         const config = await getConfig();
@@ -153,6 +155,34 @@ export class Requests {
             headers: {}
         });
         this.setupMultiRequestQueue(LIVE_LOGIN, config, Time.millis(200), 1);
+
+        setTimeout(() => {
+            for (let k in this.axiosInstances) {
+                const x = this.axiosInstances[k];
+                for (let sk in x) {
+                    const instance = x[sk];
+                    instance.request({
+                        url: "/"
+                    }).then(() => {
+                        console.log(debug("axios instance " + k + "/" + sk + " is ready"));
+                    }).catch(err => {
+                        if (err.response) {
+                            console.log(debug("axios instance " + k + "/" + sk + " is probably ready"));
+                            console.log(debug(err.message));
+                            return;
+                        }
+                        console.warn(warn("axios instance " + k + "/" + sk + " is not ready"));
+                        Sentry.captureException(err, {
+                            level: Severity.Warning,
+                            tags: {
+                                server: config.server,
+                                proxy: sk
+                            }
+                        });
+                    })
+                }
+            }
+        }, 100)
     }
 
     private static setupAxiosInstance(key: string, subkey: string, config: AxiosRequestConfig, constr: AxiosConstructor = (c) => axios.create(c)): void {
