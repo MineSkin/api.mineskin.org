@@ -1,6 +1,16 @@
 import { Account, Skin, Stat, User } from "../database/schemas";
 import { MemoizeExpiring } from "@inventivetalent/typescript-memoize";
-import { base64decode, getHashFromMojangTextureUrl, hasOwnProperty, imgHash, longAndShortUuid, Maybe, random32BitNumber, sleep, stripUuid } from "../util";
+import {
+    base64decode,
+    getHashFromMojangTextureUrl,
+    hasOwnProperty,
+    imgHash,
+    longAndShortUuid,
+    Maybe,
+    random32BitNumber,
+    sleep,
+    stripUuid
+} from "../util";
 import { Caching } from "./Caching";
 import { Authentication, AuthenticationError } from "./Authentication";
 import * as Sentry from "@sentry/node";
@@ -33,7 +43,20 @@ import stripUserAgent from "user-agent-stripper";
 import { MineSkinMetrics } from "../util/metrics";
 import { MineSkinOptimus } from "../util/optimus";
 import { Discord } from "../util/Discord";
-import { GENERATE_FAIL, GENERATE_SUCCESS, GENERATED_UPLOAD_COUNT, GENERATED_UPLOAD_DUPLICATE, GENERATED_URL_COUNT, GENERATED_URL_DUPLICATE, GENERATED_USER_COUNT, GENERATED_USER_DUPLICATE, SKINS_DUPLICATE, SKINS_TOTAL, SKINS_UNIQUE, Stats } from "./Stats";
+import {
+    GENERATE_FAIL,
+    GENERATE_SUCCESS,
+    GENERATED_UPLOAD_COUNT,
+    GENERATED_UPLOAD_DUPLICATE,
+    GENERATED_URL_COUNT,
+    GENERATED_URL_DUPLICATE,
+    GENERATED_USER_COUNT,
+    GENERATED_USER_DUPLICATE,
+    SKINS_DUPLICATE,
+    SKINS_TOTAL,
+    SKINS_UNIQUE,
+    Stats
+} from "./Stats";
 import { IPoint } from "influx";
 import { DelayInfo } from "../typings/DelayInfo";
 import { FilterQuery } from "mongoose";
@@ -771,13 +794,16 @@ export class Generator {
                     };
                 }
             }
+            console.log(debug(options.breadcrumb + " " + url));
             const contentType = this.getContentTypeFromResponse(followResponse);
+            console.log(debug(options.breadcrumb + " " + contentType));
             Sentry.setExtra("generate_contentType", contentType);
             if (!contentType || !contentType.startsWith("image") || !ALLOWED_IMAGE_TYPES.includes(contentType)) {
                 span?.setStatus("invalid_argument").finish()
                 throw new GeneratorError(GenError.INVALID_IMAGE, "Invalid image content type: " + contentType, 400, undefined, originalUrl);
             }
             const size = this.getSizeFromResponse(followResponse);
+            console.log(debug(options.breadcrumb + " size: " + size));
             Sentry.setExtra("generate_contentLength", size);
             if (!size || size < 100 || size > MAX_IMAGE_SIZE) {
                 span?.setStatus("invalid_argument").finish();
@@ -884,6 +910,7 @@ export class Generator {
                 method: "GET",
                 url: url.href,
                 maxRedirects: follow ? MAX_FOLLOW_REDIRECTS : 0,
+                timeout: 1000,
                 headers: {
                     "User-Agent": "MineSkin"
                 }

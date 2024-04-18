@@ -70,7 +70,11 @@ export class Temp {
             const response = await Requests.genericRequest({
                 method: "GET",
                 url: url,
-                responseType: "stream"
+                responseType: "stream",
+                timeout: 2000,
+                maxContentLength: 20000, // 20KB
+                maxBodyLength: 20000, // 20KB
+                maxRedirects: 0
             }, breadcrumb);
             (response.data as Stream).pipe(fs.createWriteStream(tmpFile.path))
         } catch (e) {
