@@ -43,7 +43,7 @@
     "influx": "^5.7.0",
     "jimp": "^0.16.1",
     "jobqu": "^2.0.5",
-    "jsonwebtoken": "^8.5.1",
+    "jsonwebtoken": "^9.0.0",
     "metrics-node": "^1.0.0",
     "mongoose": "^5.13.14",
     "mongoose-int32": "^0.4.1",
@@ -54,7 +54,7 @@
     "rotating-file-stream": "^1.4.4",
     "source-map-support": "^0.5.19",
     "tmp": "0.2.1",
-    "tunnel-ssh": "^4.1.4",
+    "tunnel-ssh": "^4.1.6",
     "user-agent-stripper": "^1.0.1",
     "uuid": "^3.4.0"
   },
