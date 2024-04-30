@@ -172,8 +172,19 @@ components:
                 type: string
                 description: Error message
               nextRequest:
+                deprecated: true
                 type: integer
                 description: Unix timestamp when the next request is allowed
+              delayInfo:
+                type: object
+                description: Info about the current API delay and when the next request is allowed
+                properties:
+                  millis:
+                    type: integer
+                    description: Milliseconds to wait before the next request
+                  seconds:
+                    type: integer
+                    description: Seconds to wait before the next request
               delay:
                 type: integer
                 description: The API's current delay in seconds
