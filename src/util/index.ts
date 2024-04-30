@@ -54,7 +54,7 @@ export async function checkTraffic(req: Request, res: Response): Promise<boolean
     if (lastRequest.getTime() > time - delayInfo.millis) {
         res.status(429).json({
             error: "Too many requests",
-            nextRequest: (time / 1000) + delayInfo.seconds + 5, // deprecated
+            nextRequest: Math.round((time / 1000) + delayInfo.seconds + 5), // deprecated
             delay: delayInfo.seconds, // deprecated
 
             delayInfo: {

@@ -1498,7 +1498,7 @@ export class SavedSkin {
         const info = await this.skin.toResponseJson();
         info.duplicate = this.duplicate;
         if (delayInfo) {
-            info.nextRequest = delayInfo.seconds; // deprecated
+            info.nextRequest = Math.round(delayInfo.seconds); // deprecated
 
             info.delayInfo = {
                 millis: delayInfo.millis,

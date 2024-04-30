@@ -12,7 +12,17 @@ import morgan from "morgan";
 import * as bodyParser from "body-parser";
 import fileUpload from "express-fileupload";
 import cookieParser from "cookie-parser";
-import { accountManagerRoute, accountRoute, apiKeyRoute, generateRoute, getRoute, hiatusRoute, renderRoute, testerRoute, utilRoute } from "./routes";
+import {
+    accountManagerRoute,
+    accountRoute,
+    apiKeyRoute,
+    generateRoute,
+    getRoute,
+    hiatusRoute,
+    renderRoute,
+    testerRoute,
+    utilRoute
+} from "./routes";
 import { MOJ_DIR, UPL_DIR, URL_DIR } from "./generator/Temp";
 import { getConfig, getLocalConfig, MineSkinConfig } from "./typings/Configs";
 import { isBreadRequest, MineSkinError } from "./typings";
@@ -302,7 +312,7 @@ async function init() {
                             errorType: err.name,
                             errorCode: err.code,
                             error: err.msg,
-                            nextRequest: (Date.now() / 1000) + delayInfo.seconds, // deprecated
+                            nextRequest: Math.round((Date.now() / 1000) + delayInfo.seconds), // deprecated
 
                             delayInfo: {
                                 seconds: delayInfo.seconds,
