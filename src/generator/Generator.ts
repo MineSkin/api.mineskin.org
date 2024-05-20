@@ -1170,15 +1170,38 @@ export class Generator {
         }, account).then(res => res.status === 200);
     }
 
+    protected static async claim15YearCape(account: IAccountDocument): Promise<boolean> {
+        console.log(info(`Claiming 15 year cape for ${ account.id }/${ account.uuid }`));
+        return Requests.dynamicRequestWithAccount(MINECRAFT_SERVICES_PROFILE, {
+            method: "POST",
+            url: "/minecraft/cape/15year",
+            headers: {
+                Authorization: `Bearer ${ account.accessToken }`
+            }
+        }, account).then(res => res.status === 200);
+    }
+
     protected static async clearCapeIfRequired(account: IAccountDocument): Promise<boolean> {
         if (!account.accessToken) return true;
         const profile = await Caching.getProfileByAccessToken(account.accessToken);
+        let clearResult;
+        let has15YearCape = false;
         if (profile && profile.capes && profile.capes.length > 0) {
             for (let cape of profile.capes) {
                 if (cape.state === "ACTIVE") {
-                    return await this.clearCape(account);
+                    clearResult = await this.clearCape(account);
+                }
+                if (cape.id === 'ef9e95b6-48a3-4fd7-93d4-7e7d9448d2f1') {
+                    has15YearCape = true;
                 }
             }
+        }
+        if (!has15YearCape) {
+            // auto claim 15 year cape
+            await this.claim15YearCape(account);
+        }
+        if (clearResult) {
+            return clearResult;
         }
         return true;
     }
