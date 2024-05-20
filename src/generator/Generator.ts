@@ -60,6 +60,7 @@ import {
 import { IPoint } from "influx";
 import { DelayInfo } from "../typings/DelayInfo";
 import { FilterQuery } from "mongoose";
+import { Capes } from "../util/Capes";
 
 
 // minimum delay for accounts to be used
@@ -1193,7 +1194,7 @@ export class Generator {
                 if (cape.state === "ACTIVE") {
                     clearResult = await this.clearCape(account);
                 }
-                if (cape.id === 'ef9e95b6-48a3-4fd7-93d4-7e7d9448d2f1') {
+                if (cape.id === Capes.ANNIVERSARY_15) {
                     has15YearCape = true;
                 }
             }
@@ -1203,7 +1204,7 @@ export class Generator {
             // auto claim 15 year cape
             let claimed = await this.claim15YearCape(account);
             if (claimed) {
-                account.ownedCapes?.push('ef9e95b6-48a3-4fd7-93d4-7e7d9448d2f1');
+                account.ownedCapes?.push(Capes.ANNIVERSARY_15);
                 console.log(info(`Claimed 15 year cape for ${ account.id }/${ account.uuid }`));
             }
         }
