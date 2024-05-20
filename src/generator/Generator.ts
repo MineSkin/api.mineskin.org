@@ -1201,7 +1201,11 @@ export class Generator {
         }
         if (!has15YearCape) {
             // auto claim 15 year cape
-            await this.claim15YearCape(account);
+            let claimed = await this.claim15YearCape(account);
+            if (claimed) {
+                account.ownedCapes?.push('ef9e95b6-48a3-4fd7-93d4-7e7d9448d2f1');
+                console.log(info(`Claimed 15 year cape for ${ account.id }/${ account.uuid }`));
+            }
         }
         if (clearResult) {
             return clearResult;
