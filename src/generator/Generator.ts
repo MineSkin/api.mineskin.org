@@ -1187,7 +1187,9 @@ export class Generator {
         let clearResult;
         let has15YearCape = false;
         if (profile && profile.capes && profile.capes.length > 0) {
+            let ownedIds = [];
             for (let cape of profile.capes) {
+                ownedIds.push(cape.id);
                 if (cape.state === "ACTIVE") {
                     clearResult = await this.clearCape(account);
                 }
@@ -1195,6 +1197,7 @@ export class Generator {
                     has15YearCape = true;
                 }
             }
+            account.ownedCapes = ownedIds;
         }
         if (!has15YearCape) {
             // auto claim 15 year cape

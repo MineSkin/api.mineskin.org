@@ -44,6 +44,8 @@ export interface IAccountDocument extends Document {
     playername?: string;
     originalSkinTexture?: string;
     originalSkinVariant?: SkinVariant;
+    ownedCapes?: string[];
+    selectedCape?: string;
     authInterceptorEnabled?: boolean;
     /**@deprecated**/
     password?: string;
