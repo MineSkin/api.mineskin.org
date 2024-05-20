@@ -1188,7 +1188,7 @@ export class Generator {
         let clearResult;
         let has15YearCape = false;
         if (profile && profile.capes && profile.capes.length > 0) {
-            let ownedIds = [];
+            let ownedIds: string[] = [];
             for (let cape of profile.capes) {
                 ownedIds.push(cape.id);
                 if (cape.state === "ACTIVE") {
