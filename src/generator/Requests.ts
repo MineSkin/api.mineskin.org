@@ -100,6 +100,8 @@ export class Requests {
     }, 5000);
 
     public static init(config: MineSkinConfig) {
+        console.log(debug("Initializing Requests"));
+
         SERVER = config.server;
         PROXIES = [config.server];
         if (config.server in config.requestServers) {
@@ -162,7 +164,8 @@ export class Requests {
                 for (let sk in x) {
                     const instance = x[sk];
                     instance.request({
-                        url: "/"
+                        url: "/",
+                        timeout: 5000
                     }).then(() => {
                         console.log(debug("axios instance " + k + "/" + sk + " is ready"));
                     }).catch(err => {
@@ -240,7 +243,10 @@ export class Requests {
         if (!(key in this.requestQueues)) {
             this.requestQueues[key] = {};
         }
-        this.requestQueues[key][subkey] = new JobQueue<AxiosRequestConfig, AxiosResponse>(request => timeout(this.runAxiosRequest(request, key), TIMEOUT), interval, maxPerRun);
+        this.requestQueues[key][subkey] = new JobQueue<AxiosRequestConfig, AxiosResponse>(request => {
+            const crumbs = this.getBreadcrumb(request);
+            return timeout(this.runAxiosRequest(request, key), TIMEOUT, `rq_${ key }_${ subkey }_${ crumbs }`);
+        }, interval, maxPerRun);
         console.log(debug("set up request queue " + key + "/" + subkey));
     }
 
@@ -401,7 +407,7 @@ export class Requests {
             console.warn(warn(`Rejecting new request as queue for ${ type } is full (${ q.size })! `))
             throw new Error("Request queue is full!");
         }
-        const r = await timeout(q.add(request), TIMEOUT);
+        const r = await timeout(q.add(request), TIMEOUT, `rq_dyn_${ type }_${ this.getInstanceSubkey(request) }_${ bread }`);
         t?.finish();
         return r;
     }

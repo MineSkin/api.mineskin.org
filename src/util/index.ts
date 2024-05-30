@@ -145,7 +145,7 @@ export async function validateImage(req: Request, res: Response, file: string): 
     const stats = fs.statSync(file);
     const size = stats.size;
     if (size <= 0 || size > 16000) {
-        res.status(400).json({ error: "Invalid file size (" + size + ")" });
+        res.status(400).json({error: "Invalid file size (" + size + ")"});
         return false;
     }
 
@@ -153,12 +153,12 @@ export async function validateImage(req: Request, res: Response, file: string): 
         const dimensions = imageSize(file);
         console.log(colors.debug("Dimensions: " + JSON.stringify(dimensions)));
         if ((dimensions.width !== 64) || (dimensions.height !== 64 && dimensions.height !== 32)) {
-            res.status(400).json({ error: "Invalid skin dimensions. Must be 64x32 or 64x64. (Were " + dimensions.width + "x" + dimensions.height + ")" });
+            res.status(400).json({error: "Invalid skin dimensions. Must be 64x32 or 64x64. (Were " + dimensions.width + "x" + dimensions.height + ")"});
             return false;
         }
     } catch (e) {
         console.log(e)
-        res.status(500).json({ error: "Failed to get image dimensions", err: e });
+        res.status(500).json({error: "Failed to get image dimensions", err: e});
         Sentry.captureException(e);
         return false;
     }
@@ -166,7 +166,7 @@ export async function validateImage(req: Request, res: Response, file: string): 
     const imageBuffer = await readChunk(file, 0, 4100);
     const type = await fileType.fromBuffer(imageBuffer);
     if (!type || type.ext !== "png" || type.mime !== "image/png") {
-        res.status(400).json({ error: "Invalid image type. Must be PNG. (Is " + type?.ext + " / " + type?.mime + ")" });
+        res.status(400).json({error: "Invalid image type. Must be PNG. (Is " + type?.ext + " / " + type?.mime + ")"});
         return false;
     }
 
@@ -303,11 +303,11 @@ export function sleep(duration: number): Promise<void> {
     });
 }
 
-export function timeout<U>(promise: Promise<U>, t: number): Promise<U> {
+export function timeout<U>(promise: Promise<U>, t: number, tag?: Maybe<string>): Promise<U> {
     return new Promise<U>((resolve, reject) => {
         let start = Date.now();
         let timedOut = false;
-        const err = new Error(`Promise timed out after ${ t }ms`);
+        const err = new TimeoutError(`Promise timed out after ${ t }ms`, tag);
         let timer = setTimeout(() => {
             timedOut = true;
             reject(err);
@@ -316,16 +316,20 @@ export function timeout<U>(promise: Promise<U>, t: number): Promise<U> {
         promise
             .then(v => {
                 if (timedOut) {
-                    console.log(`timed out succeeded after ${ Date.now() - start }ms`)
+                    console.log(`timed out succeeded after ${ Date.now() - start }ms: ${tag||''}`)
                     return;
                 }
                 clearTimeout(timer);
                 resolve(v);
             })
             .catch(e => {
-                Sentry.captureException(e);
+                Sentry.captureException(e, {
+                    tags: {
+                        timeoutTag: tag
+                    }
+                });
                 if (timedOut) {
-                    console.log(`timed out errored after ${ Date.now() - start }ms`)
+                    console.log(`timed out errored after ${ Date.now() - start }ms: ${tag||''}`)
                     return;
                 }
                 clearTimeout(timer);
@@ -360,6 +364,17 @@ export function timeoutWrap<T extends Array<any>, U>(func: (...args: T) => Promi
     }
 }
 
+export class TimeoutError extends MineSkinError {
+    constructor(msg: string, public tag: Maybe<string>) {
+        super('timeout', msg);
+        Object.setPrototypeOf(this, TimeoutError.prototype);
+    }
+
+    get name(): string {
+        return 'TimeoutError';
+    }
+}
+
 export const POW_2_32 = Math.pow(2, 32);
 
 export function random32BitNumber(): Promise<number> {
@@ -375,7 +390,7 @@ export function random32BitNumber(): Promise<number> {
 }
 
 export async function imgHash(buffer: Buffer): Promise<string> {
-    return imageHash(buffer, { algorithm: "sha1" })
+    return imageHash(buffer, {algorithm: "sha1"})
 }
 
 export function stripNumbers(str?: string): string {
