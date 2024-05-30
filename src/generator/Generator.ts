@@ -538,6 +538,7 @@ export class Generator {
                     .tag("newOrDuplicate", "new")
                     .tag("server", metrics.config.server)
                     .tag("type", type)
+                    .tag("userAgent", stripUserAgent(client.userAgent))
                     .inc();
             } catch (e) {
                 Sentry.captureException(e);
