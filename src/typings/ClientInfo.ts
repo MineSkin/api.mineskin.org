@@ -4,4 +4,5 @@ export interface ClientInfo {
     ip: string;
     via: string;
     apiKey?: string;
+    apiKeyId?: string;
 }

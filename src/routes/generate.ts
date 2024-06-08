@@ -1,5 +1,18 @@
 import { Application, Request, Response } from "express";
-import { checkTraffic, corsWithAuthMiddleware, getAndValidateRequestApiKey, getIp, getVia, longAndShortUuid, Maybe, md5, modelToVariant, updateTraffic, validateUrl, variantToModel } from "../util";
+import {
+    checkTraffic,
+    corsWithAuthMiddleware,
+    getAndValidateRequestApiKey,
+    getIp,
+    getVia,
+    longAndShortUuid,
+    Maybe,
+    md5,
+    modelToVariant,
+    updateTraffic,
+    validateUrl,
+    variantToModel
+} from "../util";
 import { UploadedFile } from "express-fileupload";
 import { Generator, SavedSkin } from "../generator/Generator";
 import { generateLimiter } from "../util/rateLimiters";
@@ -53,7 +66,7 @@ export const register = (app: Application) => {
         if (req.headers['origin']) {
             console.log(debug(`${ options.breadcrumb } Origin:      ${ req.headers['origin'] }`));
         }
-        console.log(debug(`${ options.breadcrumb } Key:         ${ req.apiKey?.name ?? "none" }`));
+        console.log(debug(`${ options.breadcrumb } Key:         ${ req.apiKey?.name ?? "none" } ${ req.apiKey?._id ?? "" }`));
         console.log(debug(`${ options.breadcrumb } URL:         ${ url }`));
 
         if (!options.checkOnly || !client.apiKey) {
@@ -92,7 +105,7 @@ export const register = (app: Application) => {
         if (req.headers['origin']) {
             console.log(debug(`${ options.breadcrumb } Origin:      ${ req.headers['origin'] }`));
         }
-        console.log(debug(`${ options.breadcrumb } Key:         ${ req.apiKey?.name ?? "none" }`));
+        console.log(debug(`${ options.breadcrumb } Key:         ${ req.apiKey?.name ?? "none" } ${ req.apiKey?._id ?? "" }`));
         console.log(debug(`${ options.breadcrumb } FILE:        "${ file.name }" ${ file.md5 }`))
 
         if (!options.checkOnly || !client.apiKey) {
@@ -138,7 +151,7 @@ export const register = (app: Application) => {
         if (req.headers['origin']) {
             console.log(debug(`${ options.breadcrumb } Origin:      ${ req.headers['origin'] }`));
         }
-        console.log(debug(`${ options.breadcrumb } Key:         ${ req.apiKey?.name ?? "none" }`));
+        console.log(debug(`${ options.breadcrumb } Key:         ${ req.apiKey?.name ?? "none" } ${ req.apiKey?._id ?? "" }`));
         console.log(debug(`${ options.breadcrumb } USER:        ${ uuids.long }`))
 
         const skin = await Generator.generateFromUserAndSave(uuids.long, options, client);
@@ -178,7 +191,7 @@ export const register = (app: Application) => {
         if (req.headers['origin']) {
             console.log(debug(`${ options.breadcrumb } Origin:      ${ req.headers['origin'] }`));
         }
-        console.log(debug(`${ options.breadcrumb } Key:         ${ req.apiKey?.name ?? "none" }`));
+        console.log(debug(`${ options.breadcrumb } Key:         ${ req.apiKey?.name ?? "none" } ${ req.apiKey?._id ?? "" }`));
         console.log(debug(`${ options.breadcrumb } USER:        ${ uuids.long }`))
 
         const skin = await Generator.generateFromUserAndSave(uuids.long, options, client);
@@ -209,8 +222,10 @@ export const register = (app: Application) => {
         const origin = req.header("origin");
         const ip = getIp(req);
         const via = getVia(req);
+        let apiKeyId;
         let apiKey;
         if (isApiKeyRequest(req) && req.apiKey) {
+            apiKeyId = req.apiKey._id;
             apiKey = `${ req.apiKey.key.substr(0, 8) } ${ req.apiKey?.name }`;
         }
 
@@ -224,7 +239,8 @@ export const register = (app: Application) => {
             origin,
             ip,
             via,
-            apiKey
+            apiKey,
+            apiKeyId
         };
     }
 
