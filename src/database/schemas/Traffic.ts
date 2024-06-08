@@ -15,6 +15,10 @@ export const TrafficSchema: Schema<ITrafficDocument, ITrafficModel> = new Schema
         lastRequest: {
             type: Date,
             expires: 3600
+        },
+        count: {
+            type: Number,
+            default: 0
         }
     },
     {
@@ -32,7 +36,8 @@ TrafficSchema.statics.updateRequestTime = function (this: ITrafficModel, ip: str
         ip: ip,
         key: key
     }, {
-        lastRequest: time
+        lastRequest: time,
+        $inc: {count: 1}
     }, {upsert: true, maxTimeMS: 5000}).exec();
 };
 
