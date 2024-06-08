@@ -70,7 +70,7 @@ export const register = (app: Application) => {
         console.log(debug(`${ options.breadcrumb } URL:         ${ url }`));
 
         if (!options.checkOnly || !client.apiKey) {
-            await updateTraffic(req);
+            await updateTraffic(client);
         }
 
         const skin = await Generator.generateFromUrlAndSave(url, options, client);
@@ -109,7 +109,7 @@ export const register = (app: Application) => {
         console.log(debug(`${ options.breadcrumb } FILE:        "${ file.name }" ${ file.md5 }`))
 
         if (!options.checkOnly || !client.apiKey) {
-            await updateTraffic(req);
+            await updateTraffic(client);
         }
 
         const skin = await Generator.generateFromUploadAndSave(file, options, client);
@@ -133,7 +133,7 @@ export const register = (app: Application) => {
         if (!requestAllowed) {
             return;
         }
-        await updateTraffic(req);
+        await updateTraffic(client);
         Sentry.setTag("generate_type", GenerateType.USER);
 
         const uuids = longAndShortUuid(uuidStr);
@@ -173,7 +173,7 @@ export const register = (app: Application) => {
         if (!requestAllowed) {
             return;
         }
-        await updateTraffic(req);
+        await updateTraffic(client);
         Sentry.setTag("generate_type", GenerateType.USER);
 
         const uuids = longAndShortUuid(uuidStr);

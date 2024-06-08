@@ -82,7 +82,8 @@ export async function updateTraffic(req: Request | ClientInfo, time: Date = new 
         op: "generate_updateTraffic"
     })
     const ip = req.ip ?? getIp(req as Request);
-    await Caching.updateTrafficRequestTime(ip, time);
+    const key = 'apiKeyId' in req ? req.apiKeyId : null;
+    await Caching.updateTrafficRequestTime(ip, key || null, time);
     span?.finish();
 }
 
@@ -316,7 +317,7 @@ export function timeout<U>(promise: Promise<U>, t: number, tag?: Maybe<string>):
         promise
             .then(v => {
                 if (timedOut) {
-                    console.log(`timed out succeeded after ${ Date.now() - start }ms: ${tag||''}`)
+                    console.log(`timed out succeeded after ${ Date.now() - start }ms: ${ tag || '' }`)
                     return;
                 }
                 clearTimeout(timer);
@@ -329,7 +330,7 @@ export function timeout<U>(promise: Promise<U>, t: number, tag?: Maybe<string>):
                     }
                 });
                 if (timedOut) {
-                    console.log(`timed out errored after ${ Date.now() - start }ms: ${tag||''}`)
+                    console.log(`timed out errored after ${ Date.now() - start }ms: ${ tag || '' }`)
                     return;
                 }
                 clearTimeout(timer);

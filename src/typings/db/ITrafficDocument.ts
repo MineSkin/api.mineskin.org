@@ -9,5 +9,5 @@ export interface ITrafficDocument extends Document {
 export interface ITrafficModel extends Model<ITrafficDocument> {
     findForIp(ip: string): Promise<Maybe<ITrafficDocument>>;
 
-    updateRequestTime(ip: string, time?: Date): Promise<any>;
+    updateRequestTime(ip: string, key: string | null, time?: Date): Promise<any>;
 }

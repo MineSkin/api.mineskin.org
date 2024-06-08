@@ -1,5 +1,12 @@
 import { MOJANG_API, MOJANG_SESSION, Requests } from "./Requests";
-import { AsyncLoadingCache, Caches, CacheStats, ICacheBase, LoadingCache, SimpleCache } from "@inventivetalent/loading-cache";
+import {
+    AsyncLoadingCache,
+    Caches,
+    CacheStats,
+    ICacheBase,
+    LoadingCache,
+    SimpleCache
+} from "@inventivetalent/loading-cache";
 import * as Sentry from "@sentry/node";
 import { Severity } from "@sentry/node";
 import { Maybe, sha512, stripUuid } from "../util";
@@ -285,9 +292,9 @@ export class Caching {
         return this.trafficByIpCache.get(ip);
     }
 
-    public static async updateTrafficRequestTime(ip: string, time: Date): Promise<any> {
+    public static async updateTrafficRequestTime(ip: string, key: string | null, time: Date): Promise<any> {
         this.trafficByIpCache.put(ip, time);
-        return await Traffic.updateRequestTime(ip, time);
+        return await Traffic.updateRequestTime(ip, key, time);
     }
 
     public static getSkinById(id: number): Promise<Maybe<ISkinDocument>> {
@@ -316,7 +323,7 @@ export class Caching {
         return this.pendingDiscordLinkByStateCache.getIfPresent(state) as T;
     }
 
-    public static storePendingMicrosoftLink(state: string, link: MojangAccountLink): void{
+    public static storePendingMicrosoftLink(state: string, link: MojangAccountLink): void {
         this.pendingMicrosoftLinkByStateCache.put(state, link);
     }
 
