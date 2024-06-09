@@ -124,6 +124,10 @@ components:
           type: integer
           enum: [ 0, 1 ]
           default: 0
+      example:
+        variant: "classic"
+        name: "My Example Skin"
+        visibility: 0
     UserValidation:
       type: object
       required: [ valid ]
@@ -156,7 +160,7 @@ components:
 
   responses:
     ErrorResponse:
-      description: Response if an error occured
+      description: Response if an error occurred
       content:
         application/json:
           schema:
@@ -238,6 +242,7 @@ paths:
                 - properties:
                     url:
                       type: string
+                      example: "https://i.imgur.com/kQPrtYw.png"
       responses:
         200:
           $ref: '#/components/responses/GeneratedSkin'
@@ -263,8 +268,12 @@ paths:
                 - $ref: '#/components/schemas/GenerateOptions'
                 - properties:
                     file:
+                      description: Image file to upload
                       type: string
                       format: binary
+                      externalDocs:
+                        description: Example implementations
+                        url: https://github.com/MineSkin/examples
       responses:
         200:
           $ref: '#/components/responses/GeneratedSkin'
