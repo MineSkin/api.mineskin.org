@@ -74,7 +74,7 @@ export const register = (app: Application) => {
         }
 
         const skin = await Generator.generateFromUrlAndSave(url, options, client);
-        await sendSkin(req, res, skin);
+        await sendSkin(req, res, skin, client);
     })
 
 
@@ -113,7 +113,7 @@ export const register = (app: Application) => {
         }
 
         const skin = await Generator.generateFromUploadAndSave(file, options, client);
-        await sendSkin(req, res, skin);
+        await sendSkin(req, res, skin, client);
     })
 
 
@@ -155,7 +155,7 @@ export const register = (app: Application) => {
         console.log(debug(`${ options.breadcrumb } USER:        ${ uuids.long }`))
 
         const skin = await Generator.generateFromUserAndSave(uuids.long, options, client);
-        await sendSkin(req, res, skin);
+        await sendSkin(req, res, skin, client);
     })
 
     // TODO: remove at some point
@@ -195,18 +195,19 @@ export const register = (app: Application) => {
         console.log(debug(`${ options.breadcrumb } USER:        ${ uuids.long }`))
 
         const skin = await Generator.generateFromUserAndSave(uuids.long, options, client);
-        await sendSkin(req, res, skin);
+        await sendSkin(req, res, skin, client);
     })
 
     ///
 
-    async function sendSkin(req: Request, res: Response, skin: SavedSkin): Promise<void> {
+    async function sendSkin(req: Request, res: Response, skin: SavedSkin, client: ClientInfo): Promise<void> {
         const delayInfo = await Generator.getDelay(await getAndValidateRequestApiKey(req));
         const json = await skin.toResponseJson(skin.duplicate ? { seconds: 0, millis: 100 } : delayInfo); //TODO: adjust delay for duplicate
         res.json(json);
 
         if (skin.duplicate) {
-            await updateTraffic(req, new Date(Date.now() - delayInfo.millis))
+            // reset traffic for duplicates
+            await updateTraffic(client, new Date(Date.now() - delayInfo.millis))
         }
 
         getUserFromRequest(req, res, false).then(user => {
@@ -268,6 +269,7 @@ export const register = (app: Application) => {
         const breadcrumb = nextBreadColor()(breadcrumbId);
         req.breadcrumb = breadcrumb;
         res.header("X-MineSkin-Breadcrumb", breadcrumbId);
+        res.header("X-MineSkin-Timestamp", `${ Date.now() }`);
 
         console.log(debug(`${ breadcrumb } Type:        ${ type }`))
         console.log(debug(`${ breadcrumb } Variant:     ${ variant }`));

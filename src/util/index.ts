@@ -34,13 +34,6 @@ export async function checkTraffic(req: Request, res: Response): Promise<boolean
         ip_address: ip
     });
 
-    const lastRequest = await Caching.getTrafficRequestTimeByIp(ip);
-    if (!lastRequest) { // First request
-        span?.finish();
-        return true;
-    }
-    const time = Date.now();
-
     const apiKey = await getAndValidateRequestApiKey(req);
     if (apiKey) {
         Sentry.setUser({
@@ -48,6 +41,13 @@ export async function checkTraffic(req: Request, res: Response): Promise<boolean
             ip_address: ip
         });
     }
+
+    const lastRequest = apiKey ? await Caching.getTrafficRequestTimeByApiKey(apiKey) : await Caching.getTrafficRequestTimeByIp(ip);
+    if (!lastRequest) { // First request
+        span?.finish();
+        return true;
+    }
+    const time = Date.now();
 
     const delayInfo = await Generator.getDelay(apiKey);
 

@@ -31,6 +31,12 @@ TrafficSchema.statics.findForIp = function (this: ITrafficModel, ip: string): Pr
     }).lean().exec();
 };
 
+TrafficSchema.statics.findForKey = function (this: ITrafficModel, key: string): Promise<LeanDocumentOrArray<ITrafficDocument | null>> {
+    return this.findOne({key: key}, null, {
+        sort: {lastRequest: -1}
+    }).lean().exec();
+}
+
 TrafficSchema.statics.updateRequestTime = function (this: ITrafficModel, ip: string, key: string | null, time: Date = new Date()): Promise<any> {
     return this.updateOne({
         ip: ip,

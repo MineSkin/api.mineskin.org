@@ -13,8 +13,9 @@ export const register = (app: Application) => {
     app.use("/get", corsWithAuthMiddleware);
 
     app.get("/get/delay", async (req: Request, res: Response) => {
-        const delayInfo = await Generator.getDelay(await getAndValidateRequestApiKey(req));
-        const lastRequest = await Caching.getTrafficRequestTimeByIp(getIp(req));
+        const apiKey = await getAndValidateRequestApiKey(req);
+        const delayInfo = await Generator.getDelay(apiKey);
+        const lastRequest = apiKey ? await Caching.getTrafficRequestTimeByApiKey(apiKey) : await Caching.getTrafficRequestTimeByIp(getIp(req));
         if (lastRequest) {
             res.json({
                 delay: delayInfo.seconds, // deprecated
@@ -26,6 +27,10 @@ export const register = (app: Application) => {
                 nextRequest: {
                     time: Math.round(lastRequest.getTime() + delayInfo.millis),
                     relative: Math.round(Math.max(100, ((lastRequest.getTime()) + delayInfo.millis) - Date.now()))
+                },
+
+                lastRequest: {
+                    time: lastRequest.getTime()
                 }
             });
         } else {

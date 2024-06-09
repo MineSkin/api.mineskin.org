@@ -171,6 +171,14 @@ export class Caching {
             return traffic?.lastRequest;
         });
 
+    protected static readonly trafficByKeyCache: AsyncLoadingCache<string, Date> = Caches.builder()
+        .expireAfterWrite(Time.seconds(5))
+        .expirationInterval(Time.seconds(1))
+        .buildAsync<string, Date>(async (key) => {
+            const traffic = await Traffic.findForKey(key);
+            return traffic?.lastRequest;
+        });
+
     protected static readonly skinByIdCache: AsyncLoadingCache<number, ISkinDocument> = Caches.builder()
         .expireAfterWrite(Time.minutes(1))
         .expirationInterval(Time.seconds(30))
@@ -292,8 +300,19 @@ export class Caching {
         return this.trafficByIpCache.get(ip);
     }
 
+    public static getTrafficRequestTimeByApiKey(key: IApiKeyDocument): Promise<Maybe<Date>> {
+        return this.trafficByKeyCache.get(key._id);
+    }
+
+    public static getTrafficRequestTimeByKey(key: string): Promise<Maybe<Date>> {
+        return this.trafficByKeyCache.get(key);
+    }
+
     public static async updateTrafficRequestTime(ip: string, key: string | null, time: Date): Promise<any> {
         this.trafficByIpCache.put(ip, time);
+        if (key) {
+            this.trafficByKeyCache.put(key, time);
+        }
         return await Traffic.updateRequestTime(ip, key, time);
     }
 
