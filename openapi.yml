@@ -21,17 +21,16 @@ tags:
   - name: generate
   - name: get
   - name: util
+
+security:
+  - bearerAuth: []
+
 components:
   securitySchemes:
     bearerAuth:
-      description: Get your key from https://mineskin.org/apikey
+      description: API key auth header - Get your key from https://mineskin.org/apikey
       type: http
       scheme: bearer
-    apiKey:
-      description: Get your key from https://mineskin.org/apikey
-      type: apiKey
-      in: query
-      name: key
 
   schemas:
     PartialSkinInfo:
@@ -145,6 +144,14 @@ components:
       required: true
       schema:
         type: string
+    apiKey:
+        name: Authorization
+        description: API Key - Get your key from https://mineskin.org/apikey
+        example: "Bearer [YOUR API KEY]"
+        in: header
+        required: false
+        schema:
+            type: string
 
 
   responses:
@@ -220,9 +227,7 @@ paths:
         - generate
       parameters:
         - $ref: '#/components/parameters/userAgent'
-      security:
-        - bearerAuth: []
-          apiKey: []
+        - $ref: '#/components/parameters/apiKey'
       requestBody:
         required: true
         content:
@@ -248,9 +253,7 @@ paths:
         - generate
       parameters:
         - $ref: '#/components/parameters/userAgent'
-      security:
-        - bearerAuth: [ ]
-          apiKey: [ ]
+        - $ref: '#/components/parameters/apiKey'
       requestBody:
         required: true
         content:
@@ -277,9 +280,7 @@ paths:
         - generate
       parameters:
         - $ref: '#/components/parameters/userAgent'
-      security:
-        - bearerAuth: [ ]
-          apiKey: [ ]
+        - $ref: '#/components/parameters/apiKey'
       requestBody:
         required: true
         content:
@@ -308,14 +309,13 @@ paths:
         - get
       parameters:
         - $ref: '#/components/parameters/userAgent'
-      security:
-        - bearerAuth: [ ]
-          apiKey: [ ]
+        - $ref: '#/components/parameters/apiKey'
       responses:
         200:
           $ref: '#/components/responses/DelayInfo'
   /get/id/{id}:
     get:
+      deprecated: true
       description: Deprecated. Use /get/uuid instead.
       tags:
         - get
@@ -346,6 +346,7 @@ paths:
             type: string
             format: uuid
         - $ref: '#/components/parameters/userAgent'
+        - $ref: '#/components/parameters/apiKey'
       responses:
         200:
           description: Skin Info
