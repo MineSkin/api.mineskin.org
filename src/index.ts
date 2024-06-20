@@ -1,10 +1,10 @@
+import "dotenv/config"
 import * as sourceMapSupport from "source-map-support";
 import * as Sentry from "@sentry/node";
 import * as path from "path";
 import * as fs from "fs";
 import express, { ErrorRequestHandler, NextFunction, Request, Response } from "express";
 import "express-async-errors";
-import { Puller } from "express-git-puller";
 import { connectToMongo } from "./database/database";
 import RotatingFileStream from "rotating-file-stream";
 import morgan from "morgan";
@@ -26,10 +26,9 @@ import { MOJ_DIR, UPL_DIR, URL_DIR } from "./generator/Temp";
 import { getConfig, getLocalConfig, MineSkinConfig } from "./typings/Configs";
 import { isBreadRequest, MineSkinError } from "./typings";
 import { MineSkinMetrics } from "./util/metrics";
-import { corsMiddleware, getAndValidateRequestApiKey } from "./util";
+import { corsMiddleware, getAndValidateRequestApiKey, resolveHostname } from "./util";
 import { AuthenticationError } from "./generator/Authentication";
 import { Generator, GeneratorError } from "./generator/Generator";
-import gitsha from "@inventivetalent/gitsha";
 import { GitConfig } from "@inventivetalent/gitconfig";
 import { GithubWebhook } from "@inventivetalent/express-github-webhook/dist/src";
 import { Stats } from "./generator/Stats";
@@ -39,6 +38,7 @@ import { Discord } from "./util/Discord";
 import { Balancer } from "./generator/Balancer";
 import { nodeProfilingIntegration } from '@sentry/profiling-node';
 
+
 sourceMapSupport.install();
 
 let config: MineSkinConfig;
@@ -46,9 +46,39 @@ let port: number;
 
 let updatingApp = true;
 
+const hostname = resolveHostname();
+
 console.log("\n" +
-    "  ==== STARTING UP ==== " +
+    "  ==== STARTING UP ==== \n" +
+    "" + process.env.NODE_ENV + "\n" +
+    "" + process.env.SOURCE_COMMIT + "\n" +
+    "" + hostname + "\n" +
     "\n");
+
+{
+    console.log("Initializing Sentry")
+    Sentry.init({
+        dsn: process.env.SENTRY_DSN,
+        release: process.env.SOURCE_COMMIT || "unknown",
+        integrations: [
+            nodeProfilingIntegration()
+        ],
+        serverName: hostname,
+        tracesSampleRate: 0.1,
+        sampleRate: 0.8,
+        ignoreErrors: [
+            "No duplicate found",
+            "Invalid image file size",
+            "Invalid image dimensions",
+            "Failed to find image from url",
+            "Invalid file size"
+        ]
+    });
+
+    // app.use(Sentry.Handlers.requestHandler());
+    // app.use(Sentry.Handlers.tracingHandler());
+}
+
 
 const app = express();
 
@@ -70,7 +100,12 @@ async function init() {
         Requests.init(config);
     }
 
-    const version = await gitsha();
+    if (hostname !== 'unknown') {
+        config.server = hostname;
+    }
+
+    // const version = await gitsha();
+    const version = process.env.SOURCE_COMMIT || "unknown";
     console.log(info("Version: " + version));
     Discord.postDiscordMessage('[' + config.server + '] Version: ' + version);
 
@@ -91,30 +126,6 @@ async function init() {
     }
 
     {
-        console.log("Initializing Sentry")
-        Sentry.init({
-            dsn: config.sentry.dsn,
-            release: version,
-            integrations: [
-                nodeProfilingIntegration()
-            ],
-            serverName: config.server,
-            tracesSampleRate: 0.1,
-            sampleRate: 0.8,
-            ignoreErrors: [
-                "No duplicate found",
-                "Invalid image file size",
-                "Invalid image dimensions",
-                "Failed to find image from url",
-                "Invalid file size"
-            ]
-        });
-
-        // app.use(Sentry.Handlers.requestHandler());
-        // app.use(Sentry.Handlers.tracingHandler());
-    }
-
-    {
         console.log("Creating logger")
 
         // create a rotating write stream
@@ -125,7 +136,7 @@ async function init() {
         });
 
         // setup the logger
-        app.use(morgan('combined', { stream: accessLogStream }))
+        app.use(morgan('combined', {stream: accessLogStream}))
         morgan.token('remote-addr', (req, res): string => {
             return req.headers['x-real-ip'] as string || req.headers['x-forwarded-for'] as string || req.connection.remoteAddress || "";
         });
@@ -139,8 +150,8 @@ async function init() {
         const metrics = await MineSkinMetrics.get();
 
         app.set("trust proxy", 1);
-        app.use(bodyParser.urlencoded({ extended: true, limit: '50kb' }));
-        app.use(bodyParser.json({ limit: '20kb' }));
+        app.use(bodyParser.urlencoded({extended: true, limit: '50kb'}));
+        app.use(bodyParser.json({limit: '20kb'}));
         app.use(fileUpload());
         app.use(cookieParser(config.cookie.secret));
         app.use((req, res, next) => {
@@ -173,6 +184,7 @@ async function init() {
         app.use("/.well-known", express.static(".well-known"));
     }
 
+    /*
     {// Git Puller
         console.log("Setting up git puller");
 
@@ -222,13 +234,14 @@ async function init() {
         });
         app.use(function (req: Request, res: Response, next: NextFunction) {
             if (updatingApp) {
-                res.status(503).send({ err: "app is updating" });
+                res.status(503).send({err: "app is updating"});
                 return;
             }
             next();
         });
-        app.use(config.puller.endpoint, bodyParser.json({ limit: '100kb' }), puller.middleware);
+        app.use(config.puller.endpoint, bodyParser.json({limit: '100kb'}), puller.middleware);
     }
+     */
 
     {
         console.log("Connecting to database")
@@ -239,11 +252,11 @@ async function init() {
         console.log("Registering routes");
 
         app.get("/", corsMiddleware, function (req, res) {
-            res.json({ msg: "Hi!" });
+            res.json({msg: "Hi!"});
         });
 
         app.get("/openapi.yml", corsMiddleware, (req, res) => {
-            res.sendFile("/openapi.yml", { root: `${ __dirname }/..` });
+            res.sendFile("/openapi.yml", {root: `${ __dirname }/..`});
         });
         app.get("/openapi", (req, res) => {
             res.redirect("https://rest.wiki/?https://api.mineskin.org/openapi.yml");

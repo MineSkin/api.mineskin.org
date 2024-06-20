@@ -20,7 +20,7 @@ let jwtPrivateKey: Buffer;
 
 export const register = (app: Application, config: MineSkinConfig) => {
 
-    jwtPrivateKey = fs.readFileSync(config.jwt.keys.private);
+    jwtPrivateKey = fs.readFileSync(process.env.JWT_PRIVATE_KEY_ACCOUNT || config.jwt.keys.private);
     const googleClient = new OAuth2Client(config.google.id, config.google.secret);
 
     app.use("/account", corsWithCredentialsMiddleware);
@@ -240,7 +240,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
     app.get("/account/discord/oauth/start", async (req: Request, res: Response) => {
         const config = await getConfig();
         if (!config.discordAccount) {
-            res.status(400).json({ error: "server can't handle discord auth" });
+            res.status(400).json({error: "server can't handle discord auth"});
             return;
         }
         const user = await getUserFromRequest(req, res);
@@ -270,18 +270,18 @@ export const register = (app: Application, config: MineSkinConfig) => {
         let stateSplit = (req.query['state'] as string).split('_');
         if (config.server != stateSplit[0]) {
             // redirect to correct server
-            res.redirect(`https://${stateSplit[0]}.api.mineskin.org/account/discord/oauth/callback?code=${ req.query['code'] }&state=${ req.query['state'] }`);
+            res.redirect(`https://${ stateSplit[0] }.api.mineskin.org/account/discord/oauth/callback?code=${ req.query['code'] }&state=${ req.query['state'] }`);
             return;
         }
         if (!config.discordAccount) {
-            res.status(400).json({ error: "server can't handle discord auth" });
+            res.status(400).json({error: "server can't handle discord auth"});
             return;
         }
 
         const pendingLink: Maybe<PendingDiscordAccountLink> = Caching.getPendingDiscordLink(req.query["state"] as string);
         if (!pendingLink) {
             console.warn("Got a discord OAuth callback but the API wasn't expecting that linking request");
-            res.status(400).json({ error: "invalid state" });
+            res.status(400).json({error: "invalid state"});
             return;
         }
         Caching.invalidatePendingDiscordLink(req.query["state"] as string);
@@ -291,7 +291,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
             return;
         }
         if (user.uuid !== pendingLink.user || user.email !== pendingLink.email) {
-            res.status(401).json({ error: 'invalid state' });
+            res.status(401).json({error: 'invalid state'});
             return;
         }
 
@@ -322,7 +322,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
         const accessToken = tokenBody["access_token"];
         if (!accessToken) {
             console.warn("Failed to get access token from discord");
-            res.status(500).json({ error: "Discord API error" });
+            res.status(500).json({error: "Discord API error"});
             return;
         }
 
@@ -341,7 +341,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
         const discordId = userBody['id'];
         if (!discordId) {
             console.warn("Discord response did not have an id field")
-            res.status(404).json({ error: "Discord API error" });
+            res.status(404).json({error: "Discord API error"});
             return;
         }
 
@@ -395,10 +395,12 @@ function verify(token: string, options: VerifyOptions): Promise<Jwt> {
     })
 }
 
-export async function getUserFromRequest(req: Request, res: Response, reject: boolean = true): Promise<IUserDocument & { session?: string; } | undefined> {
+export async function getUserFromRequest(req: Request, res: Response, reject: boolean = true): Promise<IUserDocument & {
+    session?: string;
+} | undefined> {
     const cookie = req.cookies['access_token'];
     if (!cookie || cookie.length <= 0) {
-        if (reject) res.status(401).json({ error: 'invalid auth (1)' })
+        if (reject) res.status(401).json({error: 'invalid auth (1)'})
         return;
     }
 
@@ -412,7 +414,7 @@ export async function getUserFromRequest(req: Request, res: Response, reject: bo
             req.headers.origin.startsWith('https://www.mineskin.org') ||
             req.headers.origin.startsWith('https://testing.mineskin.org');
         if (!originAllowed) {
-            if (reject) res.status(400).json({ error: 'origin not allowed' });
+            if (reject) res.status(400).json({error: 'origin not allowed'});
             return;
         }
     }
@@ -425,43 +427,44 @@ export async function getUserFromRequest(req: Request, res: Response, reject: bo
             maxAge: '1h'
         });
     } catch (e) {
-        console.warn(e);
+        console.warn("Failed to verify JWT", e);
+        console.log(getIp(req))
         if (e instanceof JsonWebTokenError) {
-            if (reject) res.status(401).json({ error: 'invalid auth (2)' })
+            if (reject) res.status(401).json({error: 'invalid auth (2)'})
         }
         return;
     }
     const payload = jwt.payload as JwtPayload;
     if (!jwt || !payload) {
-        if (reject) res.status(401).json({ error: 'invalid auth (3)' })
+        if (reject) res.status(401).json({error: 'invalid auth (3)'})
         return;
     }
     if (!payload['sub'] || !payload['gid'] || !payload['email'] || !payload['jti']) {
-        if (reject) res.status(401).json({ error: 'invalid auth (4)' })
+        if (reject) res.status(401).json({error: 'invalid auth (4)'})
         return;
     }
 
     const user = await User.findForIdGoogleIdAndEmail(payload['sub'], payload['gid'], payload['email']);
     if (!user) {
-        if (reject) res.status(401).json({ error: 'user not found' });
+        if (reject) res.status(401).json({error: 'user not found'});
         return;
     }
 
     if (!user.sessions) {
         // has no sessions
-        if (reject) res.status(401).json({ error: 'invalid session (1)' })
+        if (reject) res.status(401).json({error: 'invalid session (1)'})
         return;
     }
     const sessionId = payload['jti']!;
     const sessionDate = user.sessions[sessionId];
     if (!sessionDate) {
         // invalid/expired session
-        if (reject) res.status(401).json({ error: 'invalid session (2)' })
+        if (reject) res.status(401).json({error: 'invalid session (2)'})
         return;
     }
     if (Date.now() - sessionDate.getTime() > Time.hours(1)) {
         // expired session
-        if (reject) res.status(401).json({ error: 'session expired' });
+        if (reject) res.status(401).json({error: 'session expired'});
         delete user.sessions[sessionId];
         user.markModified('sessions');
         await user.save();

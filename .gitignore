@@ -3,7 +3,16 @@
 
 /node_modules/
 /todo.txt
-/*config.js
 /access.log
 /id_rsa*
 *.log
+
+config.js
+*.private.key
+
+*.docker-compose.yml
+
+.env*
+.flaskenv*
+!.env.project
+!.env.vault

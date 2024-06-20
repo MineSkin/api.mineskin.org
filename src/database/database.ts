@@ -28,7 +28,10 @@ async function connectMongo(config: MineSkinConfig) {
     };
 
     let m: Mongoose;
-    if (config.mongo.url) {
+    if (process.env.MONGO_URI) {
+        console.log("Connecting to mongodb (env)...");
+        m = await mongoose.connect(process.env.MONGO_URI, options);
+    } else if (config.mongo.url) {
         console.log("Connecting to mongodb...");
         m = await mongoose.connect(config.mongo.url, options);
     } else {

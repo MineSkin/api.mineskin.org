@@ -187,16 +187,16 @@ export class Requests {
             }
 
             this.genericRequest({
-                url: 'https://api64.ipify.org?format=json',
+                url: 'https://api4.ipify.org?format=json',
                 method: 'GET'
             }).then(response => {
-                console.log(debug("Public IP: " + response.data.ip));
+                console.log(debug("Public IP 4: " + response.data.ip));
             });
             this.genericRequest({
-                url: 'https://api64.ipify.org?format=json',
+                url: 'https://api6.ipify.org?format=json',
                 method: 'GET',
             }).then(response => {
-                console.log(debug("Public IP: " + response.data.ip));
+                console.log(debug("Public IP 6: " + response.data.ip));
             });
         }, 100)
     }

@@ -16,6 +16,24 @@ import { MineSkinError, MineSkinRequest } from "../typings";
 import { imageHash } from "@inventivetalent/imghash";
 import { ClientInfo } from "../typings/ClientInfo";
 
+export function resolveHostname() {
+    if (process.env.NODE_HOSTNAME && !process.env.NODE_HOSTNAME.startsWith("{{")) {
+        // docker swarm
+        console.log("Using NODE_HOSTNAME: " + process.env.NODE_HOSTNAME);
+        return process.env.NODE_HOSTNAME;
+    }
+    if (process.env.HOST_HOSTNAME) {
+        console.log("Using HOST_HOSTNAME: " + process.env.HOST_HOSTNAME);
+        return process.env.HOST_HOSTNAME;
+    }
+    if (process.env.HOSTNAME) {
+        console.log("Using HOSTNAME: " + process.env.HOSTNAME);
+        return process.env.HOSTNAME;
+    }
+    console.warn("Could not resolve hostname");
+    return "unknown";
+}
+
 export function getIp(req: Request): string {
     return req.get('cf-connecting-ip') || req.get('x-forwarded-for') || req.get("x-real-ip") || req.connection.remoteAddress || req.ip || "unknown"
 }
@@ -24,7 +42,7 @@ export async function checkTraffic(req: Request, res: Response): Promise<boolean
     return await Sentry.startSpan({
         op: "generate_checkTraffic",
         name: "checkTraffic"
-    },async (span)=>{
+    }, async (span) => {
         const ip = getIp(req);
         console.log(debug("IP: " + ip));
 
