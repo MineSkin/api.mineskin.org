@@ -59,12 +59,12 @@ export const register = (app: Application) => {
     app.get("/get/id/:id", async (req: Request, res: Response) => {
         const id = parseInt(req.params["id"]);
         if (isNaN(id)) {
-            res.status(400).json({ error: "invalid number" });
+            res.status(400).json({error: "invalid number"});
             return;
         }
         const skin = await Caching.getSkinById(id);
         if (!skin) {
-            res.status(404).json({ error: "Skin not found" });
+            res.status(404).json({error: "Skin not found"});
             return;
         }
         const json = await skin.toResponseJson();
@@ -79,12 +79,12 @@ export const register = (app: Application) => {
     app.get("/get/uuid/:uuid", async (req: Request, res: Response) => {
         const uuid = req.params["uuid"];
         if (uuid.length < 32 || uuid.length > 36) {
-            res.status(400).json({ error: "invalid uuid" });
+            res.status(400).json({error: "invalid uuid"});
             return;
         }
         const skin = await Caching.getSkinByUuid(stripUuid(uuid));
         if (!skin) {
-            res.status(404).json({ error: "Skin not found" });
+            res.status(404).json({error: "Skin not found"});
             return;
         }
         res
@@ -96,13 +96,13 @@ export const register = (app: Application) => {
     // TODO: add route to get by hash
 
     app.get("/get/forTexture/:value/:signature?", async (req: Request, res: Response) => {
-        const query: any = { value: req.params["value"] };
+        const query: any = {value: req.params["value"]};
         if (req.params.hasOwnProperty("signature")) {
             query.signature = req.params["signature"];
         }
         const skin = await Skin.findOne(query).exec();
         if (!skin) {
-            res.status(404).json({ error: "Skin not found" });
+            res.status(404).json({error: "Skin not found"});
             return;
         }
         res.json(await skin.toResponseJson());
@@ -112,38 +112,36 @@ export const register = (app: Application) => {
         const page = Math.max(Number(req.params.hasOwnProperty("page") ? parseInt(req.params["page"]) : 1), 1);
         const size = Math.min(Math.max(Number(req.query.hasOwnProperty("size") ? parseInt(req.query["size"] as string) : 16)), 64)
 
-        const query: any = { visibility: 0 };
-        if (req.query.hasOwnProperty("filter") && (req.query["filter"]?.length || 0) > 0) {
-            query["$text"] = { $search: `${ req.query.filter }`.substr(0, 32) };
+        const query: any = {visibility: 0};
+        if (req.query.hasOwnProperty("filter") && ((req.query["filter"] as string|undefined)?.length || 0) > 0) {
+            query["$text"] = {$search: `${ req.query.filter }`.substr(0, 32)};
         }
 
-        const transaction = Sentry.getCurrentHub().getScope()?.getTransaction();
-
-        let countSpan = transaction?.startChild({
+        const count = await Sentry.startSpan({
             op: "skin_pagination_count",
-            description: "Skin Pagination Count"
+            name: "Skin Pagination Count"
+        }, async (countSpan) => {
+            return await Caching.getSkinDocumentCount(query);
         });
-        const count = await Caching.getSkinDocumentCount(query);
-        countSpan?.finish();
 
-        let querySpan = transaction?.startChild({
+        const skins = await Sentry.startSpan({
             op: "skin_pagination_query",
-            description: "Skin Pagination Query",
-            data: {
-                filter: req.query.filter,
+            name: "Skin Pagination Query",
+            attributes: {
+                filter: req.query.filter as string,
                 page: page - 1,
                 size: size
             }
+        }, async (querySpan) => {
+            return await Skin
+                .find(query)
+                .skip(size * (page - 1))
+                .limit(size)
+                .select({'_id': 0, id: 1, uuid: 1, skinUuid: 1, name: 1, url: 1, time: 1})
+                .sort({time: -1})
+                .lean()
+                .exec();
         });
-        const skins = await Skin
-            .find(query)
-            .skip(size * (page - 1))
-            .limit(size)
-            .select({ '_id': 0, id: 1, uuid: 1, skinUuid: 1, name: 1, url: 1, time: 1 })
-            .sort({ time: -1 })
-            .lean()
-            .exec();
-        querySpan?.finish();
 
         res.json({
             _deprecated: "use list by reference instead. see https://api.mineskin.org/openapi for details",
@@ -165,12 +163,10 @@ export const register = (app: Application) => {
         const after = req.params['after'];
         const size = Math.min(Math.max(Number(req.query.hasOwnProperty("size") ? parseInt(req.query["size"] as string) : 16)), 512)
 
-        const query: any = { visibility: 0 };
-        if (req.query.hasOwnProperty("filter") && (req.query["filter"]?.length || 0) > 0) {
-            query["$text"] = { $search: `${ req.query.filter }`.substr(0, 32) };
+        const query: any = {visibility: 0};
+        if (req.query.hasOwnProperty("filter") && ((req.query["filter"] as string|undefined)?.length || 0) > 0) {
+            query["$text"] = {$search: `${ req.query.filter }`.substring(0, 32)};
         }
-
-        const transaction = Sentry.getCurrentHub().getScope()?.getTransaction();
 
         let startTime;
         if ('start' === after) {
@@ -178,12 +174,12 @@ export const register = (app: Application) => {
 
             res.header("Cache-Control", "public, max-age=120")
         } else {
-            let anchorQuerySpan = transaction?.startChild({
+            const anchor = await Sentry.startSpan({
                 op: "skin_pagination_after_anchor_query",
-                description: "Skin Pagination After Anchor Query"
+                name: "Skin Pagination After Anchor Query"
+            }, async (span) => {
+                return await Caching.getSkinByUuid(after);
             });
-            const anchor = await Caching.getSkinByUuid(after);
-            anchorQuerySpan?.finish();
             if (!anchor) {
                 res.status(404).json({
                     msg: 'anchor not found',
@@ -200,24 +196,24 @@ export const register = (app: Application) => {
             res.header("Cache-Control", "public, max-age=3600")
         }
 
-        query['time'] = { $lt: startTime };
+        query['time'] = {$lt: startTime};
 
-        let querySpan = transaction?.startChild({
+        const skins = await Sentry.startSpan({
             op: "skin_pagination_after_query",
-            description: "Skin Pagination After Query",
-            data: {
-                filter: req.query.filter,
+            name: "Skin Pagination After Query",
+            attributes: {
+                filter: req.query.filter as string,
                 size: size
             }
+        }, async (querySpan) => {
+            return await Skin
+                .find(query)
+                .limit(size)
+                .select({'_id': 0, id: 1, uuid: 1, skinUuid: 1, name: 1, url: 1, time: 1, variant: 1, model: 1})
+                .sort({time: -1})
+                .lean()
+                .exec();
         });
-        const skins = await Skin
-            .find(query)
-            .limit(size)
-            .select({ '_id': 0, id: 1, uuid: 1, skinUuid: 1, name: 1, url: 1, time: 1, variant: 1, model: 1 })
-            .sort({ time: -1 })
-            .lean()
-            .exec();
-        querySpan?.finish();
 
         res.json({
             skins: skins.map(s => {
@@ -235,12 +231,12 @@ export const register = (app: Application) => {
 
     app.get("/get/random", async (req: Request, res: Response) => {
         const skin = (await Skin.aggregate([
-            { $match: { visibility: 0 } },
-            { $sample: { size: 1 } }
+            {$match: {visibility: 0}},
+            {$sample: {size: 1}}
         ]).exec()).map((s: any) => new Skin(s))[0];
 
         if (!skin) {
-            res.status(404).json({ error: "Skin not found" });
+            res.status(404).json({error: "Skin not found"});
             return;
         }
         res.json(await skin.toResponseJson());

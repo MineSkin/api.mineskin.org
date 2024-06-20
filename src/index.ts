@@ -1,9 +1,8 @@
 import * as sourceMapSupport from "source-map-support";
 import * as Sentry from "@sentry/node";
-import * as Tracing from "@sentry/tracing";
 import * as path from "path";
 import * as fs from "fs";
-import express, { ErrorRequestHandler, Express, NextFunction, Request, Response } from "express";
+import express, { ErrorRequestHandler, NextFunction, Request, Response } from "express";
 import "express-async-errors";
 import { Puller } from "express-git-puller";
 import { connectToMongo } from "./database/database";
@@ -38,6 +37,7 @@ import { Requests } from "./generator/Requests";
 import { info, warn } from "./util/colors";
 import { Discord } from "./util/Discord";
 import { Balancer } from "./generator/Balancer";
+import { nodeProfilingIntegration } from '@sentry/profiling-node';
 
 sourceMapSupport.install();
 
@@ -50,7 +50,7 @@ console.log("\n" +
     "  ==== STARTING UP ==== " +
     "\n");
 
-const app: Express = express();
+const app = express();
 
 
 async function init() {
@@ -96,8 +96,7 @@ async function init() {
             dsn: config.sentry.dsn,
             release: version,
             integrations: [
-                new Sentry.Integrations.Http({ tracing: true }),
-                new Tracing.Integrations.Express({ app })
+                nodeProfilingIntegration()
             ],
             serverName: config.server,
             tracesSampleRate: 0.1,
@@ -111,8 +110,8 @@ async function init() {
             ]
         });
 
-        app.use(Sentry.Handlers.requestHandler());
-        app.use(Sentry.Handlers.tracingHandler());
+        // app.use(Sentry.Handlers.requestHandler());
+        // app.use(Sentry.Handlers.tracingHandler());
     }
 
     {
@@ -289,14 +288,15 @@ async function init() {
         next(err);
     };
     app.use(preErrorHandler);
-    app.use(Sentry.Handlers.errorHandler({
-        shouldHandleError: (error) => {
-            if (error.status === 400) {
-                return Math.random() < 0.1;
-            }
-            return true;
-        }
-    }));
+    Sentry.setupExpressErrorHandler(app);
+    // app.use(Sentry.Handlers.errorHandler({
+    //     shouldHandleError: (error) => {
+    //         if (error.status === 400) {
+    //             return Math.random() < 0.1;
+    //         }
+    //         return true;
+    //     }
+    // }));
     const errorHandler: ErrorRequestHandler = (err, req: Request, res: Response, next: NextFunction) => {
         if (err instanceof MineSkinError) {
             getAndValidateRequestApiKey(req)

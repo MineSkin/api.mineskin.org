@@ -223,11 +223,11 @@ export const register = (app: Application) => {
         const origin = req.header("origin");
         const ip = getIp(req);
         const via = getVia(req);
-        let apiKeyId;
+        let apiKeyId:Maybe<string>;
         let apiKey;
         if (isApiKeyRequest(req) && req.apiKey) {
-            apiKeyId = req.apiKey._id;
-            apiKey = `${ req.apiKey.key.substr(0, 8) } ${ req.apiKey?.name }`;
+            apiKeyId = req.apiKey._id as string;
+            apiKey = `${ req.apiKey.key.substring(0, 8) } ${ req.apiKey?.name }`;
         }
 
         Sentry.setTags({
@@ -246,56 +246,56 @@ export const register = (app: Application) => {
     }
 
     function getAndValidateOptions(type: GenerateType, req: GenerateRequest, res: Response): GenerateOptions {
-        const transaction = Sentry.getCurrentHub().getScope()?.getTransaction();
-        const span = transaction?.startChild({
-            op: "generate_getAndValidateOptions"
+        return Sentry.startSpan({
+            op: "generate_getAndValidateOptions",
+            name: "getAndValidateOptions"
+        }, (span)=>{
+            let model = validateModel(req.body["model"] || req.query["model"]);
+            let variant = validateVariant(req.body["variant"] || req.query["variant"]);
+            // Convert & make sure both are set
+            if (variant === SkinVariant.UNKNOWN && model !== SkinModel.UNKNOWN) {
+                variant = modelToVariant(model);
+            } else if (model === SkinModel.UNKNOWN && variant !== SkinVariant.UNKNOWN) {
+                model = variantToModel(variant);
+            }
+
+            const visibility = validateVisibility(req.body["visibility"] || req.query["visibility"]);
+            const name = validateName(req.body["name"] || req.query["name"]);
+
+            const checkOnly = !!(req.body["checkOnly"] || req.query["checkOnly"])
+
+            const breadcrumbId = md5(`${ getIp(req) }${ Date.now() }${ variant }${ visibility }${ Math.random() }${ name }`).substr(0, 8);
+            const breadcrumb = nextBreadColor()(breadcrumbId);
+            req.breadcrumb = breadcrumb;
+            res.header("X-MineSkin-Breadcrumb", breadcrumbId);
+            res.header("X-MineSkin-Timestamp", `${ Date.now() }`);
+
+            console.log(debug(`${ breadcrumb } Type:        ${ type }`))
+            console.log(debug(`${ breadcrumb } Variant:     ${ variant }`));
+            console.log(debug(`${ breadcrumb } Model:       ${ model }`));
+            console.log(debug(`${ breadcrumb } Visibility:  ${ visibility }`));
+            console.log(debug(`${ breadcrumb } Name:        "${ name ?? '' }"`));
+            if (checkOnly) {
+                console.log(debug(`${ breadcrumb } Check Only:  true`));
+            }
+
+            Sentry.setTags({
+                "generate_type": type,
+                "generate_variant": variant,
+                "generate_visibility": visibility
+            });
+            Sentry.setExtra("generate_breadcrumb", breadcrumbId);
+
+            return {
+                model,
+                variant,
+                visibility,
+                name,
+                breadcrumb,
+                checkOnly
+            };
         })
 
-        let model = validateModel(req.body["model"] || req.query["model"]);
-        let variant = validateVariant(req.body["variant"] || req.query["variant"]);
-        // Convert & make sure both are set
-        if (variant === SkinVariant.UNKNOWN && model !== SkinModel.UNKNOWN) {
-            variant = modelToVariant(model);
-        } else if (model === SkinModel.UNKNOWN && variant !== SkinVariant.UNKNOWN) {
-            model = variantToModel(variant);
-        }
-
-        const visibility = validateVisibility(req.body["visibility"] || req.query["visibility"]);
-        const name = validateName(req.body["name"] || req.query["name"]);
-
-        const checkOnly = !!(req.body["checkOnly"] || req.query["checkOnly"])
-
-        const breadcrumbId = md5(`${ getIp(req) }${ Date.now() }${ variant }${ visibility }${ Math.random() }${ name }`).substr(0, 8);
-        const breadcrumb = nextBreadColor()(breadcrumbId);
-        req.breadcrumb = breadcrumb;
-        res.header("X-MineSkin-Breadcrumb", breadcrumbId);
-        res.header("X-MineSkin-Timestamp", `${ Date.now() }`);
-
-        console.log(debug(`${ breadcrumb } Type:        ${ type }`))
-        console.log(debug(`${ breadcrumb } Variant:     ${ variant }`));
-        console.log(debug(`${ breadcrumb } Model:       ${ model }`));
-        console.log(debug(`${ breadcrumb } Visibility:  ${ visibility }`));
-        console.log(debug(`${ breadcrumb } Name:        "${ name ?? '' }"`));
-        if (checkOnly) {
-            console.log(debug(`${ breadcrumb } Check Only:  true`));
-        }
-
-        Sentry.setTags({
-            "generate_type": type,
-            "generate_variant": variant,
-            "generate_visibility": visibility
-        });
-        Sentry.setExtra("generate_breadcrumb", breadcrumbId);
-
-        span?.finish();
-        return {
-            model,
-            variant,
-            visibility,
-            name,
-            breadcrumb,
-            checkOnly
-        };
     }
 
     function validateModel(model?: string): SkinModel {

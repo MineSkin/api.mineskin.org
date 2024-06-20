@@ -208,7 +208,7 @@ export const register = (app: Application) => {
             return;
         }
 
-        await apiKey.delete();
+        await apiKey.deleteOne();
 
         Discord.postDiscordMessage("🔑 API Key deleted\n" +
             "Name:      " + apiKey.name + "\n" +

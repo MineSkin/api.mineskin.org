@@ -12,7 +12,6 @@ import * as Sentry from "@sentry/node";
 import { Generator, MIN_ACCOUNT_DELAY } from "../../generator/Generator";
 import { Discord } from "../../util/Discord";
 
-const Int32 = require("mongoose-int32");
 export const AccountSchema: Schema<IAccountDocument, IAccountModel> = new Schema({
     id: {
         type: Number,
@@ -90,8 +89,8 @@ export const AccountSchema: Schema<IAccountDocument, IAccountModel> = new Schema
         lastLaunch: Number,
         lastPing: Number
     },
-    errorCounter: Int32,
-    successCounter: Int32,
+    errorCounter: Number,
+    successCounter: Number,
     totalErrorCounter: Number,
     totalSuccessCounter: Number,
     lastGenerateSuccess: Number,
@@ -121,7 +120,7 @@ export const AccountSchema: Schema<IAccountDocument, IAccountModel> = new Schema
     sendEmails: Boolean,
     emailSent: Boolean,
     ev: Number
-}, { id: false });
+}, {id: false});
 
 
 /// METHODS
@@ -189,68 +188,73 @@ AccountSchema.methods.getEV = function (this: IAccountDocument): number {
 /// STATICS
 
 AccountSchema.statics.findUsable = async function (this: IAccountModel, bread?: Bread): Promise<Maybe<IAccountDocument>> {
-    const transaction = Sentry.getCurrentHub().getScope()?.getTransaction();
-    const span = transaction?.startChild({
-        op: "account_findUsable"
+    return await Sentry.startSpan({
+        op: "account_findUsable",
+        name: "Account.findUsable"
+    }, async span => {
+        const time = Math.floor(Date.now() / 1000);
+        const metrics = await MineSkinMetrics.get();
+        const account = await this.findOne(await Generator.usableAccountsQuery()).sort({
+            lastUsed: 1,
+            lastSelected: 1,
+            sameTextureCounter: 1
+        }).exec()
+        if (!account) {
+            console.warn(error(bread?.breadcrumb + " There are no accounts available!"));
+            span?.setStatus({
+                code: 2,
+                message: "not_found"
+            })
+            return undefined;
+        }
+        if (Caching.isAccountLocked(account.id)) {
+            console.warn(warn(bread?.breadcrumb + " Selecting a different account since " + account.id + " got locked since querying"));
+            span?.setStatus({
+                code: 2,
+                message: "not_found"
+            })
+            return Account.findUsable(bread);
+        }
+        Caching.lockSelectedAccount(account.id, bread);
+
+        let usedDiff = Math.round(time - (account.lastUsed || 0));
+        let selectedDiff = Math.round(time - (account.lastSelected || 0));
+        console.log(debug(bread?.breadcrumb + " Account #" + account.id + " last used " + usedDiff + "s ago, last selected " + selectedDiff + "s ago"));
+        Sentry.setExtras({
+            "used_diff": usedDiff,
+            "selected_diff": selectedDiff
+        });
+        let usedDiffMins = Math.round(usedDiff / 60 / 2) * 2;
+        Sentry.setTag("used_diff_mins", `${ usedDiffMins }`);
+        try {
+            metrics.metrics!.influx.writePoints([{
+                measurement: 'account_selection_difference',
+                tags: {
+                    server: metrics.config.server,
+                    account: account.id
+                },
+                fields: {
+                    lastSelected: selectedDiff,
+                    lastUsed: usedDiff
+                }
+            }], {
+                database: 'mineskin',
+                precision: 'ms'
+            })
+        } catch (e) {
+            Sentry.captureException(e);
+        }
+
+        account.lastSelected = time;
+        if (!account.successCounter) account.successCounter = 0;
+        if (!account.errorCounter) account.errorCounter = 0;
+        if (!account.totalSuccessCounter) account.totalSuccessCounter = 0;
+        if (!account.totalErrorCounter) account.totalErrorCounter = 0;
+
+        return await account.save();
     })
 
-    const time = Math.floor(Date.now() / 1000);
-    const metrics = await MineSkinMetrics.get();
-    return this.findOne(await Generator.usableAccountsQuery()).sort({
-        lastUsed: 1,
-        lastSelected: 1,
-        sameTextureCounter: 1
-    } as IAccountDocument).exec()
-        .then((account: IAccountDocument) => {
-            if (!account) {
-                console.warn(error(bread?.breadcrumb + " There are no accounts available!"));
-                span?.setStatus("not_found").finish()
-                return undefined;
-            }
-            if (Caching.isAccountLocked(account.id)) {
-                console.warn(warn(bread?.breadcrumb + " Selecting a different account since " + account.id + " got locked since querying"));
-                span?.setStatus("not_found").finish();
-                return Account.findUsable(bread);
-            }
-            Caching.lockSelectedAccount(account.id, bread);
 
-            let usedDiff = Math.round(time - (account.lastUsed || 0));
-            let selectedDiff = Math.round(time - (account.lastSelected || 0));
-            console.log(debug(bread?.breadcrumb + " Account #" + account.id + " last used " + usedDiff + "s ago, last selected " + selectedDiff + "s ago"));
-            Sentry.setExtras({
-                "used_diff": usedDiff,
-                "selected_diff": selectedDiff
-            });
-            let usedDiffMins = Math.round(usedDiff / 60 / 2) * 2;
-            Sentry.setTag("used_diff_mins", `${ usedDiffMins }`);
-            try {
-                metrics.metrics!.influx.writePoints([{
-                    measurement: 'account_selection_difference',
-                    tags: {
-                        server: metrics.config.server,
-                        account: account.id
-                    },
-                    fields: {
-                        lastSelected: selectedDiff,
-                        lastUsed: usedDiff
-                    }
-                }], {
-                    database: 'mineskin',
-                    precision: 'ms'
-                })
-            } catch (e) {
-                Sentry.captureException(e);
-            }
-
-            account.lastSelected = time;
-            if (!account.successCounter) account.successCounter = 0;
-            if (!account.errorCounter) account.errorCounter = 0;
-            if (!account.totalSuccessCounter) account.totalSuccessCounter = 0;
-            if (!account.totalErrorCounter) account.totalErrorCounter = 0;
-
-            span?.finish();
-            return account.save();
-        })
 };
 
 AccountSchema.statics.countGlobalUsable = async function (this: IAccountModel): Promise<number> {
@@ -261,32 +265,32 @@ AccountSchema.statics.countGlobalUsable = async function (this: IAccountModel): 
         $and: [
             {
                 $or: [
-                    { lastSelected: { $exists: false } },
-                    { lastSelected: { $lt: (time - MIN_ACCOUNT_DELAY) } }
+                    {lastSelected: {$exists: false}},
+                    {lastSelected: {$lt: (time - MIN_ACCOUNT_DELAY)}}
                 ]
             },
             {
                 $or: [
-                    { lastUsed: { $exists: false } },
-                    { lastUsed: { $lt: (time - MIN_ACCOUNT_DELAY) } }
+                    {lastUsed: {$exists: false}},
+                    {lastUsed: {$lt: (time - MIN_ACCOUNT_DELAY)}}
                 ]
             },
             {
                 $or: [
-                    { forcedTimeoutAt: { $exists: false } },
-                    { forcedTimeoutAt: { $lt: (time - 500) } }
+                    {forcedTimeoutAt: {$exists: false}},
+                    {forcedTimeoutAt: {$lt: (time - 500)}}
                 ]
             },
             {
                 $or: [
-                    { hiatus: { $exists: false } },
-                    { 'hiatus.enabled': false },
-                    { 'hiatus.lastPing': { $lt: (time - 900) } }
+                    {hiatus: {$exists: false}},
+                    {'hiatus.enabled': false},
+                    {'hiatus.lastPing': {$lt: (time - 900)}}
                 ]
             }
         ],
-        errorCounter: { $lt: (config.errorThreshold || 10) },
-        timeAdded: { $lt: (time - 60) }
+        errorCounter: {$lt: (config.errorThreshold || 10)},
+        timeAdded: {$lt: (time - 60)}
     }).exec();
 };
 
@@ -300,15 +304,18 @@ AccountSchema.statics.calculateMinDelay = function (this: IAccountModel): Promis
     });
 };
 
-AccountSchema.statics.getAccountsPerServer = function (this: IAccountModel, accountType?: string): Promise<{ server: string, count: number }[]> {
-    let filter: any = { enabled: true, errorCounter: { $lt: 10 } };
+AccountSchema.statics.getAccountsPerServer = function (this: IAccountModel, accountType?: string): Promise<{
+    server: string,
+    count: number
+}[]> {
+    let filter: any = {enabled: true, errorCounter: {$lt: 10}};
     if (accountType) {
         filter.accountType = accountType;
     }
     return this.aggregate([
-        { $match: filter },
-        { $group: { _id: '$requestServer', count: { $sum: 1 } } },
-        { $sort: { count: 1 } }
+        {$match: filter},
+        {$group: {_id: '$requestServer', count: {$sum: 1}}},
+        {$sort: {count: 1}}
     ]).exec().then((accountsPerServer: any[]) => {
         const arr: { server: string, count: number }[] = [];
         if (accountsPerServer && accountsPerServer.length > 0) {

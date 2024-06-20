@@ -7,13 +7,13 @@ import { URL } from "url";
 import { setInterval } from "timers";
 import { IPoint } from "influx";
 import * as Sentry from "@sentry/node";
-import { Severity } from "@sentry/node";
 import { getConfig, MineSkinConfig } from "../typings/Configs";
 import { MineSkinMetrics } from "../util/metrics";
-import { Transaction } from "@sentry/tracing";
 import { c, debug, warn } from "../util/colors";
 import { Maybe, timeout } from "../util";
 import { IAccountDocument } from "../typings";
+import * as https from "https";
+import { Span } from "@sentry/types";
 
 export const GENERIC = "generic";
 export const MOJANG_AUTH = "mojangAuth";
@@ -176,7 +176,7 @@ export class Requests {
                         }
                         console.warn(warn("axios instance " + k + "/" + sk + " is not ready"));
                         Sentry.captureException(err, {
-                            level: Severity.Warning,
+                            level: 'warning',
                             tags: {
                                 server: config.server,
                                 proxy: sk
@@ -185,6 +185,19 @@ export class Requests {
                     })
                 }
             }
+
+            this.genericRequest({
+                url: 'https://api64.ipify.org?format=json',
+                method: 'GET'
+            }).then(response => {
+                console.log(debug("Public IP: " + response.data.ip));
+            });
+            this.genericRequest({
+                url: 'https://api64.ipify.org?format=json',
+                method: 'GET',
+            }).then(response => {
+                console.log(debug("Public IP: " + response.data.ip));
+            });
         }, 100)
     }
 
@@ -208,6 +221,18 @@ export class Requests {
         this.setupAxiosInstance(key, subkey, requestConfig, constr);
     }
 
+    private static setupIPProxyAxiosInstance(key: string, subkey: string, bindIp: string, requestConfig: AxiosRequestConfig, constr?: AxiosConstructor): void {
+        requestConfig.httpsAgent = new https.Agent({
+            localAddress: bindIp,
+            family: bindIp.includes(":") ? 6 : 4
+        })
+        if (!requestConfig.headers) {
+            requestConfig.headers = {};
+        }
+        requestConfig.headers["User-Agent"] = "MineSkin/" + SERVER + "/" + subkey;
+        this.setupAxiosInstance(key, subkey, requestConfig, constr);
+    }
+
     private static setupMultiProxiedAxiosInstance(key: string, mineskinConfig: MineSkinConfig, requestConfig: AxiosRequestConfig, constr?: AxiosConstructor): void {
         this.setupAxiosInstance(key, SERVER, requestConfig); // default instance without a proxy
 
@@ -217,9 +242,13 @@ export class Requests {
             if (!mineskinConfig.requestServers[mineskinConfig.server].includes(proxyKey)) continue;
             let proxy = proxyConfig.available[proxyKey];
             if (!proxy.enabled) continue;
-            let proxyType = proxy["type"]; //TODO
+            let proxyType = proxy["type"];
 
-            this.setupProxiedAxiosInstance(key, proxyKey, proxy, requestConfig, constr);
+            if (proxyType === "ip" && "ip" in proxy) {
+                this.setupIPProxyAxiosInstance(key, proxyKey, proxy["ip"]!!, requestConfig, constr);
+            } else {
+                this.setupProxiedAxiosInstance(key, proxyKey, proxy, requestConfig, constr);
+            }
         }
     }
 
@@ -295,7 +324,7 @@ export class Requests {
     }
 
     protected static async runAxiosRequest(request: AxiosRequestConfig, inst: AxiosInstance | string = this.axiosInstance): Promise<AxiosResponse> {
-        let instanceSubkey;
+        let instanceSubkey: string;
         let instance: AxiosInstance;
         if (typeof inst === "string") {
             instanceSubkey = this.getInstanceSubkey(request);
@@ -304,12 +333,13 @@ export class Requests {
             instance = inst as AxiosInstance;
         }
 
-        const t = this.trackSentryStart(request);
-        console.log(c.gray(`${ this.getBreadcrumb(request) || '00000000' } ${ request.method || 'GET' } ${ request.baseURL || instance.defaults.baseURL || '' }${ request.url } ${ instanceSubkey ? 'via ' + instanceSubkey : '' }`))
-        const r = await instance.request(request)
-            .then(async (response) => this.processRequestMetric(response, request, response, instance))
-            .catch(err => this.processRequestMetric(err, request, err.response, instance, err));
-        t?.finish();
+        const r = await this.trackSentryStart(request, async span => {
+            console.log(c.gray(`${ this.getBreadcrumb(request) || '00000000' } ${ request.method || 'GET' } ${ request.baseURL || instance.defaults.baseURL || '' }${ request.url } ${ instanceSubkey ? 'via ' + instanceSubkey : '' }`))
+            return await instance.request(request)
+                .then(async (response) => this.processRequestMetric(response, request, response, instance))
+                .catch(err => this.processRequestMetric(err, request, err.response, instance, err));
+        });
+
         return r;
     }
 
@@ -369,7 +399,7 @@ export class Requests {
         }
         if (err) {
             Sentry.captureException(err, {
-                level: Severity.Error,
+                level: 'error',
                 tags: {
                     server: metrics.config.server,
                     proxy: request ? this.getInstanceSubkey(request) : "unknown",
@@ -389,9 +419,9 @@ export class Requests {
     }
 
     private static getBreadcrumb(request: AxiosRequestConfig): Maybe<string> {
-        const h = request.headers["x-mineskin-breadcrumb"];
+        const h = request.headers?.["x-mineskin-breadcrumb"];
         if (h) {
-            delete request.headers["x-mineskin-breadcrumb"];
+            delete request.headers?.["x-mineskin-breadcrumb"];
             return h;
         }
         return undefined;
@@ -401,15 +431,14 @@ export class Requests {
 
     public static async dynamicRequest(type: string, request: AxiosRequestConfig, bread?: string): Promise<AxiosResponse> {
         this.addBreadcrumb(request, bread);
-        const t = this.trackSentryQueued(request);
-        const q = this.getRequestQueueForRequest(type, request);
-        if (q.size > MAX_QUEUE_SIZE) {
-            console.warn(warn(`Rejecting new request as queue for ${ type } is full (${ q.size })! `))
-            throw new Error("Request queue is full!");
-        }
-        const r = await timeout(q.add(request), TIMEOUT, `rq_dyn_${ type }_${ this.getInstanceSubkey(request) }_${ bread }`);
-        t?.finish();
-        return r;
+        return await this.trackSentryQueued(request, async span => {
+            const q = this.getRequestQueueForRequest(type, request);
+            if (q.size > MAX_QUEUE_SIZE) {
+                console.warn(warn(`Rejecting new request as queue for ${ type } is full (${ q.size })! `))
+                throw new Error("Request queue is full!");
+            }
+            return await timeout(q.add(request), TIMEOUT, `rq_dyn_${ type }_${ this.getInstanceSubkey(request) }_${ bread }`);
+        });
     }
 
     public static async dynamicRequestWithAccount(type: string, request: AxiosRequestConfig, account: IAccountDocument, bread?: string): Promise<AxiosResponse> {
@@ -429,10 +458,9 @@ export class Requests {
 
     public static async genericRequest(request: AxiosRequestConfig, bread?: string): Promise<AxiosResponse> {
         this.addBreadcrumb(request, bread);
-        const t = this.trackSentryQueued(request);
-        const r = await this.runAxiosRequest(request, this.axiosInstance);
-        t?.finish();
-        return r;
+        return await this.trackSentryQueued(request,async span=>{
+            return await this.runAxiosRequest(request, this.axiosInstance);
+        });
     }
 
     public static async mojangAuthRequest(request: AxiosRequestConfig, bread?: string): Promise<AxiosResponse> {
@@ -463,34 +491,38 @@ export class Requests {
         return this.dynamicRequest(LIVE_LOGIN, request, bread);
     }
 
-    private static trackSentryQueued(request: AxiosRequestConfig) {
-        const t = Sentry.getCurrentHub().getScope()?.getTransaction();
-        const s = t?.startChild({
+    private static trackSentryQueued<T>(request: AxiosRequestConfig, callback: (span: Span) => T): T {
+        return Sentry.startSpan({
             op: "request_queued",
-            description: `${ request.method || "GET" } ${ request.url }`,
-            tags: {
+            name: `${ request.method || "GET" } ${ request.url }`,
+            attributes: {
                 server: SERVER,
                 proxy: this.getInstanceSubkey(request)
             }
+        }, span => {
+            if (span) {
+                if (!request.headers) request.headers = {};
+                request.headers["x-mineskin-sentry-transaction"] = span;
+            }
+            return callback(span);
         });
-        if (t) {
-            if (!request.headers) request.headers = {};
-            request.headers["x-mineskin-sentry-transaction"] = t;
-        }
-        return s;
     }
 
-    private static trackSentryStart(request: AxiosRequestConfig) {
-        const s = (request.headers["x-mineskin-sentry-transaction"] as Transaction)?.startChild({
-            op: "request_start",
-            description: `${ request.method || "GET" } ${ request.url }`,
-            tags: {
-                server: SERVER,
-                proxy: this.getInstanceSubkey(request)
-            }
-        });
-        delete request.headers["x-mineskin-sentry-transaction"];
-        return s;
+    private static trackSentryStart<T>(request: AxiosRequestConfig, callback: (span: Span) => T): T {
+        return Sentry.withActiveSpan(request.headers?.["x-mineskin-sentry-transaction"] as Span, () => {
+            return Sentry.startSpan({
+                op: "request_start",
+                name: `${ request.method || "GET" } ${ request.url }`,
+                attributes: {
+                    server: SERVER,
+                    proxy: this.getInstanceSubkey(request)
+                }
+            }, span => {
+                const r = callback(span);
+                delete request.headers?.["x-mineskin-sentry-transaction"];
+                return r;
+            });
+        })
     }
 
     /// UTIL

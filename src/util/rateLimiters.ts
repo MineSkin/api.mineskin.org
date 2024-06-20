@@ -1,8 +1,6 @@
-import { Request, Response } from "express";
+import { Request } from "express";
 import rateLimit from "express-rate-limit";
 import { getAndValidateRequestApiKey, getIp } from "./index";
-import { debug } from "./colors";
-import { MineSkinMetrics } from "./metrics";
 import { Generator } from "../generator/Generator";
 
 function keyGenerator(req: Request): string {
@@ -22,13 +20,18 @@ export const generateLimiter = rateLimit({
     },
     message: JSON.stringify({ error: "Too many requests" }),
     keyGenerator: keyGenerator,
-    onLimitReached: (req: Request, res: Response) => {
-        console.log(debug(`${ getIp(req) } (${ req.header("user-agent") }) reached their rate limit`));
-        MineSkinMetrics.get().then(metrics => {
-            metrics.rateLimit
-                .tag("server", metrics.config.server)
-                .tag("limiter", "express")
-                .inc();
-        })
-    }
+    //TODO
+    // handler: (request: Request, response: Response, options: Options) => {
+    //     if (request.rateLimit.used === request.rateLimit.limit + 1) {
+    //         // onLimitReached code here
+    //         console.log(debug(`${ getIp(request) } (${ request.header("user-agent") }) reached their rate limit`));
+    //         MineSkinMetrics.get().then(metrics => {
+    //             metrics.rateLimit
+    //                 .tag("server", metrics.config.server)
+    //                 .tag("limiter", "express")
+    //                 .inc();
+    //         })
+    //     }
+    //     response.status(options.statusCode).send(options.message)
+    // }
 });

@@ -8,7 +8,6 @@ import {
     SimpleCache
 } from "@inventivetalent/loading-cache";
 import * as Sentry from "@sentry/node";
-import { Severity } from "@sentry/node";
 import { Maybe, sha512, stripUuid } from "../util";
 import { IPoint } from "influx";
 import { Skin, Traffic } from "../database/schemas";
@@ -43,7 +42,7 @@ export class Caching {
                 return body.properties[0] as SkinData;
             }).catch(err => {
                 Sentry.captureException(err, {
-                    level: Severity.Warning,
+                    level: 'warning',
                     tags: {
                         cache: "skinData"
                     }
@@ -82,7 +81,7 @@ export class Caching {
             }).catch(err => {
                 console.warn(err);
                 Sentry.captureException(err, {
-                    level: Severity.Warning,
+                    level: 'warning',
                     tags: {
                         cache: "userByName"
                     }
@@ -125,7 +124,7 @@ export class Caching {
             }).catch(err => {
                 console.warn(err);
                 Sentry.captureException(err, {
-                    level: Severity.Warning,
+                    level: 'warning',
                     tags: {
                         cache: "userByUuid"
                     }
@@ -152,7 +151,7 @@ export class Caching {
                 return response.data as BasicMojangProfile
             }).catch(err => {
                 Sentry.captureException(err, {
-                    level: Severity.Warning,
+                    level: 'warning',
                     tags: {
                         cache: "profileByAccessToken"
                     }
@@ -301,7 +300,7 @@ export class Caching {
     }
 
     public static getTrafficRequestTimeByApiKey(key: IApiKeyDocument): Promise<Maybe<Date>> {
-        return this.trafficByKeyCache.get(key._id);
+        return this.trafficByKeyCache.get(key._id as string);
     }
 
     public static getTrafficRequestTimeByKey(key: string): Promise<Maybe<Date>> {

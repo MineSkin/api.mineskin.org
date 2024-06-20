@@ -15,76 +15,73 @@ import { IApiKeyDocument } from "../typings/db/IApiKeyDocument";
 import { MineSkinError, MineSkinRequest } from "../typings";
 import { imageHash } from "@inventivetalent/imghash";
 import { ClientInfo } from "../typings/ClientInfo";
-import { LeanDocument } from "mongoose";
 
 export function getIp(req: Request): string {
-    return req.get('cf-connecting-ip') || req.get('x-forwarded-for') || req.get("x-real-ip") || req.connection.remoteAddress || req.ip;
+    return req.get('cf-connecting-ip') || req.get('x-forwarded-for') || req.get("x-real-ip") || req.connection.remoteAddress || req.ip || "unknown"
 }
 
 export async function checkTraffic(req: Request, res: Response): Promise<boolean> {
-    const transaction = Sentry.getCurrentHub().getScope()?.getTransaction();
-    const span = transaction?.startChild({
-        op: "generate_checkTraffic"
-    })
+    return await Sentry.startSpan({
+        op: "generate_checkTraffic",
+        name: "checkTraffic"
+    },async (span)=>{
+        const ip = getIp(req);
+        console.log(debug("IP: " + ip));
 
-    const ip = getIp(req);
-    console.log(debug("IP: " + ip));
-
-    Sentry.setUser({
-        ip_address: ip
-    });
-
-    const apiKey = await getAndValidateRequestApiKey(req);
-    if (apiKey) {
         Sentry.setUser({
-            username: `${ apiKey.key.substr(0, 16) } ${ apiKey.name }`,
             ip_address: ip
         });
-    }
 
-    const lastRequest = apiKey ? await Caching.getTrafficRequestTimeByApiKey(apiKey) : await Caching.getTrafficRequestTimeByIp(ip);
-    if (!lastRequest) { // First request
-        span?.finish();
+        const apiKey = await getAndValidateRequestApiKey(req);
+        if (apiKey) {
+            Sentry.setUser({
+                username: `${ apiKey.key.substr(0, 16) } ${ apiKey.name }`,
+                ip_address: ip
+            });
+        }
+
+        const lastRequest = apiKey ? await Caching.getTrafficRequestTimeByApiKey(apiKey) : await Caching.getTrafficRequestTimeByIp(ip);
+        if (!lastRequest) { // First request
+            return true;
+        }
+
+        const time = Date.now();
+
+        const delayInfo = await Generator.getDelay(apiKey);
+
+        if (lastRequest.getTime() > time - delayInfo.millis) {
+            res.status(429).json({
+                error: "Too many requests",
+                nextRequest: Math.round((time / 1000) + delayInfo.seconds + 5), // deprecated
+                delay: delayInfo.seconds, // deprecated
+
+                delayInfo: {
+                    seconds: delayInfo.seconds,
+                    millis: delayInfo.millis
+                }
+            });
+            console.log(debug("Request too soon"));
+            MineSkinMetrics.get().then(metrics => {
+                metrics.rateLimit
+                    .tag("server", metrics.config.server)
+                    .tag("limiter", "mongo")
+                    .inc();
+            })
+            return false;
+        }
         return true;
-    }
-    const time = Date.now();
-
-    const delayInfo = await Generator.getDelay(apiKey);
-
-    if (lastRequest.getTime() > time - delayInfo.millis) {
-        res.status(429).json({
-            error: "Too many requests",
-            nextRequest: Math.round((time / 1000) + delayInfo.seconds + 5), // deprecated
-            delay: delayInfo.seconds, // deprecated
-
-            delayInfo: {
-                seconds: delayInfo.seconds,
-                millis: delayInfo.millis
-            }
-        });
-        console.log(debug("Request too soon"));
-        MineSkinMetrics.get().then(metrics => {
-            metrics.rateLimit
-                .tag("server", metrics.config.server)
-                .tag("limiter", "mongo")
-                .inc();
-        })
-        span?.finish();
-        return false;
-    }
-    span?.finish();
-    return true;
+    })
 }
 
 export async function updateTraffic(req: Request | ClientInfo, time: Date = new Date()): Promise<void> {
-    const transaction = Sentry.getCurrentHub().getScope()?.getTransaction();
-    const span = transaction?.startChild({
-        op: "generate_updateTraffic"
+    return await Sentry.startSpan({
+        op: "generate_updateTraffic",
+        name: "updateTraffic",
+    }, async span => {
+        const ip = req.ip ?? getIp(req as Request);
+        const key = 'apiKeyId' in req ? req.apiKeyId : null;
+        return await Caching.updateTrafficRequestTime(ip, key || null, time);
     })
-    const ip = req.ip ?? getIp(req as Request);
-    const key = 'apiKeyId' in req ? req.apiKeyId : null;
-    await Caching.updateTrafficRequestTime(ip, key || null, time);
-    span?.finish();
 }
 
 
@@ -194,7 +191,7 @@ export function variantToModel(variant?: string): SkinModel {
     return SkinModel.CLASSIC;
 }
 
-export function getVariant(skin: ISkinDocument | LeanDocument<ISkinDocument>) {
+export function getVariant(skin: ISkinDocument) {
     if (skin.variant && skin.variant !== SkinVariant.UNKNOWN) {
         return skin.variant;
     }
@@ -454,3 +451,4 @@ export const corsWithCredentialsMiddleware = (req: Request, res: Response, next:
         return next();
     }
 };
+

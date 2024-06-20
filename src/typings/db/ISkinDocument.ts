@@ -1,4 +1,4 @@
-import { Document, Model, UpdateWriteOpResult } from "mongoose";
+import { Model, UpdateWriteOpResult } from "mongoose";
 import { SkinInfo } from "../SkinInfo";
 import { Maybe } from "../../util";
 
@@ -27,7 +27,7 @@ export enum GenerateType {
     USER = "user"
 }
 
-export interface ISkinDocument extends Document {
+export interface ISkinDocument {
     /** Unique numeric ID for this skin **/
     id: number | any;
     skinUuid?: string;

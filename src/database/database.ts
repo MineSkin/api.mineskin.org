@@ -24,8 +24,6 @@ async function connectMongo(config: MineSkinConfig) {
     // Connect to DB
 
     const options: ConnectOptions = {
-        useNewUrlParser: true,
-        useFindAndModify: false,
         autoIndex: false
     };
 

@@ -78,7 +78,7 @@ interface MicrosoftConfig {
 
 export interface ProxyConfig {
     enabled: boolean;
-    available: {[id: string]: Partial<HttpsProxyAgentOptions&{type?: string;enabled?: boolean}>}
+    available: {[id: string]: Partial<HttpsProxyAgentOptions&{type?: string;enabled?: boolean; ip?: string}>}
 }
 
 export interface CloudflareConfig {

@@ -1,6 +1,26 @@
 import { Application, Request, Response } from "express";
-import { Authentication, AuthenticationError, AuthError, BasicMojangProfile, Microsoft, Mojang, MojangSecurityAnswer, XboxInfo } from "../generator/Authentication";
-import { base64decode, corsWithCredentialsMiddleware, getIp, Maybe, md5, sha1, sha256, sha512, sleep, stripUuid } from "../util";
+import {
+    Authentication,
+    AuthenticationError,
+    AuthError,
+    BasicMojangProfile,
+    Microsoft,
+    Mojang,
+    MojangSecurityAnswer,
+    XboxInfo
+} from "../generator/Authentication";
+import {
+    base64decode,
+    corsWithCredentialsMiddleware,
+    getIp,
+    Maybe,
+    md5,
+    sha1,
+    sha256,
+    sha512,
+    sleep,
+    stripUuid
+} from "../util";
 import session from "express-session";
 import { Generator } from "../generator/Generator";
 import { Account, User } from "../database/schemas";
@@ -700,8 +720,8 @@ export const register = (app: Application, config: MineSkinConfig) => {
                 enabled: false
             }
         }).exec().then(updateResult => {
-            if (updateResult.nModified > 0) {
-                Discord.postDiscordMessage(`Disabled ${ updateResult.nModified } account with the same uuid (${ account.uuid }) as a newly added ${ account.accountType } account (#${ account.id })`);
+            if (updateResult.modifiedCount > 0) {
+                Discord.postDiscordMessage(`Disabled ${ updateResult.modifiedCount } account with the same uuid (${ account.uuid }) as a newly added ${ account.accountType } account (#${ account.id })`);
             }
 
             if (user?.uuid) {

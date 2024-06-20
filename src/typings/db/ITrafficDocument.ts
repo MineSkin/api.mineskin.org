@@ -3,7 +3,9 @@ import { Maybe } from "../../util";
 
 export interface ITrafficDocument extends Document {
     ip: string;
+    key: string;
     lastRequest: Date;
+    count: number;
 }
 
 export interface ITrafficModel extends Model<ITrafficDocument> {

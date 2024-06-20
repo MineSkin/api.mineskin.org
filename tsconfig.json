@@ -25,7 +25,6 @@
       "express",
       "express-fileupload",
       "body-parser",
-      "mongoose",
       "morgan",
       "tunnel-ssh"
     ],

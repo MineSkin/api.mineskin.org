@@ -689,57 +689,61 @@ export class Microsoft {
 export class Authentication {
 
     public static async authenticate(account: IAccountDocument, bread?: Bread): Promise<IAccountDocument> {
-        const transaction = Sentry.getCurrentHub().getScope()?.getTransaction();
-        const span = transaction?.startChild({
-            op: "auth_authenticate"
-        })
-
-        const metrics = await MineSkinMetrics.get();
-        const metric = metrics.authentication
-            .tag("server", metrics.config.server)
-            .tag("type", account.getAccountType())
-            .tag("account", account.id);
-        try {
-            let prevAccessTokenExpiration = account.accessTokenExpiration;
-            let result: IAccountDocument;
-            if (account.getAccountType() === AccountType.MICROSOFT || account.microsoftAccount) {
-                result = await Microsoft.authenticate(account, bread);
-            } else {
-                result = await Mojang.authenticate(account, bread)
-                    .then(account => Mojang.completeChallenges(account, bread));
-            }
-            metric
-                .tag("result", "success")
-                .tag("source", (prevAccessTokenExpiration === result.accessTokenExpiration) ? "reused" : result.accessTokenSource)
-                .inc();
-            span?.finish();
-            return result;
-        } catch (e) {
-            metric.tag("result", "fail");
-            if (e instanceof AuthenticationError) {
-                console.warn(e);
-                if (e.code === AuthError.MISSING_CREDENTIALS) {
-                    Notifications.notifyMissingCredentials(account);
+        return await Sentry.startSpan({
+            op: "auth_authenticate",
+            name: "authenticate",
+        },async span=>{
+            const metrics = await MineSkinMetrics.get();
+            const metric = metrics.authentication
+                .tag("server", metrics.config.server)
+                .tag("type", account.getAccountType())
+                .tag("account", account.id);
+            try {
+                let prevAccessTokenExpiration = account.accessTokenExpiration;
+                let result: IAccountDocument;
+                if (account.getAccountType() === AccountType.MICROSOFT || account.microsoftAccount) {
+                    result = await Microsoft.authenticate(account, bread);
+                } else {
+                    result = await Mojang.authenticate(account, bread)
+                        .then(account => Mojang.completeChallenges(account, bread));
                 }
-                if (e.code === AuthError.MICROSOFT_AUTH_FAILED || e.code === AuthError.MOJANG_AUTH_FAILED) {
-                    Notifications.notifyLoginFailed(account, e);
-                }
-                if (e.details && e.details.response) {
-                    if (e.details.response.status >= 400 && e.details.response.status <= 403) {
-                        if (account.passwordNew) {
-                            console.warn(warn(`${ bread?.breadcrumb } [Auth] Resetting access token for ${ account.toSimplifiedString() }`));
-                            account.accessToken = "";
+                metric
+                    .tag("result", "success")
+                    .tag("source", (prevAccessTokenExpiration === result.accessTokenExpiration) ? "reused" : result.accessTokenSource)
+                    .inc();
+                return result;
+            } catch (e) {
+                metric.tag("result", "fail");
+                if (e instanceof AuthenticationError) {
+                    console.warn(e);
+                    if (e.code === AuthError.MISSING_CREDENTIALS) {
+                        Notifications.notifyMissingCredentials(account);
+                    }
+                    if (e.code === AuthError.MICROSOFT_AUTH_FAILED || e.code === AuthError.MOJANG_AUTH_FAILED) {
+                        Notifications.notifyLoginFailed(account, e);
+                    }
+                    if (e.details && e.details.response) {
+                        if (e.details.response.status >= 400 && e.details.response.status <= 403) {
+                            if (account.passwordNew) {
+                                console.warn(warn(`${ bread?.breadcrumb } [Auth] Resetting access token for ${ account.toSimplifiedString() }`));
+                                account.accessToken = "";
+                            }
                         }
                     }
+                    metric.tag("reason", e.code);
+                } else {
+                    metric.tag("reason", e.name);
                 }
-                metric.tag("reason", e.code);
-            } else {
-                metric.tag("reason", e.name);
+                metric.inc();
+                span?.setStatus({
+                    code: 2,
+                    message: "internal_error"
+                });
+                throw e;
             }
-            metric.inc();
-            span?.setStatus("internal_error").finish();
-            throw e;
-        }
+        })
+
+
     }
 
     public static async getExistingAccountServer(email: string): Promise<Maybe<string>> {
