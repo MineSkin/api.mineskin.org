@@ -46,7 +46,7 @@
     "jobqu": "^2.0.5",
     "jsonwebtoken": "9.0.0",
     "metrics-node": "^1.0.0",
-    "mongoose": "^8.4.3",
+    "mongoose": "^8.4.1",
     "mongoose-int32": "^0.6.0",
     "morgan": "^1.10.0",
     "nodemailer": "^6.5.0",
@@ -75,6 +75,6 @@
     "@types/tmp": "^0.2.0",
     "@types/tunnel-ssh": "^4.1.0",
     "@types/uuid": "^8.3.0",
-    "typescript": "^4.6.4"
+    "typescript": "^5.4.5"
   }
 }
