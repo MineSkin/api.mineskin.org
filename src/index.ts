@@ -39,6 +39,7 @@ import { Balancer } from "./generator/Balancer";
 import { nodeProfilingIntegration } from '@sentry/profiling-node';
 
 
+
 sourceMapSupport.install();
 
 let config: MineSkinConfig;

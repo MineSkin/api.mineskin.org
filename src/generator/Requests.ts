@@ -14,6 +14,7 @@ import { Maybe, timeout } from "../util";
 import { IAccountDocument } from "../typings";
 import * as https from "https";
 import { Span } from "@sentry/types";
+import { networkInterfaces } from "os";
 
 export const GENERIC = "generic";
 export const MOJANG_AUTH = "mojangAuth";
@@ -187,7 +188,7 @@ export class Requests {
             }
 
             this.genericRequest({
-                url: 'https://api4.ipify.org?format=json',
+                url: 'https://api.ipify.org?format=json',
                 method: 'GET'
             }).then(response => {
                 console.log(debug("Public IP 4: " + response.data.ip));
@@ -245,7 +246,24 @@ export class Requests {
             let proxyType = proxy["type"];
 
             if (proxyType === "ip" && "ip" in proxy) {
-                this.setupIPProxyAxiosInstance(key, proxyKey, proxy["ip"]!!, requestConfig, constr);
+                let ip = proxy["ip"]!!;
+                if ("auto6" === ip) {
+                    console.log(debug("Looking for local IPv6 address for " + proxyKey));
+                    const interfaces = networkInterfaces();
+                    for (let id in interfaces) {
+                        for (let i of interfaces[id]!!) {
+                            if (i.family === "IPv6" && !i.internal) {
+                                ip = i.address;
+                                console.log(debug("Found IPv6 address " + ip + " for " + proxyKey));
+                                break;
+                            }
+                        }
+                        if (ip !== proxy["ip"]) {
+                            break;
+                        }
+                    }
+                }
+                this.setupIPProxyAxiosInstance(key, proxyKey, ip, requestConfig, constr);
             } else {
                 this.setupProxiedAxiosInstance(key, proxyKey, proxy, requestConfig, constr);
             }
@@ -458,7 +476,7 @@ export class Requests {
 
     public static async genericRequest(request: AxiosRequestConfig, bread?: string): Promise<AxiosResponse> {
         this.addBreadcrumb(request, bread);
-        return await this.trackSentryQueued(request,async span=>{
+        return await this.trackSentryQueued(request, async span => {
             return await this.runAxiosRequest(request, this.axiosInstance);
         });
     }

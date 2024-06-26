@@ -318,6 +318,9 @@ export const register = (app: Application, config: MineSkinConfig) => {
         try {
             let server = await Generator.getPreferredAccountServer(req.query["type"] as string);
             server = await Generator.getServerFromProxy(server);
+            if (server.endsWith('6')) {
+                server = server.substring(0, server.length - 1);
+            }
             res.json({
                 server: server,
                 host: `${ server }.api.mineskin.org`
