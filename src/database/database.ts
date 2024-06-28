@@ -45,8 +45,18 @@ async function connectMongo(config: MineSkinConfig) {
         console.warn("Mongo connection error, restarting app");
         setTimeout(() => {
             process.exit(1);
-        }, 10000);
-    })
+        }, 5000);
+    });
+
+    for (const model of Object.values(mongoose.models)) {
+        model.on('error', err => {
+            Sentry.captureException(err);
+            console.warn(`Mongo model error, restarting app`);
+            setTimeout(() => {
+                process.exit(1);
+            }, 4000);
+        })
+    }
 
     return m;
 }
