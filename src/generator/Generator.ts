@@ -1237,14 +1237,14 @@ export class Generator {
             }
             account.ownedCapes = ownedIds;
         }
-        if (!has15YearCape) {
+        /*if (!has15YearCape) {
             // auto claim 15 year cape
             let claimed = await this.claim15YearCape(account);
             if (claimed) {
                 account.ownedCapes?.push(Capes.ANNIVERSARY_15);
                 console.log(info(`Claimed 15 year cape for ${ account.id }/${ account.uuid }`));
             }
-        }
+        }*/
         if (clearResult) {
             return clearResult;
         }
