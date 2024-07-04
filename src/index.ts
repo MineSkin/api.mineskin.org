@@ -39,7 +39,6 @@ import { Balancer } from "./generator/Balancer";
 import { nodeProfilingIntegration } from '@sentry/profiling-node';
 
 
-
 sourceMapSupport.install();
 
 let config: MineSkinConfig;
@@ -282,6 +281,7 @@ async function init() {
 
     const preErrorHandler: ErrorRequestHandler = (err, req: Request, res: Response, next: NextFunction) => {
         console.warn(warn((isBreadRequest(req) ? req.breadcrumb + " " : "") + "Error in a route " + err.message));
+        Sentry.setExtra("route", req.path);
         if (err instanceof MineSkinError) {
             Sentry.setTags({
                 "error_type": err.name,
