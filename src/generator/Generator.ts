@@ -1379,7 +1379,7 @@ export class Generator {
                     code: 2,
                     message: "invalid_argument"
                 });
-                throw new GeneratorError(GenError.INVALID_IMAGE, "Invalid file size", 400);
+                throw new GeneratorError(GenError.INVALID_IMAGE, `Invalid file size (${size})`, 400);
             }
 
             let fType;
