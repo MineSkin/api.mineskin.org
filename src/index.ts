@@ -33,7 +33,7 @@ import { GitConfig } from "@inventivetalent/gitconfig";
 import { GithubWebhook } from "@inventivetalent/express-github-webhook/dist/src";
 import { Stats } from "./generator/Stats";
 import { Requests } from "./generator/Requests";
-import { info, warn } from "./util/colors";
+import { debug, info, warn } from "./util/colors";
 import { Discord } from "./util/Discord";
 import { Balancer } from "./generator/Balancer";
 import { nodeProfilingIntegration } from '@sentry/profiling-node';
@@ -282,6 +282,7 @@ async function init() {
     const preErrorHandler: ErrorRequestHandler = (err, req: Request, res: Response, next: NextFunction) => {
         console.warn(warn((isBreadRequest(req) ? req.breadcrumb + " " : "") + "Error in a route " + err.message));
         Sentry.setExtra("route", req.path);
+        console.debug(debug(req.path));
         if (err instanceof MineSkinError) {
             Sentry.setTags({
                 "error_type": err.name,
@@ -326,6 +327,7 @@ async function init() {
                             errorType: err.name,
                             errorCode: err.code,
                             error: err.msg,
+                            breadcrumb: isBreadRequest(req) ? req.breadcrumb : null,
                             nextRequest: Math.round((Date.now() / 1000) + delayInfo.seconds), // deprecated
 
                             delayInfo: {
@@ -336,10 +338,11 @@ async function init() {
                     }).catch(e => Sentry.captureException(e));
                 });
         } else {
-            console.warn(err);
+            console.error("Unexpected Error", err);
             res.status(500).json({
                 success: false,
-                error: "An unexpected error occurred"
+                error: "An unexpected error occurred",
+                breadcrumb: isBreadRequest(req) ? req.breadcrumb : null
             })
         }
     }
