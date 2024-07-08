@@ -1,7 +1,7 @@
 version: "3.9"
 services:
   mineskin-api:
-    image: ghcr.io/mineskin/mineskin-api:ipv6
+    image: ghcr.io/mineskin/mineskin-api:log
     container_name: mineskin-api
     environment:
       FORCE_COLOR: 1
@@ -15,6 +15,7 @@ services:
     volumes:
       - /home/inventivetalent/api.mineskin.org/config.js:/opt/app/config.js
       - /home/inventivetalent/mineskin.jwt.private.key:/etc/mineskin/mineskin.jwt.private.key
+      - /home/inventivetalent/api.mineskin.org/logs:/opt/app/logs
     secrets:
       - mineskin.jwt.private.key
     deploy:

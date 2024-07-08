@@ -23,6 +23,8 @@
     "@inventivetalent/optimus-ts": "^0.2.1",
     "@inventivetalent/time": "^1.0.0",
     "@inventivetalent/typescript-memoize": "^1.0.0-alpha.5",
+    "@logtail/node": "^0.4.21",
+    "@logtail/winston": "^0.4.21",
     "@sentry/node": "8.9.2",
     "@sentry/profiling-node": "8.9.2",
     "@sentry/tracing": "^7.117.0",
@@ -59,7 +61,8 @@
     "tmp": "0.2.1",
     "tunnel-ssh": "^4.1.4",
     "user-agent-stripper": "^1.0.1",
-    "uuid": "^3.4.0"
+    "uuid": "^3.4.0",
+    "winston": "^3.13.0"
   },
   "devDependencies": {
     "@types/body-parser": "^1.19.5",

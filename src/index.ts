@@ -1,5 +1,6 @@
 import "dotenv/config"
 import "./instrument"
+import { logger, logtail } from "./util/log";
 import * as sourceMapSupport from "source-map-support";
 import * as Sentry from "@sentry/node";
 import * as path from "path";
@@ -48,7 +49,7 @@ let updatingApp = true;
 
 const hostname = resolveHostname();
 
-console.log("\n" +
+logger.info("\n" +
     "  ==== STARTING UP ==== \n" +
     "" + process.env.NODE_ENV + "\n" +
     "" + process.env.SOURCE_COMMIT + "\n" +
@@ -278,6 +279,12 @@ async function init() {
         hiatusRoute.register(app);
 
     }
+
+    // flush logs
+    app.use((req, res, next) => {
+        logtail.flush();
+        next();
+    })
 
     const preErrorHandler: ErrorRequestHandler = (err, req: Request, res: Response, next: NextFunction) => {
         console.warn(warn((isBreadRequest(req) ? req.breadcrumb + " " : "") + "Error in a route " + err.message));
