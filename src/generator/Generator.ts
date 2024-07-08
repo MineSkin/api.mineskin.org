@@ -23,7 +23,6 @@ import imageSize from "image-size";
 import { promises as fs } from "fs";
 import * as fileType from "file-type";
 import { FileTypeResult } from "file-type";
-import { UploadedFile } from "express-fileupload";
 import { ISizeCalculationResult } from "image-size/dist/types/interface";
 import { v4 as randomUuid } from "uuid";
 import * as Jimp from "jimp";
@@ -960,7 +959,7 @@ export class Generator {
 
     /// GENERATE UPLOAD
 
-    public static async generateFromUploadAndSave(file: UploadedFile, options: GenerateOptions, client: ClientInfo): Promise<SavedSkin> {
+    public static async generateFromUploadAndSave(file: Express.Multer.File, options: GenerateOptions, client: ClientInfo): Promise<SavedSkin> {
         const start = Date.now();
         const data = await this.generateFromUpload(file, options, client);
         const skin = await this.getDuplicateOrSaved(data, options, client, GenerateType.UPLOAD, start);
@@ -969,9 +968,9 @@ export class Generator {
         return skin;
     }
 
-    protected static async generateFromUpload(file: UploadedFile, options: GenerateOptions, client: ClientInfo): Promise<GenerateResult> {
+    protected static async generateFromUpload(file: Express.Multer.File, options: GenerateOptions, client: ClientInfo): Promise<GenerateResult> {
         console.log(info(options.breadcrumb + " [Generator] Generating from upload"));
-        Sentry.setExtra("generate_file", file.md5);
+        Sentry.setExtra("generate_file", file.filename);
 
         return await Sentry.startSpan({
             op: "generate_generateFromUpload",

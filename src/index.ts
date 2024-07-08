@@ -11,7 +11,6 @@ import { connectToMongo } from "./database/database";
 import RotatingFileStream from "rotating-file-stream";
 import morgan from "morgan";
 import * as bodyParser from "body-parser";
-import fileUpload from "express-fileupload";
 import cookieParser from "cookie-parser";
 import {
     accountManagerRoute,
@@ -155,7 +154,6 @@ async function init() {
         app.set("trust proxy", 1);
         app.use(bodyParser.urlencoded({extended: true, limit: '50kb'}));
         app.use(bodyParser.json({limit: '20kb'}));
-        app.use(fileUpload());
         app.use(cookieParser(config.cookie.secret));
         app.use((req, res, next) => {
             res.header("X-MineSkin-Server", config.server || "default");

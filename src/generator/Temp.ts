@@ -3,7 +3,6 @@ import * as tmp from "tmp";
 import { DirOptions, FileOptions } from "tmp";
 import { Stream } from "stream";
 import { Requests } from "./Requests";
-import { UploadedFile } from "express-fileupload";
 
 export const URL_DIR = "/tmp/url";
 export const UPL_DIR = "/tmp/upl";
@@ -86,12 +85,21 @@ export class Temp {
         return tmpFile;
     }
 
-    public static async copyUploadedImage(uploadedFile: UploadedFile, tmpFile?: TempFile): Promise<TempFile> {
+    public static async copyUploadedImage(uploadedFile: Express.Multer.File, tmpFile?: TempFile): Promise<TempFile> {
         if (!tmpFile) {
             tmpFile = await this.file();
         }
         try {
-            await uploadedFile.mv(tmpFile.path);
+            // move file
+            await new Promise((resolve, reject) => {
+                fs.rename(uploadedFile.path, tmpFile.path, (err) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(tmpFile);
+                    }
+                });
+            });
         } catch (e) {
             if (tmpFile) {
                 tmpFile.remove();

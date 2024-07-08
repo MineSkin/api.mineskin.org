@@ -13,7 +13,6 @@ import {
     validateUrl,
     variantToModel
 } from "../util";
-import { UploadedFile } from "express-fileupload";
 import { Generator, SavedSkin } from "../generator/Generator";
 import { generateLimiter } from "../util/rateLimiters";
 import { ClientInfo } from "../typings/ClientInfo";
@@ -26,8 +25,16 @@ import { GenerateRequest } from "../typings";
 import { Caching } from "../generator/Caching";
 import { isApiKeyRequest } from "../typings/ApiKeyRequest";
 import { getUserFromRequest } from "./account";
+import multer from "multer";
 
 export const register = (app: Application) => {
+
+    const upload = multer({
+        dest: 'temp-uploads/',
+        limits: {
+            fileSize: 1024 * 1024 * 2 // 2MB
+        }
+    })
 
     app.use("/generate", corsWithAuthMiddleware);
     app.use("/generate", (req: GenerateRequest, res: Response, next) => {
@@ -84,12 +91,12 @@ export const register = (app: Application) => {
 
     //// UPLOAD
 
-    app.post("/generate/upload", async (req: GenerateRequest, res: Response) => {
-        if (!req.files) {
+    app.post("/generate/upload", upload.single('file'), async (req: GenerateRequest, res: Response) => {
+        if (!req.file) {
             res.status(400).json({ error: "missing files" });
             return;
         }
-        const file = req.files["file"] as UploadedFile;
+        const file: Express.Multer.File = req.file;
         if (!file) {
             res.status(400).json({ error: "missing file" });
             return;
@@ -110,7 +117,7 @@ export const register = (app: Application) => {
             console.log(debug(`${ options.breadcrumb } Origin:      ${ req.headers['origin'] }`));
         }
         console.log(debug(`${ options.breadcrumb } Key:         ${ req.apiKey?.name ?? "none" } ${ req.apiKey?._id ?? "" }`));
-        console.log(debug(`${ options.breadcrumb } FILE:        "${ file.name }" ${ file.md5 }`))
+        console.log(debug(`${ options.breadcrumb } FILE:        "${ file.filename }"`))
 
         if (!options.checkOnly || !client.apiKey) {
             await updateTraffic(client);
