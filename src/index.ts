@@ -5,7 +5,7 @@ import * as sourceMapSupport from "source-map-support";
 import * as Sentry from "@sentry/node";
 import * as path from "path";
 import * as fs from "fs";
-import express, { ErrorRequestHandler, NextFunction, Request, Response } from "express";
+import express, { ErrorRequestHandler, Express, NextFunction, Request, Response } from "express";
 import "express-async-errors";
 import { connectToMongo } from "./database/database";
 import RotatingFileStream from "rotating-file-stream";
@@ -81,7 +81,7 @@ logger.info("\n" +
 // }
 
 
-const app = express();
+let app: Express;
 
 
 async function init() {
@@ -125,6 +125,8 @@ async function init() {
         } catch (e) {
         }
     }
+
+    app = express();
 
     {
         console.log("Creating logger")
