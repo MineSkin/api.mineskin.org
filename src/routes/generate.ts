@@ -265,6 +265,7 @@ export const register = (app: Application) => {
         res.header("X-MineSkin-Breadcrumb", breadcrumbId);
         res.header("X-MineSkin-Timestamp", `${ Date.now() }`);
         Sentry.setExtra("generate_breadcrumb", breadcrumbId);
+        Sentry.setTag("generate_breadcrumb", breadcrumbId);
     }
 
     function getAndValidateOptions(type: GenerateType, req: GenerateRequest, res: Response): GenerateOptions {
