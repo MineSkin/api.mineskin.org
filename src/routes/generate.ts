@@ -13,7 +13,7 @@ import {
     validateUrl,
     variantToModel
 } from "../util";
-import { Generator, SavedSkin } from "../generator/Generator";
+import { Generator, MAX_IMAGE_SIZE, SavedSkin } from "../generator/Generator";
 import { generateLimiter } from "../util/rateLimiters";
 import { ClientInfo } from "../typings/ClientInfo";
 import { GenerateOptions } from "../typings/GenerateOptions";
@@ -32,7 +32,7 @@ export const register = (app: Application) => {
     const upload = multer({
         dest: 'temp-uploads/',
         limits: {
-            fileSize: 1024 * 1024 * 2 // 2MB
+            fileSize: MAX_IMAGE_SIZE
         }
     })
 
