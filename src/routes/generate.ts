@@ -32,7 +32,9 @@ export const register = (app: Application) => {
     const upload = multer({
         dest: 'temp-uploads/',
         limits: {
-            fileSize: MAX_IMAGE_SIZE
+            fileSize: MAX_IMAGE_SIZE,
+            files: 1,
+            fields: 5
         }
     })
 
