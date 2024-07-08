@@ -25,7 +25,7 @@ import { GenerateRequest } from "../typings";
 import { Caching } from "../generator/Caching";
 import { isApiKeyRequest } from "../typings/ApiKeyRequest";
 import { getUserFromRequest } from "./account";
-import multer from "multer";
+import multer, { MulterError } from "multer";
 import { logger } from "../util/log";
 
 export const register = (app: Application) => {
@@ -100,17 +100,7 @@ export const register = (app: Application) => {
 
     //// UPLOAD
 
-    app.post("/generate/upload", upload.single('file'), async (req: GenerateRequest, res: Response) => {
-        if (!req.file) {
-            res.status(400).json({error: "missing files"});
-            return;
-        }
-        const file: Express.Multer.File = req.file;
-        if (!file) {
-            res.status(400).json({error: "missing file"});
-            return;
-        }
-
+    app.post("/generate/upload", async (req: GenerateRequest, res: Response) => {
         const options = getAndValidateOptions(GenerateType.UPLOAD, req, res);
         const client = getClientInfo(req);
 
@@ -132,6 +122,38 @@ export const register = (app: Application) => {
             });
         }
         console.log(debug(`${ options.breadcrumb } Key:         ${ req.apiKey?.name ?? "none" } ${ req.apiKey?._id ?? "" }`));
+
+        try {
+            await new Promise<void>((resolve, reject) => {
+                upload.single('file')(req, res, function (err) {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve();
+                    }
+                })
+            });
+        } catch (e) {
+            Sentry.captureException(e);
+            if (e instanceof MulterError) {
+                res.status(400).json({error: "invalid file"});
+                return;
+            } else {
+                res.status(500).json({error: "upload error"});
+                return;
+            }
+        }
+
+        if (!req.file) {
+            res.status(400).json({error: "missing files"});
+            return;
+        }
+        const file: Express.Multer.File = req.file;
+        if (!file) {
+            res.status(400).json({error: "missing file"});
+            return;
+        }
+
         console.log(debug(`${ options.breadcrumb } FILE:        "${ file.filename }"`))
 
         if (!options.checkOnly || !client.apiKey) {
