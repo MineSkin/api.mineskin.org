@@ -136,7 +136,7 @@ export const register = (app: Application) => {
         } catch (e) {
             Sentry.captureException(e);
             if (e instanceof MulterError) {
-                res.status(400).json({error: "invalid file"});
+                res.status(400).json({error: `invalid file: ${e.message} (${e.code})`});
                 return;
             } else {
                 res.status(500).json({error: "upload error"});
