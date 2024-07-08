@@ -334,7 +334,7 @@ async function init() {
                             errorType: err.name,
                             errorCode: err.code,
                             error: err.msg,
-                            breadcrumb: isBreadRequest(req) ? req.breadcrumb : null,
+                            breadcrumb: isBreadRequest(req) ? req.breadcrumbId : null,
                             nextRequest: Math.round((Date.now() / 1000) + delayInfo.seconds), // deprecated
 
                             delayInfo: {
@@ -354,7 +354,7 @@ async function init() {
                 error: "An unexpected error occurred",
                 errorType: err.name,
                 details: err.message,
-                breadcrumb: isBreadRequest(req) ? req.breadcrumb : null
+                breadcrumb: isBreadRequest(req) ? req.breadcrumbId : null
             })
         }
     }

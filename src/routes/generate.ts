@@ -308,6 +308,7 @@ export const register = (app: Application) => {
     function addBreadcrumb(req: GenerateRequest, res: Response) {
         const breadcrumbId = md5(`${ getIp(req) }${ Date.now() }${ Math.random() }`).substr(0, 8);
         const breadcrumb = nextBreadColor()(breadcrumbId);
+        req.breadcrumbId = breadcrumbId;
         req.breadcrumb = breadcrumb;
         res.header("X-MineSkin-Breadcrumb", breadcrumbId);
         res.header("X-MineSkin-Timestamp", `${ Date.now() }`);

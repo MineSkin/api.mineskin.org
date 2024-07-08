@@ -2,6 +2,7 @@ import chalk, { Chalk } from "chalk";
 
 export interface Bread {
     breadcrumb?: string;
+    breadcrumbId?: string;
 }
 
 export const BREAD_COLORS: Chalk[] = [
