@@ -348,9 +348,14 @@ async function init() {
                 });
         } else {
             console.error("Unexpected Error", err);
+            Sentry.captureException(err,{
+                level: "fatal"
+            });
             res.status(500).json({
                 success: false,
                 error: "An unexpected error occurred",
+                errorType: err.name,
+                details: err.message,
                 breadcrumb: isBreadRequest(req) ? req.breadcrumb : null
             })
         }
