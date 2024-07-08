@@ -59,10 +59,10 @@ export const register = (app: Application) => {
 
     //// URL
 
-    app.post("/generate/url", async (req: GenerateRequest, res: Response) => {
+    app.post("/generate/url", upload.none(), async (req: GenerateRequest, res: Response) => {
         const url = validateUrl(req.body["url"] || req.query["url"]);
         if (!url) {
-            res.status(400).json({ error: "invalid url" });
+            res.status(400).json({error: "invalid url"});
             return;
         }
 
@@ -76,12 +76,12 @@ export const register = (app: Application) => {
             }
         }
 
-        logger.debug(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`),{
+        logger.debug(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`), {
             breadcrumb: options.breadcrumb,
             userAgent: req.headers["user-agent"]
         });
         if (req.headers['origin']) {
-            logger.debug(debug(`${ options.breadcrumb } Origin:      ${ req.headers['origin'] }`),{
+            logger.debug(debug(`${ options.breadcrumb } Origin:      ${ req.headers['origin'] }`), {
                 breadcrumb: options.breadcrumb,
                 origin: req.headers['origin']
             });
@@ -102,12 +102,12 @@ export const register = (app: Application) => {
 
     app.post("/generate/upload", upload.single('file'), async (req: GenerateRequest, res: Response) => {
         if (!req.file) {
-            res.status(400).json({ error: "missing files" });
+            res.status(400).json({error: "missing files"});
             return;
         }
         const file: Express.Multer.File = req.file;
         if (!file) {
-            res.status(400).json({ error: "missing file" });
+            res.status(400).json({error: "missing file"});
             return;
         }
 
@@ -121,12 +121,12 @@ export const register = (app: Application) => {
             }
         }
 
-        logger.debug(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`),{
+        logger.debug(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`), {
             breadcrumb: options.breadcrumb,
             userAgent: req.headers["user-agent"]
         });
         if (req.headers['origin']) {
-            logger.debug(debug(`${ options.breadcrumb } Origin:      ${ req.headers['origin'] }`),{
+            logger.debug(debug(`${ options.breadcrumb } Origin:      ${ req.headers['origin'] }`), {
                 breadcrumb: options.breadcrumb,
                 origin: req.headers['origin']
             });
@@ -145,10 +145,10 @@ export const register = (app: Application) => {
 
     //// USER
 
-    app.post("/generate/user", async (req: GenerateRequest, res: Response) => {
+    app.post("/generate/user", upload.none(), async (req: GenerateRequest, res: Response) => {
         const uuidStr = req.body["uuid"] || req.query["uuid"];
         if (!uuidStr) {
-            res.status(400).json({ error: "missing uuid" });
+            res.status(400).json({error: "missing uuid"});
             return;
         }
 
@@ -164,21 +164,21 @@ export const register = (app: Application) => {
 
         const uuids = longAndShortUuid(uuidStr);
         if (!uuids) {
-            res.status(400).json({ error: "invalid uuid" });
+            res.status(400).json({error: "invalid uuid"});
             return;
         }
         const userValidation = await Caching.getUserByUuid(uuids.short);
         if (!userValidation || !userValidation.valid) {
-            res.status(400).json({ error: "invalid user" });
+            res.status(400).json({error: "invalid user"});
             return;
         }
 
-        logger.debug(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`),{
+        logger.debug(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`), {
             breadcrumb: options.breadcrumb,
             userAgent: req.headers["user-agent"]
         });
         if (req.headers['origin']) {
-            logger.debug(debug(`${ options.breadcrumb } Origin:      ${ req.headers['origin'] }`),{
+            logger.debug(debug(`${ options.breadcrumb } Origin:      ${ req.headers['origin'] }`), {
                 breadcrumb: options.breadcrumb,
                 origin: req.headers['origin']
             });
@@ -191,10 +191,10 @@ export const register = (app: Application) => {
     })
 
     // TODO: remove at some point
-    app.get("/generate/user/:uuid", async (req: GenerateRequest, res: Response) => {
+    app.get("/generate/user/:uuid", upload.none(), async (req: GenerateRequest, res: Response) => {
         const uuidStr = req.params["uuid"];
         if (!uuidStr) {
-            res.status(400).json({ error: "missing uuid" });
+            res.status(400).json({error: "missing uuid"});
             return;
         }
 
@@ -210,21 +210,21 @@ export const register = (app: Application) => {
 
         const uuids = longAndShortUuid(uuidStr);
         if (!uuids) {
-            res.status(400).json({ error: "invalid uuid" });
+            res.status(400).json({error: "invalid uuid"});
             return;
         }
         const userValidation = await Caching.getUserByUuid(uuids.short);
         if (!userValidation || !userValidation.valid) {
-            res.status(400).json({ error: "invalid user" });
+            res.status(400).json({error: "invalid user"});
             return;
         }
 
-        logger.debug(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`),{
+        logger.debug(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`), {
             breadcrumb: options.breadcrumb,
             userAgent: req.headers["user-agent"]
         });
         if (req.headers['origin']) {
-            logger.debug(debug(`${ options.breadcrumb } Origin:      ${ req.headers['origin'] }`),{
+            logger.debug(debug(`${ options.breadcrumb } Origin:      ${ req.headers['origin'] }`), {
                 breadcrumb: options.breadcrumb,
                 origin: req.headers['origin']
             });
@@ -240,7 +240,7 @@ export const register = (app: Application) => {
 
     async function sendSkin(req: Request, res: Response, skin: SavedSkin, client: ClientInfo): Promise<void> {
         const delayInfo = await Generator.getDelay(await getAndValidateRequestApiKey(req));
-        const json = await skin.toResponseJson(skin.duplicate ? { seconds: 0, millis: 100 } : delayInfo); //TODO: adjust delay for duplicate
+        const json = await skin.toResponseJson(skin.duplicate ? {seconds: 0, millis: 100} : delayInfo); //TODO: adjust delay for duplicate
         res.json(json);
 
         if (skin.duplicate) {
@@ -261,7 +261,7 @@ export const register = (app: Application) => {
         const origin = req.header("origin");
         const ip = getIp(req);
         const via = getVia(req);
-        let apiKeyId:Maybe<string>;
+        let apiKeyId: Maybe<string>;
         let apiKey;
         if (isApiKeyRequest(req) && req.apiKey) {
             apiKeyId = req.apiKey._id as string;
@@ -297,7 +297,7 @@ export const register = (app: Application) => {
         return Sentry.startSpan({
             op: "generate_getAndValidateOptions",
             name: "getAndValidateOptions"
-        }, (span)=>{
+        }, (span) => {
             let model = validateModel(req.body["model"] || req.query["model"]);
             let variant = validateVariant(req.body["variant"] || req.query["variant"]);
             // Convert & make sure both are set
