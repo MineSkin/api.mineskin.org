@@ -26,6 +26,7 @@ import { Caching } from "../generator/Caching";
 import { isApiKeyRequest } from "../typings/ApiKeyRequest";
 import { getUserFromRequest } from "./account";
 import multer from "multer";
+import { logger } from "../util/log";
 
 export const register = (app: Application) => {
 
@@ -75,9 +76,15 @@ export const register = (app: Application) => {
             }
         }
 
-        console.log(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`));
+        logger.debug(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`),{
+            breadcrumb: options.breadcrumb,
+            userAgent: req.headers["user-agent"]
+        });
         if (req.headers['origin']) {
-            console.log(debug(`${ options.breadcrumb } Origin:      ${ req.headers['origin'] }`));
+            logger.debug(debug(`${ options.breadcrumb } Origin:      ${ req.headers['origin'] }`),{
+                breadcrumb: options.breadcrumb,
+                origin: req.headers['origin']
+            });
         }
         console.log(debug(`${ options.breadcrumb } Key:         ${ req.apiKey?.name ?? "none" } ${ req.apiKey?._id ?? "" }`));
         console.log(debug(`${ options.breadcrumb } URL:         ${ url }`));
@@ -114,9 +121,15 @@ export const register = (app: Application) => {
             }
         }
 
-        console.log(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`));
+        logger.debug(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`),{
+            breadcrumb: options.breadcrumb,
+            userAgent: req.headers["user-agent"]
+        });
         if (req.headers['origin']) {
-            console.log(debug(`${ options.breadcrumb } Origin:      ${ req.headers['origin'] }`));
+            logger.debug(debug(`${ options.breadcrumb } Origin:      ${ req.headers['origin'] }`),{
+                breadcrumb: options.breadcrumb,
+                origin: req.headers['origin']
+            });
         }
         console.log(debug(`${ options.breadcrumb } Key:         ${ req.apiKey?.name ?? "none" } ${ req.apiKey?._id ?? "" }`));
         console.log(debug(`${ options.breadcrumb } FILE:        "${ file.filename }"`))
@@ -160,9 +173,15 @@ export const register = (app: Application) => {
             return;
         }
 
-        console.log(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`));
+        logger.debug(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`),{
+            breadcrumb: options.breadcrumb,
+            userAgent: req.headers["user-agent"]
+        });
         if (req.headers['origin']) {
-            console.log(debug(`${ options.breadcrumb } Origin:      ${ req.headers['origin'] }`));
+            logger.debug(debug(`${ options.breadcrumb } Origin:      ${ req.headers['origin'] }`),{
+                breadcrumb: options.breadcrumb,
+                origin: req.headers['origin']
+            });
         }
         console.log(debug(`${ options.breadcrumb } Key:         ${ req.apiKey?.name ?? "none" } ${ req.apiKey?._id ?? "" }`));
         console.log(debug(`${ options.breadcrumb } USER:        ${ uuids.long }`))
@@ -200,9 +219,15 @@ export const register = (app: Application) => {
             return;
         }
 
-        console.log(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`));
+        logger.debug(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`),{
+            breadcrumb: options.breadcrumb,
+            userAgent: req.headers["user-agent"]
+        });
         if (req.headers['origin']) {
-            console.log(debug(`${ options.breadcrumb } Origin:      ${ req.headers['origin'] }`));
+            logger.debug(debug(`${ options.breadcrumb } Origin:      ${ req.headers['origin'] }`),{
+                breadcrumb: options.breadcrumb,
+                origin: req.headers['origin']
+            });
         }
         console.log(debug(`${ options.breadcrumb } Key:         ${ req.apiKey?.name ?? "none" } ${ req.apiKey?._id ?? "" }`));
         console.log(debug(`${ options.breadcrumb } USER:        ${ uuids.long }`))
