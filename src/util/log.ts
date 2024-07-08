@@ -8,7 +8,7 @@ export const logtail = new Logtail(process.env.LOGTAIL_TOKEN!);
 export const logger = winston.createLogger({
     level: 'info',
     format: winston.format.combine(
-        winston.format.timestamp(),
+        winston.format.timestamp({format: 'YYYY-MM-DD hh:mm:ss.SSS A'}),
         winston.format.json()
     ),
     transports: [
