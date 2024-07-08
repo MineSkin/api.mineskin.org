@@ -2,6 +2,7 @@ import winston from 'winston';
 
 import { Logtail } from "@logtail/node";
 import { LogtailTransport } from "@logtail/winston";
+import { resolveHostname } from "./index";
 
 export const logtail = new Logtail(process.env.LOGTAIL_TOKEN!);
 
@@ -11,6 +12,9 @@ export const logger = winston.createLogger({
         winston.format.timestamp({format: 'YYYY-MM-DD hh:mm:ss.SSS A'}),
         winston.format.json()
     ),
+    defaultMeta: {
+        server: resolveHostname()
+    },
     transports: [
         new winston.transports.File({filename: 'logs/error.log', level: 'error'}),
         new winston.transports.File({filename: 'logs/combined.log'}),
