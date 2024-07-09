@@ -786,12 +786,14 @@ export class Generator {
                 originalUrl = this.rewriteUrl(originalUrl, options);
                 // Try to find the source image
                 const followResponse = await this.followUrl(originalUrl, options.breadcrumb);
-                if (!followResponse) {
+                if (!followResponse || typeof followResponse === 'string') {
                     span?.setStatus({
                         code: 2,
                         message: "invalid_argument"
                     });
-                    throw new GeneratorError(GenError.INVALID_IMAGE_URL, "Failed to find image from url", 400, undefined, originalUrl);
+                    throw new GeneratorError(GenError.INVALID_IMAGE_URL,
+                        "Failed to find image from url" + (typeof followResponse === 'string' ? ": " + followResponse : ""),
+                        400, undefined, originalUrl);
                 }
                 // Validate response headers
                 const url = this.getUrlFromResponse(followResponse, originalUrl);
@@ -918,8 +920,8 @@ export class Generator {
         return urlStr;
     }
 
-    protected static async followUrl(urlStr: string, breadcrumb?: string): Promise<Maybe<AxiosResponse>> {
-        if (!urlStr) return undefined;
+    protected static async followUrl(urlStr: string, breadcrumb?: string): Promise<string | Maybe<AxiosResponse>> {
+        if (!urlStr) return "no url";
 
         return await Sentry.startSpan({
             op: "generate_followUrl",
@@ -928,10 +930,10 @@ export class Generator {
             try {
                 const url = new URL(urlStr);
                 if (!url.host || !url.pathname) {
-                    return undefined;
+                    return "invalid host or path";
                 }
                 if (!url.protocol || (url.protocol !== "http:" && url.protocol !== "https:")) {
-                    return undefined;
+                    return "invalid protocol";
                 }
                 const follow = URL_FOLLOW_WHITELIST.includes(url.host!);
                 return await Requests.genericRequest({
@@ -947,8 +949,11 @@ export class Generator {
                 });
             } catch (e) {
                 Sentry.captureException(e);
+                if (e?.message?.includes("timeout")) {
+                    return "timeout";
+                }
             }
-            return undefined;
+            return "request failed";
         })
     }
 
@@ -1374,7 +1379,7 @@ export class Generator {
                     code: 2,
                     message: "invalid_argument"
                 });
-                throw new GeneratorError(GenError.INVALID_IMAGE, "Invalid file size", 400);
+                throw new GeneratorError(GenError.INVALID_IMAGE, `Invalid file size (${size})`, 400);
             }
 
             let fType;

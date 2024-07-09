@@ -429,6 +429,7 @@ export async function getUserFromRequest(req: Request, res: Response, reject: bo
     } catch (e) {
         console.warn("Failed to verify JWT", e);
         console.log(getIp(req))
+        console.log(cookie);
         if (e instanceof JsonWebTokenError) {
             if (reject) res.status(401).json({error: 'invalid auth (2)'})
         }

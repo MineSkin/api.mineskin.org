@@ -1,4 +1,5 @@
 import "dotenv/config"
+import "./instrument"
 import * as sourceMapSupport from "source-map-support";
 import * as Sentry from "@sentry/node";
 import * as path from "path";
@@ -33,10 +34,9 @@ import { GitConfig } from "@inventivetalent/gitconfig";
 import { GithubWebhook } from "@inventivetalent/express-github-webhook/dist/src";
 import { Stats } from "./generator/Stats";
 import { Requests } from "./generator/Requests";
-import { info, warn } from "./util/colors";
+import { debug, info, warn } from "./util/colors";
 import { Discord } from "./util/Discord";
 import { Balancer } from "./generator/Balancer";
-import { nodeProfilingIntegration } from '@sentry/profiling-node';
 
 
 sourceMapSupport.install();
@@ -55,29 +55,29 @@ console.log("\n" +
     "" + hostname + "\n" +
     "\n");
 
-{
-    console.log("Initializing Sentry")
-    Sentry.init({
-        dsn: process.env.SENTRY_DSN,
-        release: process.env.SOURCE_COMMIT || "unknown",
-        integrations: [
-            nodeProfilingIntegration()
-        ],
-        serverName: hostname,
-        tracesSampleRate: 0.1,
-        sampleRate: 0.8,
-        ignoreErrors: [
-            "No duplicate found",
-            "Invalid image file size",
-            "Invalid image dimensions",
-            "Failed to find image from url",
-            "Invalid file size"
-        ]
-    });
-
-    // app.use(Sentry.Handlers.requestHandler());
-    // app.use(Sentry.Handlers.tracingHandler());
-}
+// {
+//     console.log("Initializing Sentry")
+//     Sentry.init({
+//         dsn: process.env.SENTRY_DSN,
+//         release: process.env.SOURCE_COMMIT || "unknown",
+//         integrations: [
+//             nodeProfilingIntegration()
+//         ],
+//         serverName: hostname,
+//         tracesSampleRate: 0.1,
+//         sampleRate: 0.8,
+//         ignoreErrors: [
+//             "No duplicate found",
+//             "Invalid image file size",
+//             "Invalid image dimensions",
+//             "Failed to find image from url",
+//             "Invalid file size"
+//         ]
+//     });
+//
+//     // app.use(Sentry.Handlers.requestHandler());
+//     // app.use(Sentry.Handlers.tracingHandler());
+// }
 
 
 const app = express();
@@ -281,6 +281,8 @@ async function init() {
 
     const preErrorHandler: ErrorRequestHandler = (err, req: Request, res: Response, next: NextFunction) => {
         console.warn(warn((isBreadRequest(req) ? req.breadcrumb + " " : "") + "Error in a route " + err.message));
+        Sentry.setExtra("route", req.path);
+        console.debug(debug(req.path));
         if (err instanceof MineSkinError) {
             Sentry.setTags({
                 "error_type": err.name,
@@ -325,6 +327,7 @@ async function init() {
                             errorType: err.name,
                             errorCode: err.code,
                             error: err.msg,
+                            breadcrumb: isBreadRequest(req) ? req.breadcrumb : null,
                             nextRequest: Math.round((Date.now() / 1000) + delayInfo.seconds), // deprecated
 
                             delayInfo: {
@@ -335,10 +338,11 @@ async function init() {
                     }).catch(e => Sentry.captureException(e));
                 });
         } else {
-            console.warn(err);
+            console.error("Unexpected Error", err);
             res.status(500).json({
                 success: false,
-                error: "An unexpected error occurred"
+                error: "An unexpected error occurred",
+                breadcrumb: isBreadRequest(req) ? req.breadcrumb : null
             })
         }
     }

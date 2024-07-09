@@ -30,6 +30,10 @@ import { getUserFromRequest } from "./account";
 export const register = (app: Application) => {
 
     app.use("/generate", corsWithAuthMiddleware);
+    app.use("/generate", (req: GenerateRequest, res: Response, next) => {
+        addBreadcrumb(req, res);
+        next();
+    });
     app.use("/generate", generateLimiter);
     app.use("/generate", async (req, res, next) => {
         try {
@@ -245,6 +249,15 @@ export const register = (app: Application) => {
         };
     }
 
+    function addBreadcrumb(req: GenerateRequest, res: Response) {
+        const breadcrumbId = md5(`${ getIp(req) }${ Date.now() }${ Math.random() }`).substr(0, 8);
+        const breadcrumb = nextBreadColor()(breadcrumbId);
+        req.breadcrumb = breadcrumb;
+        res.header("X-MineSkin-Breadcrumb", breadcrumbId);
+        res.header("X-MineSkin-Timestamp", `${ Date.now() }`);
+        Sentry.setExtra("generate_breadcrumb", breadcrumbId);
+    }
+
     function getAndValidateOptions(type: GenerateType, req: GenerateRequest, res: Response): GenerateOptions {
         return Sentry.startSpan({
             op: "generate_getAndValidateOptions",
@@ -264,11 +277,7 @@ export const register = (app: Application) => {
 
             const checkOnly = !!(req.body["checkOnly"] || req.query["checkOnly"])
 
-            const breadcrumbId = md5(`${ getIp(req) }${ Date.now() }${ variant }${ visibility }${ Math.random() }${ name }`).substr(0, 8);
-            const breadcrumb = nextBreadColor()(breadcrumbId);
-            req.breadcrumb = breadcrumb;
-            res.header("X-MineSkin-Breadcrumb", breadcrumbId);
-            res.header("X-MineSkin-Timestamp", `${ Date.now() }`);
+            const breadcrumb = req.breadcrumb;
 
             console.log(debug(`${ breadcrumb } Type:        ${ type }`))
             console.log(debug(`${ breadcrumb } Variant:     ${ variant }`));
@@ -284,7 +293,6 @@ export const register = (app: Application) => {
                 "generate_variant": variant,
                 "generate_visibility": visibility
             });
-            Sentry.setExtra("generate_breadcrumb", breadcrumbId);
 
             return {
                 model,
