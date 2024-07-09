@@ -4,7 +4,7 @@ import { Logtail } from "@logtail/node";
 import { LogtailTransport } from "@logtail/winston";
 import { resolveHostname } from "./index";
 
-export const logtail = new Logtail(process.env.LOGTAIL_TOKEN!);
+export const logtail = process.env.LOGTAIL_TOKEN ? new Logtail(process.env.LOGTAIL_TOKEN!) : null;
 
 export const logger = winston.createLogger({
     level: 'info',
@@ -23,10 +23,14 @@ export const logger = winston.createLogger({
                 winston.format.colorize(),
                 winston.format.simple()
             )
-        }),
-        new LogtailTransport(logtail)
+        })
     ],
 });
+
+if (logtail) {
+    logger.add(new LogtailTransport(logtail));
+}
+
 
 (()=>{
     console.log = (...args: any[]) => {
@@ -46,5 +50,5 @@ export const logger = winston.createLogger({
     }
 
     // Ensure that all logs are sent to Logtail
-    logtail.flush()
+    logtail?.flush()
 })();

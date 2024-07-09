@@ -282,7 +282,7 @@ async function init() {
 
     // flush logs
     app.use((req, res, next) => {
-        logtail.flush();
+        logtail?.flush();
         next();
     })
 
