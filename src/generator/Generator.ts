@@ -18,7 +18,7 @@ import { MINECRAFT_SERVICES_PROFILE, Requests } from "./Requests";
 import FormData from "form-data";
 import { URL } from "url";
 import { MOJ_DIR, Temp, TempFile, UPL_DIR, URL_DIR } from "./Temp";
-import { AxiosResponse } from "axios";
+import { AxiosError, AxiosResponse } from "axios";
 import imageSize from "image-size";
 import { promises as fs } from "fs";
 import * as fileType from "file-type";
@@ -955,6 +955,9 @@ export class Generator {
                 });
                 if (e?.message?.includes("timeout")) {
                     return "timeout";
+                }
+                if (e instanceof AxiosError) {
+                    return e.message;
                 }
             }
             return "request failed";
