@@ -947,7 +947,12 @@ export class Generator {
                     return res;
                 });
             } catch (e) {
-                Sentry.captureException(e);
+                Sentry.captureException(e,{
+                    extra: {
+                        url: urlStr,
+                        breadcrumb: breadcrumb
+                    }
+                });
                 if (e?.message?.includes("timeout")) {
                     return "timeout";
                 }
