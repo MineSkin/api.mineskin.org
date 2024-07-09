@@ -9,7 +9,7 @@ export const logtail = process.env.LOGTAIL_TOKEN ? new Logtail(process.env.LOGTA
 export const logger = winston.createLogger({
     level: 'info',
     format: winston.format.combine(
-        winston.format.timestamp({format: 'YYYY-MM-DD hh:mm:ss.SSS A'}),
+        winston.format.timestamp({format: 'YYYY-MM-DD hh:mm:ss.SSS'}),
         winston.format.json()
     ),
     defaultMeta: {
