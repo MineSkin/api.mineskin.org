@@ -17,7 +17,8 @@ export async function initRedis() {
 
 export async function trackRedisGenerated(isNew: boolean, apiKey: Maybe<string>, userAgent: Maybe<string>) {
     return Sentry.startSpan({
-        op: "redis_trackGenerated"
+        op: "redis_trackGenerated",
+        name: "Track Generated Skin",
     }, async span => {
         const newOrDup = isNew ? "new" : "duplicate";
 
