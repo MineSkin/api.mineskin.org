@@ -402,6 +402,7 @@ export class Stats {
                         console.log(`[redis] Migrating ${ ua } with ${ count }`)
                         await redisClient?.multi()
                             .set(key, count)
+                            .incr(`mineskin:generated:agent:alltime:new`)
                             .incr(`mineskin:generated:agent:${ ua }:${ currentYear }:new`)
                             .exec();
                     }
@@ -436,6 +437,7 @@ export class Stats {
                         console.log(`[redis] Migrating ${ keyId }/${ rawKey } with ${ count }`)
                         await redisClient?.multi()
                             .set(key, count)
+                            .incr(`mineskin:generated:apikey:alltime:new`)
                             .incr(`mineskin:generated:apikey:${ keyId }:${ currentYear }:new`)
                             .exec();
                     }
