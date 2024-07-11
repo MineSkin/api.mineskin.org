@@ -13,6 +13,7 @@ Sentry.init({
     ],
     serverName: hostname,
     tracesSampleRate: 0.1,
+    profilesSampleRate: 0.1,
     sampleRate: 0.8,
     ignoreErrors: [
         "No duplicate found",
