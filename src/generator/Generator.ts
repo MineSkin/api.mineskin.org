@@ -60,6 +60,7 @@ import { IPoint } from "influx";
 import { DelayInfo } from "../typings/DelayInfo";
 import { FilterQuery } from "mongoose";
 import { Capes } from "../util/Capes";
+import { redisClient } from "../database/redis";
 
 
 // minimum delay for accounts to be used
@@ -551,6 +552,14 @@ export class Generator {
             } catch (e) {
                 Sentry.captureException(e);
             }
+            try {
+                redisClient?.incr("mineskins:generated:total:new");
+                if (client.apiKeyId) {
+                    redisClient?.incr(`mineskins:generated:apikey:${ client.apiKeyId }:new`);
+                }
+            } catch (e) {
+                Sentry.captureException(e);
+            }
             const doc = await this.saveSkin(result, options, client, type, start)
 
             const statPromises = [];
@@ -612,6 +621,11 @@ export class Generator {
                             .tag("source", DuplicateSource.MINESKIN_URL)
                             .tag("type", type)
                             .inc();
+                    } catch (e) {
+                        Sentry.captureException(e);
+                    }
+                    try {
+                        redisClient?.incr("mineskins:generated:total:duplicate");
                     } catch (e) {
                         Sentry.captureException(e);
                     }
@@ -687,6 +701,14 @@ export class Generator {
                         .tag("type", type)
                         .tag("userAgent", stripUserAgent(client.userAgent))
                         .inc();
+                } catch (e) {
+                    Sentry.captureException(e);
+                }
+                try {
+                    redisClient?.incr("mineskins:generated:total:duplicate");
+                    if (client.apiKeyId) {
+                        redisClient?.incr(`mineskins:generated:apikey:${ client.apiKeyId }:duplicate`);
+                    }
                 } catch (e) {
                     Sentry.captureException(e);
                 }
