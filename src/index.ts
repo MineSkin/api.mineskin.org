@@ -264,6 +264,7 @@ async function init() {
 
         app.get("/redistest",function (req,res){
             redisClient?.incr("mineskin:test"); //TODO: remove
+            res.json({msg: "ok"});
         })
 
         app.get("/openapi.yml", corsMiddleware, (req, res) => {
