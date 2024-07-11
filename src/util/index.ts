@@ -15,7 +15,6 @@ import { IApiKeyDocument } from "../typings/db/IApiKeyDocument";
 import { MineSkinError, MineSkinRequest } from "../typings";
 import { imageHash } from "@inventivetalent/imghash";
 import { ClientInfo } from "../typings/ClientInfo";
-import stripUserAgent from "user-agent-stripper";
 import UAParser from "ua-parser-js";
 
 export function resolveHostname() {
@@ -50,7 +49,7 @@ export async function checkTraffic(req: Request, res: Response): Promise<boolean
 
         Sentry.setUser({
             ip_address: ip,
-            username: `${ stripUserAgent(req.headers["user-agent"]!) }`
+            username: `${ simplifyUserAgent(req.headers["user-agent"]!).ua }`
         });
 
         const apiKey = await getAndValidateRequestApiKey(req);
