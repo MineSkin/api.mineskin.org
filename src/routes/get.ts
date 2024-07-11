@@ -171,7 +171,13 @@ export const register = (app: Application) => {
 
     app.get("/get/list/:after(\\w+)?", async (req: Request, res: Response) => {
         const after = req.params['after'];
-        const size = Math.min(Math.max(Number(req.query.hasOwnProperty("size") ? parseInt(req.query["size"] as string) : 16)), 512)
+        let size = Number(req.query.hasOwnProperty("size") ? parseInt(req.query["size"] as string) : 16);
+        if (isNaN(size) || size < 1) {
+            size = 16;
+        }
+        if (size > 512) {
+            size = 512;
+        }
 
         const query: any = {visibility: 0};
         if (req.query.hasOwnProperty("filter") && ((req.query["filter"] as string | undefined)?.length || 0) > 0) {
