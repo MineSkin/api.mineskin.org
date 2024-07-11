@@ -37,7 +37,7 @@ import { Requests } from "./generator/Requests";
 import { debug, info, warn } from "./util/colors";
 import { Discord } from "./util/Discord";
 import { Balancer } from "./generator/Balancer";
-import { initRedis } from "./database/redis";
+import { initRedis, redisClient } from "./database/redis";
 
 
 sourceMapSupport.install();
@@ -260,6 +260,7 @@ async function init() {
 
         app.get("/", corsMiddleware, function (req, res) {
             res.json({msg: "Hi!"});
+            redisClient?.incr("mineskin:index_hit"); //TODO: remove
         });
 
         app.get("/openapi.yml", corsMiddleware, (req, res) => {

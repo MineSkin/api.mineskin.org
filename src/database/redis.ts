@@ -1,7 +1,7 @@
 import { createClient, RedisClientType } from 'redis';
 import { Maybe } from "../util";
 
-let redisClient: Maybe<RedisClientType>;
+export let redisClient: Maybe<RedisClientType>;
 
 export async function initRedis() {
     if (!process.env.REDIS_URI) return;
