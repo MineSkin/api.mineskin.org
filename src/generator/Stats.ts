@@ -419,7 +419,7 @@ export class Stats {
                     const count = entry.count;
                     let keyDoc;
                     if (rawKey.includes(" ")) {
-                        let split = rawKey.split(" ");
+                        let split = rawKey.split(" ", 2);
                         let keyName = split[1];
                         keyDoc = await ApiKey.findOne({name: keyName}, '_id name').exec();
                     } else {
@@ -433,7 +433,7 @@ export class Stats {
                     // check if last month exists
                     const key = `mineskin:generated:apikey:${ keyId }:${ currentYear }:${ currentMonth - 1 }:new`
                     if (!await redisClient?.exists(key)) {
-                        console.log(`[redis] Migrating ${ keyId } with ${ count }`)
+                        console.log(`[redis] Migrating ${ keyId }/${ rawKey } with ${ count }`)
                         await redisClient?.multi()
                             .set(key, count)
                             .incr(`mineskin:generated:apikey:${ keyId }:${ currentYear }:new`)
