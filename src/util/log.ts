@@ -19,16 +19,20 @@ export const logger = winston.createLogger({
         new winston.transports.File({filename: 'logs/error.log', level: 'error'}),
         new winston.transports.File({filename: 'logs/combined.log'}),
         new winston.transports.Console({
+            level: 'debug',
             format: winston.format.combine(
                 winston.format.colorize(),
-                winston.format.simple()
+                winston.format.simple(),
+                winston.format.errors({ stack: true }),
             )
         })
     ],
 });
 
 if (logtail) {
-    logger.add(new LogtailTransport(logtail));
+    logger.add(new LogtailTransport(logtail,{
+        level: 'info'
+    }));
 }
 
 

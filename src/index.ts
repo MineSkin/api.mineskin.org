@@ -37,6 +37,7 @@ import { Requests } from "./generator/Requests";
 import { debug, info, warn } from "./util/colors";
 import { Discord } from "./util/Discord";
 import { Balancer } from "./generator/Balancer";
+import { initRedis } from "./database/redis";
 
 
 sourceMapSupport.install();
@@ -247,6 +248,11 @@ async function init() {
     {
         console.log("Connecting to database")
         await connectToMongo(config);
+    }
+
+    {
+        console.info("Connecting to Redis...")
+        await initRedis();
     }
 
     {
