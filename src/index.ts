@@ -27,7 +27,7 @@ import { MOJ_DIR, UPL_DIR, URL_DIR } from "./generator/Temp";
 import { getConfig, getLocalConfig, MineSkinConfig } from "./typings/Configs";
 import { isBreadRequest, MineSkinError } from "./typings";
 import { MineSkinMetrics } from "./util/metrics";
-import { corsMiddleware, getAndValidateRequestApiKey, resolveHostname } from "./util";
+import { corsMiddleware, getAndValidateRequestApiKey, resolveHostname, simplifyUserAgent } from "./util";
 import { AuthenticationError } from "./generator/Authentication";
 import { Generator, GeneratorError } from "./generator/Generator";
 import { GitConfig } from "@inventivetalent/gitconfig";
@@ -263,15 +263,16 @@ async function init() {
             res.json({msg: "Hi!"});
         });
 
-        app.get("/redistest",function (req,res){
+        app.get("/test/redistest",function (req,res){
             redisClient?.incr("mineskin:test"); //TODO: remove
             res.json({msg: "ok"});
         });
 
-        app.get("/useragent", async (req, res) => {
+        app.get("/test/useragent", async (req, res) => {
             res.json({
                 useragent: req.headers["user-agent"],
-                parsed: new UAParser(req.headers["user-agent"]).getResult()
+                parsed: new UAParser(req.headers["user-agent"]).getResult(),
+                simplified: simplifyUserAgent(req.headers["user-agent"] as string)
             });
         })
 

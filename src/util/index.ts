@@ -16,6 +16,7 @@ import { MineSkinError, MineSkinRequest } from "../typings";
 import { imageHash } from "@inventivetalent/imghash";
 import { ClientInfo } from "../typings/ClientInfo";
 import stripUserAgent from "user-agent-stripper";
+import UAParser from "ua-parser-js";
 
 export function resolveHostname() {
     if (process.env.NODE_HOSTNAME && !process.env.NODE_HOSTNAME.startsWith("{{")) {
@@ -49,7 +50,7 @@ export async function checkTraffic(req: Request, res: Response): Promise<boolean
 
         Sentry.setUser({
             ip_address: ip,
-            username: `${stripUserAgent(req.headers["user-agent"]!)}`
+            username: `${ stripUserAgent(req.headers["user-agent"]!) }`
         });
 
         const apiKey = await getAndValidateRequestApiKey(req);
@@ -436,16 +437,19 @@ export const ONE_YEAR_SECONDS = 60 * 60 * 24 * 365;
 export const ONE_MONTH_SECONDS = 60 * 60 * 24 * 30;
 export const ONE_DAY_SECONDS = 60 * 60 * 24;
 
-export function currentYear(): number {
-    return new Date().getFullYear();
-}
-
-export function currentMonth(): number {
-    return new Date().getMonth() + 1;
-}
-
-export function currentDate(): number {
-    return new Date().getDate();
+export function simplifyUserAgent(ua: string): { generic: boolean; ua: string; } {
+    const result = UAParser(ua);
+    if (result.browser && result.browser.name) {
+        return {generic: true, ua: result.browser.name};
+    }
+    if (result.device && result.device.type) {
+        return {generic: true, ua: result.device.type};
+    }
+    if (result.os && result.os.name) {
+        return {generic: true, ua: result.os.name};
+    }
+    const stripped = result.ua.replace(/\d/g, "x");
+    return {generic: false, ua: stripped};
 }
 
 export const corsMiddleware = (req: Request, res: Response, next: NextFunction) => {
