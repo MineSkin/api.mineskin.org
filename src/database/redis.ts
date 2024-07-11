@@ -22,27 +22,36 @@ export async function trackRedisGenerated(isNew: boolean, apiKey: Maybe<string>,
     }, async span => {
         const newOrDup = isNew ? "new" : "duplicate";
 
-        let trans = redisClient?.multi();
+        if (!redisClient) {
+            return;
+        }
 
-        trans = trans?.incr(`mineskin:generated:total:${ newOrDup }`);
+        let trans = redisClient.multi();
 
-        const date = new Date();
+        trans = trans.incr(`mineskin:generated:total:${ newOrDup }`);
 
         if (apiKey) {
-            const apiKeyPrefix = `mineskin:generated:apikey:${ apiKey }`;
-
-            trans?.incr(`${ apiKeyPrefix }:alltime:${ newOrDup }`);
-
-            trans?.incr(`${ apiKeyPrefix }:${ date.getFullYear() }:${ newOrDup }`);
-            trans?.expire(`${ apiKeyPrefix }:${ date.getFullYear() }:${ newOrDup }`, ONE_YEAR_SECONDS * 2, "NX");
-
-            trans?.incr(`${ apiKeyPrefix }:${ date.getFullYear() }:${ date.getMonth() + 1 }:${ newOrDup }`);
-            trans?.expire(`${ apiKeyPrefix }:${ date.getFullYear() }:${ date.getMonth() + 1 }:${ newOrDup }`, ONE_YEAR_SECONDS, "NX");
-
-            trans?.incr(`${ apiKeyPrefix }:${ date.getFullYear() }:${ date.getMonth() + 1 }:${ date.getDate() }:${ newOrDup }`);
-            trans?.expire(`${ apiKeyPrefix }:${ date.getFullYear() }:${ date.getMonth() + 1 }:${ date.getDate() }:${ newOrDup }`, ONE_MONTH_SECONDS, "NX");
+            trackRedisGenerated0(trans, newOrDup, `mineskin:generated:apikey:${ apiKey }`);
+        }
+        if (userAgent) {
+            trackRedisGenerated0(trans, newOrDup, `mineskin:generated:agent:${ userAgent }`);
         }
 
         await trans?.exec();
     });
+}
+
+function trackRedisGenerated0(trans: any, newOrDup: string, prefix: string) {
+    const date = new Date();
+
+    trans?.incr(`${ prefix }:alltime:${ newOrDup }`);
+
+    trans?.incr(`${ prefix }:${ date.getFullYear() }:${ newOrDup }`);
+    trans?.expire(`${ prefix }:${ date.getFullYear() }:${ newOrDup }`, ONE_YEAR_SECONDS * 2, "NX");
+
+    trans?.incr(`${ prefix }:${ date.getFullYear() }:${ date.getMonth() + 1 }:${ newOrDup }`);
+    trans?.expire(`${ prefix }:${ date.getFullYear() }:${ date.getMonth() + 1 }:${ newOrDup }`, ONE_YEAR_SECONDS, "NX");
+
+    trans?.incr(`${ prefix }:${ date.getFullYear() }:${ date.getMonth() + 1 }:${ date.getDate() }:${ newOrDup }`);
+    trans?.expire(`${ prefix }:${ date.getFullYear() }:${ date.getMonth() + 1 }:${ date.getDate() }:${ newOrDup }`, ONE_MONTH_SECONDS, "NX");
 }
