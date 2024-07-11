@@ -622,7 +622,7 @@ export class Generator {
                         Sentry.captureException(e);
                     }
                     try {
-                        redisClient?.incr("mineskins:generated:total:duplicate");
+                        redisClient?.incr("mineskin:generated:total:duplicate");
                     } catch (e) {
                         Sentry.captureException(e);
                     }
@@ -1297,6 +1297,7 @@ export class Generator {
             .tag("apiKey", client.apiKey || "none")
             .inc();
         await Stat.inc(GENERATE_SUCCESS);
+        await redisClient?.incr("mineskin:generated:total:success");
         if (!account) return;
         try {
             account.errorCounter = 0;
@@ -1326,6 +1327,7 @@ export class Generator {
         }
 
         await Stat.inc(GENERATE_FAIL);
+        await redisClient?.incr("mineskin:generated:total:fail");
 
         let m = metrics.successFail
             .tag("state", "fail")
