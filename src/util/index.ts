@@ -432,6 +432,21 @@ export function toEpochSeconds(timestamp: number): number {
 // https://github.com/microsoft/TypeScript/issues/13321#issuecomment-637120710
 export type Maybe<T> = T | undefined;
 
+export const ONE_YEAR_SECONDS = 60 * 60 * 24 * 365;
+export const ONE_MONTH_SECONDS = 60 * 60 * 24 * 30;
+export const ONE_DAY_SECONDS = 60 * 60 * 24;
+
+export function currentYear(): number {
+    return new Date().getFullYear();
+}
+
+export function currentMonth(): number {
+    return new Date().getMonth() + 1;
+}
+
+export function currentDate(): number {
+    return new Date().getDate();
+}
 
 export const corsMiddleware = (req: Request, res: Response, next: NextFunction) => {
     res.header('Access-Control-Allow-Origin', '*');

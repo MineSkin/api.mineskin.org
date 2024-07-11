@@ -60,7 +60,7 @@ import { IPoint } from "influx";
 import { DelayInfo } from "../typings/DelayInfo";
 import { FilterQuery } from "mongoose";
 import { Capes } from "../util/Capes";
-import { redisClient } from "../database/redis";
+import { redisClient, trackRedisGenerated } from "../database/redis";
 
 
 // minimum delay for accounts to be used
@@ -553,10 +553,7 @@ export class Generator {
                 Sentry.captureException(e);
             }
             try {
-                redisClient?.incr("mineskins:generated:total:new");
-                if (client.apiKeyId) {
-                    redisClient?.incr(`mineskins:generated:apikey:${ client.apiKeyId }:new`);
-                }
+                await trackRedisGenerated(true, client.apiKeyId, undefined);
             } catch (e) {
                 Sentry.captureException(e);
             }
@@ -705,10 +702,7 @@ export class Generator {
                     Sentry.captureException(e);
                 }
                 try {
-                    redisClient?.incr("mineskins:generated:total:duplicate");
-                    if (client.apiKeyId) {
-                        redisClient?.incr(`mineskins:generated:apikey:${ client.apiKeyId }:duplicate`);
-                    }
+                    await trackRedisGenerated(true, client.apiKeyId, undefined);
                 } catch (e) {
                     Sentry.captureException(e);
                 }
