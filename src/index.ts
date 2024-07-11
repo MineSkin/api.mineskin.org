@@ -260,8 +260,11 @@ async function init() {
 
         app.get("/", corsMiddleware, function (req, res) {
             res.json({msg: "Hi!"});
-            redisClient?.incr("mineskin:index_hit"); //TODO: remove
         });
+
+        app.get("/redistest",function (req,res){
+            redisClient?.incr("mineskin:test"); //TODO: remove
+        })
 
         app.get("/openapi.yml", corsMiddleware, (req, res) => {
             res.sendFile("/openapi.yml", {root: `${ __dirname }/..`});
