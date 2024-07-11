@@ -401,6 +401,13 @@ async function init() {
                 Sentry.captureException(e);
             }
         }, 1000 * 60 * 2);
+
+        console.log("running redis migration");
+        try{
+            Stats.migrateAgentGenerateStatsToRedis();
+        }catch (e){
+            Sentry.captureException(e);
+        }
     }
 
     setInterval(() => {

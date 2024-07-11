@@ -4,6 +4,9 @@ import { Account, Skin, Stat } from "../database/schemas";
 import * as Sentry from "@sentry/node";
 import { MineSkinMetrics } from "../util/metrics";
 import { debug } from "../util/colors";
+import { simplifyUserAgent } from "../util";
+import { redisClient } from "../database/redis";
+import { ApiKey } from "../database/schemas/ApiKey";
 
 export const ACCOUNTS_TOTAL = "accounts.total";
 export const ACCOUNTS_HEALTHY = "accounts.healthy";
@@ -155,7 +158,7 @@ export class Stats {
         // }).exec();
         const healthyAccounts = await Account.countDocuments({
             enabled: true,
-            errorCounter: { $lt: config.errorThreshold }
+            errorCounter: {$lt: config.errorThreshold}
         })
         const usableAccounts = await Account.countGlobalUsable();
 
@@ -193,12 +196,12 @@ export class Stats {
 
     protected static async queryDurationStats(): Promise<void> {
         return Skin.aggregate([
-            { "$sort": { time: -1 } },
-            { "$limit": 1000 },
+            {"$sort": {time: -1}},
+            {"$limit": 1000},
             {
                 "$group": {
                     "_id": null,
-                    "avgGenTime": { "$avg": "$generateDuration" }
+                    "avgGenTime": {"$avg": "$generateDuration"}
                 }
             }
         ]).exec().then((res: any[]) => {
@@ -237,9 +240,9 @@ export class Stats {
                 "$group":
                     {
                         _id: "$type",
-                        duplicate: { $sum: "$duplicate" },
-                        views: { $sum: "$views" },
-                        count: { $sum: 1 }
+                        duplicate: {$sum: "$duplicate"},
+                        views: {$sum: "$views"},
+                        count: {$sum: 1}
                     }
             }
         ]).exec().then(async (res: any[]) => {
@@ -362,13 +365,135 @@ export class Stats {
         const lastYear = new Date(now - 3.154e+10).getTime() / 1000;
 
         return Promise.all([
-            Skin.countDocuments({ time: { $gte: lastYear } }).exec().then(c => Stat.set(GENERATED_LAST_YEAR, c)),
-            Skin.countDocuments({ time: { $gte: lastMonth } }).exec().then(c => Stat.set(GENERATED_LAST_MONTH, c)),
-            Skin.countDocuments({ time: { $gte: lastDay } }).exec().then(c => Stat.set(GENERATED_LAST_DAY, c)),
-            Skin.countDocuments({ time: { $gte: lastHour } }).exec().then(c => Stat.set(GENERATED_LAST_HOUR, c)),
-        ]).then(r=>{
+            Skin.countDocuments({time: {$gte: lastYear}}).exec().then(c => Stat.set(GENERATED_LAST_YEAR, c)),
+            Skin.countDocuments({time: {$gte: lastMonth}}).exec().then(c => Stat.set(GENERATED_LAST_MONTH, c)),
+            Skin.countDocuments({time: {$gte: lastDay}}).exec().then(c => Stat.set(GENERATED_LAST_DAY, c)),
+            Skin.countDocuments({time: {$gte: lastHour}}).exec().then(c => Stat.set(GENERATED_LAST_HOUR, c)),
+        ]).then(r => {
         })
     }
 
+    /// redis migration
+
+    static migrateAgentGenerateStatsToRedis() {
+        this.migrateAgentGenerateStatsToRedis0().then(() => {
+            console.log(`[redis] Migration complete`);
+        }).catch(e => {
+            console.error(`[redis] Migration failed`, e);
+            Sentry.captureException(e);
+        });
+    }
+
+    static async migrateAgentGenerateStatsToRedis0() {
+        const date = new Date();
+        const currentYear = date.getFullYear();
+        const currentMonth = date.getMonth() + 1;
+
+        for (let month = 0; month < currentMonth; month++) {
+            try {
+                const uaAndCount = await this.uaSkinsInMonth(month);
+                console.log(uaAndCount);
+                for (let entry of uaAndCount) {
+                    const ua = simplifyUserAgent(entry._id).ua.toLowerCase();
+                    const count = entry.count;
+                    // check if last month exists
+                    const key = `mineskin:generated:agent:${ ua }:${ currentYear }:${ currentMonth - 1 }:new`
+                    if (!await redisClient?.exists(key)) {
+                        console.log(`[redis] Migrating ${ ua } with ${ count }`)
+                        await redisClient?.multi()
+                            .set(key, count)
+                            .incr(`mineskin:generated:agent:${ ua }:${ currentYear }:new`)
+                            .exec();
+                    }
+                }
+            } catch (e) {
+                console.log(`[redis] Migration agent failed for month ${ month }`, e)
+                Sentry.captureException(e);
+            }
+
+            try {
+                const keysAndCount = await this.keySkinsInMonth(month);
+                console.log(keysAndCount);
+                for (let entry of keysAndCount) {
+                    const rawKey = entry._id as string;
+                    const count = entry.count;
+                    let keyDoc;
+                    if (rawKey.includes(" ")) {
+                        let split = rawKey.split(" ");
+                        let keyName = split[1];
+                        keyDoc = await ApiKey.findOne({name: keyName}, '_id name').exec();
+                    } else {
+                        keyDoc = await ApiKey.findOne({_id: rawKey}, '_id name').exec();
+                    }
+                    if (!keyDoc) {
+                        console.log(`[redis] Key not found for ${ rawKey }`)
+                        continue;
+                    }
+                    const keyId = keyDoc._id;
+                    // check if last month exists
+                    const key = `mineskin:generated:apikey:${ keyId }:${ currentYear }:${ currentMonth - 1 }:new`
+                    if (!await redisClient?.exists(key)) {
+                        console.log(`[redis] Migrating ${ keyId } with ${ count }`)
+                        await redisClient?.multi()
+                            .set(key, count)
+                            .incr(`mineskin:generated:apikey:${ keyId }:${ currentYear }:new`)
+                            .exec();
+                    }
+                }
+            } catch (e) {
+                console.log(`[redis] Migration keys failed for month ${ month }`, e)
+                Sentry.captureException(e);
+            }
+        }
+
+    }
+
+    static uaSkinsInMonth(month: number) {
+        const startOfMonth = new Date();
+        startOfMonth.setMonth(month);
+        startOfMonth.setDate(1);
+        startOfMonth.setHours(0);
+        startOfMonth.setMinutes(0);
+        startOfMonth.setSeconds(0);
+        const endOfMonth = new Date(startOfMonth);
+        endOfMonth.setMonth(month + 1);
+        return Skin.aggregate([
+            {
+                $match: {
+                    time: {
+                        $gte: startOfMonth.getTime() / 1000,
+                        $lt: endOfMonth.getTime() / 1000
+                    },
+                    ua: {$exists: true}
+                }
+            },
+            {$group: {_id: "$ua", count: {$sum: 1}}},
+            {$sort: {count: -1}}
+        ]);
+    }
+
+    static keySkinsInMonth(month: number) {
+        const startOfMonth = new Date();
+        startOfMonth.setMonth(month);
+        startOfMonth.setDate(1);
+        startOfMonth.setHours(0);
+        startOfMonth.setMinutes(0);
+        startOfMonth.setSeconds(0);
+        const endOfMonth = new Date(startOfMonth);
+        endOfMonth.setMonth(month + 1);
+        return Skin.aggregate([
+            {
+                $match: {
+                    time: {
+                        $gte: startOfMonth.getTime() / 1000,
+                        $lt: endOfMonth.getTime() / 1000
+                    },
+                    apiKey: {$exists: true}
+                }
+            },
+            {$group: {_id: "$apiKey", count: {$sum: 1}}},
+            {$sort: {count: -1}}
+        ]);
+    }
 
 }
