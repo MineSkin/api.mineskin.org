@@ -397,13 +397,13 @@ export class Stats {
                     const ua = simplifyUserAgent(entry._id).ua.toLowerCase();
                     const count = entry.count;
                     // check if last month exists
-                    const key = `mineskin:generated:agent:${ ua }:${ currentYear }:${ currentMonth - 1 }:new`
+                    const key = `mineskin:generated:agent:${ ua }:${ currentYear }:${ month + 1 }:new`
                     if (!await redisClient?.exists(key)) {
                         console.log(`[redis] Migrating ${ ua } with ${ count }`)
                         await redisClient?.multi()
                             .set(key, count)
-                            .incr(`mineskin:generated:agent:alltime:new`)
-                            .incr(`mineskin:generated:agent:${ ua }:${ currentYear }:new`)
+                            .incrBy(`mineskin:generated:agent:${ ua }:alltime:new`, count)
+                            .incrBy(`mineskin:generated:agent:${ ua }:${ currentYear }:new`, count)
                             .exec();
                     }
                 }
@@ -432,13 +432,13 @@ export class Stats {
                     }
                     const keyId = keyDoc._id;
                     // check if last month exists
-                    const key = `mineskin:generated:apikey:${ keyId }:${ currentYear }:${ currentMonth - 1 }:new`
+                    const key = `mineskin:generated:apikey:${ keyId }:${ currentYear }:${ month + 1 }:new`
                     if (!await redisClient?.exists(key)) {
                         console.log(`[redis] Migrating ${ keyId }/${ rawKey } with ${ count }`)
                         await redisClient?.multi()
                             .set(key, count)
-                            .incr(`mineskin:generated:apikey:alltime:new`)
-                            .incr(`mineskin:generated:apikey:${ keyId }:${ currentYear }:new`)
+                            .incrBy(`mineskin:generated:apikey:${ keyId }:alltime:new`, count)
+                            .incrBy(`mineskin:generated:apikey:${ keyId }:${ currentYear }:new`, count)
                             .exec();
                     }
                 }
