@@ -38,6 +38,7 @@ import { debug, info, warn } from "./util/colors";
 import { Discord } from "./util/Discord";
 import { Balancer } from "./generator/Balancer";
 import { initRedis, redisClient } from "./database/redis";
+import UAParser from "ua-parser-js";
 
 
 sourceMapSupport.install();
@@ -265,6 +266,13 @@ async function init() {
         app.get("/redistest",function (req,res){
             redisClient?.incr("mineskin:test"); //TODO: remove
             res.json({msg: "ok"});
+        });
+
+        app.get("/useragent", async (req, res) => {
+            res.json({
+                useragent: req.headers["user-agent"],
+                parsed: new UAParser(req.headers["user-agent"]).getResult()
+            });
         })
 
         app.get("/openapi.yml", corsMiddleware, (req, res) => {
