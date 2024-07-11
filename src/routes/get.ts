@@ -109,12 +109,22 @@ export const register = (app: Application) => {
     })
 
     app.get("/get/list/:page(\\d+)?", async (req: Request, res: Response) => {
-        const page = Math.max(Number(req.params.hasOwnProperty("page") ? parseInt(req.params["page"]) : 1), 1);
-        const size = Math.min(Math.max(Number(req.query.hasOwnProperty("size") ? parseInt(req.query["size"] as string) : 16)), 64)
+        let page = Number(req.params.hasOwnProperty("page") ? parseInt(req.params["page"]) : 1);
+        if (isNaN(page) || page < 1) {
+            page = 1;
+        }
+
+        let size = Number(req.query.hasOwnProperty("size") ? parseInt(req.query["size"] as string) : 16);
+        if (isNaN(size) || size < 1) {
+            size = 16;
+        }
+        if (size > 64) {
+            size = 64;
+        }
 
         const query: any = {visibility: 0};
-        if (req.query.hasOwnProperty("filter") && ((req.query["filter"] as string|undefined)?.length || 0) > 0) {
-            query["$text"] = {$search: `${ req.query.filter }`.substr(0, 32)};
+        if (req.query.hasOwnProperty("filter") && ((req.query["filter"] as string | undefined)?.length || 0) > 0) {
+            query["$text"] = {$search: `${ req.query.filter }`.substring(0, 32)};
         }
 
         const count = await Sentry.startSpan({
@@ -164,7 +174,7 @@ export const register = (app: Application) => {
         const size = Math.min(Math.max(Number(req.query.hasOwnProperty("size") ? parseInt(req.query["size"] as string) : 16)), 512)
 
         const query: any = {visibility: 0};
-        if (req.query.hasOwnProperty("filter") && ((req.query["filter"] as string|undefined)?.length || 0) > 0) {
+        if (req.query.hasOwnProperty("filter") && ((req.query["filter"] as string | undefined)?.length || 0) > 0) {
             query["$text"] = {$search: `${ req.query.filter }`.substring(0, 32)};
         }
 
