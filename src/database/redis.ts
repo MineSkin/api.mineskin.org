@@ -34,13 +34,13 @@ export async function trackRedisGenerated(isNew: boolean, apiKey: Maybe<string>,
             trans?.incr(`${ apiKeyPrefix }:alltime:${ newOrDup }`);
 
             trans?.incr(`${ apiKeyPrefix }:${ date.getFullYear() }:${ newOrDup }`);
-            trans?.expire(`${ apiKeyPrefix }:${ date.getFullYear() }:${ newOrDup }`, ONE_YEAR_SECONDS * 2);
+            trans?.expire(`${ apiKeyPrefix }:${ date.getFullYear() }:${ newOrDup }`, ONE_YEAR_SECONDS * 2, "NX");
 
             trans?.incr(`${ apiKeyPrefix }:${ date.getFullYear() }:${ date.getMonth() + 1 }:${ newOrDup }`);
-            trans?.expire(`${ apiKeyPrefix }:${ date.getFullYear() }:${ date.getMonth() + 1 }:${ newOrDup }`, ONE_YEAR_SECONDS);
+            trans?.expire(`${ apiKeyPrefix }:${ date.getFullYear() }:${ date.getMonth() + 1 }:${ newOrDup }`, ONE_YEAR_SECONDS, "NX");
 
             trans?.incr(`${ apiKeyPrefix }:${ date.getFullYear() }:${ date.getMonth() + 1 }:${ date.getDate() }:${ newOrDup }`);
-            trans?.expire(`${ apiKeyPrefix }:${ date.getFullYear() }:${ date.getMonth() + 1 }:${ date.getDate() }:${ newOrDup }`, ONE_MONTH_SECONDS);
+            trans?.expire(`${ apiKeyPrefix }:${ date.getFullYear() }:${ date.getMonth() + 1 }:${ date.getDate() }:${ newOrDup }`, ONE_MONTH_SECONDS, "NX");
         }
 
         await trans?.exec();
