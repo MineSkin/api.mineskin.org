@@ -421,7 +421,7 @@ export class Stats {
                     let keyDoc;
                     if (rawKey.includes(" ")) {
                         let split = rawKey.split(" ", 2);
-                        let keyName = split[1];
+                        let keyName = rawKey.substring(split[0].length + 1);
                         keyDoc = await ApiKey.findOne({name: keyName}, '_id name').exec();
                     } else {
                         keyDoc = await ApiKey.findOne({_id: rawKey}, '_id name').exec();
