@@ -702,7 +702,7 @@ export class Generator {
                     Sentry.captureException(e);
                 }
                 try {
-                    await trackRedisGenerated(true, client.apiKeyId, undefined);
+                    await trackRedisGenerated(false, client.apiKeyId, undefined);
                 } catch (e) {
                     Sentry.captureException(e);
                 }
