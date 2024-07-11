@@ -501,7 +501,7 @@ export class Generator {
 
                 via: client.via,
                 ua: client.userAgent,
-                apiKey: client.apiKey,
+                apiKey: client.apiKeyId,
 
                 duplicate: 0,
                 views: 0,
