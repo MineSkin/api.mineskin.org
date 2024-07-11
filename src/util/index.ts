@@ -448,7 +448,7 @@ export function simplifyUserAgent(ua: string): { generic: boolean; ua: string; }
     if (result.os && result.os.name) {
         return {generic: true, ua: result.os.name};
     }
-    const stripped = result.ua.replace(/\d/g, "x");
+    const stripped = result.ua.replace(/\/v?(\d\.?)+/g, '');
     return {generic: false, ua: stripped};
 }
 
