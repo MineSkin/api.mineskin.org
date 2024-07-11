@@ -34,7 +34,7 @@ export async function trackRedisGenerated(isNew: boolean, apiKey: Maybe<string>,
             trackRedisGenerated0(trans, newOrDup, `mineskin:generated:apikey:${ apiKey }`);
         }
         if (userAgent) {
-            trackRedisGenerated0(trans, newOrDup, `mineskin:generated:agent:${ userAgent }`);
+            trackRedisGenerated0(trans, newOrDup, `mineskin:generated:agent:${ userAgent.toLowerCase() }`);
         }
 
         await trans?.exec();
