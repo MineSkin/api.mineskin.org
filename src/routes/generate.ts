@@ -76,12 +76,12 @@ export const register = (app: Application) => {
             }
         }
 
-        logger.debug(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`), {
+        logger.info(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`), {
             breadcrumb: options.breadcrumb,
             userAgent: req.headers["user-agent"]
         });
         if (req.headers['origin']) {
-            logger.debug(debug(`${ options.breadcrumb } Origin:      ${ req.headers['origin'] }`), {
+            logger.info(debug(`${ options.breadcrumb } Origin:      ${ req.headers['origin'] }`), {
                 breadcrumb: options.breadcrumb,
                 origin: req.headers['origin']
             });
@@ -111,12 +111,12 @@ export const register = (app: Application) => {
             }
         }
 
-        logger.debug(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`), {
+        logger.info(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`), {
             breadcrumb: options.breadcrumb,
             userAgent: req.headers["user-agent"]
         });
         if (req.headers['origin']) {
-            logger.debug(debug(`${ options.breadcrumb } Origin:      ${ req.headers['origin'] }`), {
+            logger.info(debug(`${ options.breadcrumb } Origin:      ${ req.headers['origin'] }`), {
                 breadcrumb: options.breadcrumb,
                 origin: req.headers['origin']
             });
@@ -195,12 +195,12 @@ export const register = (app: Application) => {
             return;
         }
 
-        logger.debug(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`), {
+        logger.info(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`), {
             breadcrumb: options.breadcrumb,
             userAgent: req.headers["user-agent"]
         });
         if (req.headers['origin']) {
-            logger.debug(debug(`${ options.breadcrumb } Origin:      ${ req.headers['origin'] }`), {
+            logger.info(debug(`${ options.breadcrumb } Origin:      ${ req.headers['origin'] }`), {
                 breadcrumb: options.breadcrumb,
                 origin: req.headers['origin']
             });
@@ -241,12 +241,12 @@ export const register = (app: Application) => {
             return;
         }
 
-        logger.debug(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`), {
+        logger.info(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`), {
             breadcrumb: options.breadcrumb,
             userAgent: req.headers["user-agent"]
         });
         if (req.headers['origin']) {
-            logger.debug(debug(`${ options.breadcrumb } Origin:      ${ req.headers['origin'] }`), {
+            logger.info(debug(`${ options.breadcrumb } Origin:      ${ req.headers['origin'] }`), {
                 breadcrumb: options.breadcrumb,
                 origin: req.headers['origin']
             });
