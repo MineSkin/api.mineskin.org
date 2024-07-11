@@ -23,7 +23,7 @@ RUN npm prune --production
 
 ######
 
-FROM node:18.20.3-alpine3.19
+FROM node:18.20.3-alpine3.19 AS APP_IMAGE
 
 ARG SOURCE_COMMIT=0
 ENV SOURCE_COMMIT=$SOURCE_COMMIT
