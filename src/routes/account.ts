@@ -216,8 +216,8 @@ export const register = (app: Application, config: MineSkinConfig) => {
             const keyId = doc._id;
             const date = new Date();
 
-            const yearNew = await redisClient?.get(`mineskin:generated:apikey:${ keyId }:${ date.getFullYear() }:new`);
-            const monthNew = await redisClient?.get(`mineskin:generated:apikey:${ keyId }:${ date.getFullYear() }:${ date.getMonth() + 1 }:new`);
+            const yearNew = parseInt(await redisClient?.get(`mineskin:generated:apikey:${ keyId }:${ date.getFullYear() }:new`) || '0');
+            const monthNew = parseInt(await redisClient?.get(`mineskin:generated:apikey:${ keyId }:${ date.getFullYear() }:${ date.getMonth() + 1 }:new`) || '0');
 
             keys.push({
                 id: ("" + doc._id),
@@ -263,8 +263,8 @@ export const register = (app: Application, config: MineSkinConfig) => {
 
         const date = new Date();
 
-        const yearNew = await redisClient?.get(`mineskin:generated:agent:${ agent }:${ date.getFullYear() }:new`);
-        const monthNew = await redisClient?.get(`mineskin:generated:agent:${ agent }:${ date.getFullYear() }:${ date.getMonth() + 1 }:new`);
+        const yearNew = parseInt(await redisClient?.get(`mineskin:generated:agent:${ agent }:${ date.getFullYear() }:new`) || '0');
+        const monthNew = parseInt(await redisClient?.get(`mineskin:generated:agent:${ agent }:${ date.getFullYear() }:${ date.getMonth() + 1 }:new`) || '0');
 
         res.json({
             agent: agent,
