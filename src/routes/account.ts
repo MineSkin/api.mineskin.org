@@ -1,6 +1,6 @@
 import { Application, Request, Response } from "express";
 import { getConfig, MineSkinConfig } from "../typings/Configs";
-import { corsWithCredentialsMiddleware, getIp, Maybe, sha256, stripUuid } from "../util";
+import { corsWithCredentialsMiddleware, getIp, Maybe, sha256, simplifyUserAgent, stripUuid } from "../util";
 import jwt, { JsonWebTokenError, Jwt, JwtPayload, SignOptions, VerifyOptions } from "jsonwebtoken";
 import { LoginTicket, OAuth2Client } from "google-auth-library";
 import { v4 as randomUuid } from "uuid";
@@ -243,6 +243,39 @@ export const register = (app: Application, config: MineSkinConfig) => {
         res.json(skins);
     });
 
+
+    app.get("/account/agentusage", async (req, res) => {
+        const user = await getUserFromRequest(req, res);
+        if (!user) {
+            return;
+        }
+        let agent = req.query.agent as string;
+        if (!agent) {
+            res.status(400).json({error: 'missing agent'});
+            return;
+        }
+        const simplified = simplifyUserAgent(agent);
+        if (simplified.generic) {
+            res.status(400).json({error: 'invalid agent'});
+            return;
+        }
+        agent = simplified.ua.toLowerCase();
+
+        const date = new Date();
+
+        const yearNew = await redisClient?.get(`mineskin:generated:agent:${ agent }:${ date.getFullYear() }:new`);
+        const monthNew = await redisClient?.get(`mineskin:generated:agent:${ agent }:${ date.getFullYear() }:${ date.getMonth() + 1 }:new`);
+
+        res.json({
+            agent: agent,
+            usage: {
+                new: {
+                    year: yearNew || 0,
+                    month: monthNew || 0
+                }
+            }
+        });
+    });
 
     //// DISCORD LINKING
 

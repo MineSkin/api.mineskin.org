@@ -450,7 +450,8 @@ export function simplifyUserAgent(ua: string): { generic: boolean; ua: string; }
     const stripped = result.ua
         .replace(/\/v?(\d\.?)+/g, '')
         .replace(/\ \(.+/, '')
-        .replace(/\d/g, "x");
+        .replace(/\d/g, "x")
+        .replace(/[^a-zA-Z\/]/g, '');
 
     return {generic: false, ua: stripped};
 }
