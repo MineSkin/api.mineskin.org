@@ -139,9 +139,20 @@ export class Stats {
             this.queryDurationStats(),
             // this.queryCountDuplicateViewStats(),
             this.queryTimeFrameStats(),
-            this.pushCountDuplicateViewStats(),
+            this.pushCountDuplicateViewStats()
         ]).then((ignored: any) => {
             console.log(debug(`Complete stats query took ${ (Date.now() - queryStart) / 1000 }s`));
+        });
+    }
+
+
+    static async slowQuery(): Promise<void> {
+        console.log(debug(`Querying stats (slow)...`));
+        const queryStart = Date.now();
+        return Promise.all([
+            this.queryAccountCapeStats()
+        ]).then((ignored: any) => {
+            console.log(debug(`Slow stats query took ${ (Date.now() - queryStart) / 1000 }s`));
         });
     }
 
@@ -192,6 +203,37 @@ export class Stats {
             Stat.set(ACCOUNTS_USABLE, usableAccounts)
         ]).then((ignored: any) => {
         });
+    }
+
+    protected static async queryAccountCapeStats(): Promise<void>{
+        const accountCapes = await Account.aggregate([
+            {$match:{ ownedCapes : { $exists : true, $ne : [ ] } }},
+            { $unwind: "$ownedCapes" }, // flatten the ownedCapes array
+            { $group: { _id: "$ownedCapes", count: { $sum: 1 } } } // count the occurrences of each unique value in the ownedCapes field
+        ]);
+
+        const points = accountCapes.map((entry) => {
+            return {
+                measurement: 'account_capes',
+                tags: {
+                    cape: entry._id
+                },
+                fields: {
+                    count: entry.count
+                }
+            }
+        });
+
+        try {
+            const metrics = await MineSkinMetrics.get();
+            await metrics.metrics!.influx.writePoints(points, {
+                database: 'mineskin',
+                precision: 's'
+            })
+        } catch (e) {
+            console.warn(e);
+            Sentry.captureException(e);
+        }
     }
 
     protected static async queryDurationStats(): Promise<void> {

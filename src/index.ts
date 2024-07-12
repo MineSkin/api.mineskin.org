@@ -403,6 +403,21 @@ async function init() {
             }
         }, 1000 * 60 * 2);
 
+        setInterval(() => {
+            try {
+                Stats.slowQuery();
+            } catch (e) {
+                Sentry.captureException(e);
+            }
+        }, 1000 * 60 * 60);
+        setTimeout(() => {
+            try {
+                Stats.slowQuery();
+            } catch (e) {
+                Sentry.captureException(e);
+            }
+        }, 1000 * 60)
+
         if (config.migrateRedisStats) {
             console.log("running redis migration");
             try {

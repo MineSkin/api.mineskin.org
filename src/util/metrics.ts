@@ -31,6 +31,7 @@ export class MineSkinMetrics {
     public readonly hashMismatch: Metric;
     public readonly urlMismatch: Metric;
     public readonly accountNotifications: Metric;
+    public readonly accountCapes: Metric;
 
     public readonly tester: Metric;
 
@@ -65,6 +66,7 @@ export class MineSkinMetrics {
         this.urlMismatch = this.metrics.metric('mineskin', 'url_mismatch');
         this.tester = this.metrics.metric('mineskin', 'tester');
         this.accountNotifications = this.metrics.metric('mineskin', 'account_notifications');
+        this.accountCapes = this.metrics.metric('mineskin', 'account_capes');
     }
 
     apiRequestsMiddleware(req: Request, res: Response, next: NextFunction) {
