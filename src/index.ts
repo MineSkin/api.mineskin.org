@@ -263,7 +263,7 @@ async function init() {
             res.json({msg: "Hi!"});
         });
 
-        app.get("/test/redistest",function (req,res){
+        app.get("/test/redistest", function (req, res) {
             redisClient?.incr("mineskin:test"); //TODO: remove
             res.json({msg: "ok"});
         });
@@ -366,7 +366,7 @@ async function init() {
                 });
         } else {
             console.error("Unexpected Error", err);
-            Sentry.captureException(err,{
+            Sentry.captureException(err, {
                 level: "fatal"
             });
             res.status(500).json({
@@ -402,11 +402,13 @@ async function init() {
             }
         }, 1000 * 60 * 2);
 
-        console.log("running redis migration");
-        try{
-            Stats.migrateAgentGenerateStatsToRedis();
-        }catch (e){
-            Sentry.captureException(e);
+        if (config.migrateRedisStats) {
+            console.log("running redis migration");
+            try {
+                Stats.migrateAgentGenerateStatsToRedis();
+            } catch (e) {
+                Sentry.captureException(e);
+            }
         }
     }
 

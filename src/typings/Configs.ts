@@ -111,6 +111,7 @@ export interface MineSkinConfig {
     sessionSecret: string;
     statsServers: string[];
     balanceServers: string[];
+    migrateRedisStats: boolean;
 
     requestServers: {[k: string]: string[]};
     proxies: ProxyConfig;
