@@ -235,13 +235,6 @@ async function init() {
             updatingApp = false;
             Discord.postDiscordMessage("[" + config.server + "] update errored! " + err);
         });
-        app.use(function (req: Request, res: Response, next: NextFunction) {
-            if (updatingApp) {
-                res.status(503).send({err: "app is updating"});
-                return;
-            }
-            next();
-        });
         app.use(config.puller.endpoint, bodyParser.json({limit: '100kb'}), puller.middleware);
     }
      */
@@ -379,6 +372,14 @@ async function init() {
         }
     }
     app.use(errorHandler);
+
+    app.use(function (req: Request, res: Response, next: NextFunction) {
+        if (updatingApp) {
+            res.status(503).send({err: "app is updating"});
+            return;
+        }
+        next();
+    });
 
     if (config.balanceServers?.includes(config.server)) {
         console.log("Starting balancing task");
