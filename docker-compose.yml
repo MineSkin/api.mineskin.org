@@ -19,7 +19,7 @@ services:
     secrets:
       - mineskin.jwt.private.key
     deploy:
-      replicas: 5
+      replicas: 6
       placement:
         constraints: [node.labels.mineskin-api == true]
       update_config:
