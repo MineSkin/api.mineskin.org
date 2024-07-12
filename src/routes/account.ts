@@ -4,7 +4,6 @@ import { corsWithCredentialsMiddleware, getIp, Maybe, sha256, stripUuid } from "
 import jwt, { JsonWebTokenError, Jwt, JwtPayload, SignOptions, VerifyOptions } from "jsonwebtoken";
 import { LoginTicket, OAuth2Client } from "google-auth-library";
 import { v4 as randomUuid } from "uuid";
-import * as fs from "fs";
 import { Caching } from "../generator/Caching";
 import { Account, User } from "../database/schemas"
 import { IUserDocument } from "../typings/db/IUserDocument";
@@ -15,16 +14,9 @@ import { Discord } from "../util/Discord";
 import { PendingDiscordAccountLink } from "../typings/DiscordAccountLink";
 import { Requests } from "../generator/Requests";
 import qs from "querystring";
-import * as Sentry from "@sentry/node";
-
-let jwtPrivateKey: Buffer;
 
 export const register = (app: Application, config: MineSkinConfig) => {
 
-    jwtPrivateKey = fs.readFileSync(process.env.JWT_PRIVATE_KEY_ACCOUNT || config.jwt.keys.private);
-    if (!jwtPrivateKey || jwtPrivateKey.length <= 0) {
-        Sentry.captureException(new Error("JWT_PRIVATE_KEY_ACCOUNT is not set or empty"));
-    }
     const googleClient = new OAuth2Client(config.google.id, config.google.secret);
 
     app.use("/account", corsWithCredentialsMiddleware);
@@ -371,7 +363,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
 
 function sign(payload: string | Buffer | object, options: SignOptions): Promise<string | undefined> {
     return new Promise((resolve, reject) => {
-        jwt.sign(payload, jwtPrivateKey, options, (err, token) => {
+        jwt.sign(payload, process.env.JWT_PRIVATE_KEY_ACCOUNT as string, options, (err, token) => {
             if (err) {
                 reject(err);
                 return;
@@ -385,7 +377,7 @@ function verify(token: string, options: VerifyOptions): Promise<Jwt> {
     return new Promise((resolve, reject) => {
         options.complete = true;
         try {
-            jwt.verify(token, jwtPrivateKey, options, (err, jwt) => {
+            jwt.verify(token, process.env.JWT_PRIVATE_KEY_ACCOUNT as string, options, (err, jwt) => {
                 if (err || !jwt) {
                     reject(err);
                     return;
