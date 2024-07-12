@@ -15,12 +15,16 @@ import { Discord } from "../util/Discord";
 import { PendingDiscordAccountLink } from "../typings/DiscordAccountLink";
 import { Requests } from "../generator/Requests";
 import qs from "querystring";
+import * as Sentry from "@sentry/node";
 
 let jwtPrivateKey: Buffer;
 
 export const register = (app: Application, config: MineSkinConfig) => {
 
     jwtPrivateKey = fs.readFileSync(process.env.JWT_PRIVATE_KEY_ACCOUNT || config.jwt.keys.private);
+    if (!jwtPrivateKey || jwtPrivateKey.length <= 0) {
+        Sentry.captureException(new Error("JWT_PRIVATE_KEY_ACCOUNT is not set or empty"));
+    }
     const googleClient = new OAuth2Client(config.google.id, config.google.secret);
 
     app.use("/account", corsWithCredentialsMiddleware);
