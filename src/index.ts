@@ -459,9 +459,12 @@ init().then(() => {
 });
 
 
-// Make sure to call Sentry's close method when shutting down your app
 process.on('SIGTERM', () => {
-    Sentry.close().then(() => {
-        process.exit(0);
-    });
+    console.log("SIGTERM received, stopping...");
+    updatingApp = true;
+    setTimeout(() => {
+        Sentry.close().then(() => {
+            process.exit(0);
+        });
+    }, 1000);
 });
