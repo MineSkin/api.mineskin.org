@@ -11,6 +11,7 @@ export async function initRedis() {
     })
     redisClient.on('error', (err: any) => {
         console.error(`Redis error`, err);
+        Sentry.captureException(err);
     });
     redisClient = await redisClient.connect();
 }
