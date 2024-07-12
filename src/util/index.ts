@@ -451,7 +451,7 @@ export function simplifyUserAgent(ua: string): { generic: boolean; ua: string; }
         .replace(/\/v?(\d\.?)+/g, '')
         .replace(/\ \(.+/, '')
         .replace(/\d/g, "x")
-        .replace(/[^a-zA-Z\/]/g, '');
+        .replace(/[^a-zA-Z\/\-_]/g, '');
 
     return {generic: false, ua: stripped};
 }
