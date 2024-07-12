@@ -14,6 +14,7 @@ import { Discord } from "../util/Discord";
 import { PendingDiscordAccountLink } from "../typings/DiscordAccountLink";
 import { Requests } from "../generator/Requests";
 import qs from "querystring";
+import { redisClient } from "../database/redis";
 
 export const register = (app: Application, config: MineSkinConfig) => {
 
@@ -212,10 +213,22 @@ export const register = (app: Application, config: MineSkinConfig) => {
         }, '_id name lastUsed').lean().exec();
         let keys = [];
         for (let doc of docs) {
+            const keyId = doc._id;
+            const date = new Date();
+
+            const yearNew = await redisClient?.get(`mineskin:generated:apikey:${ keyId }:${ date.getFullYear() }:new`);
+            const monthNew = await redisClient?.get(`mineskin:generated:apikey:${ keyId }:${ date.getFullYear() }:${ date.getMonth() + 1 }:new`);
+
             keys.push({
                 id: ("" + doc._id),
                 name: doc.name,
-                lastUsed: doc.lastUsed
+                lastUsed: doc.lastUsed,
+                usage: {
+                    new: {
+                        year: yearNew || 0,
+                        month: monthNew || 0
+                    }
+                }
             })
         }
         res.json(keys);
