@@ -14,10 +14,7 @@ services:
       - host
     volumes:
       - /home/inventivetalent/api.mineskin.org/config.js:/opt/app/config.js
-      - /home/inventivetalent/mineskin.jwt.private.key:/etc/mineskin/mineskin.jwt.private.key
       - /home/inventivetalent/api.mineskin.org/logs:/opt/app/logs
-    secrets:
-      - mineskin.jwt.private.key
     deploy:
       replicas: 6
       placement:
@@ -25,11 +22,6 @@ services:
       update_config:
           parallelism: 1
           delay: 10s
-
-secrets:
-  mineskin.jwt.private.key:
-    file: /home/inventivetalent/mineskin.jwt.private.key
-    external: true
 
 networks:
   host:
