@@ -154,7 +154,6 @@ export class Generator {
 
         const stats = <AllStats>{
             server: config.server,
-            delay: Math.ceil(delay), //TODO: maybe add a ms version
             account: {
                 global: {},
                 local: {}
