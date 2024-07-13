@@ -65,7 +65,8 @@
     "ua-parser-js": "^1.0.38",
     "user-agent-stripper": "^1.0.1",
     "uuid": "^3.4.0",
-    "winston": "^3.13.0"
+    "winston": "^3.13.0",
+    "winston-daily-rotate-file": "^5.0.0"
   },
   "devDependencies": {
     "@types/body-parser": "^1.19.5",
