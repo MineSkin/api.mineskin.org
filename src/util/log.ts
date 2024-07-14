@@ -44,6 +44,7 @@ export const logger = winston.createLogger({
             level: 'debug',
             format: winston.format.combine(
                 winston.format.colorize(),
+                winston.format.splat(),
                 winston.format.simple(),
                 winston.format.errors({ stack: true }),
             )
