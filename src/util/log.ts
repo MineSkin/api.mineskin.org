@@ -29,6 +29,7 @@ logRotate.on('rotate', (oldFilename, newFilename) => {
 export const logger = winston.createLogger({
     level: 'info',
     format: winston.format.combine(
+        winston.format.splat(),
         winston.format.timestamp({format: 'YYYY-MM-DD hh:mm:ss.SSS'}),
         winston.format.json()
     ),
