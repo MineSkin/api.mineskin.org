@@ -1,6 +1,6 @@
 import { AllStats, CountDuplicateViewStats } from "../typings/AllStats";
 import { getConfig } from "../typings/Configs";
-import { Account, Skin, Stat } from "../database/schemas";
+import { Account, Skin, Stat, User } from "../database/schemas";
 import * as Sentry from "@sentry/node";
 import { MineSkinMetrics } from "../util/metrics";
 import { debug } from "../util/colors";
@@ -150,7 +150,8 @@ export class Stats {
         console.log(debug(`Querying stats (slow)...`));
         const queryStart = Date.now();
         return Promise.all([
-            this.queryAccountCapeStats()
+            this.queryAccountCapeStats(),
+            this.queryMiscStats()
         ]).then((ignored: any) => {
             console.log(debug(`Slow stats query took ${ (Date.now() - queryStart) / 1000 }s`));
         });
@@ -227,6 +228,28 @@ export class Stats {
         try {
             const metrics = await MineSkinMetrics.get();
             await metrics.metrics!.influx.writePoints(points, {
+                database: 'mineskin',
+                precision: 's'
+            })
+        } catch (e) {
+            console.warn(e);
+            Sentry.captureException(e);
+        }
+    }
+
+    protected static async queryMiscStats(): Promise<void>{
+        const userCount = await User.countDocuments();
+
+        try {
+            const metrics = await MineSkinMetrics.get();
+            await metrics.metrics!.influx.writePoints([
+                {
+                    measurement: 'users',
+                    fields: {
+                        total: userCount
+                    }
+                }
+            ], {
                 database: 'mineskin',
                 precision: 's'
             })
