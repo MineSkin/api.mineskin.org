@@ -9,6 +9,7 @@ import {
     Maybe,
     md5,
     modelToVariant,
+    simplifyUserAgent,
     updateTraffic,
     validateUrl,
     variantToModel
@@ -279,7 +280,7 @@ export const register = (app: Application) => {
     }
 
     function getClientInfo(req: GenerateRequest): ClientInfo {
-        const userAgent = req.header("user-agent") || "n/a";
+        const rawUserAgent = req.header("user-agent") || "n/a";
         const origin = req.header("origin");
         const ip = getIp(req);
         const via = getVia(req);
@@ -294,6 +295,8 @@ export const register = (app: Application) => {
             "generate_via": via,
             "generate_api_key": apiKey ?? "none"
         });
+
+        const userAgent = simplifyUserAgent(rawUserAgent);
 
         return {
             userAgent,

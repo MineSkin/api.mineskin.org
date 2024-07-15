@@ -436,7 +436,7 @@ export const ONE_YEAR_SECONDS = 60 * 60 * 24 * 365;
 export const ONE_MONTH_SECONDS = 60 * 60 * 24 * 30;
 export const ONE_DAY_SECONDS = 60 * 60 * 24;
 
-export function simplifyUserAgent(ua: string): { generic: boolean; ua: string; } {
+export function simplifyUserAgent(ua: string): SimplifiedUserAgent {
     const result = UAParser(ua);
     if (result.browser && result.browser.name) {
         return {generic: true, ua: result.browser.name};
@@ -453,8 +453,9 @@ export function simplifyUserAgent(ua: string): { generic: boolean; ua: string; }
         .replace(/\d/g, "x")
         .replace(/[^a-zA-Z\/\-_]/g, '');
 
-    return {generic: false, ua: stripped};
+    return {generic: false, ua: stripped, original: ua};
 }
+export type SimplifiedUserAgent = { generic: boolean; ua: string; original: string; };
 
 export const corsMiddleware = (req: Request, res: Response, next: NextFunction) => {
     res.header('Access-Control-Allow-Origin', '*');

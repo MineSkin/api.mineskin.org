@@ -8,7 +8,6 @@ import {
     longAndShortUuid,
     Maybe,
     random32BitNumber,
-    simplifyUserAgent,
     sleep,
     stripUuid
 } from "../util";
@@ -499,7 +498,7 @@ export class Generator {
                 server: result.account?.requestServer || config.server,
 
                 via: client.via,
-                ua: client.userAgent,
+                ua: client.userAgent.original,
                 apiKey: client.apiKeyId,
 
                 duplicate: 0,
@@ -546,13 +545,13 @@ export class Generator {
                     .tag("newOrDuplicate", "new")
                     .tag("server", metrics.config.server)
                     .tag("type", type)
-                    .tag("userAgent", simplifyUserAgent(client.userAgent).ua)
+                    .tag("userAgent", client.userAgent.ua)
                     .inc();
             } catch (e) {
                 Sentry.captureException(e);
             }
             try {
-                await trackRedisGenerated(true, client.apiKeyId, simplifyUserAgent(client.userAgent).ua);
+                await trackRedisGenerated(true, client.apiKeyId, client.userAgent.ua);
             } catch (e) {
                 Sentry.captureException(e);
             }
@@ -695,13 +694,13 @@ export class Generator {
                         .tag("server", metrics.config.server)
                         .tag("source", DuplicateSource.IMAGE_HASH)
                         .tag("type", type)
-                        .tag("userAgent", simplifyUserAgent(client.userAgent).ua)
+                        .tag("userAgent", client.userAgent.ua)
                         .inc();
                 } catch (e) {
                     Sentry.captureException(e);
                 }
                 try {
-                    await trackRedisGenerated(false, client.apiKeyId, simplifyUserAgent(client.userAgent).ua);
+                    await trackRedisGenerated(false, client.apiKeyId, client.userAgent.ua);
                 } catch (e) {
                     Sentry.captureException(e);
                 }
@@ -1290,7 +1289,7 @@ export class Generator {
             .tag("visibility", options.visibility === SkinVisibility.PRIVATE ? "private" : "public")
             .tag("variant", options.variant)
             .tag("via", client.via)
-            .tag("userAgent", simplifyUserAgent(client.userAgent).ua)
+            .tag("userAgent", client.userAgent.ua)
             .tag("account", account.id)
             .tag("accountType", account.accountType || "unknown")
             .tag("apiKey", client.apiKey || "none")
@@ -1334,7 +1333,7 @@ export class Generator {
             .tag("type", type)
             .tag("visibility", options.visibility === SkinVisibility.PRIVATE ? "private" : "public")
             .tag("variant", options.variant)
-            .tag("userAgent", simplifyUserAgent(client.userAgent).ua)
+            .tag("userAgent", client.userAgent.ua)
             .tag("apiKey", client.apiKey || "none")
             .tag("via", client.via);
         if (account) {
