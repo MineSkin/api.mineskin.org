@@ -137,7 +137,7 @@ export const register = (app: Application) => {
         } catch (e) {
             Sentry.captureException(e);
             if (e instanceof MulterError) {
-                res.status(400).json({error: `invalid file: ${e.message} (${e.code})`});
+                res.status(400).json({error: `invalid file: ${ e.message } (${ e.code })`});
                 return;
             } else {
                 res.status(500).json({error: "upload error"});
@@ -264,6 +264,10 @@ export const register = (app: Application) => {
     async function sendSkin(req: Request, res: Response, skin: SavedSkin, client: ClientInfo): Promise<void> {
         const delayInfo = await Generator.getDelay(await getAndValidateRequestApiKey(req));
         const json = await skin.toResponseJson(skin.duplicate ? {seconds: 0, millis: 100} : delayInfo); //TODO: adjust delay for duplicate
+        if (client.userAgent.generic && (client.via === 'api' || client.via === 'other')) {
+            (json as any).warnings = [];
+            (json as any).warnings.push("generic_user_agent");
+        }
         res.json(json);
 
         if (skin.duplicate) {

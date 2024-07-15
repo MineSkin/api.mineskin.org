@@ -439,13 +439,13 @@ export const ONE_DAY_SECONDS = 60 * 60 * 24;
 export function simplifyUserAgent(ua: string): SimplifiedUserAgent {
     const result = UAParser(ua);
     if (result.browser && result.browser.name) {
-        return {generic: true, ua: result.browser.name};
+        return {generic: true, ua: result.browser.name, original: ua};
     }
     if (result.device && result.device.type) {
-        return {generic: true, ua: result.device.type};
+        return {generic: true, ua: result.device.type, original: ua};
     }
     if (result.os && result.os.name) {
-        return {generic: true, ua: result.os.name};
+        return {generic: true, ua: result.os.name, original: ua};
     }
     const stripped = result.ua
         .replace(/\/v?(\d\.?)+/g, '')
