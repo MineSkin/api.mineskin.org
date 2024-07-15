@@ -166,10 +166,10 @@ export class Balancer {
                 $match: {
                     enabled: true,
                     errorCounter: { $lt: config.errorThreshold },
-                    $and: [
-                        { lastSelected: { $ne: 0 } },
-                        { lastSelected: { $gt: (Date.now() / 1000) - (60 * 60) } }
-                    ]
+                    // $and: [
+                    //     { lastSelected: { $ne: 0 } },
+                    //     { lastSelected: { $gt: (Date.now() / 1000) - (60 * 60) } }
+                    // ]
                 }
             },
             { $group: { _id: '$requestServer', count: { $sum: 1 } } }
