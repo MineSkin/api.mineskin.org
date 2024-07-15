@@ -99,11 +99,19 @@ async function init() {
 
         config = await getConfig();
 
-        Requests.init(config);
-    }
+        if (hostname !== 'unknown') {
+            config.server = hostname;
+        }
 
-    if (hostname !== 'unknown') {
-        config.server = hostname;
+        if (!config ||
+            !config.requestServers ||
+            !config.requestServers[config.server]
+        ) {
+            console.error(new Error("Invalid config"));
+            process.exit(1);
+        }
+
+        Requests.init(config);
     }
 
     // const version = await gitsha();
