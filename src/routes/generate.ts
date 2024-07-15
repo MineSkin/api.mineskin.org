@@ -256,18 +256,20 @@ export const register = (app: Application) => {
         console.log(debug(`${ options.breadcrumb } USER:        ${ uuids.long }`))
 
         const skin = await Generator.generateFromUserAndSave(uuids.long, options, client);
-        await sendSkin(req, res, skin, client);
+        await sendSkin(req, res, skin, client, ["this endpoint is deprecated, use POST /generate/user"]);
     })
 
     ///
 
-    async function sendSkin(req: Request, res: Response, skin: SavedSkin, client: ClientInfo): Promise<void> {
+    async function sendSkin(req: Request, res: Response, skin: SavedSkin, client: ClientInfo, warnings: string[] = []): Promise<void> {
         const delayInfo = await Generator.getDelay(await getAndValidateRequestApiKey(req));
         const json = await skin.toResponseJson(skin.duplicate ? {seconds: 0, millis: 100} : delayInfo); //TODO: adjust delay for duplicate
+
+        (json as any).warnings = warnings;
         if (client.userAgent.generic && (client.via === 'api' || client.via === 'other')) {
-            (json as any).warnings = [];
-            (json as any).warnings.push("generic_user_agent");
+            (json as any).warnings.push("please use a proper user-agent header");
         }
+
         res.json(json);
 
         if (skin.duplicate) {
