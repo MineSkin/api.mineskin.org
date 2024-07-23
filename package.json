@@ -10,7 +10,8 @@
     "compile": "tsc",
     "build": "npm run clean && npm run compile",
     "start": "node dist/index.js",
-    "pm2": "pm2 start ecosystem.config.js"
+    "pm2": "pm2 start ecosystem.config.js",
+    "licenses": "npx generate-license-file --input package.json --output third-party-licenses.txt --overwrite"
   },
   "author": "Haylee Schäfer",
   "dependencies": {
@@ -86,6 +87,7 @@
     "@types/tunnel-ssh": "^4.1.0",
     "@types/ua-parser-js": "^0.7.39",
     "@types/uuid": "^8.3.0",
+    "generate-license-file": "^3.5.0",
     "typescript": "^5.4.5"
   }
 }
