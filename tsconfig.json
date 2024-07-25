@@ -29,7 +29,7 @@
       "morgan",
       "tunnel-ssh"
     ],
-    "baseUrl": "."
+    "baseUrl": "src"
   },
   "exclude": [
     "node_modules",
