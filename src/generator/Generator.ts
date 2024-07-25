@@ -961,7 +961,7 @@ export class Generator {
                     return res;
                 });
             } catch (e) {
-                Sentry.captureException(e,{
+                Sentry.captureException(e, {
                     extra: {
                         url: urlStr,
                         breadcrumb: breadcrumb
@@ -1402,7 +1402,7 @@ export class Generator {
                     code: 2,
                     message: "invalid_argument"
                 });
-                throw new GeneratorError(GenError.INVALID_IMAGE, `Invalid file size (${size})`, 400);
+                throw new GeneratorError(GenError.INVALID_IMAGE, `Invalid file size (${ size })`, 400);
             }
 
             let fType;
@@ -1452,7 +1452,7 @@ export class Generator {
                     code: 2,
                     message: "invalid_argument"
                 });
-                throw new GeneratorError(GenError.INVALID_IMAGE, "Failed to get image hash", 400, undefined, e);
+                throw new GeneratorError(GenError.INVALID_IMAGE, `Failed to get image hash: ${ e.message }`, 400, undefined, e);
             }
             console.log(debug(options.breadcrumb + " Image hash: " + imageHash));
             // Check duplicate from imageHash
