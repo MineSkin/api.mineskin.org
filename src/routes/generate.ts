@@ -102,6 +102,27 @@ export const register = (app: Application) => {
     //// UPLOAD
 
     app.post("/generate/upload", async (req: GenerateRequest, res: Response) => {
+        try {
+            await new Promise<void>((resolve, reject) => {
+                upload.single('file')(req, res, function (err) {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve();
+                    }
+                })
+            });
+        } catch (e) {
+            Sentry.captureException(e);
+            if (e instanceof MulterError) {
+                res.status(400).json({error: `invalid file: ${ e.message } (${ e.code })`});
+                return;
+            } else {
+                res.status(500).json({error: "upload error"});
+                return;
+            }
+        }
+
         const options = getAndValidateOptions(GenerateType.UPLOAD, req, res);
         const client = getClientInfo(req);
 
@@ -123,27 +144,6 @@ export const register = (app: Application) => {
             });
         }
         console.log(debug(`${ options.breadcrumb } Key:         ${ req.apiKey?.name ?? "none" } ${ req.apiKey?._id ?? "" }`));
-
-        try {
-            await new Promise<void>((resolve, reject) => {
-                upload.single('file')(req, res, function (err) {
-                    if (err) {
-                        reject(err);
-                    } else {
-                        resolve();
-                    }
-                })
-            });
-        } catch (e) {
-            Sentry.captureException(e);
-            if (e instanceof MulterError) {
-                res.status(400).json({error: `invalid file: ${ e.message } (${ e.code })`});
-                return;
-            } else {
-                res.status(500).json({error: "upload error"});
-                return;
-            }
-        }
 
         if (!req.file) {
             res.status(400).json({error: "missing files"});
