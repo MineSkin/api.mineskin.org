@@ -39,6 +39,7 @@ import { Discord } from "./util/Discord";
 import { Balancer } from "./generator/Balancer";
 import { initRedis, redisClient } from "./database/redis";
 import UAParser from "ua-parser-js";
+import mongoose from "mongoose";
 
 
 sourceMapSupport.install();
@@ -275,7 +276,31 @@ async function init() {
                 parsed: new UAParser(req.headers["user-agent"]).getResult(),
                 simplified: simplifyUserAgent(req.headers["user-agent"] as string)
             });
-        })
+        });
+
+        app.get("/health", async function (req, res) {
+            const metrics = await MineSkinMetrics.get();
+            const influx_ = await metrics.metrics?.influx.ping(5000);
+            const influx = influx_ && influx_.length > 0 ? influx_[0] : undefined;
+            const mongo = mongoose.connection.readyState;
+            const redis = await redisClient?.ping();
+
+            return res.json({
+                server: config.server,
+                mongo: {
+                    ok: mongo === 1,
+                    state: mongo
+                },
+                influx: {
+                    ok: influx && influx.online,
+                    rtt: influx?.rtt
+                },
+                redis: {
+                    ok: redis === "PONG",
+                    res: redis
+                }
+            });
+        });
 
         app.get("/openapi.yml", corsMiddleware, (req, res) => {
             res.sendFile("/openapi.yml", {root: `${ __dirname }/..`});
