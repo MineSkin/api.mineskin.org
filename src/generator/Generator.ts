@@ -254,10 +254,20 @@ export class Generator {
         // const enabledAccounts = await Account.countDocuments({
         //     enabled: true
         // }).exec();
-        const serverAccounts = await Account.countDocuments({
-            enabled: true,
-            requestServer: config.server
-        }).exec();
+        let serverAccounts: number;
+        try {
+            serverAccounts = await Account.countDocuments({
+                enabled: true,
+                requestServer: config.server
+            }).exec();
+        } catch (e) {
+            Sentry.captureException(e);
+            console.error("Error counting server accounts, restarting")
+            setTimeout(() => {
+                process.exit(1);
+            }, 5000);
+            return;
+        }
         this.serverAccounts = serverAccounts;
 
         const usableAccountDocs = await Account.find(await this.usableAccountsQuery(), {
