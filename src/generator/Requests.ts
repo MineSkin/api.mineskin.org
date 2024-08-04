@@ -91,9 +91,15 @@ export class Requests {
         }
         try {
             MineSkinMetrics.get().then(metrics => {
-                metrics.metrics!.influx.writePoints(points, {
+                return metrics.metrics!.influx.writePoints(points, {
                     precision: 's'
                 });
+            }).catch(e => {
+                Sentry.captureException(e);
+                console.error("influx error, restarting");
+                setTimeout(() => {
+                    process.exit(1);
+                }, 1000);
             })
         } catch (e) {
             Sentry.captureException(e);
