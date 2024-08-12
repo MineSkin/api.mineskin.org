@@ -21,7 +21,7 @@ services:
         bind:
           create_host_path: true
     healthcheck:
-      test: "wget --no-verbose --tries=1 --spider http://localhost/ || exit 1"
+      test: "wget --no-verbose --tries=1 --spider http://localhost:3017/health || exit 1"
       interval: 5m
       start_period: 1m
       timeout: 3s
