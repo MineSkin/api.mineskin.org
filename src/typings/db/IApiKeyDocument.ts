@@ -11,6 +11,7 @@ export interface IApiKeyDocument extends Document {
     updatedAt?: Date;
     lastUsed?: Date;
     minDelay?: number;
+    billable?: boolean;
     allowedOrigins?: string[];
     allowedIps?: string[];
     allowedAgents?: string[];

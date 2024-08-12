@@ -1,6 +1,6 @@
-import {model, Schema} from "mongoose";
-import {IApiKeyDocument, IApiKeyModel} from "../../typings/db/IApiKeyDocument";
-import {getConfig} from "../../typings/Configs";
+import { model, Schema } from "mongoose";
+import { IApiKeyDocument, IApiKeyModel } from "../../typings/db/IApiKeyDocument";
+import { getConfig } from "../../typings/Configs";
 
 const ApiKeySchema: Schema<IApiKeyDocument, IApiKeyModel> = new Schema(
     {
@@ -37,7 +37,8 @@ const ApiKeySchema: Schema<IApiKeyDocument, IApiKeyModel> = new Schema(
         allowedOrigins: [String],
         allowedIps: [String],
         allowedAgents: [String],
-        minDelay: Number
+        minDelay: Number,
+        billable: Boolean
     },
     {
         collection: "apikeys"

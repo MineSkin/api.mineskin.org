@@ -7,4 +7,5 @@ export interface ClientInfo {
     via: string;
     apiKey?: string;
     apiKeyId?: string;
+    billable?: boolean;
 }

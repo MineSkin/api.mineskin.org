@@ -16,7 +16,7 @@ export async function initRedis() {
     redisClient = await redisClient.connect();
 }
 
-export async function trackRedisGenerated(isNew: boolean, apiKey: Maybe<string>, userAgent: Maybe<string>) {
+export async function trackRedisGenerated(isNew: boolean, apiKey: Maybe<string>, userAgent: Maybe<string>, billable?: boolean) {
     return Sentry.startSpan({
         op: "redis_trackGenerated",
         name: "Track Generated Skin",
@@ -33,6 +33,9 @@ export async function trackRedisGenerated(isNew: boolean, apiKey: Maybe<string>,
 
         if (apiKey) {
             trackRedisGenerated0(trans, newOrDup, `mineskin:generated:apikey:${ apiKey }`);
+            if (billable) {
+                trackRedisGenerated0(trans, 'billable', `mineskin:generated:apikey:${ apiKey }`);
+            }
         }
         if (userAgent) {
             trackRedisGenerated0(trans, newOrDup, `mineskin:generated:agent:${ userAgent.toLowerCase() }`);

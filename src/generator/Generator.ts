@@ -562,7 +562,7 @@ export class Generator {
                 Sentry.captureException(e);
             }
             try {
-                await trackRedisGenerated(true, client.apiKeyId, client.userAgent.ua);
+                await trackRedisGenerated(true, client.apiKeyId, client.userAgent.ua, client.billable);
             } catch (e) {
                 Sentry.captureException(e);
             }

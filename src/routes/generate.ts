@@ -292,14 +292,17 @@ export const register = (app: Application) => {
         const via = getVia(req);
         let apiKeyId: Maybe<string>;
         let apiKey;
+        let billable = false;
         if (isApiKeyRequest(req) && req.apiKey) {
             apiKeyId = req.apiKey._id as string;
             apiKey = `${ req.apiKey.key.substring(0, 8) } ${ req.apiKey?.name }`;
+            billable = req.apiKey.billable||false;
         }
 
         Sentry.setTags({
             "generate_via": via,
-            "generate_api_key": apiKey ?? "none"
+            "generate_api_key": apiKey ?? "none",
+            "generate_billable": billable
         });
 
         const userAgent = simplifyUserAgent(rawUserAgent);
@@ -310,7 +313,8 @@ export const register = (app: Application) => {
             ip,
             via,
             apiKey,
-            apiKeyId
+            apiKeyId,
+            billable
         };
     }
 
