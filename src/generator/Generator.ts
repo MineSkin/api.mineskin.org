@@ -7,6 +7,7 @@ import {
     imgHash,
     longAndShortUuid,
     Maybe,
+    ONE_MONTH_SECONDS,
     ONE_YEAR_SECONDS,
     random32BitNumber,
     sleep,
@@ -567,14 +568,18 @@ export class Generator {
             } catch (e) {
                 Sentry.captureException(e);
             }
-            if(!!client.billable) {
+            if (!!client.billable) {
                 try {
                     const date = new Date();
-                    const billableKey = `mineskin:generated:apikey:${ client.apiKeyId }:${ date.getFullYear() }:${ date.getMonth() + 1 }:billable`
-                    let incr = await redisClient?.incr(billableKey);
-                    await redisClient?.expire(billableKey, ONE_YEAR_SECONDS * 2);
-                    if (incr && (incr === 1 || incr % 100 === 0)) {
-                        await redisClient?.publish(`mineskin:invalidations:billable`, `${ client.apiKeyId }:${ date.getFullYear() }:${ date.getMonth() + 1 }`);
+                    const billableKeyMonth = `mineskin:generated:apikey:${ client.apiKeyId }:${ date.getFullYear() }:${ date.getMonth() + 1 }:billable`
+                    const billableKeyDate = `mineskin:generated:apikey:${ client.apiKeyId }:${ date.getFullYear() }:${ date.getMonth() + 1 }:${ date.getDate() }:billable`
+                    let incrMonth = await redisClient?.incr(billableKeyMonth);
+                    let incrDate = await redisClient?.incr(billableKeyDate);
+                    await redisClient?.expire(billableKeyMonth, ONE_YEAR_SECONDS * 2);
+                    await redisClient?.expire(billableKeyDate, ONE_MONTH_SECONDS * 3);
+                    if ((incrDate && (incrDate === 1 || incrDate % 20 === 0)) ||
+                        (incrMonth && (incrMonth === 1 || incrMonth % 100 === 0))) {
+                        await redisClient?.publish(`mineskin:invalidations:billable`, `${ client.apiKeyId }`);
                     }
                 } catch (e) {
                     Sentry.captureException(e);
