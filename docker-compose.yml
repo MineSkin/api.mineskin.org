@@ -15,6 +15,12 @@ services:
     volumes:
       - /home/inventivetalent/api.mineskin.org/config.js:/opt/app/config.js
       - /home/inventivetalent/api.mineskin.org/logs:/opt/app/logs
+    healthcheck:
+      test: "wget --no-verbose --tries=1 --spider http://localhost/ || exit 1"
+      interval: 5m
+      start_period: 1m
+      timeout: 3s
+      retries: 3
     deploy:
       replicas: 6
       placement:
