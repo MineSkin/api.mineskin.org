@@ -514,12 +514,16 @@ export function shutdown(signal: string, value: number) {
     updatingApp = true;
     setTimeout(() => {
         server.close().then(() => {
-            console.log(`server stopped by ${ signal } with value ${ value }`);
+            console.warn(`server stopped by ${ signal } with value ${ value }`);
             Sentry.close().then(() => {
                 process.exit(128 + value);
             });
         });
     }, 100);
+    setTimeout(() => {
+        console.error("shutdown timeout");
+        process.exit(128 + value);
+    }, 10000);
 }
 
 const signals: Record<string, number> = {
