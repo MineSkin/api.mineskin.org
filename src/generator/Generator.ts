@@ -7,6 +7,7 @@ import {
     imgHash,
     longAndShortUuid,
     Maybe,
+    ONE_YEAR_SECONDS,
     random32BitNumber,
     sleep,
     stripUuid
@@ -562,9 +563,22 @@ export class Generator {
                 Sentry.captureException(e);
             }
             try {
-                await trackRedisGenerated(true, client.apiKeyId, client.userAgent.ua, client.billable);
+                await trackRedisGenerated(true, client.apiKeyId, client.userAgent.ua);
             } catch (e) {
                 Sentry.captureException(e);
+            }
+            if(!!client.billable) {
+                try {
+                    const date = new Date();
+                    const billableKey = `mineskin:generated:apikey:${ client.apiKeyId }:${ date.getFullYear() }:${ date.getMonth() + 1 }:billable`
+                    let incr = await redisClient?.incr(billableKey);
+                    await redisClient?.expire(billableKey, ONE_YEAR_SECONDS * 2);
+                    if (incr && (incr === 1 || incr % 100 === 0)) {
+                        await redisClient?.publish(`mineskin:invalidations:billable`, `${ client.apiKeyId }:${ date.getFullYear() }:${ date.getMonth() + 1 }`);
+                    }
+                } catch (e) {
+                    Sentry.captureException(e);
+                }
             }
             const doc = await this.saveSkin(result, options, client, type, start)
 
