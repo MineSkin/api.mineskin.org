@@ -571,14 +571,15 @@ export class Generator {
             if (!!client.billable) {
                 try {
                     const date = new Date();
+                    const usageKey = `mineskin:usage:apikey:${ client.apiKeyId }:meter`;
                     const billableKeyMonth = `mineskin:generated:apikey:${ client.apiKeyId }:${ date.getFullYear() }:${ date.getMonth() + 1 }:billable`
                     const billableKeyDate = `mineskin:generated:apikey:${ client.apiKeyId }:${ date.getFullYear() }:${ date.getMonth() + 1 }:${ date.getDate() }:billable`
-                    let incrMonth = await redisClient?.incr(billableKeyMonth);
-                    let incrDate = await redisClient?.incr(billableKeyDate);
+                    const incr = await redisClient?.incr(usageKey);
+                    await redisClient?.incr(billableKeyMonth);
+                    await redisClient?.incr(billableKeyDate);
                     await redisClient?.expire(billableKeyMonth, ONE_YEAR_SECONDS * 2);
                     await redisClient?.expire(billableKeyDate, ONE_MONTH_SECONDS * 3);
-                    if ((incrDate && (incrDate === 1 || incrDate % 20 === 0)) ||
-                        (incrMonth && (incrMonth === 1 || incrMonth % 100 === 0))) {
+                    if (incr && (incr === 1 || incr % 20 === 0)) {
                         await redisClient?.publish(`mineskin:invalidations:billable`, `${ client.apiKeyId }`);
                     }
                 } catch (e) {
