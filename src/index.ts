@@ -84,6 +84,7 @@ logger.info("\n" +
 
 
 let app: Express;
+let server: any;
 
 
 async function init() {
@@ -109,7 +110,7 @@ async function init() {
             !config.requestServers[config.server]
         ) {
             console.error(new Error("Invalid config"));
-            process.exit(1);
+            shutdown('CONFIG_ERROR', 1);
         }
 
         Requests.init(config);
@@ -492,7 +493,7 @@ function addErrorDetailsToSentry(err: AuthenticationError | GeneratorError): voi
 init().then(() => {
     setTimeout(() => {
         console.log("Starting app");
-        const server = app.listen(port, function () {
+        server = app.listen(port, function () {
             console.log(info(" ==> listening on *:" + port + "\n"));
             setTimeout(() => {
                 updatingApp = false;
@@ -507,13 +508,28 @@ init().then(() => {
     }, 1000);
 });
 
-
-process.on('SIGTERM', () => {
-    console.log("SIGTERM received, stopping...");
+// https://medium.com/@becintec/building-graceful-node-applications-in-docker-4d2cd4d5d392
+export function shutdown(signal: string, value: number) {
+    console.log("shutdown");
     updatingApp = true;
     setTimeout(() => {
-        Sentry.close().then(() => {
-            process.exit(0);
+        server.close().then(() => {
+            console.log(`server stopped by ${ signal } with value ${ value }`);
+            Sentry.close().then(() => {
+                process.exit(128 + value);
+            });
         });
-    }, 1000);
+    }, 100);
+}
+
+const signals: Record<string, number> = {
+    'SIGHUP': 1,
+    'SIGINT': 2,
+    'SIGTERM': 15
+};
+Object.keys(signals).forEach((signal) => {
+    process.on(signal, () => {
+        console.log(`process received a ${ signal } signal`);
+        shutdown(signal, signals[signal]);
+    });
 });

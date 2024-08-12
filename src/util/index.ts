@@ -495,4 +495,3 @@ export const corsWithCredentialsMiddleware = (req: Request, res: Response, next:
         return next();
     }
 };
-
