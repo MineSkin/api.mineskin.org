@@ -579,6 +579,7 @@ export class Generator {
                     await redisClient?.incr(billableKeyDate);
                     await redisClient?.expire(billableKeyMonth, ONE_YEAR_SECONDS * 2);
                     await redisClient?.expire(billableKeyDate, ONE_MONTH_SECONDS * 3);
+                    await redisClient?.expire(usageKey, ONE_MONTH_SECONDS * 3);
                     if (incr && (incr === 1 || incr % 20 === 0)) {
                         await redisClient?.publish(`mineskin:invalidations:billable`, `${ client.apiKeyId }`);
                     }
