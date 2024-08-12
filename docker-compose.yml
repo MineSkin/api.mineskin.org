@@ -15,6 +15,11 @@ services:
     volumes:
       - /home/inventivetalent/api.mineskin.org/config.js:/opt/app/config.js
       - /home/inventivetalent/api.mineskin.org/logs:/opt/app/logs
+      - type: bind
+        source: /home/inventivetalent/api.mineskin.org/.well-known
+        target: /opt/app/.well-known
+        bind:
+          create_host_path: true
     healthcheck:
       test: "wget --no-verbose --tries=1 --spider http://localhost/ || exit 1"
       interval: 5m
