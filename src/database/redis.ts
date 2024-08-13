@@ -3,7 +3,8 @@ import * as Sentry from "@sentry/node";
 import { Maybe, ONE_MONTH_SECONDS, ONE_YEAR_SECONDS } from "../util";
 
 export let redisClient: Maybe<RedisClientType>;
-export let redisPubSub: Maybe<RedisClientType>;
+export let redisPub: Maybe<RedisClientType>;
+export let redisSub: Maybe<RedisClientType>;
 
 export async function initRedis() {
     if (!process.env.REDIS_URI) return;
@@ -16,14 +17,23 @@ export async function initRedis() {
     });
     redisClient = await redisClient.connect();
 
-    redisPubSub = createClient({
+    redisPub = createClient({
         url: process.env.REDIS_URI
     })
-    redisPubSub.on('error', (err: any) => {
+    redisPub.on('error', (err: any) => {
         console.error(`Redis error`, err);
         Sentry.captureException(err);
     });
-    redisPubSub = await redisPubSub.connect();
+    redisPub = await redisPub.connect();
+
+    redisSub = createClient({
+        url: process.env.REDIS_URI
+    })
+    redisSub.on('error', (err: any) => {
+        console.error(`Redis error`, err);
+        Sentry.captureException(err);
+    });
+    redisSub = await redisSub.connect();
 }
 
 export async function trackRedisGenerated(isNew: boolean, apiKey: Maybe<string>, userAgent: Maybe<string>) {

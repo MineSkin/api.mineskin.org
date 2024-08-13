@@ -61,7 +61,7 @@ import { IPoint } from "influx";
 import { DelayInfo } from "../typings/DelayInfo";
 import { FilterQuery } from "mongoose";
 import { Capes } from "../util/Capes";
-import { redisClient, redisPubSub, trackRedisGenerated } from "../database/redis";
+import { redisClient, redisPub, trackRedisGenerated } from "../database/redis";
 import { shutdown } from "../index";
 
 
@@ -583,7 +583,7 @@ export class Generator {
                         ?.expire(usageKey, ONE_MONTH_SECONDS * 3)
                         .exec();
                     if (incr && (incr % 20 === 0)) {
-                        await redisPubSub?.publish(`mineskin:invalidations:billable`, `${ client.apiKeyId }`);
+                        await redisPub?.publish(`mineskin:invalidations:billable`, `${ client.apiKeyId }`);
                     }
                 } catch (e) {
                     Sentry.captureException(e);
