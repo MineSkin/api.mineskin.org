@@ -582,7 +582,7 @@ export class Generator {
                         ?.expire(billableKeyDate, ONE_MONTH_SECONDS * 3)
                         ?.expire(usageKey, ONE_MONTH_SECONDS * 3)
                         .exec();
-                    if (incr && (incr === 1 || incr % 20 === 0)) {
+                    if (incr && (incr % 20 === 0)) {
                         await redisPubSub?.publish(`mineskin:invalidations:billable`, `${ client.apiKeyId }`);
                     }
                 } catch (e) {
