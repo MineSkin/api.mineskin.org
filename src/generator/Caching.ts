@@ -23,6 +23,7 @@ import { ApiKey } from "../database/schemas/ApiKey";
 import { IPendingDiscordLink } from "../typings/DiscordAccountLink";
 import { Time } from "@inventivetalent/time";
 import { MojangAccountLink } from "../typings/MojangAccountLink";
+import { redisPubSub } from "../database/redis";
 
 export class Caching {
 
@@ -274,6 +275,13 @@ export class Caching {
             Sentry.captureException(e);
         }
     }, 20000);
+
+    public static subscribeToRedis() {
+        redisPubSub?.subscribe('mineskin:invalidations:apikey', (message, channel) => {
+            console.log('Received apikey invalidation message', message, channel);
+            this.apiKeyCache.invalidate(message);
+        })
+    }
 
     /// REQUESTS
 
