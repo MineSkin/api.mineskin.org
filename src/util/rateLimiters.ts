@@ -18,7 +18,7 @@ export const generateLimiter = rateLimit({
         if (req.path.includes("user")) return false; // always limit user, doesn't have check-only option
         return !!(req.body["checkOnly"] || req.query["checkOnly"])
     },
-    message: JSON.stringify({ error: "Too many requests" }),
+    message: JSON.stringify({ error: "Too many requests", limiter: "express" }),
     keyGenerator: keyGenerator,
     //TODO
     // handler: (request: Request, response: Response, options: Options) => {

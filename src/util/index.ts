@@ -72,13 +72,19 @@ export async function checkTraffic(req: Request, res: Response): Promise<boolean
         if (lastRequest.getTime() > time - delayInfo.millis) {
             res.status(429).json({
                 error: "Too many requests",
+                limiter: "mongo",
                 nextRequest: Math.round((time / 1000) + delayInfo.seconds + 5), // deprecated
                 delay: delayInfo.seconds, // deprecated
 
                 delayInfo: {
                     seconds: delayInfo.seconds,
                     millis: delayInfo.millis
-                }
+                },
+
+                lastRequest: {
+                    time: lastRequest.getTime()
+                },
+                now: time
             });
             console.log(debug("Request too soon"));
             MineSkinMetrics.get().then(metrics => {

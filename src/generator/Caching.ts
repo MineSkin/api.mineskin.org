@@ -164,7 +164,7 @@ export class Caching {
     //// DATABASE
 
     protected static readonly trafficByIpCache: AsyncLoadingCache<string, Date> = Caches.builder()
-        .expireAfterWrite(Time.seconds(5))
+        .expireAfterWrite(Time.seconds(1))
         .expirationInterval(Time.seconds(1))
         .buildAsync<string, Date>(async (ip) => {
             const traffic = await Traffic.findForIp(ip);
@@ -172,7 +172,7 @@ export class Caching {
         });
 
     protected static readonly trafficByKeyCache: AsyncLoadingCache<string, Date> = Caches.builder()
-        .expireAfterWrite(Time.seconds(5))
+        .expireAfterWrite(Time.seconds(1))
         .expirationInterval(Time.seconds(1))
         .buildAsync<string, Date>(async (key) => {
             const traffic = await Traffic.findForKey(key);
