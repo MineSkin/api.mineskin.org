@@ -138,6 +138,12 @@ components:
           type: string
         name:
           type: string
+    DelayInfo:
+        properties:
+          millis:
+            type: integer
+          seconds:
+            type: integer
 
   parameters:
     userAgent:
@@ -149,13 +155,13 @@ components:
       schema:
         type: string
     apiKey:
-        name: Authorization
-        description: API Key - Get your key from https://mineskin.org/apikey
-        example: "Bearer [YOUR API KEY]"
-        in: header
-        required: false
-        schema:
-            type: string
+      name: Authorization
+      description: API Key - Get your key from https://mineskin.org/apikey
+      example: "Bearer [YOUR API KEY]"
+      in: header
+      required: false
+      schema:
+        type: string
 
 
   responses:
@@ -209,21 +215,13 @@ components:
               - $ref: '#/components/schemas/SkinInfo'
               - properties:
                   nextRequest:
+                    deprecated: true
                     type: integer
                   duplicate:
                     type: boolean
-    DelayInfo:
-      description: Delay info for the requesting client
-      content:
-        application/json:
-          schema:
-            properties:
-              delay:
-                type: integer
-              next:
-                type: integer
-              nextRelative:
-                type: integer
+                  delayInfo:
+                    $ref: '#/components/schemas/DelayInfo'
+
 paths:
   /generate/url:
     post:
@@ -321,7 +319,28 @@ paths:
         - $ref: '#/components/parameters/apiKey'
       responses:
         200:
-          $ref: '#/components/responses/DelayInfo'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  millis:
+                    type: integer
+                  seconds:
+                    type: integer
+                  nextRequest:
+                    type: object
+                    properties:
+                      time:
+                        type: integer
+                      relative:
+                        type: integer
+                  lastRequest:
+                    type: object
+                    required: false,
+                    properties:
+                      time:
+                        type: integer
   /get/id/{id}:
     get:
       deprecated: true
