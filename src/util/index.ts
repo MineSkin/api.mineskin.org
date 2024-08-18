@@ -16,6 +16,7 @@ import { MineSkinError, MineSkinRequest } from "../typings";
 import { imageHash } from "@inventivetalent/imghash";
 import { ClientInfo } from "../typings/ClientInfo";
 import UAParser from "ua-parser-js";
+import { updateRedisNextRequest } from "../database/redis";
 
 export function resolveHostname() {
     if (process.env.NODE_HOSTNAME && !process.env.NODE_HOSTNAME.startsWith("{{")) {
@@ -99,13 +100,24 @@ export async function checkTraffic(req: Request, res: Response): Promise<boolean
     })
 }
 
-export async function updateTraffic(req: Request | ClientInfo, time: Date = new Date()): Promise<void> {
+export async function updateTraffic(req: ClientInfo, time: Date = new Date()): Promise<void> {
     return await Sentry.startSpan({
         op: "generate_updateTraffic",
         name: "updateTraffic",
     }, async span => {
-        const ip = req.ip ?? getIp(req as Request);
+        const ip = req.ip;
         const key = 'apiKeyId' in req ? req.apiKeyId : null;
+        try {
+            if (req.delayInfo) {
+                updateRedisNextRequest(req, req.delayInfo.millis).catch(e => {
+                    console.error(e);
+                    Sentry.captureException(e);
+                });
+            }
+        } catch (e) {
+            console.error(e);
+            Sentry.captureException(e);
+        }
         return await Caching.updateTrafficRequestTime(ip, key || null, time);
     })
 }
@@ -461,6 +473,7 @@ export function simplifyUserAgent(ua: string): SimplifiedUserAgent {
 
     return {generic: false, ua: stripped, original: ua};
 }
+
 export type SimplifiedUserAgent = { generic: boolean; ua: string; original: string; };
 
 export const corsMiddleware = (req: Request, res: Response, next: NextFunction) => {

@@ -22,12 +22,13 @@ import { GenerateType, SkinModel, SkinVariant, SkinVisibility } from "../typings
 import { debug } from "../util/colors";
 import * as Sentry from "@sentry/node";
 import { nextBreadColor } from "../typings/Bread";
-import { GenerateRequest } from "../typings";
+import { GenerateRequest, MineSkinRequest } from "../typings";
 import { Caching } from "../generator/Caching";
 import { isApiKeyRequest } from "../typings/ApiKeyRequest";
 import { getUserFromRequest } from "./account";
 import multer, { MulterError } from "multer";
 import { logger } from "../util/log";
+import { DelayInfo } from "../typings/DelayInfo";
 
 export const register = (app: Application) => {
 
@@ -46,9 +47,11 @@ export const register = (app: Application) => {
         next();
     });
     app.use("/generate", generateLimiter);
-    app.use("/generate", async (req, res, next) => {
+    app.use("/generate", async (req: MineSkinRequest, res, next) => {
         try {
-            const delay = await Generator.getDelay(await getAndValidateRequestApiKey(req));
+            const key = await getAndValidateRequestApiKey(req);
+            const delay = await Generator.getDelay(key);
+            req.delayInfo = delay;
             res.header("X-MineSkin-Delay", `${ delay.seconds || 5 }`); //deprecated
             res.header("X-MineSkin-Delay-Seconds", `${ delay.seconds || 5 }`);
             res.header("X-MineSkin-Delay-Millis", `${ delay.millis || 5000 }`);
@@ -296,6 +299,10 @@ export const register = (app: Application) => {
             apiKeyId = req.apiKey._id as string;
             apiKey = `${ req.apiKey.key.substring(0, 8) } ${ req.apiKey?.name }`;
         }
+        let delayInfo: Maybe<DelayInfo>;
+        if ('delayInfo' in req) {
+            delayInfo = req.delayInfo;
+        }
 
         Sentry.setTags({
             "generate_via": via,
@@ -304,13 +311,17 @@ export const register = (app: Application) => {
 
         const userAgent = simplifyUserAgent(rawUserAgent);
 
+        const time = Date.now();
+
         return {
+            time,
             userAgent,
             origin,
             ip,
             via,
             apiKey,
-            apiKeyId
+            apiKeyId,
+            delayInfo
         };
     }
 
