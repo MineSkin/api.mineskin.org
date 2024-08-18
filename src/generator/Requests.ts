@@ -248,7 +248,7 @@ export class Requests {
         if (!mineskinConfig.proxies.enabled) return;
         const proxyConfig = mineskinConfig.proxies;
         for (let proxyKey in proxyConfig.available) {
-            if (!mineskinConfig.requestServers[mineskinConfig.server].includes(proxyKey)) continue;
+            if (!mineskinConfig.requestServers[mineskinConfig.server]?.includes(proxyKey)) continue;
             let proxy = proxyConfig.available[proxyKey];
             if (!proxy.enabled) continue;
             let proxyType = proxy["type"];
@@ -311,7 +311,7 @@ export class Requests {
         if (!mineskinConfig.proxies.enabled) return;
         const proxyConfig = mineskinConfig.proxies;
         for (let proxyKey in proxyConfig.available) {
-            if (!mineskinConfig.requestServers[mineskinConfig.server].includes(proxyKey)) continue;
+            if (!mineskinConfig.requestServers[mineskinConfig.server]?.includes(proxyKey)) continue;
             let proxy = proxyConfig.available[proxyKey];
             if (!proxy.enabled) continue;
 
