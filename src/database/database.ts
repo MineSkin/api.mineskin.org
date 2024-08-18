@@ -42,6 +42,7 @@ async function connectMongo(config: MineSkinConfig) {
     console.info("MongoDB connected!");
 
     mongoose.connection.on("error", err => {
+        console.log(err);
         Sentry.captureException(err);
         console.warn("Mongo connection error, restarting app");
         setTimeout(() => {
@@ -51,6 +52,7 @@ async function connectMongo(config: MineSkinConfig) {
 
     for (const model of Object.values(mongoose.models)) {
         model.on('error', err => {
+            console.log(err);
             Sentry.captureException(err);
             console.warn(`Mongo model error, restarting app`);
             setTimeout(() => {

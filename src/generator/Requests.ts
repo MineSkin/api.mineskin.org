@@ -96,6 +96,7 @@ export class Requests {
                     precision: 's'
                 });
             }).catch(e => {
+                console.log(e);
                 Sentry.captureException(e);
                 console.error("influx error, restarting");
                 setTimeout(() => {
