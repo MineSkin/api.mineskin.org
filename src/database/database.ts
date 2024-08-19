@@ -1,7 +1,7 @@
 import mongoose, { ConnectOptions, Mongoose } from "mongoose";
 import * as Sentry from "@sentry/node";
 import { MineSkinConfig } from "../typings/Configs";
-import { shutdown } from "../index";
+import { requestShutdown } from "../index";
 import tunnel = require("tunnel-ssh");
 
 export function connectToMongo(config: MineSkinConfig): Promise<Mongoose> {
@@ -45,9 +45,7 @@ async function connectMongo(config: MineSkinConfig) {
         console.log(err);
         Sentry.captureException(err);
         console.warn("Mongo connection error, restarting app");
-        setTimeout(() => {
-            shutdown('MONGO_ERROR', 1);
-        }, 1000);
+        requestShutdown('MONGO_ERROR', 1);
     });
 
     for (const model of Object.values(mongoose.models)) {
@@ -55,9 +53,7 @@ async function connectMongo(config: MineSkinConfig) {
             console.log(err);
             Sentry.captureException(err);
             console.warn(`Mongo model error, restarting app`);
-            setTimeout(() => {
-                shutdown('MONGO_ERROR', 1);
-            }, 1000);
+                requestShutdown('MONGO_ERROR', 1);
         })
     }
 

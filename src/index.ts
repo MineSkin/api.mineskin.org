@@ -110,7 +110,7 @@ async function init() {
             !config.requestServers[config.server]
         ) {
             console.error(new Error("Invalid config"));
-            shutdown('CONFIG_ERROR', 1);
+            requestShutdown('CONFIG_ERROR', 1);
         }
 
         Requests.init(config);
@@ -511,6 +511,7 @@ init().then(() => {
 // https://medium.com/@becintec/building-graceful-node-applications-in-docker-4d2cd4d5d392
 export function shutdown(signal: string, value: number) {
     console.log("shutdown");
+    Sentry.captureException(new Error(`Shutdown by ${ signal } with value ${ value }`));
     updatingApp = true;
     setTimeout(() => {
         server.close().then(() => {
@@ -524,6 +525,27 @@ export function shutdown(signal: string, value: number) {
         console.error("shutdown timeout");
         process.exit(128 + value);
     }, 20000);
+}
+
+const shutdownCounts: Record<string, number> = {};
+(() => {
+    setInterval(() => {
+        Object.keys(shutdownCounts).forEach((signal) => {
+            if (shutdownCounts[signal] > 0) {
+                shutdownCounts[signal]--;
+            }
+        });
+    }, 1000 * 30);
+})();
+
+export function requestShutdown(signal: string, value: number) {
+    Sentry.captureMessage(`Requesting shutdown by ${ signal } with value ${ value }`);
+    if (!shutdownCounts[signal]) {
+        shutdownCounts[signal] = 0;
+    }
+    if (shutdownCounts[signal]++ >= 3) {
+        shutdown(signal, value);
+    }
 }
 
 const signals: Record<string, number> = {

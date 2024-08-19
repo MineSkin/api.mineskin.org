@@ -15,7 +15,7 @@ import { IAccountDocument } from "../typings";
 import * as https from "https";
 import { Span } from "@sentry/types";
 import { networkInterfaces } from "os";
-import { shutdown } from "../index";
+import { requestShutdown } from "../index";
 
 export const GENERIC = "generic";
 export const MOJANG_AUTH = "mojangAuth";
@@ -99,9 +99,7 @@ export class Requests {
                 console.log(e);
                 Sentry.captureException(e);
                 console.error("influx error, restarting");
-                setTimeout(() => {
-                    shutdown('INFLUX_ERROR', 1);
-                }, 1000);
+                requestShutdown('INFLUX_ERROR', 1);
             })
         } catch (e) {
             Sentry.captureException(e);

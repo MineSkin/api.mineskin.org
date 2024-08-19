@@ -60,7 +60,7 @@ import { DelayInfo } from "../typings/DelayInfo";
 import { FilterQuery } from "mongoose";
 import { Capes } from "../util/Capes";
 import { redisClient, trackRedisGenerated } from "../database/redis";
-import { shutdown } from "../index";
+import { requestShutdown } from "../index";
 
 
 // minimum delay for accounts to be used
@@ -264,9 +264,7 @@ export class Generator {
         } catch (e) {
             Sentry.captureException(e);
             console.error("Error counting server accounts, restarting")
-            setTimeout(() => {
-                shutdown('MONGO_ERROR', 1);
-            }, 1000);
+            requestShutdown('MONGO_ERROR', 1);
             return;
         }
         this.serverAccounts = serverAccounts;
