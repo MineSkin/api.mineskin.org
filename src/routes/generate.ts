@@ -270,7 +270,7 @@ export const register = (app: Application) => {
         if (client.apiKey && skin.duplicate) {
             returnDelayInfo = {
                 seconds: 1,
-                millis: client.nextRequest ? client.nextRequest - Date.now() + 100 : 500
+                millis: client.nextRequest ? Math.round((client.nextRequest - Date.now() + 100) / 100) * 100 : 500
             };
             returnDelayInfo.seconds = Math.max(1, Math.ceil(returnDelayInfo.millis / 1000));
         }
