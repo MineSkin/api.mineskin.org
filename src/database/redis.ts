@@ -1,7 +1,7 @@
 import { createClient, RedisClientType } from 'redis';
 import * as Sentry from "@sentry/node";
 import { Maybe, ONE_MONTH_SECONDS, ONE_YEAR_SECONDS } from "../util";
-import { ClientInfoPartial } from "../typings/ClientInfo";
+import { ClientInfo } from "../typings/ClientInfo";
 import { Caching } from "../generator/Caching";
 
 export let redisClient: Maybe<RedisClientType>;
@@ -74,7 +74,7 @@ function trackRedisGenerated0(trans: any, newOrDup: string, prefix: string) {
     trans?.expire(`${ prefix }:${ date.getFullYear() }:${ date.getMonth() + 1 }:${ date.getDate() }:${ newOrDup }`, ONE_MONTH_SECONDS * 3);
 }
 
-export async function getRedisNextRequest(client: ClientInfoPartial): Promise<number> {
+export async function getRedisNextRequest(client: ClientInfo): Promise<number> {
     return Sentry.startSpan({
         op: "redis_getNextRequest",
         name: "Get Next Request",
@@ -114,7 +114,7 @@ export async function getRedisNextRequest(client: ClientInfoPartial): Promise<nu
     });
 }
 
-export async function updateRedisNextRequest(client: ClientInfoPartial, effectiveDelayMs: number) {
+export async function updateRedisNextRequest(client: ClientInfo, effectiveDelayMs: number) {
     return Sentry.startSpan({
         op: "redis_updateNextRequest",
         name: "Update Next Request",
@@ -126,6 +126,7 @@ export async function updateRedisNextRequest(client: ClientInfoPartial, effectiv
         const prefix = 'mineskin:ratelimit';
 
         const nextRequest = client.time + effectiveDelayMs;
+        client.nextRequest = nextRequest;
 
         // clean up ipv6 etc.
         const cleanIp = client.ip.replace(/[^a-zA-Z0-9]/g, '_');

@@ -10,6 +10,5 @@ export interface ClientInfo {
     apiKey?: string;
     apiKeyId?: string;
     delayInfo?: DelayInfo;
+    nextRequest?: number;
 }
-
-export type ClientInfoPartial = Pick<ClientInfo,'ip'|'apiKeyId'|'time'>;

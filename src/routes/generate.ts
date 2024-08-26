@@ -266,7 +266,15 @@ export const register = (app: Application) => {
 
     async function sendSkin(req: Request, res: Response, skin: SavedSkin, client: ClientInfo, warnings: string[] = []): Promise<void> {
         const delayInfo = client.delayInfo || await Generator.getDelay(await getAndValidateRequestApiKey(req));
-        const json = await skin.toResponseJson(client.apiKey && skin.duplicate ? {seconds: 1, millis: 500} : delayInfo); //TODO: adjust delay for duplicate
+        let returnDelayInfo = delayInfo;
+        if (client.apiKey && skin.duplicate) {
+            returnDelayInfo = {
+                seconds: 1,
+                millis: client.nextRequest ? client.nextRequest - Date.now() + 100 : 500
+            };
+            returnDelayInfo.seconds = Math.max(1, Math.ceil(returnDelayInfo.millis / 1000));
+        }
+        const json = await skin.toResponseJson(returnDelayInfo);
 
         (json as any).warnings = warnings;
         if (client.userAgent.generic && (client.via === 'api' || client.via === 'other')) {
