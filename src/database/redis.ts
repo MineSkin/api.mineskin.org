@@ -82,8 +82,11 @@ export async function getRedisNextRequest(client: ClientInfo) {
             return 0;
         }
 
+        // clean up ipv6 etc.
+        const cleanIp = client.ip.replace(/[^a-zA-Z0-9]/g, '_');
+
         let trans = redisClient.multi()
-            .get(`mineskin:ratelimit:ip:${ client.ip }:next`);
+            .get(`mineskin:ratelimit:ip:${ cleanIp }:next`);
         if (client.apiKeyId) {
             trans = trans.get(`mineskin:ratelimit:apikey:${ client.apiKeyId }:next`);
         }
@@ -112,6 +115,9 @@ export async function updateRedisNextRequest(client: ClientInfo, effectiveDelayM
 
         const nextRequest = client.time + effectiveDelayMs;
 
+        // clean up ipv6 etc.
+        const cleanIp = client.ip.replace(/[^a-zA-Z0-9]/g, '_');
+
         let trans = redisClient.multi();
         if (client.apiKeyId) {
             trans = trans.set(`${ prefix }:apikey:${ client.apiKeyId }:last`, client.time)
@@ -120,9 +126,9 @@ export async function updateRedisNextRequest(client: ClientInfo, effectiveDelayM
                     arguments: [`${ nextRequest }`]
                 });
         }
-        trans = trans.set(`${ prefix }:ip:${ client.ip }:last`, client.time)
+        trans = trans.set(`${ prefix }:ip:${ cleanIp }:last`, client.time)
             .evalSha(setIfGreater.sha!, {
-                keys: [`${ prefix }:ip:${ client.ip }:next`],
+                keys: [`${ prefix }:ip:${ cleanIp }:next`],
                 arguments: [`${ nextRequest }`]
             });
 
