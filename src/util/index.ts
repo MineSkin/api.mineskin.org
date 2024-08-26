@@ -129,16 +129,16 @@ export async function checkTraffic(client: ClientInfo, req: Request, res: Respon
     })
 }
 
-export async function updateTraffic(req: ClientInfo, time: Date = new Date()): Promise<void> {
+export async function updateTraffic(client: ClientInfo, time: Date = new Date()): Promise<void> {
     return await Sentry.startSpan({
         op: "generate_updateTraffic",
         name: "updateTraffic",
     }, async span => {
-        const ip = req.ip;
-        const key = 'apiKeyId' in req ? req.apiKeyId : null;
+        const ip = client.ip;
+        const key = 'apiKeyId' in client ? client.apiKeyId : null;
         try {
-            if (req.delayInfo) {
-                updateRedisNextRequest(req, req.delayInfo.millis).catch(e => {
+            if (client.delayInfo) {
+                updateRedisNextRequest(client, client.delayInfo.millis).catch(e => {
                     console.error(e);
                     Sentry.captureException(e);
                 });

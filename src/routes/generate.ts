@@ -29,6 +29,7 @@ import { getUserFromRequest } from "./account";
 import multer, { MulterError } from "multer";
 import { logger } from "../util/log";
 import { DelayInfo } from "../typings/DelayInfo";
+import { updateRedisNextRequest } from "../database/redis";
 
 export const register = (app: Application) => {
 
@@ -266,15 +267,7 @@ export const register = (app: Application) => {
 
     async function sendSkin(req: Request, res: Response, skin: SavedSkin, client: ClientInfo, warnings: string[] = []): Promise<void> {
         const delayInfo = client.delayInfo || await Generator.getDelay(await getAndValidateRequestApiKey(req));
-        let returnDelayInfo = delayInfo;
-        if (client.apiKey && skin.duplicate) {
-            returnDelayInfo = {
-                seconds: 1,
-                millis: client.nextRequest ? Math.round((client.nextRequest - Date.now() + 100) / 100) * 100 : 500
-            };
-            returnDelayInfo.seconds = Math.max(1, Math.ceil(returnDelayInfo.millis / 1000));
-        }
-        const json = await skin.toResponseJson(returnDelayInfo);
+        const json = await skin.toResponseJson(client.apiKey && skin.duplicate ? {seconds: 1, millis: 800} : delayInfo);
 
         (json as any).warnings = warnings;
         if (client.userAgent.generic && (client.via === 'api' || client.via === 'other')) {
@@ -283,10 +276,20 @@ export const register = (app: Application) => {
 
         res.json(json);
 
-        // if (skin.duplicate) {
-        //     // reset traffic for duplicates
-        //     await updateTraffic(client, new Date(Date.now() - delayInfo.millis))
-        // }
+        if (skin.duplicate) {
+            // reset traffic for duplicates
+            try {
+                if (client.delayInfo) {
+                    updateRedisNextRequest(client, 500).catch(e => {
+                        console.error(e);
+                        Sentry.captureException(e);
+                    });
+                }
+            } catch (e) {
+                console.error(e);
+                Sentry.captureException(e);
+            }
+        }
 
         getUserFromRequest(req, res, false).then(user => {
             if (!user) return;
