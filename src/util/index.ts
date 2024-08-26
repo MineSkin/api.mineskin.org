@@ -16,7 +16,7 @@ import { MineSkinError, MineSkinRequest } from "../typings";
 import { imageHash } from "@inventivetalent/imghash";
 import { ClientInfo } from "../typings/ClientInfo";
 import UAParser from "ua-parser-js";
-import { updateRedisNextRequest } from "../database/redis";
+import { getRedisNextRequest, updateRedisNextRequest } from "../database/redis";
 
 export function resolveHostname() {
     if (process.env.NODE_HOSTNAME && !process.env.NODE_HOSTNAME.startsWith("{{")) {
@@ -40,7 +40,7 @@ export function getIp(req: Request): string {
     return req.get('cf-connecting-ip') || req.get('x-forwarded-for') || req.get("x-real-ip") || req.connection.remoteAddress || req.ip || "unknown"
 }
 
-export async function checkTraffic(req: Request, res: Response): Promise<boolean> {
+export async function checkTraffic(client: ClientInfo, req: Request, res: Response): Promise<boolean> {
     return await Sentry.startSpan({
         op: "generate_checkTraffic",
         name: "checkTraffic"
@@ -61,14 +61,43 @@ export async function checkTraffic(req: Request, res: Response): Promise<boolean
             });
         }
 
+        const nextRequest = await getRedisNextRequest(client);
+
+        if (!nextRequest) { // first request
+            return true;
+        }
+
+        if (nextRequest > client.time) {
+            const delayInfo = await Generator.getDelay(apiKey);
+
+            res.status(429).json({
+                error: "Too many requests",
+                limiter: "redis",
+                nextRequest: Math.round(nextRequest / 1000), // deprecated
+                delay: delayInfo.seconds, // deprecated
+
+                delayInfo: {
+                    seconds: delayInfo.seconds,
+                    millis: delayInfo.millis
+                },
+                now: client.time
+            });
+            console.log(debug("Request too soon"));
+            MineSkinMetrics.get().then(metrics => {
+                metrics.rateLimit
+                    .tag("server", metrics.config.server)
+                    .tag("limiter", "redis")
+                    .inc();
+            })
+            return false;
+        }
+
+        /*
         const lastRequest = apiKey ? await Caching.getTrafficRequestTimeByApiKey(apiKey) : await Caching.getTrafficRequestTimeByIp(ip);
         if (!lastRequest) { // First request
             return true;
         }
 
-        const time = Date.now();
-
-        const delayInfo = await Generator.getDelay(apiKey);
 
         if (lastRequest.getTime() > time - delayInfo.millis) {
             res.status(429).json({
@@ -95,7 +124,7 @@ export async function checkTraffic(req: Request, res: Response): Promise<boolean
                     .inc();
             })
             return false;
-        }
+        }*/
         return true;
     })
 }

@@ -74,7 +74,7 @@ export const register = (app: Application) => {
         const client = getClientInfo(req);
 
         if (!options.checkOnly || !client.apiKey) {
-            const requestAllowed = await checkTraffic(req, res);
+            const requestAllowed = await checkTraffic(client, req, res);
             if (!requestAllowed) {
                 return;
             }
@@ -130,7 +130,7 @@ export const register = (app: Application) => {
         const client = getClientInfo(req);
 
         if (!options.checkOnly || !client.apiKey) {
-            const requestAllowed = await checkTraffic(req, res);
+            const requestAllowed = await checkTraffic(client, req, res);
             if (!requestAllowed) {
                 return;
             }
@@ -181,7 +181,7 @@ export const register = (app: Application) => {
         const options = getAndValidateOptions(GenerateType.USER, req, res);
         const client = getClientInfo(req);
 
-        const requestAllowed = await checkTraffic(req, res);
+        const requestAllowed = await checkTraffic(client, req, res);
         if (!requestAllowed) {
             return;
         }
@@ -227,7 +227,7 @@ export const register = (app: Application) => {
         const options = getAndValidateOptions(GenerateType.USER, req, res);
         const client = getClientInfo(req);
 
-        const requestAllowed = await checkTraffic(req, res);
+        const requestAllowed = await checkTraffic(client, req, res);
         if (!requestAllowed) {
             return;
         }
@@ -265,7 +265,7 @@ export const register = (app: Application) => {
     ///
 
     async function sendSkin(req: Request, res: Response, skin: SavedSkin, client: ClientInfo, warnings: string[] = []): Promise<void> {
-        const delayInfo = await Generator.getDelay(await getAndValidateRequestApiKey(req));
+        const delayInfo = client.delayInfo || await Generator.getDelay(await getAndValidateRequestApiKey(req));
         const json = await skin.toResponseJson(client.apiKey && skin.duplicate ? {seconds: 1, millis: 500} : delayInfo); //TODO: adjust delay for duplicate
 
         (json as any).warnings = warnings;
@@ -275,10 +275,10 @@ export const register = (app: Application) => {
 
         res.json(json);
 
-        if (skin.duplicate) {
-            // reset traffic for duplicates
-            await updateTraffic(client, new Date(Date.now() - delayInfo.millis))
-        }
+        // if (skin.duplicate) {
+        //     // reset traffic for duplicates
+        //     await updateTraffic(client, new Date(Date.now() - delayInfo.millis))
+        // }
 
         getUserFromRequest(req, res, false).then(user => {
             if (!user) return;

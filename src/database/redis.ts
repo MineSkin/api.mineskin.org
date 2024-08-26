@@ -1,7 +1,8 @@
 import { createClient, RedisClientType } from 'redis';
 import * as Sentry from "@sentry/node";
 import { Maybe, ONE_MONTH_SECONDS, ONE_YEAR_SECONDS } from "../util";
-import { ClientInfo } from "../typings/ClientInfo";
+import { ClientInfoPartial } from "../typings/ClientInfo";
+import { Caching } from "../generator/Caching";
 
 export let redisClient: Maybe<RedisClientType>;
 
@@ -73,7 +74,7 @@ function trackRedisGenerated0(trans: any, newOrDup: string, prefix: string) {
     trans?.expire(`${ prefix }:${ date.getFullYear() }:${ date.getMonth() + 1 }:${ date.getDate() }:${ newOrDup }`, ONE_MONTH_SECONDS * 3);
 }
 
-export async function getRedisNextRequest(client: ClientInfo) {
+export async function getRedisNextRequest(client: ClientInfoPartial): Promise<number> {
     return Sentry.startSpan({
         op: "redis_getNextRequest",
         name: "Get Next Request",
@@ -84,6 +85,17 @@ export async function getRedisNextRequest(client: ClientInfo) {
 
         // clean up ipv6 etc.
         const cleanIp = client.ip.replace(/[^a-zA-Z0-9]/g, '_');
+
+        let cachedByIp = Caching.nextRequestByIpCache.getIfPresent(cleanIp);
+        if (!!cachedByIp) {
+            return cachedByIp;
+        }
+        if (client.apiKeyId) {
+            let cachedByKey = Caching.nextRequestByKeyCache.getIfPresent(client.apiKeyId);
+            if (!!cachedByKey) {
+                return cachedByKey;
+            }
+        }
 
         let trans = redisClient.multi()
             .get(`mineskin:ratelimit:ip:${ cleanIp }:next`);
@@ -102,7 +114,7 @@ export async function getRedisNextRequest(client: ClientInfo) {
     });
 }
 
-export async function updateRedisNextRequest(client: ClientInfo, effectiveDelayMs: number) {
+export async function updateRedisNextRequest(client: ClientInfoPartial, effectiveDelayMs: number) {
     return Sentry.startSpan({
         op: "redis_updateNextRequest",
         name: "Update Next Request",
@@ -120,12 +132,14 @@ export async function updateRedisNextRequest(client: ClientInfo, effectiveDelayM
 
         let trans = redisClient.multi();
         if (client.apiKeyId) {
+            Caching.nextRequestByKeyCache.put(client.apiKeyId, nextRequest);
             trans = trans.set(`${ prefix }:apikey:${ client.apiKeyId }:last`, client.time)
                 .evalSha(setIfGreater.sha!, {
                     keys: [`${ prefix }:apikey:${ client.apiKeyId }:next`],
                     arguments: [`${ nextRequest }`]
                 });
         }
+        Caching.nextRequestByIpCache.put(cleanIp, nextRequest);
         trans = trans.set(`${ prefix }:ip:${ cleanIp }:last`, client.time)
             .evalSha(setIfGreater.sha!, {
                 keys: [`${ prefix }:ip:${ cleanIp }:next`],
