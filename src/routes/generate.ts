@@ -29,7 +29,6 @@ import { getUserFromRequest } from "./account";
 import multer, { MulterError } from "multer";
 import { logger } from "../util/log";
 import { DelayInfo } from "../typings/DelayInfo";
-import { updateRedisNextRequest } from "../database/redis";
 
 export const register = (app: Application) => {
 
@@ -267,7 +266,7 @@ export const register = (app: Application) => {
 
     async function sendSkin(req: Request, res: Response, skin: SavedSkin, client: ClientInfo, warnings: string[] = []): Promise<void> {
         const delayInfo = client.delayInfo || await Generator.getDelay(await getAndValidateRequestApiKey(req));
-        const json = await skin.toResponseJson(client.apiKey && skin.duplicate ? {seconds: 1, millis: 800} : delayInfo);
+        const json = await skin.toResponseJson(delayInfo);
 
         (json as any).warnings = warnings;
         if (client.userAgent.generic && (client.via === 'api' || client.via === 'other')) {
@@ -276,20 +275,20 @@ export const register = (app: Application) => {
 
         res.json(json);
 
-        if (skin.duplicate) {
-            // reset traffic for duplicates
-            try {
-                if (client.delayInfo) {
-                    updateRedisNextRequest(client, 500).catch(e => {
-                        console.error(e);
-                        Sentry.captureException(e);
-                    });
-                }
-            } catch (e) {
-                console.error(e);
-                Sentry.captureException(e);
-            }
-        }
+        // if (skin.duplicate) {
+        //     // reset traffic for duplicates
+        //     try {
+        //         if (client.delayInfo) {
+        //             updateRedisNextRequest(client, 500).catch(e => {
+        //                 console.error(e);
+        //                 Sentry.captureException(e);
+        //             });
+        //         }
+        //     } catch (e) {
+        //         console.error(e);
+        //         Sentry.captureException(e);
+        //     }
+        // }
 
         getUserFromRequest(req, res, false).then(user => {
             if (!user) return;
