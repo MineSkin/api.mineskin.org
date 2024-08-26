@@ -82,15 +82,20 @@ export async function getRedisNextRequest(client: ClientInfo) {
             return 0;
         }
 
-        let key = 'mineskin:ratelimit';
+        let trans = redisClient.multi()
+            .get(`mineskin:ratelimit:ip:${ client.ip }:next`);
         if (client.apiKeyId) {
-            key += `:apikey:${ client.apiKeyId }`;
-        } else {
-            key += `:ip:${ client.ip }`;
+            trans = trans.get(`mineskin:ratelimit:apikey:${ client.apiKeyId }:next`);
         }
 
-        const nextRequestStr = await redisClient.get(key + ':next');
-        return nextRequestStr ? parseInt(nextRequestStr) : 0;
+        const results = await trans.exec();
+        const nextIpRequestStr = results[0] as string;
+        const nextKeyRequestStr = client.apiKeyId ? results[1] as string : null;
+
+        const nextIpRequest = nextIpRequestStr ? parseInt(nextIpRequestStr) : 0;
+        const nextKeyRequest = nextKeyRequestStr ? parseInt(nextKeyRequestStr) : 0;
+
+        return Math.max(nextIpRequest, nextKeyRequest);
     });
 }
 
@@ -103,21 +108,24 @@ export async function updateRedisNextRequest(client: ClientInfo, effectiveDelayM
             return;
         }
 
-        let key = 'mineskin:ratelimit';
-        if (client.apiKeyId) {
-            key += `:apikey:${ client.apiKeyId }`;
-        } else {
-            key += `:ip:${ client.ip }`;
-        }
+        const prefix = 'mineskin:ratelimit';
 
         const nextRequest = client.time + effectiveDelayMs;
 
-        await redisClient.multi()
-            .set(key + ':last', client.time)
+        let trans = redisClient.multi();
+        if (client.apiKeyId) {
+            trans = trans.set(`${ prefix }:apikey:${ client.apiKeyId }:last`, client.time)
+                .evalSha(setIfGreater.sha!, {
+                    keys: [`${ prefix }:apikey:${ client.apiKeyId }:next`],
+                    arguments: [`${ nextRequest }`]
+                });
+        }
+        trans = trans.set(`${ prefix }:ip:${ client.ip }:last`, client.time)
             .evalSha(setIfGreater.sha!, {
-                keys: [key + ':next'],
+                keys: [`${ prefix }:ip:${ client.ip }:next`],
                 arguments: [`${ nextRequest }`]
-            })
-            .exec();
+            });
+
+        await trans.exec();
     });
 }
