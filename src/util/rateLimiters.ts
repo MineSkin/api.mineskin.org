@@ -1,7 +1,9 @@
-import { Request } from "express";
-import rateLimit from "express-rate-limit";
+import { NextFunction, Request, Response } from "express";
+import rateLimit, { Options } from "express-rate-limit";
 import { getAndValidateRequestApiKey, getIp } from "./index";
 import { Generator } from "../generator/Generator";
+import { debug } from "./colors";
+import { MineSkinMetrics } from "./metrics";
 
 function keyGenerator(req: Request): string {
     return getIp(req);
@@ -18,20 +20,24 @@ export const generateLimiter = rateLimit({
         if (req.path.includes("user")) return false; // always limit user, doesn't have check-only option
         return !!(req.body["checkOnly"] || req.query["checkOnly"])
     },
-    message: JSON.stringify({ error: "Too many requests", limiter: "express" }),
+    message: {
+        error: "Too many requests",
+        limiter: "express",
+        delayInfo: {
+            seconds: 5,
+            millis: 5000
+        }
+    },
     keyGenerator: keyGenerator,
-    //TODO
-    // handler: (request: Request, response: Response, options: Options) => {
-    //     if (request.rateLimit.used === request.rateLimit.limit + 1) {
-    //         // onLimitReached code here
-    //         console.log(debug(`${ getIp(request) } (${ request.header("user-agent") }) reached their rate limit`));
-    //         MineSkinMetrics.get().then(metrics => {
-    //             metrics.rateLimit
-    //                 .tag("server", metrics.config.server)
-    //                 .tag("limiter", "express")
-    //                 .inc();
-    //         })
-    //     }
-    //     response.status(options.statusCode).send(options.message)
-    // }
+    handler: (request: Request, response: Response, next: NextFunction, options: Options) => {
+        // onLimitReached code here
+        console.log(debug(`${ getIp(request) } (${ request.header("user-agent") }) reached their rate limit`));
+        MineSkinMetrics.get().then(metrics => {
+            metrics.rateLimit
+                .tag("server", metrics.config.server)
+                .tag("limiter", "express")
+                .inc();
+        })
+        response.status(options.statusCode).json(options.message)
+    }
 });
