@@ -2,8 +2,8 @@ import { NextFunction, Request, Response } from "express";
 import rateLimit, { Options } from "express-rate-limit";
 import { getAndValidateRequestApiKey, getIp } from "./index";
 import { Generator } from "../generator/Generator";
-import { debug } from "./colors";
 import { MineSkinMetrics } from "./metrics";
+import { logger } from "./log";
 
 function keyGenerator(req: Request): string {
     return getIp(req);
@@ -31,7 +31,7 @@ export const generateLimiter = rateLimit({
     keyGenerator: keyGenerator,
     handler: (request: Request, response: Response, next: NextFunction, options: Options) => {
         // onLimitReached code here
-        console.log(debug(`${ getIp(request) } (${ request.header("user-agent") }) reached their rate limit`));
+        logger.warn(`${ getIp(request) } reached their rate limit`);
         MineSkinMetrics.get().then(metrics => {
             metrics.rateLimit
                 .tag("server", metrics.config.server)

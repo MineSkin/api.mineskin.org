@@ -17,6 +17,7 @@ import { imageHash } from "@inventivetalent/imghash";
 import { ClientInfo } from "../typings/ClientInfo";
 import UAParser from "ua-parser-js";
 import { getRedisNextRequest, updateRedisNextRequest } from "../database/redis";
+import { logger } from "./log";
 
 export function resolveHostname() {
     if (process.env.NODE_HOSTNAME && !process.env.NODE_HOSTNAME.startsWith("{{")) {
@@ -82,7 +83,7 @@ export async function checkTraffic(client: ClientInfo, req: Request, res: Respon
                 },
                 now: client.time
             });
-            console.log(debug(`Request too soon (${ nextRequest } > ${ client.time } = ${ nextRequest - client.time })`));
+            logger.warn(`Request too soon (${ nextRequest } > ${ client.time } = ${ nextRequest - client.time })`);
             MineSkinMetrics.get().then(metrics => {
                 metrics.rateLimit
                     .tag("server", metrics.config.server)
