@@ -169,7 +169,6 @@ export class Caching {
             const traffic = await Traffic.findForIp(ip);
             return traffic?.lastRequest;
         });
-
     protected static readonly trafficByKeyCache: AsyncLoadingCache<string, Date> = Caches.builder()
         .expireAfterWrite(Time.seconds(1))
         .expirationInterval(Time.seconds(1))
@@ -177,6 +176,15 @@ export class Caching {
             const traffic = await Traffic.findForKey(key);
             return traffic?.lastRequest;
         });
+
+    public static readonly nextRequestByIpCache: SimpleCache<string, number> = Caches.builder()
+        .expireAfterWrite(Time.millis(100))
+        .expirationInterval(Time.seconds(1))
+        .build<string, number>();
+    public static readonly nextRequestByKeyCache: SimpleCache<string, number> = Caches.builder()
+        .expireAfterWrite(Time.millis(100))
+        .expirationInterval(Time.seconds(1))
+        .build<string, number>();
 
     protected static readonly skinByIdCache: AsyncLoadingCache<number, ISkinDocument> = Caches.builder()
         .expireAfterWrite(Time.minutes(1))
@@ -295,18 +303,22 @@ export class Caching {
 
     /// DATABASE
 
+    /**@deprecated*/
     public static getTrafficRequestTimeByIp(ip: string): Promise<Maybe<Date>> {
         return this.trafficByIpCache.get(ip);
     }
 
+    /**@deprecated*/
     public static getTrafficRequestTimeByApiKey(key: IApiKeyDocument): Promise<Maybe<Date>> {
         return this.trafficByKeyCache.get(key._id as string);
     }
 
+    /**@deprecated*/
     public static getTrafficRequestTimeByKey(key: string): Promise<Maybe<Date>> {
         return this.trafficByKeyCache.get(key);
     }
 
+    /**@deprecated*/
     public static async updateTrafficRequestTime(ip: string, key: string | null, time: Date): Promise<any> {
         this.trafficByIpCache.put(ip, time);
         if (key) {

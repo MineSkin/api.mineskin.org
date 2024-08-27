@@ -22,12 +22,13 @@ import { GenerateType, SkinModel, SkinVariant, SkinVisibility } from "../typings
 import { debug } from "../util/colors";
 import * as Sentry from "@sentry/node";
 import { nextBreadColor } from "../typings/Bread";
-import { GenerateRequest } from "../typings";
+import { GenerateRequest, MineSkinRequest } from "../typings";
 import { Caching } from "../generator/Caching";
 import { isApiKeyRequest } from "../typings/ApiKeyRequest";
 import { getUserFromRequest } from "./account";
 import multer, { MulterError } from "multer";
 import { logger } from "../util/log";
+import { DelayInfo } from "../typings/DelayInfo";
 
 export const register = (app: Application) => {
 
@@ -46,9 +47,11 @@ export const register = (app: Application) => {
         next();
     });
     app.use("/generate", generateLimiter);
-    app.use("/generate", async (req, res, next) => {
+    app.use("/generate", async (req: MineSkinRequest, res, next) => {
         try {
-            const delay = await Generator.getDelay(await getAndValidateRequestApiKey(req));
+            const key = await getAndValidateRequestApiKey(req);
+            const delay = await Generator.getDelay(key);
+            req.delayInfo = delay;
             res.header("X-MineSkin-Delay", `${ delay.seconds || 5 }`); //deprecated
             res.header("X-MineSkin-Delay-Seconds", `${ delay.seconds || 5 }`);
             res.header("X-MineSkin-Delay-Millis", `${ delay.millis || 5000 }`);
@@ -71,23 +74,12 @@ export const register = (app: Application) => {
         const client = getClientInfo(req);
 
         if (!options.checkOnly || !client.apiKey) {
-            const requestAllowed = await checkTraffic(req, res);
+            const requestAllowed = await checkTraffic(client, req, res);
             if (!requestAllowed) {
                 return;
             }
         }
 
-        logger.info(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`), {
-            breadcrumb: options.breadcrumb,
-            userAgent: req.headers["user-agent"]
-        });
-        if (req.headers['origin']) {
-            logger.info(debug(`${ options.breadcrumb } Origin:      ${ req.headers['origin'] }`), {
-                breadcrumb: options.breadcrumb,
-                origin: req.headers['origin']
-            });
-        }
-        console.log(debug(`${ options.breadcrumb } Key:         ${ req.apiKey?.name ?? "none" } ${ req.apiKey?._id ?? "" }`));
         console.log(debug(`${ options.breadcrumb } URL:         ${ url }`));
 
         if (!options.checkOnly || !client.apiKey) {
@@ -127,23 +119,11 @@ export const register = (app: Application) => {
         const client = getClientInfo(req);
 
         if (!options.checkOnly || !client.apiKey) {
-            const requestAllowed = await checkTraffic(req, res);
+            const requestAllowed = await checkTraffic(client, req, res);
             if (!requestAllowed) {
                 return;
             }
         }
-
-        logger.info(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`), {
-            breadcrumb: options.breadcrumb,
-            userAgent: req.headers["user-agent"]
-        });
-        if (req.headers['origin']) {
-            logger.info(debug(`${ options.breadcrumb } Origin:      ${ req.headers['origin'] }`), {
-                breadcrumb: options.breadcrumb,
-                origin: req.headers['origin']
-            });
-        }
-        console.log(debug(`${ options.breadcrumb } Key:         ${ req.apiKey?.name ?? "none" } ${ req.apiKey?._id ?? "" }`));
 
         if (!req.file) {
             res.status(400).json({error: "missing files"});
@@ -178,7 +158,7 @@ export const register = (app: Application) => {
         const options = getAndValidateOptions(GenerateType.USER, req, res);
         const client = getClientInfo(req);
 
-        const requestAllowed = await checkTraffic(req, res);
+        const requestAllowed = await checkTraffic(client, req, res);
         if (!requestAllowed) {
             return;
         }
@@ -196,17 +176,6 @@ export const register = (app: Application) => {
             return;
         }
 
-        logger.info(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`), {
-            breadcrumb: options.breadcrumb,
-            userAgent: req.headers["user-agent"]
-        });
-        if (req.headers['origin']) {
-            logger.info(debug(`${ options.breadcrumb } Origin:      ${ req.headers['origin'] }`), {
-                breadcrumb: options.breadcrumb,
-                origin: req.headers['origin']
-            });
-        }
-        console.log(debug(`${ options.breadcrumb } Key:         ${ req.apiKey?.name ?? "none" } ${ req.apiKey?._id ?? "" }`));
         console.log(debug(`${ options.breadcrumb } USER:        ${ uuids.long }`))
 
         const skin = await Generator.generateFromUserAndSave(uuids.long, options, client);
@@ -224,7 +193,7 @@ export const register = (app: Application) => {
         const options = getAndValidateOptions(GenerateType.USER, req, res);
         const client = getClientInfo(req);
 
-        const requestAllowed = await checkTraffic(req, res);
+        const requestAllowed = await checkTraffic(client, req, res);
         if (!requestAllowed) {
             return;
         }
@@ -242,17 +211,6 @@ export const register = (app: Application) => {
             return;
         }
 
-        logger.info(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`), {
-            breadcrumb: options.breadcrumb,
-            userAgent: req.headers["user-agent"]
-        });
-        if (req.headers['origin']) {
-            logger.info(debug(`${ options.breadcrumb } Origin:      ${ req.headers['origin'] }`), {
-                breadcrumb: options.breadcrumb,
-                origin: req.headers['origin']
-            });
-        }
-        console.log(debug(`${ options.breadcrumb } Key:         ${ req.apiKey?.name ?? "none" } ${ req.apiKey?._id ?? "" }`));
         console.log(debug(`${ options.breadcrumb } USER:        ${ uuids.long }`))
 
         const skin = await Generator.generateFromUserAndSave(uuids.long, options, client);
@@ -262,8 +220,8 @@ export const register = (app: Application) => {
     ///
 
     async function sendSkin(req: Request, res: Response, skin: SavedSkin, client: ClientInfo, warnings: string[] = []): Promise<void> {
-        const delayInfo = await Generator.getDelay(await getAndValidateRequestApiKey(req));
-        const json = await skin.toResponseJson(client.apiKey && skin.duplicate ? {seconds: 1, millis: 500} : delayInfo); //TODO: adjust delay for duplicate
+        const delayInfo = client.delayInfo || await Generator.getDelay(await getAndValidateRequestApiKey(req));
+        const json = await skin.toResponseJson(delayInfo);
 
         (json as any).warnings = warnings;
         if (client.userAgent.generic && (client.via === 'api' || client.via === 'other')) {
@@ -272,10 +230,20 @@ export const register = (app: Application) => {
 
         res.json(json);
 
-        if (skin.duplicate) {
-            // reset traffic for duplicates
-            await updateTraffic(client, new Date(Date.now() - delayInfo.millis))
-        }
+        // if (skin.duplicate) {
+        //     // reset traffic for duplicates
+        //     try {
+        //         if (client.delayInfo) {
+        //             updateRedisNextRequest(client, 500).catch(e => {
+        //                 console.error(e);
+        //                 Sentry.captureException(e);
+        //             });
+        //         }
+        //     } catch (e) {
+        //         console.error(e);
+        //         Sentry.captureException(e);
+        //     }
+        // }
 
         getUserFromRequest(req, res, false).then(user => {
             if (!user) return;
@@ -296,6 +264,10 @@ export const register = (app: Application) => {
             apiKeyId = req.apiKey._id as string;
             apiKey = `${ req.apiKey.key.substring(0, 8) } ${ req.apiKey?.name }`;
         }
+        let delayInfo: Maybe<DelayInfo>;
+        if ('delayInfo' in req) {
+            delayInfo = req.delayInfo;
+        }
 
         Sentry.setTags({
             "generate_via": via,
@@ -304,13 +276,29 @@ export const register = (app: Application) => {
 
         const userAgent = simplifyUserAgent(rawUserAgent);
 
+        const time = Date.now();
+
+        logger.info(debug(`${ req.breadcrumb } Agent:       ${ req.headers["user-agent"] }`), {
+            breadcrumb: req.breadcrumb,
+            userAgent: req.headers["user-agent"]
+        });
+        if (req.headers['origin']) {
+            logger.info(debug(`${ req.breadcrumb } Origin:      ${ req.headers['origin'] }`), {
+                breadcrumb: req.breadcrumb,
+                origin: req.headers['origin']
+            });
+        }
+        console.log(debug(`${ req.breadcrumb } Key:         ${ req.apiKey?.name ?? "none" } ${ req.apiKey?._id ?? "" }`));
+
         return {
+            time,
             userAgent,
             origin,
             ip,
             via,
             apiKey,
-            apiKeyId
+            apiKeyId,
+            delayInfo
         };
     }
 

@@ -16,6 +16,8 @@ import { MineSkinError, MineSkinRequest } from "../typings";
 import { imageHash } from "@inventivetalent/imghash";
 import { ClientInfo } from "../typings/ClientInfo";
 import UAParser from "ua-parser-js";
+import { getRedisNextRequest, updateRedisNextRequest } from "../database/redis";
+import { logger } from "./log";
 
 export function resolveHostname() {
     if (process.env.NODE_HOSTNAME && !process.env.NODE_HOSTNAME.startsWith("{{")) {
@@ -39,7 +41,7 @@ export function getIp(req: Request): string {
     return req.get('cf-connecting-ip') || req.get('x-forwarded-for') || req.get("x-real-ip") || req.connection.remoteAddress || req.ip || "unknown"
 }
 
-export async function checkTraffic(req: Request, res: Response): Promise<boolean> {
+export async function checkTraffic(client: ClientInfo, req: Request, res: Response): Promise<boolean> {
     return await Sentry.startSpan({
         op: "generate_checkTraffic",
         name: "checkTraffic"
@@ -60,14 +62,44 @@ export async function checkTraffic(req: Request, res: Response): Promise<boolean
             });
         }
 
+        const nextRequest = await getRedisNextRequest(client);
+
+        if (!nextRequest) { // first request
+            return true;
+        }
+
+        if (nextRequest > client.time) {
+            const delayInfo = await Generator.getDelay(apiKey);
+
+            res.status(429).json({
+                error: "Too many requests",
+                limiter: "redis",
+                nextRequest: Math.round(nextRequest / 1000), // deprecated
+                delay: delayInfo.seconds, // deprecated
+
+                delayInfo: {
+                    seconds: delayInfo.seconds,
+                    millis: delayInfo.millis
+                },
+                now: client.time
+            });
+            logger.warn(`Request too soon (${ nextRequest } > ${ client.time } = ${ nextRequest - client.time })`);
+            MineSkinMetrics.get().then(metrics => {
+                metrics.rateLimit
+                    .tag("server", metrics.config.server)
+                    .tag("limiter", "redis")
+                    .tag("ua", client.userAgent.ua)
+                    .inc();
+            })
+            return false;
+        }
+
+        /*
         const lastRequest = apiKey ? await Caching.getTrafficRequestTimeByApiKey(apiKey) : await Caching.getTrafficRequestTimeByIp(ip);
         if (!lastRequest) { // First request
             return true;
         }
 
-        const time = Date.now();
-
-        const delayInfo = await Generator.getDelay(apiKey);
 
         if (lastRequest.getTime() > time - delayInfo.millis) {
             res.status(429).json({
@@ -94,18 +126,29 @@ export async function checkTraffic(req: Request, res: Response): Promise<boolean
                     .inc();
             })
             return false;
-        }
+        }*/
         return true;
     })
 }
 
-export async function updateTraffic(req: Request | ClientInfo, time: Date = new Date()): Promise<void> {
+export async function updateTraffic(client: ClientInfo, time: Date = new Date()): Promise<void> {
     return await Sentry.startSpan({
         op: "generate_updateTraffic",
         name: "updateTraffic",
     }, async span => {
-        const ip = req.ip ?? getIp(req as Request);
-        const key = 'apiKeyId' in req ? req.apiKeyId : null;
+        const ip = client.ip;
+        const key = 'apiKeyId' in client ? client.apiKeyId : null;
+        try {
+            if (client.delayInfo) {
+                updateRedisNextRequest(client, client.delayInfo.millis).catch(e => {
+                    console.error(e);
+                    Sentry.captureException(e);
+                });
+            }
+        } catch (e) {
+            console.error(e);
+            Sentry.captureException(e);
+        }
         return await Caching.updateTrafficRequestTime(ip, key || null, time);
     })
 }
@@ -461,6 +504,7 @@ export function simplifyUserAgent(ua: string): SimplifiedUserAgent {
 
     return {generic: false, ua: stripped, original: ua};
 }
+
 export type SimplifiedUserAgent = { generic: boolean; ua: string; original: string; };
 
 export const corsMiddleware = (req: Request, res: Response, next: NextFunction) => {
