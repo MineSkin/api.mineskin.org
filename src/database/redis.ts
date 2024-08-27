@@ -64,14 +64,17 @@ function trackRedisGenerated0(trans: any, newOrDup: string, prefix: string) {
 
     trans?.incr(`${ prefix }:alltime:${ newOrDup }`);
 
-    trans?.incr(`${ prefix }:${ date.getFullYear() }:${ newOrDup }`);
-    trans?.expire(`${ prefix }:${ date.getFullYear() }:${ newOrDup }`, ONE_YEAR_SECONDS * 5);
+    trans?.incr(`${ prefix }:${ date.getFullYear() }:${ newOrDup }`, {
+        EX: ONE_YEAR_SECONDS * 5
+    });
 
-    trans?.incr(`${ prefix }:${ date.getFullYear() }:${ date.getMonth() + 1 }:${ newOrDup }`);
-    trans?.expire(`${ prefix }:${ date.getFullYear() }:${ date.getMonth() + 1 }:${ newOrDup }`, ONE_YEAR_SECONDS * 2);
+    trans?.incr(`${ prefix }:${ date.getFullYear() }:${ date.getMonth() + 1 }:${ newOrDup }`,{
+        EX: ONE_YEAR_SECONDS * 2
+    });
 
-    trans?.incr(`${ prefix }:${ date.getFullYear() }:${ date.getMonth() + 1 }:${ date.getDate() }:${ newOrDup }`);
-    trans?.expire(`${ prefix }:${ date.getFullYear() }:${ date.getMonth() + 1 }:${ date.getDate() }:${ newOrDup }`, ONE_MONTH_SECONDS * 3);
+    trans?.incr(`${ prefix }:${ date.getFullYear() }:${ date.getMonth() + 1 }:${ date.getDate() }:${ newOrDup }`,{
+        EX: ONE_MONTH_SECONDS * 3
+    });
 }
 
 export async function getRedisNextRequest(client: ClientInfo): Promise<number> {
