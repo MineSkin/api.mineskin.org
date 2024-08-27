@@ -1,9 +1,10 @@
-import winston from 'winston';
+import winston, { format } from 'winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
 import { Logtail } from "@logtail/node";
 import { LogtailTransport } from "@logtail/winston";
 import { resolveHostname } from "./index";
 import * as Sentry from "@sentry/node";
+import * as util from "node:util";
 
 
 export const logtail = process.env.LOGTAIL_TOKEN ? new Logtail(process.env.LOGTAIL_TOKEN!) : null;
@@ -26,12 +27,32 @@ logRotate.on('rotate', (oldFilename, newFilename) => {
     console.info(`Rotated log file from ${oldFilename} to ${newFilename}`);
 });
 
+const transform: winston.Logform.TransformFunction = (info) => {
+    const args = info[Symbol.for('splat')];
+    const { message: rawMessage } = info;
+    // Combine all the args with util.format
+    // also do a util.format of the rawMessage which handles JSON
+    const message = args
+        ? util.format(rawMessage, ...args)
+        : util.format(rawMessage);
+    return {
+        ...info,
+        message,
+    };
+};
+
+const utilFormatter = format(transform);
+
 export const logger = winston.createLogger({
     level: 'info',
-    format: winston.format.combine(
-        winston.format.splat(),
-        winston.format.timestamp({format: 'YYYY-MM-DD hh:mm:ss.SSS'}),
-        winston.format.json()
+    format: format.combine(
+        format.timestamp({format: 'YYYY-MM-DD HH:mm:ss.SSS'}),
+        utilFormatter(),
+        format.colorize(),
+        format.printf(
+            ({ level, message, timestamp, label }) =>
+                `${timestamp} ${label || '-'} ${level}: ${message}`,
+        ),
     ),
     defaultMeta: {
         server: resolveHostname()
@@ -42,12 +63,12 @@ export const logger = winston.createLogger({
         logRotate,
         new winston.transports.Console({
             level: 'debug',
-            format: winston.format.combine(
-                winston.format.colorize(),
-                winston.format.splat(),
-                winston.format.simple(),
-                winston.format.errors({ stack: true }),
-            )
+            // format: winston.format.combine(
+            //     winston.format.colorize(),
+            //     winston.format.splat(),
+            //     winston.format.simple(),
+            //     winston.format.errors({ stack: true }),
+            // )
         })
     ],
 });
