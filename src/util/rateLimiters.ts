@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import rateLimit, { Options } from "express-rate-limit";
-import { getAndValidateRequestApiKey, getIp } from "./index";
+import { getAndValidateRequestApiKey, getIp, simplifyUserAgent } from "./index";
 import { Generator } from "../generator/Generator";
 import { MineSkinMetrics } from "./metrics";
 import { logger } from "./log";
@@ -31,11 +31,13 @@ export const generateLimiter = rateLimit({
     keyGenerator: keyGenerator,
     handler: (request: Request, response: Response, next: NextFunction, options: Options) => {
         // onLimitReached code here
-        logger.warn(`${ getIp(request) } reached their rate limit`);
+        const agent = simplifyUserAgent(request.headers["user-agent"] as string);
+        logger.warn(`${ agent } ${ getIp(request) } reached their rate limit`);
         MineSkinMetrics.get().then(metrics => {
             metrics.rateLimit
                 .tag("server", metrics.config.server)
                 .tag("limiter", "express")
+                .tag("ua", agent.ua)
                 .inc();
         })
         response.status(options.statusCode).json(options.message)

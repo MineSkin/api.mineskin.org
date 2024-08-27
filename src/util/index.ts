@@ -88,6 +88,7 @@ export async function checkTraffic(client: ClientInfo, req: Request, res: Respon
                 metrics.rateLimit
                     .tag("server", metrics.config.server)
                     .tag("limiter", "redis")
+                    .tag("ua", client.userAgent.ua)
                     .inc();
             })
             return false;
