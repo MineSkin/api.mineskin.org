@@ -80,17 +80,6 @@ export const register = (app: Application) => {
             }
         }
 
-        logger.info(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`), {
-            breadcrumb: options.breadcrumb,
-            userAgent: req.headers["user-agent"]
-        });
-        if (req.headers['origin']) {
-            logger.info(debug(`${ options.breadcrumb } Origin:      ${ req.headers['origin'] }`), {
-                breadcrumb: options.breadcrumb,
-                origin: req.headers['origin']
-            });
-        }
-        console.log(debug(`${ options.breadcrumb } Key:         ${ req.apiKey?.name ?? "none" } ${ req.apiKey?._id ?? "" }`));
         console.log(debug(`${ options.breadcrumb } URL:         ${ url }`));
 
         if (!options.checkOnly || !client.apiKey) {
@@ -135,18 +124,6 @@ export const register = (app: Application) => {
                 return;
             }
         }
-
-        logger.info(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`), {
-            breadcrumb: options.breadcrumb,
-            userAgent: req.headers["user-agent"]
-        });
-        if (req.headers['origin']) {
-            logger.info(debug(`${ options.breadcrumb } Origin:      ${ req.headers['origin'] }`), {
-                breadcrumb: options.breadcrumb,
-                origin: req.headers['origin']
-            });
-        }
-        console.log(debug(`${ options.breadcrumb } Key:         ${ req.apiKey?.name ?? "none" } ${ req.apiKey?._id ?? "" }`));
 
         if (!req.file) {
             res.status(400).json({error: "missing files"});
@@ -199,17 +176,6 @@ export const register = (app: Application) => {
             return;
         }
 
-        logger.info(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`), {
-            breadcrumb: options.breadcrumb,
-            userAgent: req.headers["user-agent"]
-        });
-        if (req.headers['origin']) {
-            logger.info(debug(`${ options.breadcrumb } Origin:      ${ req.headers['origin'] }`), {
-                breadcrumb: options.breadcrumb,
-                origin: req.headers['origin']
-            });
-        }
-        console.log(debug(`${ options.breadcrumb } Key:         ${ req.apiKey?.name ?? "none" } ${ req.apiKey?._id ?? "" }`));
         console.log(debug(`${ options.breadcrumb } USER:        ${ uuids.long }`))
 
         const skin = await Generator.generateFromUserAndSave(uuids.long, options, client);
@@ -245,17 +211,6 @@ export const register = (app: Application) => {
             return;
         }
 
-        logger.info(debug(`${ options.breadcrumb } Agent:       ${ req.headers["user-agent"] }`), {
-            breadcrumb: options.breadcrumb,
-            userAgent: req.headers["user-agent"]
-        });
-        if (req.headers['origin']) {
-            logger.info(debug(`${ options.breadcrumb } Origin:      ${ req.headers['origin'] }`), {
-                breadcrumb: options.breadcrumb,
-                origin: req.headers['origin']
-            });
-        }
-        console.log(debug(`${ options.breadcrumb } Key:         ${ req.apiKey?.name ?? "none" } ${ req.apiKey?._id ?? "" }`));
         console.log(debug(`${ options.breadcrumb } USER:        ${ uuids.long }`))
 
         const skin = await Generator.generateFromUserAndSave(uuids.long, options, client);
@@ -322,6 +277,18 @@ export const register = (app: Application) => {
         const userAgent = simplifyUserAgent(rawUserAgent);
 
         const time = Date.now();
+
+        logger.info(debug(`${ req.breadcrumb } Agent:       ${ req.headers["user-agent"] }`), {
+            breadcrumb: req.breadcrumb,
+            userAgent: req.headers["user-agent"]
+        });
+        if (req.headers['origin']) {
+            logger.info(debug(`${ req.breadcrumb } Origin:      ${ req.headers['origin'] }`), {
+                breadcrumb: req.breadcrumb,
+                origin: req.headers['origin']
+            });
+        }
+        console.log(debug(`${ req.breadcrumb } Key:         ${ req.apiKey?.name ?? "none" } ${ req.apiKey?._id ?? "" }`));
 
         return {
             time,

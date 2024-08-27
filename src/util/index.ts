@@ -82,7 +82,7 @@ export async function checkTraffic(client: ClientInfo, req: Request, res: Respon
                 },
                 now: client.time
             });
-            console.log(debug(`Request too soon (${ nextRequest } > ${ client.time })`));
+            console.log(debug(`Request too soon (${ nextRequest } > ${ client.time } = ${ nextRequest - client.time })`));
             MineSkinMetrics.get().then(metrics => {
                 metrics.rateLimit
                     .tag("server", metrics.config.server)
