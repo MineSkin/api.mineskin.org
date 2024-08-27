@@ -9,7 +9,7 @@ export let redisClient: Maybe<RedisClientType>;
 const setIfGreater = {
     script: `local current = redis.call('GET', KEYS[1])
 if not current or tonumber(ARGV[1]) > tonumber(current) then
-    redis.call('SET', KEYS[1], ARGV[1])
+    redis.call('SET', KEYS[1], ARGV[1], 'EX', 3600)
     return 1
 else
     return 0
@@ -134,14 +134,18 @@ export async function updateRedisNextRequest(client: ClientInfo, effectiveDelayM
         let trans = redisClient.multi();
         if (client.apiKeyId) {
             Caching.nextRequestByKeyCache.put(client.apiKeyId, nextRequest);
-            trans = trans.set(`${ prefix }:apikey:${ client.apiKeyId }:last`, client.time)
+            trans = trans.set(`${ prefix }:apikey:${ client.apiKeyId }:last`, client.time, {
+                EX: 3600
+            })
                 .evalSha(setIfGreater.sha!, {
                     keys: [`${ prefix }:apikey:${ client.apiKeyId }:next`],
                     arguments: [`${ nextRequest }`]
                 });
         }
         Caching.nextRequestByIpCache.put(cleanIp, nextRequest);
-        trans = trans.set(`${ prefix }:ip:${ cleanIp }:last`, client.time)
+        trans = trans.set(`${ prefix }:ip:${ cleanIp }:last`, client.time, {
+            EX: 3600
+        })
             .evalSha(setIfGreater.sha!, {
                 keys: [`${ prefix }:ip:${ cleanIp }:next`],
                 arguments: [`${ nextRequest }`]
