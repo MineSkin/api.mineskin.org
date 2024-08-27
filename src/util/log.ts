@@ -2,9 +2,9 @@ import winston, { format } from 'winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
 import { Logtail } from "@logtail/node";
 import { LogtailTransport } from "@logtail/winston";
-import { resolveHostname } from "./index";
+import { resolveHostname } from "../util";
 import * as Sentry from "@sentry/node";
-import * as util from "node:util";
+import * as nodeUtil from "node:util";
 
 
 export const logtail = process.env.LOGTAIL_TOKEN ? new Logtail(process.env.LOGTAIL_TOKEN!) : null;
@@ -33,8 +33,8 @@ const transform: winston.Logform.TransformFunction = (info) => {
     // Combine all the args with util.format
     // also do a util.format of the rawMessage which handles JSON
     const message = args
-        ? util.format(rawMessage, ...args)
-        : util.format(rawMessage);
+        ? nodeUtil.format(rawMessage, ...args)
+        : nodeUtil.format(rawMessage);
     return {
         ...info,
         message,
