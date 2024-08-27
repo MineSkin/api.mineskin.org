@@ -1,6 +1,7 @@
-import { SkinModel, SkinVariant } from "./db/ISkinDocument";
 import { ProfileProperty } from "./ProfileResponse";
 import { DelayInfo } from "./DelayInfo";
+import { SkinModel } from "@mineskin/database";
+import { SkinVariant } from "@mineskin/types";
 
 export interface SkinInfoTextureUrls {
     skin: string;

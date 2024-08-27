@@ -3,11 +3,6 @@ import { Request } from "express";
 import { ApiKeyRequest } from "./ApiKeyRequest";
 import { DelayInfo } from "./DelayInfo";
 
-export { IAccountDocument } from "./db/IAccountDocument";
-export { ISkinDocument } from "./db/ISkinDocument";
-export { ITrafficDocument } from "./db/ITrafficDocument";
-export { IStatDocument } from "./db/IStatDocument";
-
 // https://stackoverflow.com/a/60323233/6257838
 export class MineSkinError extends Error {
     constructor(public code: string, public msg?: string, public httpCode?: number) {

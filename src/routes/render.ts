@@ -1,9 +1,9 @@
 import { Application, Request, Response } from "express";
 import { Requests } from "../generator/Requests";
 import * as Sentry from "@sentry/node";
-import { ISkinDocument } from "../typings";
 import { corsMiddleware, Maybe } from "../util";
 import { Caching } from "../generator/Caching";
+import { ISkinDocument } from "@mineskin/database";
 
 export const register = (app: Application) => {
 

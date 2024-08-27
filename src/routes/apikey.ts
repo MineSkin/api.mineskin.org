@@ -2,11 +2,10 @@ import { Application, Request, Response } from "express";
 import { base64encode, corsWithCredentialsMiddleware, random32BitNumber, sha256, sha512 } from "../util";
 import { debug, info } from "../util/colors";
 import { Caching } from "../generator/Caching";
-import { IApiKeyDocument } from "../typings/db/IApiKeyDocument";
-import { ApiKey } from "../database/schemas/ApiKey";
 import { getConfig } from "../typings/Configs";
 import { Discord } from "../util/Discord";
 import { getUserFromRequest } from "./account";
+import { ApiKey, IApiKeyDocument } from "@mineskin/database";
 
 
 export const register = (app: Application) => {
@@ -130,7 +129,7 @@ export const register = (app: Application) => {
             return;
         }
 
-        const apiKey = await ApiKey.findKey(Caching.cachedSha512(key));
+        const apiKey = await ApiKey.findByKeyHash(Caching.cachedSha512(key));
         if (!apiKey) {
             res.status(400).json({ error: "invalid key" });
             return;
@@ -197,7 +196,7 @@ export const register = (app: Application) => {
             return;
         }
 
-        const apiKey = await ApiKey.findKey(Caching.cachedSha512(key));
+        const apiKey = await ApiKey.findByKeyHash(Caching.cachedSha512(key));
         if (!apiKey) {
             res.status(400).json({ error: "invalid key" });
             return;

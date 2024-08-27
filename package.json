@@ -15,6 +15,8 @@
   },
   "author": "Haylee Schäfer",
   "dependencies": {
+    "@mineskin/database": "git+ssh://git@github.com/MineSkin/mineskin-database.git",
+    "@mineskin/types": "git+ssh://git@github.com/MineSkin/mineskin-types.git",
     "@inventivetalent/axios-rate-limit": "^1.3.5",
     "@inventivetalent/express-github-webhook": "^1.0.3",
     "@inventivetalent/gitconfig": "^1.0.9",

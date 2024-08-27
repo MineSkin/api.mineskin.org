@@ -10,7 +10,6 @@ import {
 import * as Sentry from "@sentry/node";
 import { Maybe, sha512, stripUuid } from "../util";
 import { IPoint } from "influx";
-import { Skin, Traffic } from "../database/schemas";
 import { BasicMojangProfile } from "./Authentication";
 import { SkinData } from "../typings/SkinData";
 import { User } from "../typings/User";
@@ -18,11 +17,10 @@ import { ISkinDocument } from "../typings";
 import { ProfileResponse } from "../typings/ProfileResponse";
 import { MineSkinMetrics } from "../util/metrics";
 import { Bread } from "../typings/Bread";
-import { IApiKeyDocument } from "../typings/db/IApiKeyDocument";
-import { ApiKey } from "../database/schemas/ApiKey";
 import { IPendingDiscordLink } from "../typings/DiscordAccountLink";
 import { Time } from "@inventivetalent/time";
 import { MojangAccountLink } from "../typings/MojangAccountLink";
+import { ApiKey, IApiKeyDocument, Skin, Traffic } from "@mineskin/database";
 
 export class Caching {
 
@@ -189,7 +187,7 @@ export class Caching {
     protected static readonly skinByIdCache: AsyncLoadingCache<number, ISkinDocument> = Caches.builder()
         .expireAfterWrite(Time.minutes(1))
         .expirationInterval(Time.seconds(30))
-        .buildAsync<number, ISkinDocument>(id => Skin.findForId(id));
+        .buildAsync<number, ISkinDocument>(id => Skin.findById(id));
 
     protected static readonly skinByUuidCache: AsyncLoadingCache<string, ISkinDocument> = Caches.builder()
         .expireAfterWrite(Time.minutes(1))
@@ -200,7 +198,7 @@ export class Caching {
         .expireAfterWrite(Time.minutes(5))
         .expireAfterAccess(Time.minutes(1))
         .expirationInterval(Time.seconds(20))
-        .buildAsync<string, IApiKeyDocument>(key => ApiKey.findKey(key));
+        .buildAsync<string, IApiKeyDocument>(key => ApiKey.findByKeyHash(key));
 
     protected static readonly skinDocumentCounts: AsyncLoadingCache<string, number> = Caches.builder()
         .expireAfterWrite(Time.minutes(20))

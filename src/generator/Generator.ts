@@ -1,4 +1,3 @@
-import { Account, Skin, Stat, User } from "../database/schemas";
 import { MemoizeExpiring } from "@inventivetalent/typescript-memoize";
 import {
     base64decode,
@@ -30,14 +29,12 @@ import { getConfig } from "../typings/Configs";
 import { IAccountDocument, ISkinDocument, MineSkinError } from "../typings";
 import { SkinData, SkinMeta, SkinValue } from "../typings/SkinData";
 import { GenerateOptions } from "../typings/GenerateOptions";
-import { GenerateType, SkinModel, SkinVariant, SkinVisibility } from "../typings/db/ISkinDocument";
 import { AllStats } from "../typings/AllStats";
 import { ClientInfo } from "../typings/ClientInfo";
 import { debug, error, info, warn } from "../util/colors";
 import { SkinInfo } from "../typings/SkinInfo";
 import { Bread } from "../typings/Bread";
 import { Notifications } from "../util/Notifications";
-import { IApiKeyDocument } from "../typings/db/IApiKeyDocument";
 import { MineSkinMetrics } from "../util/metrics";
 import { MineSkinOptimus } from "../util/optimus";
 import { Discord } from "../util/Discord";
@@ -61,6 +58,8 @@ import { FilterQuery } from "mongoose";
 import { Capes } from "../util/Capes";
 import { redisClient, trackRedisGenerated } from "../database/redis";
 import { requestShutdown } from "../index";
+import { Account, IApiKeyDocument, Skin, SkinModel, Stat, User } from "@mineskin/database";
+import { GenerateType, SkinVariant, SkinVisibility } from "@mineskin/types";
 
 
 // minimum delay for accounts to be used
@@ -122,7 +121,7 @@ export class Generator {
     @MemoizeExpiring(30000)
     static async getMinDelay(): Promise<number> {
         const metrics = await MineSkinMetrics.get();
-        const delay = await Account.calculateMinDelay();
+        const delay = await Account.calculateMinDelay(); //FIXME
         try {
             metrics.metrics!.influx.writePoints([{
                 measurement: 'delay',
@@ -142,7 +141,7 @@ export class Generator {
     @MemoizeExpiring(30000)
     static async getPreferredAccountServer(accountType?: string): Promise<string> {
         const config = await getConfig();
-        return await Account.getPreferredAccountServer(accountType) || config.server;
+        return await Account.getPreferredAccountServer(accountType) || config.server; //FIXME
     }
 
     // Stats
@@ -1205,7 +1204,7 @@ export class Generator {
             name: "getAndAuthenticateAccount"
         }, async span => {
             const metrics = await MineSkinMetrics.get();
-            let account = await Account.findUsable(bread);
+            let account = await Account.findUsable(bread); //FIXME
             if (!account) {
                 console.warn(error(bread?.breadcrumb + " [Generator] No account available!"));
                 metrics.noAccounts
@@ -1295,7 +1294,7 @@ export class Generator {
             .tag("state", "success")
             .tag("server", metrics.config.server)
             .tag("type", type)
-            .tag("visibility", options.visibility === SkinVisibility.PRIVATE ? "private" : "public")
+            .tag("visibility", options.visibility === SkinVisibility.PRIVATE ? "private" : "public") //FIXME
             .tag("variant", options.variant)
             .tag("via", client.via)
             .tag("userAgent", client.userAgent.ua)
@@ -1340,7 +1339,7 @@ export class Generator {
             .tag("state", "fail")
             .tag("server", metrics.config.server)
             .tag("type", type)
-            .tag("visibility", options.visibility === SkinVisibility.PRIVATE ? "private" : "public")
+            .tag("visibility", options.visibility === SkinVisibility.PRIVATE ? "private" : "public") //FIXME
             .tag("variant", options.variant)
             .tag("userAgent", client.userAgent.ua)
             .tag("apiKey", client.apiKey || "none")
@@ -1374,7 +1373,7 @@ export class Generator {
                 await account.save();
 
                 if (account.user) {
-                    User.updateMinecraftAccounts(account.user);
+                    User.updateMinecraftAccounts(account.user); //FIXME
                 }
             } catch (e1) {
                 Sentry.captureException(e1);

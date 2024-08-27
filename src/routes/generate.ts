@@ -18,7 +18,6 @@ import { Generator, MAX_IMAGE_SIZE, SavedSkin } from "../generator/Generator";
 import { generateLimiter } from "../util/rateLimiters";
 import { ClientInfo } from "../typings/ClientInfo";
 import { GenerateOptions } from "../typings/GenerateOptions";
-import { GenerateType, SkinModel, SkinVariant, SkinVisibility } from "../typings/db/ISkinDocument";
 import { debug } from "../util/colors";
 import * as Sentry from "@sentry/node";
 import { nextBreadColor } from "../typings/Bread";
@@ -29,6 +28,8 @@ import { getUserFromRequest } from "./account";
 import multer, { MulterError } from "multer";
 import { logger } from "../util/log";
 import { DelayInfo } from "../typings/DelayInfo";
+import { GenerateType, SkinVariant } from "@mineskin/types";
+import { SkinModel } from "@mineskin/database";
 
 export const register = (app: Application) => {
 

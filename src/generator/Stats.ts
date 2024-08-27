@@ -1,12 +1,11 @@
 import { AllStats, CountDuplicateViewStats } from "../typings/AllStats";
 import { getConfig } from "../typings/Configs";
-import { Account, Skin, Stat, User } from "../database/schemas";
 import * as Sentry from "@sentry/node";
 import { MineSkinMetrics } from "../util/metrics";
 import { debug } from "../util/colors";
 import { simplifyUserAgent } from "../util";
 import { redisClient } from "../database/redis";
-import { ApiKey } from "../database/schemas/ApiKey";
+import { Account, ApiKey, Skin, Stat, User } from "@mineskin/database";
 
 export const ACCOUNTS_TOTAL = "accounts.total";
 export const ACCOUNTS_HEALTHY = "accounts.healthy";
@@ -172,7 +171,7 @@ export class Stats {
             enabled: true,
             errorCounter: {$lt: config.errorThreshold}
         })
-        const usableAccounts = await Account.countGlobalUsable();
+        const usableAccounts = await Account.countGlobalUsable(); //FIXME
 
         try {
             const metrics = await MineSkinMetrics.get();

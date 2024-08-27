@@ -1,7 +1,6 @@
 import { Requests } from "../generator/Requests";
 import * as Sentry from "@sentry/node";
 import { getConfig } from "../typings/Configs";
-import { IAccountDocument } from "../typings";
 import { Request } from "express";
 import { getIp } from "./index";
 import FormData from "form-data";

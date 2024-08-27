@@ -11,7 +11,7 @@ import { debug, warn } from "../util/colors";
 import { Encryption } from "../util/Encryption";
 import { Bread } from "../typings/Bread";
 import { Notifications } from "../util/Notifications";
-import { Account } from "../database/schemas";
+import { Account } from "@mineskin/database";
 import { epochSeconds, Maybe, toEpochSeconds } from "../util";
 import { MineSkinMetrics } from "../util/metrics";
 import { MicrosoftAuthInfo } from "../typings/MicrosoftAuthInfo";

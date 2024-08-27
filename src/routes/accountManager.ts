@@ -23,13 +23,11 @@ import {
 } from "../util";
 import session from "express-session";
 import { Generator } from "../generator/Generator";
-import { Account, User } from "../database/schemas";
 import { Caching } from "../generator/Caching";
 import { Requests } from "../generator/Requests";
 import qs from "querystring";
 import { Discord } from "../util/Discord";
 import { getConfig, MineSkinConfig } from "../typings/Configs";
-import { AccessTokenSource, AccountType, IAccountDocument } from "../typings/db/IAccountDocument";
 import { MineSkinError, MineSkinRequest } from "../typings";
 import { Encryption } from "../util/Encryption";
 import { info, warn } from "../util/colors";
@@ -41,6 +39,8 @@ import { Buffer } from "buffer";
 import { randomBytes } from "crypto";
 import { MicrosoftAuthInfo } from "../typings/MicrosoftAuthInfo";
 import { getUserFromRequest } from "./account";
+import { AccessTokenSource, AccountType } from "@mineskin/types";
+import { Account, IAccountDocument, User } from "@mineskin/database";
 
 export const register = (app: Application, config: MineSkinConfig) => {
 
@@ -384,7 +384,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
         // Update token
         if (req.session.account.token) {
             account.accessToken = req.session.account.token;
-            account.accessTokenSource = req.session.account.type === AccountType.MICROSOFT ? AccessTokenSource.USER_LOGIN_MICROSOFT : AccessTokenSource.USER_LOGIN_MOJANG;
+            account.accessTokenSource = req.session.account.type === AccountType.MICROSOFT ? AccessTokenSource.USER_LOGIN_MICROSOFT : AccessTokenSource.USER_LOGIN_MOJANG; //FIXME
             account.accessTokenExpiration = Math.round(Date.now() / 1000) + 86360;
         }
 
@@ -590,7 +590,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
         res.json(resp);
 
         if (account?.user) {
-            User.updateMinecraftAccounts(account.user);
+            User.updateMinecraftAccounts(account.user); //FIXME
         }
     })
 
@@ -728,7 +728,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
             }
 
             if (user?.uuid) {
-                User.updateMinecraftAccounts(user.uuid);
+                User.updateMinecraftAccounts(user.uuid); //FIXME
             }
         })
 
@@ -800,7 +800,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
 
         const user = await getUserFromRequest(req, res, false);
         if (user?.uuid) {
-            User.updateMinecraftAccounts(user.uuid);
+            User.updateMinecraftAccounts(user.uuid); //FIXME
         }
 
     })

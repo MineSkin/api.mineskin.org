@@ -5,16 +5,14 @@ import jwt, { JsonWebTokenError, Jwt, JwtPayload, SignOptions, VerifyOptions } f
 import { LoginTicket, OAuth2Client } from "google-auth-library";
 import { v4 as randomUuid } from "uuid";
 import { Caching } from "../generator/Caching";
-import { Account, User } from "../database/schemas"
-import { IUserDocument } from "../typings/db/IUserDocument";
 import { debug, info, warn } from "../util/colors";
 import { Time } from "@inventivetalent/time";
-import { ApiKey } from "../database/schemas/ApiKey";
 import { Discord } from "../util/Discord";
 import { PendingDiscordAccountLink } from "../typings/DiscordAccountLink";
 import { Requests } from "../generator/Requests";
 import qs from "querystring";
 import { redisClient } from "../database/redis";
+import { Account, ApiKey, IUserDocument, User } from "@mineskin/database";
 
 export const register = (app: Application, config: MineSkinConfig) => {
 

@@ -2,11 +2,11 @@ import { IntervalFlusher, Metric, Metrics } from "metrics-node";
 import { NextFunction, Request, Response } from "express";
 import * as Sentry from "@sentry/node";
 import { getConfig, MineSkinConfig } from "../typings/Configs";
-import { GenerateType } from "../typings/db/ISkinDocument";
 import { GenerateOptions } from "../typings/GenerateOptions";
-import { IAccountDocument } from "../typings";
 import { isApiKeyRequest } from "../typings/ApiKeyRequest";
 import { Maybe } from "./index";
+import { GenerateType } from "@mineskin/types";
+import { IAccountDocument } from "@mineskin/database";
 
 let config: Maybe<MineSkinConfig>;
 
