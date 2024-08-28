@@ -4,6 +4,7 @@ import { getConfig } from "../typings/Configs";
 import { Request } from "express";
 import { getIp } from "./index";
 import FormData from "form-data";
+import { IAccountDocument } from "@mineskin/database";
 
 export const OWNER_CHANNEL = "636632020985839619";
 export const SUPPORT_CHANNEL = "482181024445497354";
@@ -177,7 +178,7 @@ export class Discord {
 
     static notifyNewAccount(account: IAccountDocument, req: Request): void {
         this.postDiscordMessage("ℹ 👤 A new Account #" + account.id + " has just been added!\n" +
-            "  Account Type: " + account.getAccountType() + (account.gamePass ? " (game pass)" : "") + "\n" +
+            "  Account Type: " + account.accountType + (account.gamePass ? " (game pass)" : "") + "\n" +
             "  UUID: " + account.uuid + "\n" +
             "  Server: " + account.requestServer + "\n" +
             "  Agent: " + req.headers["user-agent"] + "\n" +

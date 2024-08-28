@@ -7,7 +7,6 @@ import * as path from "path";
 import * as fs from "fs";
 import express, { ErrorRequestHandler, Express, NextFunction, Request, Response } from "express";
 import "express-async-errors";
-import { connectToMongo } from "./database/database";
 import RotatingFileStream from "rotating-file-stream";
 import morgan from "morgan";
 import * as bodyParser from "body-parser";
@@ -40,6 +39,7 @@ import { Balancer } from "./generator/Balancer";
 import { initRedis, redisClient } from "./database/redis";
 import UAParser from "ua-parser-js";
 import mongoose from "mongoose";
+import { connectToMongo } from "@mineskin/database";
 
 
 sourceMapSupport.install();
@@ -251,7 +251,7 @@ async function init() {
 
     {
         console.log("Connecting to database")
-        await connectToMongo(config);
+        await connectToMongo();
     }
 
     {

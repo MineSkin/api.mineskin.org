@@ -9,15 +9,15 @@ import * as fileType from "file-type";
 import readChunk from "read-chunk";
 import * as crypto from "crypto";
 import { Caching } from "../generator/Caching";
-import { ISkinDocument, SkinModel, SkinVariant } from "../typings/db/ISkinDocument";
 import { MineSkinMetrics } from "./metrics";
-import { IApiKeyDocument } from "../typings/db/IApiKeyDocument";
 import { MineSkinError, MineSkinRequest } from "../typings";
 import { imageHash } from "@inventivetalent/imghash";
 import { ClientInfo } from "../typings/ClientInfo";
 import UAParser from "ua-parser-js";
 import { getRedisNextRequest, updateRedisNextRequest } from "../database/redis";
 import { logger } from "./log";
+import { IApiKeyDocument, ISkinDocument, SkinModel } from "@mineskin/database";
+import { SkinVariant } from "@mineskin/types";
 
 export function resolveHostname() {
     if (process.env.NODE_HOSTNAME && !process.env.NODE_HOSTNAME.startsWith("{{")) {

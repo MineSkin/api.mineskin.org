@@ -6,6 +6,7 @@ import { debug } from "../util/colors";
 import { simplifyUserAgent } from "../util";
 import { redisClient } from "../database/redis";
 import { Account, ApiKey, Skin, Stat, User } from "@mineskin/database";
+import { Accounts } from "./Accounts";
 
 export const ACCOUNTS_TOTAL = "accounts.total";
 export const ACCOUNTS_HEALTHY = "accounts.healthy";
@@ -171,7 +172,7 @@ export class Stats {
             enabled: true,
             errorCounter: {$lt: config.errorThreshold}
         })
-        const usableAccounts = await Account.countGlobalUsable(); //FIXME
+        const usableAccounts = await Accounts.countGlobalUsable();
 
         try {
             const metrics = await MineSkinMetrics.get();
