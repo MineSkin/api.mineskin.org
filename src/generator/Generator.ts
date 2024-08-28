@@ -1083,7 +1083,7 @@ export class Generator {
             method: "POST",
             url: "/minecraft/profile/skins",
             headers: body.getHeaders({
-                "Authorization": account.authenticationHeader()
+                "Authorization": `Bearer ${ account.accessToken }`
             }),
             data: body
         }, account, breadcrumb).catch(err => {
@@ -1304,7 +1304,7 @@ export class Generator {
             .tag("state", "success")
             .tag("server", metrics.config.server)
             .tag("type", type)
-            .tag("visibility", options.visibility === SkinVisibility.PRIVATE ? "private" : "public") //FIXME
+            .tag("visibility", options.visibility === SkinVisibility.UNLISTED ? "unlisted" : "public") //FIXME
             .tag("variant", options.variant)
             .tag("via", client.via)
             .tag("userAgent", client.userAgent.ua)
@@ -1349,7 +1349,7 @@ export class Generator {
             .tag("state", "fail")
             .tag("server", metrics.config.server)
             .tag("type", type)
-            .tag("visibility", options.visibility === SkinVisibility.PRIVATE ? "private" : "public") //FIXME
+            .tag("visibility", options.visibility === SkinVisibility.UNLISTED ? "unlisted" : "public") //FIXME
             .tag("variant", options.variant)
             .tag("userAgent", client.userAgent.ua)
             .tag("apiKey", client.apiKey || "none")

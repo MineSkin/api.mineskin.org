@@ -394,7 +394,7 @@ export const register = (app: Application) => {
     }
 
     function validateVisibility(visibility?: number): SkinVisibility {
-        return visibility == 1 ? SkinVisibility.PRIVATE : SkinVisibility.PUBLIC; //FIXME
+        return visibility == 1 ? SkinVisibility.UNLISTED : SkinVisibility.PUBLIC;
     }
 
     function validateName(name?: string): Maybe<string> {
