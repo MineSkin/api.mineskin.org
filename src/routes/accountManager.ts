@@ -39,7 +39,7 @@ import { randomBytes } from "crypto";
 import { MicrosoftAuthInfo } from "../typings/MicrosoftAuthInfo";
 import { getUserFromRequest } from "./account";
 import { AccessTokenSource, AccountType } from "@mineskin/types";
-import { Account, IAccountDocument, User } from "@mineskin/database";
+import { Account, IAccountDocument } from "@mineskin/database";
 import { Accounts } from "../generator/Accounts";
 
 export const register = (app: Application, config: MineSkinConfig) => {
@@ -569,7 +569,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
         res.json(resp);
 
         if (account?.user) {
-            User.updateMinecraftAccounts(account.user); //FIXME
+            Accounts.updateUserMinecraftAccounts(account.user);
         }
     })
 
@@ -697,7 +697,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
             }
 
             if (user?.uuid) {
-                User.updateMinecraftAccounts(user.uuid); //FIXME
+                Accounts.updateUserMinecraftAccounts(user.uuid);
             }
         })
 
@@ -769,7 +769,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
 
         const user = await getUserFromRequest(req, res, false);
         if (user?.uuid) {
-            User.updateMinecraftAccounts(user.uuid); //FIXME
+            Accounts.updateUserMinecraftAccounts(user.uuid);
         }
 
     })

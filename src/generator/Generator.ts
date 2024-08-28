@@ -24,7 +24,7 @@ import * as fileType from "file-type";
 import { FileTypeResult } from "file-type";
 import { ISizeCalculationResult } from "image-size/dist/types/interface";
 import { v4 as randomUuid } from "uuid";
-import * as Jimp from "jimp";
+import Jimp from "jimp";
 import { getConfig } from "../typings/Configs";
 import { SkinData, SkinMeta, SkinValue } from "../typings/SkinData";
 import { GenerateOptions } from "../typings/GenerateOptions";
@@ -55,16 +55,7 @@ import { DelayInfo } from "../typings/DelayInfo";
 import { Capes } from "../util/Capes";
 import { redisClient, trackRedisGenerated } from "../database/redis";
 import { requestShutdown } from "../index";
-import {
-    Account,
-    IAccountDocument,
-    IApiKeyDocument,
-    ISkinDocument,
-    Skin,
-    SkinModel,
-    Stat,
-    User
-} from "@mineskin/database";
+import { Account, IAccountDocument, IApiKeyDocument, ISkinDocument, Skin, SkinModel, Stat } from "@mineskin/database";
 import { GenerateType, SkinInfo, SkinVariant, SkinVisibility } from "@mineskin/types";
 import { MineSkinError } from "../typings";
 import { Accounts } from "./Accounts";
@@ -1335,7 +1326,7 @@ export class Generator {
                 await account.save();
 
                 if (account.user) {
-                    User.updateMinecraftAccounts(account.user); //FIXME
+                    Accounts.updateUserMinecraftAccounts(account.user);
                 }
             } catch (e1) {
                 Sentry.captureException(e1);
@@ -1543,8 +1534,8 @@ export class Generator {
             }
             // https://github.com/InventivetalentDev/MineRender/blob/master/src/skin/index.js#L146
             let allTransparent = true;
-            image.scan(54, 20, 2, 12, function (x, y, idx) {
-                let a = this.bitmap.data[idx + 3];
+            image.scan(54, 20, 2, 12, function (x: number, y: number, idx: number) {
+                let a = image.bitmap.data[idx + 3];
                 if (a === 255) {
                     allTransparent = false;
                 }

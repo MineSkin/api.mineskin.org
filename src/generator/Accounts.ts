@@ -1,5 +1,5 @@
 import { Maybe } from "@mineskin/types";
-import { Account, IAccountDocument } from "@mineskin/database";
+import { Account, IAccountDocument, User } from "@mineskin/database";
 import { Bread } from "../typings/Bread";
 import * as Sentry from "@sentry/node";
 import { MineSkinMetrics } from "../util/metrics";
@@ -220,6 +220,32 @@ export class Accounts {
         return !!account.hiatus &&
             account.hiatus.enabled &&
             (now - account.hiatus.lastPing < fifteenMins || now - account.hiatus.lastLaunch < fifteenMins);
+    }
+
+    public static async updateUserMinecraftAccounts(uuid: string) {
+        const time = Math.floor(Date.now() / 1000);
+        const config = await getConfig();
+        const count = await Account.countDocuments({
+            user: uuid,
+            enabled: true,
+            $and: [
+                {
+                    $or: [
+                        {forcedTimeoutAt: {$exists: false}},
+                        {forcedTimeoutAt: {$lt: (time - 500)}}
+                    ]
+                }
+            ],
+            errorCounter: {$lt: (config.errorThreshold || 10)},
+            timeAdded: {$lt: (time - 60)}
+        }).exec();
+        await User.updateOne({
+            uuid: uuid
+        }, {
+            $set: {
+                minecraftAccounts: count
+            }
+        }).exec();
     }
 
 }
