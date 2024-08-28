@@ -539,6 +539,9 @@ const shutdownCounts: Record<string, number> = {};
 })();
 
 export function requestShutdown(signal: string, value: number) {
+    if (process.env.NODE_ENV === "development") {
+        return;
+    }
     Sentry.captureMessage(`Requesting shutdown by ${ signal } with value ${ value }`);
     if (!shutdownCounts[signal]) {
         shutdownCounts[signal] = 0;
