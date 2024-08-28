@@ -5,17 +5,16 @@ import { AuthenticateResponse, ExchangeRpsTicketResponse } from "@xboxreplay/xbo
 import qs from "querystring";
 import { AxiosResponse } from "axios";
 import { getConfig } from "../typings/Configs";
-import { IAccountDocument, MineSkinError } from "../typings";
-import { AccessTokenSource, AccountType } from "../typings/db/IAccountDocument";
 import { debug, warn } from "../util/colors";
 import { Encryption } from "../util/Encryption";
 import { Bread } from "../typings/Bread";
 import { Notifications } from "../util/Notifications";
-import { Account } from "@mineskin/database";
+import { Account, IAccountDocument } from "@mineskin/database";
 import { epochSeconds, Maybe, toEpochSeconds } from "../util";
 import { MineSkinMetrics } from "../util/metrics";
 import { MicrosoftAuthInfo } from "../typings/MicrosoftAuthInfo";
 import { Generator } from "./Generator";
+import { AccountType } from "@mineskin/types";
 
 const ACCESS_TOKEN_EXPIRATION_MOJANG = 86360;
 const ACCESS_TOKEN_EXPIRATION_MICROSOFT = 86360;
