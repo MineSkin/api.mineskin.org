@@ -19,7 +19,7 @@ export const register = (app: Application) => {
             return;
         }
 
-        const apiKey = await ApiKey.findKey(Caching.cachedSha512(key));
+        const apiKey = await ApiKey.findByKeyHash(Caching.cachedSha512(key));
         if (!apiKey) {
             res.status(400).json({ error: "invalid key" });
             return;

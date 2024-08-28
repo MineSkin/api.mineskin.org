@@ -13,14 +13,13 @@ import { IPoint } from "influx";
 import { BasicMojangProfile } from "./Authentication";
 import { SkinData } from "../typings/SkinData";
 import { User } from "../typings/User";
-import { ISkinDocument } from "../typings";
 import { ProfileResponse } from "../typings/ProfileResponse";
 import { MineSkinMetrics } from "../util/metrics";
 import { Bread } from "../typings/Bread";
 import { IPendingDiscordLink } from "../typings/DiscordAccountLink";
 import { Time } from "@inventivetalent/time";
 import { MojangAccountLink } from "../typings/MojangAccountLink";
-import { ApiKey, IApiKeyDocument, Skin, Traffic } from "@mineskin/database";
+import { ApiKey, IApiKeyDocument, ISkinDocument, Skin, Traffic } from "@mineskin/database";
 
 export class Caching {
 
@@ -187,7 +186,7 @@ export class Caching {
     protected static readonly skinByIdCache: AsyncLoadingCache<number, ISkinDocument> = Caches.builder()
         .expireAfterWrite(Time.minutes(1))
         .expirationInterval(Time.seconds(30))
-        .buildAsync<number, ISkinDocument>(id => Skin.findById(id));
+        .buildAsync<number, ISkinDocument>(id => Skin.findForId(id));
 
     protected static readonly skinByUuidCache: AsyncLoadingCache<string, ISkinDocument> = Caches.builder()
         .expireAfterWrite(Time.minutes(1))
