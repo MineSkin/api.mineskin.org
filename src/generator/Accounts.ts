@@ -3,10 +3,12 @@ import { Account, IAccountDocument } from "@mineskin/database";
 import { Bread } from "../typings/Bread";
 import * as Sentry from "@sentry/node";
 import { MineSkinMetrics } from "../util/metrics";
-import { Generator } from "./Generator";
+import { Generator, MIN_ACCOUNT_DELAY } from "./Generator";
 import { debug, error, warn } from "../util/colors";
 import { Caching } from "./Caching";
 import { Discord } from "../util/Discord";
+import { getConfig } from "../typings/Configs";
+import { FilterQuery } from "mongoose";
 
 export class Accounts {
 
@@ -17,7 +19,7 @@ export class Accounts {
         }, async span => {
             const time = Math.floor(Date.now() / 1000);
             const metrics = await MineSkinMetrics.get();
-            const account = await Account.findOne(await Generator.usableAccountsQuery()).sort({
+            const account = await Account.findOne(await Accounts.usableAccountsQuery()).sort({
                 lastUsed: 1,
                 lastSelected: 1,
                 sameTextureCounter: 1
@@ -76,6 +78,132 @@ export class Accounts {
 
             return await account.save();
         })
+    }
+
+    public static async countGlobalUsable(): Promise<number> {
+        const time = Math.floor(Date.now() / 1000);
+        const config = await getConfig();
+        return Account.countDocuments({
+            enabled: true,
+            $and: [
+                {
+                    $or: [
+                        {lastSelected: {$exists: false}},
+                        {lastSelected: {$lt: (time - MIN_ACCOUNT_DELAY)}}
+                    ]
+                },
+                {
+                    $or: [
+                        {lastUsed: {$exists: false}},
+                        {lastUsed: {$lt: (time - MIN_ACCOUNT_DELAY)}}
+                    ]
+                },
+                {
+                    $or: [
+                        {forcedTimeoutAt: {$exists: false}},
+                        {forcedTimeoutAt: {$lt: (time - 500)}}
+                    ]
+                },
+                {
+                    $or: [
+                        {hiatus: {$exists: false}},
+                        {'hiatus.enabled': false},
+                        {'hiatus.lastPing': {$lt: (time - 900)}}
+                    ]
+                }
+            ],
+            errorCounter: {$lt: (config.errorThreshold || 10)},
+            timeAdded: {$lt: (time - 60)}
+        }).exec();
+    }
+
+    public static async calculateMinDelay(): Promise<number> {
+        return Accounts.countGlobalUsable().then(usable => {
+            if (usable <= 0) {
+                console.warn(error("Global usable account count is " + usable));
+                return 200;
+            }
+            return MIN_ACCOUNT_DELAY / Math.max(1, usable)
+        });
+    }
+
+    public static async getAccountsPerServer(): Promise<{
+        server: string,
+        count: number
+    }[]> {
+        let filter: any = {enabled: true, errorCounter: {$lt: 10}};
+        return Account.aggregate([
+            {$match: filter},
+            {$group: {_id: '$requestServer', count: {$sum: 1}}},
+            {$sort: {count: 1}}
+        ]).exec().then((accountsPerServer: any[]) => {
+            const arr: { server: string, count: number }[] = [];
+            if (accountsPerServer && accountsPerServer.length > 0) {
+                accountsPerServer.forEach(a => {
+                    arr.push({
+                        server: a["_id"],
+                        count: a["count"]
+                    })
+                });
+            }
+            return arr;
+        });
+    }
+
+    public static async getPreferredAccountServer(): Promise<Maybe<string>> {
+        return this.getAccountsPerServer().then(accountsPerServer => {
+            if (!accountsPerServer || accountsPerServer.length < 1) {
+                return undefined;
+            }
+            // sorted from least to most
+            return accountsPerServer[0].server;
+        })
+    }
+
+    public static async usableAccountsQuery(): Promise<FilterQuery<IAccountDocument>> {
+        const time = Math.floor(Date.now() / 1000);
+        const config = await getConfig();
+        let allowedRequestServers: string[] = ["default", ...await Generator.getRequestServers()];
+        return {
+            enabled: true,
+            id: {$nin: Caching.getLockedAccounts()},
+            $and: [
+                {
+                    $or: [
+                        {requestServer: {$exists: false}},
+                        {requestServer: null},
+                        {requestServer: {$in: allowedRequestServers}}
+                    ]
+                },
+                {
+                    $or: [
+                        {lastSelected: {$exists: false}},
+                        {lastSelected: {$lt: (time - MIN_ACCOUNT_DELAY)}}
+                    ]
+                },
+                {
+                    $or: [
+                        {lastUsed: {$exists: false}},
+                        {lastUsed: {$lt: (time - MIN_ACCOUNT_DELAY)}}
+                    ]
+                },
+                {
+                    $or: [
+                        {forcedTimeoutAt: {$exists: false}},
+                        {forcedTimeoutAt: {$lt: (time - 500)}}
+                    ]
+                },
+                {
+                    $or: [
+                        {hiatus: {$exists: false}},
+                        {'hiatus.enabled': false},
+                        {'hiatus.lastPing': {$lt: (time - 900)}}
+                    ]
+                }
+            ],
+            errorCounter: {$lt: (config.errorThreshold || 10)},
+            timeAdded: {$lt: (time - 60)}
+        };
     }
 
     public static async updateAccountRequestServer(account: IAccountDocument, newRequestServer: string | null, bread?: Bread): Promise<void> {

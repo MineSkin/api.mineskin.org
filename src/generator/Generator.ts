@@ -31,7 +31,6 @@ import { GenerateOptions } from "../typings/GenerateOptions";
 import { AllStats } from "../typings/AllStats";
 import { ClientInfo } from "../typings/ClientInfo";
 import { debug, error, info, warn } from "../util/colors";
-import { SkinInfo } from "../typings/SkinInfo";
 import { Bread } from "../typings/Bread";
 import { Notifications } from "../util/Notifications";
 import { MineSkinMetrics } from "../util/metrics";
@@ -53,7 +52,6 @@ import {
 } from "./Stats";
 import { IPoint } from "influx";
 import { DelayInfo } from "../typings/DelayInfo";
-import { FilterQuery } from "mongoose";
 import { Capes } from "../util/Capes";
 import { redisClient, trackRedisGenerated } from "../database/redis";
 import { requestShutdown } from "../index";
@@ -67,7 +65,7 @@ import {
     Stat,
     User
 } from "@mineskin/database";
-import { GenerateType, SkinVariant, SkinVisibility } from "@mineskin/types";
+import { GenerateType, SkinInfo, SkinVariant, SkinVisibility } from "@mineskin/types";
 import { MineSkinError } from "../typings";
 import { Accounts } from "./Accounts";
 
@@ -131,7 +129,7 @@ export class Generator {
     @MemoizeExpiring(30000)
     static async getMinDelay(): Promise<number> {
         const metrics = await MineSkinMetrics.get();
-        const delay = await Account.calculateMinDelay(); //FIXME
+        const delay = await Accounts.calculateMinDelay();
         try {
             metrics.metrics!.influx.writePoints([{
                 measurement: 'delay',
@@ -151,7 +149,7 @@ export class Generator {
     @MemoizeExpiring(30000)
     static async getPreferredAccountServer(accountType?: string): Promise<string> {
         const config = await getConfig();
-        return await Account.getPreferredAccountServer(accountType) || config.server; //FIXME
+        return await Accounts.getPreferredAccountServer() || config.server;
     }
 
     // Stats
@@ -210,52 +208,6 @@ export class Generator {
         return proxy;
     }
 
-    public static async usableAccountsQuery(): Promise<FilterQuery<IAccountDocument>> {
-        const time = Math.floor(Date.now() / 1000);
-        const config = await getConfig();
-        let allowedRequestServers: string[] = ["default", ...await this.getRequestServers()];
-        return {
-            enabled: true,
-            id: {$nin: Caching.getLockedAccounts()},
-            $and: [
-                {
-                    $or: [
-                        {requestServer: {$exists: false}},
-                        {requestServer: null},
-                        {requestServer: {$in: allowedRequestServers}}
-                    ]
-                },
-                {
-                    $or: [
-                        {lastSelected: {$exists: false}},
-                        {lastSelected: {$lt: (time - MIN_ACCOUNT_DELAY)}}
-                    ]
-                },
-                {
-                    $or: [
-                        {lastUsed: {$exists: false}},
-                        {lastUsed: {$lt: (time - MIN_ACCOUNT_DELAY)}}
-                    ]
-                },
-                {
-                    $or: [
-                        {forcedTimeoutAt: {$exists: false}},
-                        {forcedTimeoutAt: {$lt: (time - 500)}}
-                    ]
-                },
-                {
-                    $or: [
-                        {hiatus: {$exists: false}},
-                        {'hiatus.enabled': false},
-                        {'hiatus.lastPing': {$lt: (time - 900)}}
-                    ]
-                }
-            ],
-            errorCounter: {$lt: (config.errorThreshold || 10)},
-            timeAdded: {$lt: (time - 60)}
-        };
-    }
-
 
     protected static async queryAccountStats(): Promise<void> {
         const start = Date.now();
@@ -278,7 +230,7 @@ export class Generator {
         }
         this.serverAccounts = serverAccounts;
 
-        const usableAccountDocs = await Account.find(await this.usableAccountsQuery(), {
+        const usableAccountDocs = await Account.find(await Accounts.usableAccountsQuery(), {
             _id: 0,
             requestServer: 1
         }).exec();
