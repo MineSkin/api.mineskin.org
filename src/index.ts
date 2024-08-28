@@ -392,7 +392,7 @@ async function init() {
                     }).catch(e => Sentry.captureException(e));
                 });
         } else {
-            console.error("Unexpected Error", err);
+            logger.error("Unexpected Error", err);
             Sentry.captureException(err, {
                 level: "fatal"
             });

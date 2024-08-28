@@ -82,7 +82,7 @@ export class MineSkinMetrics {
                             .tag("path", path)
                             .tag("status", `${ res.statusCode }`);
                         if (isApiKeyRequest(req) && req.apiKey) {
-                            m.tag("apikey", `${ req.apiKey.key.substr(0, 8) } ${ req.apiKey?.name }`);
+                            m.tag("apikey", `${ req.apiKey.id.substr(0, 8) } ${ req.apiKey?.name }`);
                         }
                         m.inc();
                     }

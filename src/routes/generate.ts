@@ -262,8 +262,8 @@ export const register = (app: Application) => {
         let apiKeyId: Maybe<string>;
         let apiKey;
         if (isApiKeyRequest(req) && req.apiKey) {
-            apiKeyId = req.apiKey._id as string;
-            apiKey = `${ req.apiKey.key.substring(0, 8) } ${ req.apiKey?.name }`;
+            apiKeyId = req.apiKey.id;
+            apiKey = `${ apiKeyId?.substring(0, 8) } ${ req.apiKey?.name }`;
         }
         let delayInfo: Maybe<DelayInfo>;
         if ('delayInfo' in req) {

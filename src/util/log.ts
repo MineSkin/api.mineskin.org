@@ -47,6 +47,7 @@ export const logger = winston.createLogger({
     level: 'info',
     format: format.combine(
         format.timestamp({format: 'YYYY-MM-DD HH:mm:ss.SSS'}),
+        format.errors({ stack: true }),
         utilFormatter(),
         format.colorize(),
         format.printf(
