@@ -116,7 +116,7 @@ export class Generator {
                 millis: Math.ceil(Math.ceil(d * 1000) / 50) * 50
             }
         }
-        const d = Math.max(Math.min(config.delays.default, await apiKey.getMinDelay()), minDelay);
+        const d = Math.max(Math.min(config.delays.default, (apiKey.minDelay || (await getConfig()).delays.defaultApiKey)), minDelay);
         return {
             seconds: Math.ceil(d),
             millis: Math.ceil(Math.ceil(d * 1000) / 50) * 50
