@@ -28,7 +28,7 @@ import { getUserFromRequest } from "./account";
 import multer, { MulterError } from "multer";
 import { logger } from "../util/log";
 import { DelayInfo } from "../typings/DelayInfo";
-import { GenerateType, SkinVariant } from "@mineskin/types";
+import { GenerateType, SkinVariant, SkinVisibility } from "@mineskin/types";
 import { SkinModel } from "@mineskin/database";
 
 export const register = (app: Application) => {
@@ -394,7 +394,7 @@ export const register = (app: Application) => {
     }
 
     function validateVisibility(visibility?: number): SkinVisibility {
-        return visibility == 1 ? SkinVisibility.PRIVATE : SkinVisibility.PUBLIC;
+        return visibility == 1 ? SkinVisibility.PRIVATE : SkinVisibility.PUBLIC; //FIXME
     }
 
     function validateName(name?: string): Maybe<string> {

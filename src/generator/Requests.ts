@@ -11,11 +11,11 @@ import { getConfig, MineSkinConfig } from "../typings/Configs";
 import { MineSkinMetrics } from "../util/metrics";
 import { c, debug, warn } from "../util/colors";
 import { Maybe, timeout } from "../util";
-import { IAccountDocument } from "../typings";
 import * as https from "https";
 import { Span } from "@sentry/types";
 import { networkInterfaces } from "os";
 import { requestShutdown } from "../index";
+import { IAccountDocument } from "@mineskin/database";
 
 export const GENERIC = "generic";
 export const MOJANG_AUTH = "mojangAuth";

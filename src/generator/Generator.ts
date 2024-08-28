@@ -26,7 +26,6 @@ import { ISizeCalculationResult } from "image-size/dist/types/interface";
 import { v4 as randomUuid } from "uuid";
 import * as Jimp from "jimp";
 import { getConfig } from "../typings/Configs";
-import { IAccountDocument, ISkinDocument, MineSkinError } from "../typings";
 import { SkinData, SkinMeta, SkinValue } from "../typings/SkinData";
 import { GenerateOptions } from "../typings/GenerateOptions";
 import { AllStats } from "../typings/AllStats";
@@ -58,8 +57,19 @@ import { FilterQuery } from "mongoose";
 import { Capes } from "../util/Capes";
 import { redisClient, trackRedisGenerated } from "../database/redis";
 import { requestShutdown } from "../index";
-import { Account, IApiKeyDocument, Skin, SkinModel, Stat, User } from "@mineskin/database";
+import {
+    Account,
+    IAccountDocument,
+    IApiKeyDocument,
+    ISkinDocument,
+    Skin,
+    SkinModel,
+    Stat,
+    User
+} from "@mineskin/database";
 import { GenerateType, SkinVariant, SkinVisibility } from "@mineskin/types";
+import { MineSkinError } from "../typings";
+import { Accounts } from "./Accounts";
 
 
 // minimum delay for accounts to be used
@@ -516,7 +526,7 @@ export class Generator {
 
             skin = await skin.save();
             //TODO: fix this message for user generate
-            console.log(info(options.breadcrumb + " New skin saved " + skin.uuid + " - generated in " + duration + "ms by " + result.account?.getAccountType() + " account #" + result.account?.id));
+            console.log(info(options.breadcrumb + " New skin saved " + skin.uuid + " - generated in " + duration + "ms by " + result.account?.accountType + " account #" + result.account?.id));
             Generator.lastSave = Date.now();
             return skin;
         })
@@ -918,7 +928,7 @@ export class Generator {
             url: "/minecraft/profile/skins",
             headers: {
                 "Content-Type": "application/json",
-                "Authorization": account.authenticationHeader()
+                "Authorization": `Bearer ${ account.accessToken }`
             },
             data: body
         }, account, breadcrumb).catch(err => {
@@ -1204,7 +1214,7 @@ export class Generator {
             name: "getAndAuthenticateAccount"
         }, async span => {
             const metrics = await MineSkinMetrics.get();
-            let account = await Account.findUsable(bread); //FIXME
+            let account = await Accounts.findUsable(bread);
             if (!account) {
                 console.warn(error(bread?.breadcrumb + " [Generator] No account available!"));
                 metrics.noAccounts
@@ -1217,12 +1227,12 @@ export class Generator {
                 throw new GeneratorError(GenError.NO_ACCOUNT_AVAILABLE, "No account available");
             }
             Sentry.setTag("account", account.id);
-            Sentry.setTag("account_type", account.getAccountType());
+            Sentry.setTag("account_type", account.accountType);
             account = await Authentication.authenticate(account, bread);
 
             account.lastUsed = Math.floor(Date.now() / 1000);
             if (!account.requestServer || !(await Generator.getRequestServers()).includes(account.requestServer)) {
-                account.updateRequestServer(metrics.config.server);
+                Accounts.updateAccountRequestServer(account, metrics.config.server)
             }
 
             return account;
@@ -1363,7 +1373,7 @@ export class Generator {
                 if (e instanceof AuthenticationError) {
                     account.forcedTimeoutAt = Math.floor(Date.now() / 1000);
                     console.warn(warn(options.breadcrumb + " [Generator] Account #" + account.id + " forced timeout"));
-                    account.updateRequestServer(null);
+                    Accounts.updateAccountRequestServer(account, null);
                 }
 
                 if (account.errorCounter > 0 && account.errorCounter % 10 === 0) {

@@ -3,9 +3,8 @@ import { Generator } from "../generator/Generator";
 import { Caching } from "../generator/Caching";
 import { corsWithAuthMiddleware, getAndValidateRequestApiKey, getIp, getVariant, stripUuid } from "../util";
 import * as Sentry from "@sentry/node";
-import { ISkinDocument } from "../typings";
 import { GENERATED_UPLOAD_VIEWS, GENERATED_URL_VIEWS, GENERATED_USER_VIEWS, SKINS_VIEWS } from "../generator/Stats";
-import { Skin, Stat } from "@mineskin/database";
+import { ISkinDocument, Skin, Stat } from "@mineskin/database";
 import { GenerateType } from "@mineskin/types";
 
 export const register = (app: Application) => {

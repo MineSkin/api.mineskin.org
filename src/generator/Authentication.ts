@@ -15,6 +15,7 @@ import { MicrosoftAuthInfo } from "../typings/MicrosoftAuthInfo";
 import { Generator } from "./Generator";
 import { AccessTokenSource, AccountType } from "@mineskin/types";
 import { MineSkinError } from "../typings";
+import { Accounts } from "./Accounts";
 
 const ACCESS_TOKEN_EXPIRATION_MOJANG = 86360;
 const ACCESS_TOKEN_EXPIRATION_MICROSOFT = 86360;
@@ -267,7 +268,7 @@ export class Microsoft {
         account.accessTokenExpiration = Math.round(Date.now() / 1000) + ACCESS_TOKEN_EXPIRATION_MICROSOFT;
         account.accessTokenSource = AccessTokenSource.REFRESH_MICROSOFT;
         if (!account.requestServer || !(await Generator.getRequestServers()).includes(account.requestServer)) {
-            account.updateRequestServer(config.server); //FIXME
+            Accounts.updateAccountRequestServer(account, config.server);
         }
         console.log(debug(bread?.breadcrumb + " [Auth] (#" + account.id + ") Request server set to " + account.requestServer));
 
