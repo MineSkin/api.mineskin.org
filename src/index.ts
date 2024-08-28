@@ -4,7 +4,6 @@ import { logger, logtail } from "./util/log";
 import * as sourceMapSupport from "source-map-support";
 import * as Sentry from "@sentry/node";
 import * as path from "path";
-import * as fs from "fs";
 import express, { ErrorRequestHandler, Express, NextFunction, Request, Response } from "express";
 import "express-async-errors";
 import RotatingFileStream from "rotating-file-stream";
@@ -22,7 +21,7 @@ import {
     testerRoute,
     utilRoute
 } from "./routes";
-import { MOJ_DIR, UPL_DIR, URL_DIR } from "./generator/Temp";
+import { Temp } from "./generator/Temp";
 import { getConfig, getLocalConfig, MineSkinConfig } from "./typings/Configs";
 import { isBreadRequest, MineSkinError } from "./typings";
 import { MineSkinMetrics } from "./util/metrics";
@@ -121,21 +120,7 @@ async function init() {
     console.log(info("Version: " + version));
     Discord.postDiscordMessage('[' + config.server + '] Version: ' + version);
 
-    {
-        console.log("Creating temp directories");
-        try {
-            fs.mkdirSync(URL_DIR);
-        } catch (e) {
-        }
-        try {
-            fs.mkdirSync(UPL_DIR);
-        } catch (e) {
-        }
-        try {
-            fs.mkdirSync(MOJ_DIR);
-        } catch (e) {
-        }
-    }
+    Temp.mkdirs();
 
     app = express();
 

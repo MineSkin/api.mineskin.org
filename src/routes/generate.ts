@@ -30,11 +30,12 @@ import { logger } from "../util/log";
 import { DelayInfo } from "../typings/DelayInfo";
 import { GenerateType, SkinVariant, SkinVisibility } from "@mineskin/types";
 import { SkinModel } from "@mineskin/database";
+import { Temp } from "../generator/Temp";
 
 export const register = (app: Application) => {
 
     const upload = multer({
-        dest: 'temp-uploads/',
+        dest: Temp.tmpdir,
         limits: {
             fileSize: MAX_IMAGE_SIZE,
             files: 1,

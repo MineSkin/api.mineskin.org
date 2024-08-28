@@ -4,8 +4,10 @@ import {
     getHashFromMojangTextureUrl,
     hasOwnProperty,
     imgHash,
+    isTempFile,
     longAndShortUuid,
     Maybe,
+    PathHolder,
     random32BitNumber,
     sleep,
     stripUuid
@@ -16,7 +18,7 @@ import * as Sentry from "@sentry/node";
 import { MINECRAFT_SERVICES_PROFILE, Requests } from "./Requests";
 import FormData from "form-data";
 import { URL } from "url";
-import { MOJ_DIR, Temp, TempFile, UPL_DIR, URL_DIR } from "./Temp";
+import { MOJ_DIR, Temp, UPL_DIR, URL_DIR } from "./Temp";
 import { AxiosError, AxiosResponse } from "axios";
 import imageSize from "image-size";
 import { promises as fs } from "fs";
@@ -747,7 +749,7 @@ export class Generator {
             //TODO: filter out requests for localhost 127.0.0.1 etc.
 
             let account: Maybe<IAccountDocument> = undefined;
-            let tempFile: Maybe<TempFile> = undefined;
+            let tempFile: Maybe<PathHolder> = undefined;
             try {
                 // Check original url for duplicate or for mineskin urls
                 const originalUrlDuplicate = await this.findDuplicateFromUrl(originalUrl, options, GenerateType.URL);
@@ -815,7 +817,7 @@ export class Generator {
                     dir: URL_DIR
                 });
                 try {
-                    await Temp.downloadImage(url, tempFile)
+                    tempFile = await Temp.downloadImage(url, tempFile)
                 } catch (e) {
                     span?.setStatus({
                         code: 2,
@@ -825,7 +827,7 @@ export class Generator {
                 }
 
                 // Validate downloaded image file
-                const tempFileValidation = await this.validateTempFile(tempFile, options, client, GenerateType.URL);
+                const tempFileValidation = await this.validateTempFile(tempFile.path, options, client, GenerateType.URL);
                 if (tempFileValidation.duplicate) {
                     // found a duplicate
                     return tempFileValidation;
@@ -854,7 +856,7 @@ export class Generator {
                 await this.handleGenerateError(e, GenerateType.URL, options, client, account);
                 throw e;
             } finally {
-                if (tempFile) {
+                if (tempFile && isTempFile(tempFile)) {
                     tempFile.remove();
                 }
             }
@@ -960,14 +962,14 @@ export class Generator {
             name: "generateFromUpload"
         }, async span => {
             let account: Maybe<IAccountDocument> = undefined;
-            let tempFile: Maybe<TempFile> = undefined;
+            let tempFile: Maybe<PathHolder> = undefined;
             try {
                 // Copy uploaded file
                 tempFile = await Temp.file({
                     dir: UPL_DIR
                 });
                 try {
-                    await Temp.copyUploadedImage(file, tempFile);
+                    tempFile = await Temp.copyUploadedImage(file, tempFile);
                 } catch (e) {
                     span.setStatus({
                         code: 2,
@@ -977,7 +979,7 @@ export class Generator {
                 }
 
                 // Validate uploaded image file
-                const tempFileValidation = await this.validateTempFile(tempFile, options, client, GenerateType.UPLOAD);
+                const tempFileValidation = await this.validateTempFile(tempFile.path, options, client, GenerateType.UPLOAD);
                 if (tempFileValidation.duplicate) {
                     // found a duplicate
                     return tempFileValidation;
@@ -1006,7 +1008,7 @@ export class Generator {
                 await this.handleGenerateError(e, GenerateType.UPLOAD, options, client, account);
                 throw e;
             } finally {
-                if (tempFile) {
+                if (tempFile && isTempFile(tempFile)) {
                     tempFile.remove();
                 }
             }
@@ -1349,13 +1351,13 @@ export class Generator {
         return response.headers["content-type"];
     }
 
-    protected static async validateTempFile(tempFile: TempFile, options: GenerateOptions, client: ClientInfo, type: GenerateType): Promise<TempFileValidationResult> {
+    protected static async validateTempFile(path: string, options: GenerateOptions, client: ClientInfo, type: GenerateType): Promise<TempFileValidationResult> {
         return await Sentry.startSpan({
             op: "generate_validateTempFile",
             name: "validateTempFile"
         }, async span => {
             // Validate downloaded image file
-            const imageBuffer = await fs.readFile(tempFile.path);
+            const imageBuffer = await fs.readFile(path);
             const size = imageBuffer.byteLength;
             Sentry.setExtra("generate_filesize", size);
             if (!size || size < 100 || size > MAX_IMAGE_SIZE) {

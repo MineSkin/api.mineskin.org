@@ -18,6 +18,7 @@ import { getRedisNextRequest, updateRedisNextRequest } from "../database/redis";
 import { logger } from "./log";
 import { IApiKeyDocument, ISkinDocument, SkinModel } from "@mineskin/database";
 import { SkinVariant } from "@mineskin/types";
+import { TempFile } from "../generator/Temp";
 
 export function resolveHostname() {
     if (process.env.NODE_HOSTNAME && !process.env.NODE_HOSTNAME.startsWith("{{")) {
@@ -506,6 +507,12 @@ export function simplifyUserAgent(ua: string): SimplifiedUserAgent {
 }
 
 export type SimplifiedUserAgent = { generic: boolean; ua: string; original: string; };
+
+export type PathHolder = { path: string;}
+
+export function isTempFile(obj: any): obj is TempFile {
+    return obj && 'path' in obj && 'fd' in obj && 'remove' in obj;
+}
 
 export const corsMiddleware = (req: Request, res: Response, next: NextFunction) => {
     res.header('Access-Control-Allow-Origin', '*');
