@@ -14,7 +14,8 @@ const logRotate: DailyRotateFile = new DailyRotateFile({
     datePattern: 'YYYY-MM-DD-HH',
     zippedArchive: true,
     maxSize: '20m',
-    maxFiles: '14d'
+    maxFiles: '14d',
+    createSymlink: true,
 });
 
 logRotate.on('error', error => {
