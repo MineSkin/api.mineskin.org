@@ -37,7 +37,7 @@ export const register = (app: Application) => {
             origins: apiKey.allowedOrigins,
             ips: apiKey.allowedIps,
             agents: apiKey.allowedAgents,
-            minDelay: apiKey.minDelay || (await getConfig()).delays.defaultApiKey
+            minDelay: apiKey.getMinDelay((await getConfig()).delays.defaultApiKey)
         })
     })
 
@@ -112,7 +112,7 @@ export const register = (app: Application) => {
             origins: apiKey.allowedOrigins,
             ips: apiKey.allowedIps,
             agents: apiKey.allowedAgents,
-            minDelay: apiKey.minDelay || (await getConfig()).delays.defaultApiKey
+            minDelay: apiKey.getMinDelay((await getConfig()).delays.defaultApiKey)
         })
     });
 
