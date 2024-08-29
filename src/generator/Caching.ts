@@ -10,20 +10,17 @@ import {
 import * as Sentry from "@sentry/node";
 import { Maybe, sha512, stripUuid } from "../util";
 import { IPoint } from "influx";
-import { Skin, Traffic } from "../database/schemas";
 import { BasicMojangProfile } from "./Authentication";
 import { SkinData } from "../typings/SkinData";
 import { User } from "../typings/User";
-import { ISkinDocument } from "../typings";
 import { ProfileResponse } from "../typings/ProfileResponse";
 import { MineSkinMetrics } from "../util/metrics";
 import { Bread } from "../typings/Bread";
-import { IApiKeyDocument } from "../typings/db/IApiKeyDocument";
-import { ApiKey } from "../database/schemas/ApiKey";
 import { IPendingDiscordLink } from "../typings/DiscordAccountLink";
 import { Time } from "@inventivetalent/time";
 import { MojangAccountLink } from "../typings/MojangAccountLink";
 import { redisSub } from "../database/redis";
+import { ApiKey, IApiKeyDocument, ISkinDocument, Skin, Traffic } from "@mineskin/database";
 
 export class Caching {
 
@@ -170,7 +167,6 @@ export class Caching {
             const traffic = await Traffic.findForIp(ip);
             return traffic?.lastRequest;
         });
-
     protected static readonly trafficByKeyCache: AsyncLoadingCache<string, Date> = Caches.builder()
         .expireAfterWrite(Time.seconds(1))
         .expirationInterval(Time.seconds(1))
@@ -178,6 +174,15 @@ export class Caching {
             const traffic = await Traffic.findForKey(key);
             return traffic?.lastRequest;
         });
+
+    public static readonly nextRequestByIpCache: SimpleCache<string, number> = Caches.builder()
+        .expireAfterWrite(Time.millis(100))
+        .expirationInterval(Time.seconds(1))
+        .build<string, number>();
+    public static readonly nextRequestByKeyCache: SimpleCache<string, number> = Caches.builder()
+        .expireAfterWrite(Time.millis(100))
+        .expirationInterval(Time.seconds(1))
+        .build<string, number>();
 
     protected static readonly skinByIdCache: AsyncLoadingCache<number, ISkinDocument> = Caches.builder()
         .expireAfterWrite(Time.minutes(1))
@@ -193,7 +198,7 @@ export class Caching {
         .expireAfterWrite(Time.minutes(5))
         .expireAfterAccess(Time.minutes(1))
         .expirationInterval(Time.seconds(20))
-        .buildAsync<string, IApiKeyDocument>(key => ApiKey.findKey(key));
+        .buildAsync<string, IApiKeyDocument>(key => ApiKey.findByKeyHash(key));
 
     protected static readonly skinDocumentCounts: AsyncLoadingCache<string, number> = Caches.builder()
         .expireAfterWrite(Time.minutes(20))
@@ -303,18 +308,22 @@ export class Caching {
 
     /// DATABASE
 
+    /**@deprecated*/
     public static getTrafficRequestTimeByIp(ip: string): Promise<Maybe<Date>> {
         return this.trafficByIpCache.get(ip);
     }
 
+    /**@deprecated*/
     public static getTrafficRequestTimeByApiKey(key: IApiKeyDocument): Promise<Maybe<Date>> {
         return this.trafficByKeyCache.get(key._id as string);
     }
 
+    /**@deprecated*/
     public static getTrafficRequestTimeByKey(key: string): Promise<Maybe<Date>> {
         return this.trafficByKeyCache.get(key);
     }
 
+    /**@deprecated*/
     public static async updateTrafficRequestTime(ip: string, key: string | null, time: Date): Promise<any> {
         this.trafficByIpCache.put(ip, time);
         if (key) {

@@ -1,10 +1,10 @@
 import { getConfig, MineSkinConfig } from "../typings/Configs";
 import { Requests } from "./Requests";
-import { Account } from "../database/schemas";
 import { debug, info, warn } from "../util/colors";
-import { AccountType } from "../typings/db/IAccountDocument";
 import { sleep } from "../util";
 import { Discord } from "../util/Discord";
+import { AccountType } from "@mineskin/types";
+import { Account } from "@mineskin/database";
 
 export class Balancer {
 

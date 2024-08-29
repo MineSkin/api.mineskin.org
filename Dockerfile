@@ -5,14 +5,11 @@ RUN mkdir -p /opt/app
 WORKDIR /opt/app
 
 # copy sources
-COPY src/ .
+COPY src/ src/
 COPY openapi.yml .env.vault .
 
 # build
-RUN npm run build
-
-# remove development dependencies
-RUN npm prune --production
+RUN yarn build
 
 ######
 
@@ -26,12 +23,12 @@ WORKDIR /opt/app
 
 COPY --from=BUILD_IMAGE /opt/app/dist ./dist
 #COPY --from=BUILD_IMAGE /opt/app/node_modules ./node_modules
-#COPY --from=BUILD_IMAGE /opt/app/package.json .
+COPY --from=BUILD_IMAGE /opt/app/package.json .
 COPY --from=BUILD_IMAGE /opt/app/openapi.yml .
 COPY --from=BUILD_IMAGE /opt/app/.env.vault .
 
 EXPOSE 3017
-CMD [ "npm", "start"]
+CMD [ "yarn", "start"]
 
 
 

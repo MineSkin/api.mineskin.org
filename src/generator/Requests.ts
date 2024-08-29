@@ -7,15 +7,15 @@ import { URL } from "url";
 import { setInterval } from "timers";
 import { IPoint } from "influx";
 import * as Sentry from "@sentry/node";
+import { Span } from "@sentry/node";
 import { getConfig, MineSkinConfig } from "../typings/Configs";
 import { MineSkinMetrics } from "../util/metrics";
 import { c, debug, warn } from "../util/colors";
 import { Maybe, timeout } from "../util";
-import { IAccountDocument } from "../typings";
 import * as https from "https";
-import { Span } from "@sentry/types";
 import { networkInterfaces } from "os";
-import { shutdown } from "../index";
+import { requestShutdown } from "../index";
+import { IAccountDocument } from "@mineskin/database";
 
 export const GENERIC = "generic";
 export const MOJANG_AUTH = "mojangAuth";
@@ -96,11 +96,10 @@ export class Requests {
                     precision: 's'
                 });
             }).catch(e => {
+                console.error(e);
                 Sentry.captureException(e);
                 console.error("influx error, restarting");
-                setTimeout(() => {
-                    shutdown('INFLUX_ERROR', 1);
-                }, 1000);
+                requestShutdown('INFLUX_ERROR', 1);
             })
         } catch (e) {
             Sentry.captureException(e);
@@ -247,7 +246,7 @@ export class Requests {
         if (!mineskinConfig.proxies.enabled) return;
         const proxyConfig = mineskinConfig.proxies;
         for (let proxyKey in proxyConfig.available) {
-            if (!mineskinConfig.requestServers[mineskinConfig.server].includes(proxyKey)) continue;
+            if (!mineskinConfig.requestServers[mineskinConfig.server]?.includes(proxyKey)) continue;
             let proxy = proxyConfig.available[proxyKey];
             if (!proxy.enabled) continue;
             let proxyType = proxy["type"];
@@ -310,7 +309,7 @@ export class Requests {
         if (!mineskinConfig.proxies.enabled) return;
         const proxyConfig = mineskinConfig.proxies;
         for (let proxyKey in proxyConfig.available) {
-            if (!mineskinConfig.requestServers[mineskinConfig.server].includes(proxyKey)) continue;
+            if (!mineskinConfig.requestServers[mineskinConfig.server]?.includes(proxyKey)) continue;
             let proxy = proxyConfig.available[proxyKey];
             if (!proxy.enabled) continue;
 

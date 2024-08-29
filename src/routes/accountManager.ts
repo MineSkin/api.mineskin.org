@@ -23,15 +23,12 @@ import {
 } from "../util";
 import session from "express-session";
 import { Generator } from "../generator/Generator";
-import { Account, User } from "../database/schemas";
 import { Caching } from "../generator/Caching";
 import { Requests } from "../generator/Requests";
 import qs from "querystring";
 import { Discord } from "../util/Discord";
 import { getConfig, MineSkinConfig } from "../typings/Configs";
-import { AccessTokenSource, AccountType, IAccountDocument } from "../typings/db/IAccountDocument";
 import { MineSkinError, MineSkinRequest } from "../typings";
-import { Encryption } from "../util/Encryption";
 import { info, warn } from "../util/colors";
 import * as Sentry from "@sentry/node";
 import { Time } from "@inventivetalent/time";
@@ -41,6 +38,9 @@ import { Buffer } from "buffer";
 import { randomBytes } from "crypto";
 import { MicrosoftAuthInfo } from "../typings/MicrosoftAuthInfo";
 import { getUserFromRequest } from "./account";
+import { AccessTokenSource, AccountType } from "@mineskin/types";
+import { Account, IAccountDocument } from "@mineskin/database";
+import { Accounts } from "../generator/Accounts";
 
 export const register = (app: Application, config: MineSkinConfig) => {
 
@@ -373,36 +373,15 @@ export const register = (app: Application, config: MineSkinConfig) => {
             return;
         }
 
-        // Update password
-        if (req.body["password"] && req.body["password"].length > 3) {
-            account.passwordNew = await Encryption.encrypt(base64decode(req.body["password"]));
-        } else if (account.accountType === AccountType.MICROSOFT) {
-            // probably new microsoft login, reset it
-            account.passwordNew = undefined;
-        }
-
         // Update token
         if (req.session.account.token) {
             account.accessToken = req.session.account.token;
-            account.accessTokenSource = req.session.account.type === AccountType.MICROSOFT ? AccessTokenSource.USER_LOGIN_MICROSOFT : AccessTokenSource.USER_LOGIN_MOJANG;
+            account.accessTokenSource = AccessTokenSource.USER_LOGIN_MICROSOFT;
             account.accessTokenExpiration = Math.round(Date.now() / 1000) + 86360;
         }
 
         // Update extras
-        if (req.session.account.type === AccountType.MOJANG && req.session.account.mojangInfo) {
-            if (req.session.account.mojangInfo.securityAnswers) {
-                account.multiSecurity = req.session.account.mojangInfo.securityAnswers;
-            }
-        } else if (req.session.account.type === AccountType.MICROSOFT && req.session.account.microsoftInfo) {
-            if (req.session.account.microsoftInfo.XSTSToken) {
-                account.microsoftXSTSToken = req.session.account.microsoftInfo.XSTSToken;
-            }
-            if (req.session.account.microsoftInfo.accessToken) {
-                account.microsoftAccessToken = req.session.account.microsoftInfo.accessToken;
-            }
-            if (req.session.account.microsoftInfo.refreshToken) {
-                account.microsoftRefreshToken = req.session.account.microsoftInfo.refreshToken;
-            }
+        if (req.session.account.type === AccountType.MICROSOFT && req.session.account.microsoftInfo) {
             if (req.session.account.microsoftInfo.msa) {
                 account.microsoftAuth = req.session.account.microsoftInfo.msa;
             }
@@ -454,7 +433,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
         await account.save();
 
         res.json({
-            type: account.accountType || (account.microsoftAccount ? "microsoft" : "mojang"),
+            type: account.accountType,
             username: account.username,
             email: account.email || account.username,
             gamerTag: account.microsoftAuth?.identities?.xbox?.claims.gtg,
@@ -473,7 +452,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
             hadErrors: hadErrors,
             hiatus: {
                 enabled: account.hiatus?.enabled ?? false,
-                onHiatus: account.isOnHiatus(),
+                onHiatus: Accounts.isAccountOnHiatus(account),
                 lastPing: account.hiatus?.lastPing ?? 0,
                 token: account.hiatus?.token
             },
@@ -590,7 +569,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
         res.json(resp);
 
         if (account?.user) {
-            User.updateMinecraftAccounts(account.user);
+            Accounts.updateUserMinecraftAccounts(account.user);
         }
     })
 
@@ -642,14 +621,13 @@ export const register = (app: Application, config: MineSkinConfig) => {
             id: lastId + 1,
 
             accountType: req.session.account.type,
-            microsoftAccount: req.session.account.type === AccountType.MICROSOFT,
 
             uuid: req.session.account.uuid,
             playername: profileValidation.profile.name,
 
             accessToken: req.session.account!.token!,
             accessTokenExpiration: Math.round(Date.now() / 1000) + 86360,
-            accessTokenSource: req.session.account.type === AccountType.MICROSOFT ? AccessTokenSource.USER_LOGIN_MICROSOFT : AccessTokenSource.USER_LOGIN_MOJANG,
+            accessTokenSource: AccessTokenSource.USER_LOGIN_MICROSOFT,
             clientToken: md5(req.session.account.uuid + "_" + ip),
 
             requestIp: ip,
@@ -669,17 +647,8 @@ export const register = (app: Application, config: MineSkinConfig) => {
             ev: 0 //TODO
         });
         if (req.session.account.type === AccountType.MICROSOFT) {
-            account.microsoftUserHash = req.session.account.microsoftInfo?.userHash;
-            account.microsoftUserId = req.session.account.microsoftInfo?.userId;
-            account.minecraftXboxUsername = req.session.account.microsoftInfo?.username;
-            account.microsoftXSTSToken = req.session.account.microsoftInfo?.XSTSToken;
-            account.microsoftAccessToken = req.session.account.microsoftInfo?.accessToken;
-            account.microsoftRefreshToken = req.session.account.microsoftInfo?.refreshToken;
             account.microsoftAuth = req.session.account.microsoftInfo?.msa as MicrosoftAuthInfo;
             account.gamePass = req.session.account.gamePass;
-        } else if (req.session.account!.type === AccountType.MOJANG) {
-            account.passwordNew = await Encryption.encrypt(base64decode(req.body["password"]));
-            account.multiSecurity = req.session.account.mojangInfo?.securityAnswers;
         }
 
         if (req.session.account.email) {
@@ -728,7 +697,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
             }
 
             if (user?.uuid) {
-                User.updateMinecraftAccounts(user.uuid);
+                Accounts.updateUserMinecraftAccounts(user.uuid);
             }
         })
 
@@ -800,7 +769,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
 
         const user = await getUserFromRequest(req, res, false);
         if (user?.uuid) {
-            User.updateMinecraftAccounts(user.uuid);
+            Accounts.updateUserMinecraftAccounts(user.uuid);
         }
 
     })
@@ -839,7 +808,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
 
         const clientId = config.discordAccount.id;
         const redirect = encodeURIComponent(`https://api.mineskin.org/accountManager/discord/oauth/callback`);
-        const state = config.server + '_' + sha256(`${ account.getAccountType() }${ account.uuid }${ Math.random() }${ req.session.account.email! }${ Date.now() }${ account.id }`);
+        const state = config.server + '_' + sha256(`${ account.accountType }${ account.uuid }${ Math.random() }${ req.session.account.email! }${ Date.now() }${ account.id }`);
 
         Caching.storePendingDiscordLink(<PendingDiscordAccountLink>{
             state: state,

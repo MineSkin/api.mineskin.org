@@ -1,10 +1,23 @@
 import { createClient, RedisClientType } from 'redis';
 import * as Sentry from "@sentry/node";
 import { Maybe, ONE_MONTH_SECONDS, ONE_YEAR_SECONDS } from "../util";
+import { ClientInfo } from "../typings/ClientInfo";
+import { Caching } from "../generator/Caching";
 
 export let redisClient: Maybe<RedisClientType>;
 export let redisPub: Maybe<RedisClientType>;
 export let redisSub: Maybe<RedisClientType>;
+
+const setIfGreater = {
+    script: `local current = redis.call('GET', KEYS[1])
+if not current or tonumber(ARGV[1]) > tonumber(current) then
+    redis.call('SET', KEYS[1], ARGV[1], 'EX', 3600)
+    return 1
+else
+    return 0
+end`,
+    sha: "null"
+}
 
 export async function initRedis() {
     if (!process.env.REDIS_URI) return;
@@ -16,6 +29,10 @@ export async function initRedis() {
         Sentry.captureException(err);
     });
     redisClient = await redisClient.connect();
+
+    redisClient.scriptLoad(setIfGreater.script).then(sha => {
+        setIfGreater.sha = sha;
+    })
 
     redisPub = createClient({
         url: process.env.REDIS_URI
@@ -67,12 +84,96 @@ function trackRedisGenerated0(trans: any, newOrDup: string, prefix: string) {
 
     trans?.incr(`${ prefix }:alltime:${ newOrDup }`);
 
-    trans?.incr(`${ prefix }:${ date.getFullYear() }:${ newOrDup }`);
-    trans?.expire(`${ prefix }:${ date.getFullYear() }:${ newOrDup }`, ONE_YEAR_SECONDS * 5);
+    trans?.incr(`${ prefix }:${ date.getFullYear() }:${ newOrDup }`, {
+        EX: ONE_YEAR_SECONDS * 5
+    });
 
-    trans?.incr(`${ prefix }:${ date.getFullYear() }:${ date.getMonth() + 1 }:${ newOrDup }`);
-    trans?.expire(`${ prefix }:${ date.getFullYear() }:${ date.getMonth() + 1 }:${ newOrDup }`, ONE_YEAR_SECONDS * 2);
+    trans?.incr(`${ prefix }:${ date.getFullYear() }:${ date.getMonth() + 1 }:${ newOrDup }`,{
+        EX: ONE_YEAR_SECONDS * 2
+    });
 
-    trans?.incr(`${ prefix }:${ date.getFullYear() }:${ date.getMonth() + 1 }:${ date.getDate() }:${ newOrDup }`);
-    trans?.expire(`${ prefix }:${ date.getFullYear() }:${ date.getMonth() + 1 }:${ date.getDate() }:${ newOrDup }`, ONE_MONTH_SECONDS * 3);
+    trans?.incr(`${ prefix }:${ date.getFullYear() }:${ date.getMonth() + 1 }:${ date.getDate() }:${ newOrDup }`,{
+        EX: ONE_MONTH_SECONDS * 3
+    });
+}
+
+export async function getRedisNextRequest(client: ClientInfo): Promise<number> {
+    return Sentry.startSpan({
+        op: "redis_getNextRequest",
+        name: "Get Next Request",
+    }, async span => {
+        if (!redisClient) {
+            return 0;
+        }
+
+        // clean up ipv6 etc.
+        const cleanIp = client.ip.replace(/[^a-zA-Z0-9]/g, '_');
+
+        let cachedByIp = Caching.nextRequestByIpCache.getIfPresent(cleanIp);
+        if (!!cachedByIp) {
+            return cachedByIp;
+        }
+        if (client.apiKeyId) {
+            let cachedByKey = Caching.nextRequestByKeyCache.getIfPresent(client.apiKeyId);
+            if (!!cachedByKey) {
+                return cachedByKey;
+            }
+        }
+
+        let trans = redisClient.multi()
+            .get(`mineskin:ratelimit:ip:${ cleanIp }:next`);
+        if (client.apiKeyId) {
+            trans = trans.get(`mineskin:ratelimit:apikey:${ client.apiKeyId }:next`);
+        }
+
+        const results = await trans.exec();
+        const nextIpRequestStr = results[0] as string;
+        const nextKeyRequestStr = client.apiKeyId ? results[1] as string : null;
+
+        const nextIpRequest = nextIpRequestStr ? parseInt(nextIpRequestStr) : 0;
+        const nextKeyRequest = nextKeyRequestStr ? parseInt(nextKeyRequestStr) : 0;
+
+        return Math.max(nextIpRequest, nextKeyRequest);
+    });
+}
+
+export async function updateRedisNextRequest(client: ClientInfo, effectiveDelayMs: number) {
+    return Sentry.startSpan({
+        op: "redis_updateNextRequest",
+        name: "Update Next Request",
+    }, async span => {
+        if (!redisClient) {
+            return;
+        }
+
+        const prefix = 'mineskin:ratelimit';
+
+        const nextRequest = client.time + effectiveDelayMs;
+        client.nextRequest = nextRequest;
+
+        // clean up ipv6 etc.
+        const cleanIp = client.ip.replace(/[^a-zA-Z0-9]/g, '_');
+
+        let trans = redisClient.multi();
+        if (client.apiKeyId) {
+            Caching.nextRequestByKeyCache.put(client.apiKeyId, nextRequest);
+            trans = trans.set(`${ prefix }:apikey:${ client.apiKeyId }:last`, client.time, {
+                EX: 3600
+            })
+                .evalSha(setIfGreater.sha!, {
+                    keys: [`${ prefix }:apikey:${ client.apiKeyId }:next`],
+                    arguments: [`${ nextRequest }`]
+                });
+        }
+        Caching.nextRequestByIpCache.put(cleanIp, nextRequest);
+        trans = trans.set(`${ prefix }:ip:${ cleanIp }:last`, client.time, {
+            EX: 3600
+        })
+            .evalSha(setIfGreater.sha!, {
+                keys: [`${ prefix }:ip:${ cleanIp }:next`],
+                arguments: [`${ nextRequest }`]
+            });
+
+        await trans.exec();
+    });
 }

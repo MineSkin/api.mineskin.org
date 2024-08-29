@@ -1,10 +1,11 @@
 import { Application, Request, Response } from "express";
 import { base64decode, corsWithCredentialsMiddleware, sha256, stripUuid } from "../util";
-import { IAccountDocument, MineSkinError } from "../typings";
-import { Account } from "../database/schemas";
 import { debug, warn } from "../util/colors";
 import { Discord } from "../util/Discord";
 import { Generator } from "../generator/Generator";
+import { Account, IAccountDocument } from "@mineskin/database";
+import { MineSkinError } from "../typings";
+import { Accounts } from "../generator/Accounts";
 
 export const register = (app: Application) => {
 
@@ -27,7 +28,7 @@ export const register = (app: Application) => {
                 return;
             }
             if (!validateAuth(req, res, auth, account)) return;
-            const wasOnHiatus = account.isOnHiatus();
+            const wasOnHiatus = Accounts.isAccountOnHiatus(account);
 
             const t = Math.floor(Date.now() / 1000);
             account.hiatus!.lastLaunch = t;
@@ -38,7 +39,7 @@ export const register = (app: Application) => {
                     msg: "launch updated"
                 })
             });
-            if (!wasOnHiatus && account.isOnHiatus()) {
+            if (!wasOnHiatus && Accounts.isAccountOnHiatus(account)) {
                 Discord.postDiscordMessage(`💤 Account ${ account.id }/${ account.uuid }/${ account.playername } put on hiatus due to game launch`);
                 Generator.restoreOriginalSkinASAP(account);
             }
@@ -91,7 +92,7 @@ export const register = (app: Application) => {
                 return;
             }
             if (!validateAuth(req, res, auth, account)) return;
-            const wasOnHiatus = account.isOnHiatus();
+            const wasOnHiatus = Accounts.isAccountOnHiatus(account);
 
             account.hiatus!.lastPing = Math.floor(Date.now() / 1000);
             account.save().then(() => {
@@ -100,7 +101,7 @@ export const register = (app: Application) => {
                     msg: "ping updated"
                 })
             })
-            if (!wasOnHiatus && account.isOnHiatus()) {
+            if (!wasOnHiatus && Accounts.isAccountOnHiatus(account)) {
                 Discord.postDiscordMessage(`💤 Account ${ account.id }/${ account.uuid }/${ account.playername } put on hiatus due to recent ping`);
                 Generator.restoreOriginalSkinASAP(account);
             }

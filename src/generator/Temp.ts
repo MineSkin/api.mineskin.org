@@ -1,13 +1,16 @@
 import * as fs from "fs";
+import * as path from "path";
 import * as tmp from "tmp";
 import { DirOptions, FileOptions } from "tmp";
 import { Stream } from "stream";
 import { Requests } from "./Requests";
+import { isTempFile, PathHolder } from "../util";
 
-export const URL_DIR = "/tmp/url";
-export const UPL_DIR = "/tmp/upl";
-export const USR_DIR = "/tmp/usr";
-export const MOJ_DIR = "/tmp/moj";
+export const URL_DIR = "url";
+export const UPL_DIR = "upl";
+export const USR_DIR = "usr";
+export const MOJ_DIR = "moj";
+export const MLT_DIR = "mlt";
 
 export class TempDir {
     constructor(public readonly path: string, private readonly removeCallback: () => void) {
@@ -35,6 +38,24 @@ tmp.setGracefulCleanup();
 
 export class Temp {
 
+    static tmpdir = tmp.tmpdir;
+
+    static mkdirs() {
+        console.log("Creating temp directories in " + tmp.tmpdir);
+        try {
+            fs.mkdirSync(tmp.tmpdir + path.sep + URL_DIR);
+        } catch (e) {
+        }
+        try {
+            fs.mkdirSync(tmp.tmpdir + path.sep + UPL_DIR);
+        } catch (e) {
+        }
+        try {
+            fs.mkdirSync(tmp.tmpdir + path.sep + MOJ_DIR);
+        } catch (e) {
+        }
+    }
+
     static async file(options?: FileOptions): Promise<TempFile> {
         return new Promise((resolve, reject) => {
             tmp.file(options || {}, (err, name, fd, removeCallback) => {
@@ -61,7 +82,7 @@ export class Temp {
 
     // UTIL
 
-    public static async downloadImage(url: string, tmpFile?: TempFile, breadcrumb?: string): Promise<TempFile> {
+    public static async downloadImage(url: string, tmpFile?: PathHolder, breadcrumb?: string): Promise<PathHolder> {
         if (!tmpFile) {
             tmpFile = await this.file();
         }
@@ -77,7 +98,7 @@ export class Temp {
             }, breadcrumb);
             (response.data as Stream).pipe(fs.createWriteStream(tmpFile.path))
         } catch (e) {
-            if (tmpFile) {
+            if (isTempFile(tmpFile)) {
                 tmpFile.remove();
             }
             throw e;
@@ -85,9 +106,12 @@ export class Temp {
         return tmpFile;
     }
 
-    public static async copyUploadedImage(uploadedFile: Express.Multer.File, tmpFile?: TempFile): Promise<TempFile> {
+    public static async copyUploadedImage(uploadedFile: Express.Multer.File, tmpFile?: PathHolder): Promise<PathHolder> {
         if (!tmpFile) {
             tmpFile = await this.file();
+        }
+        if (process.env.NODE_ENV === "development") {
+            return uploadedFile;
         }
         try {
             // move file
@@ -101,7 +125,7 @@ export class Temp {
                 });
             });
         } catch (e) {
-            if (tmpFile) {
+            if (isTempFile(tmpFile)) {
                 tmpFile.remove();
             }
             throw e;

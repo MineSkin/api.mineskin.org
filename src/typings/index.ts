@@ -1,11 +1,7 @@
 import { Bread } from "./Bread";
 import { Request } from "express";
 import { ApiKeyRequest } from "./ApiKeyRequest";
-
-export { IAccountDocument } from "./db/IAccountDocument";
-export { ISkinDocument } from "./db/ISkinDocument";
-export { ITrafficDocument } from "./db/ITrafficDocument";
-export { IStatDocument } from "./db/IStatDocument";
+import { DelayInfo } from "./DelayInfo";
 
 // https://stackoverflow.com/a/60323233/6257838
 export class MineSkinError extends Error {
@@ -19,7 +15,7 @@ export class MineSkinError extends Error {
     }
 }
 
-export type MineSkinRequest = Request & ApiKeyRequest;
+export type MineSkinRequest = Request & ApiKeyRequest & {delayInfo?: DelayInfo};
 export type BreadRequest = MineSkinRequest & Bread;
 export type GenerateRequest = BreadRequest;
 

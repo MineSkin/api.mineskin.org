@@ -1,10 +1,10 @@
 import * as Sentry from "@sentry/node";
-import { IAccountDocument, MineSkinError } from "../typings";
-import { AccountType } from "../typings/db/IAccountDocument";
-import { GenerateType } from "../typings/db/ISkinDocument";
+import { MineSkinError } from "../typings";
 import { Discord, OWNER_CHANNEL, SUPPORT_CHANNEL } from "./Discord";
 import { Email } from "./Email";
 import { MineSkinMetrics } from "./metrics";
+import { IAccountDocument } from "@mineskin/database";
+import { AccountType, GenerateType } from "@mineskin/types";
 
 const ERROR_THRESHOLD = 3;
 
@@ -64,14 +64,14 @@ export class Notifications {
     protected static accountInfo(acc: IAccountDocument, html: boolean): string {
         if (html) {
             return `
-<p style="margin-left: 20px">Affected Account: ${ acc.playername || acc.uuid } (${ acc.getEmail() })</p>
-<p style="margin-left: 20px">Account Type: ${ acc.getAccountType() }</p>
+<p style="margin-left: 20px">Affected Account: ${ acc.playername || acc.uuid } (${ acc.email })</p>
+<p style="margin-left: 20px">Account Type: ${ acc.accountType }</p>
 <p style="margin-left: 20px">Last Error Code: ${ acc.lastErrorCode }</p>
             `
         } else {
             return `
-  Affected Account: ${ acc.playername || acc.uuid } (${ acc.getEmail() })
-  Account Type: ${ acc.getAccountType() }
+  Affected Account: ${ acc.playername || acc.uuid } (${ acc.email })
+  Account Type: ${ acc.accountType }
   Last Error Code: ${ acc.lastErrorCode }
             `
         }
@@ -89,7 +89,7 @@ export class Notifications {
         // Log Channel
         Discord.postDiscordMessage("⚠️ 👤 Account #" + account.id + " just lost its access token\n" +
             "  Current Server: " + account.lastRequestServer + "/" + account.requestServer + "\n" +
-            "  Account Type: " + account.getAccountType() + "\n" +
+            "  Account Type: " + account.accountType + "\n" +
             "  Current Success/Error: " + account.successCounter + "/" + account.errorCounter + "\n" +
             "  Total Success/Error: " + account.totalSuccessCounter + "/" + account.totalErrorCounter + "\n" +
             "  Account Added: " + new Date((account.timeAdded || 0) * 1000).toUTCString() + "\n" +
@@ -110,12 +110,12 @@ https://downdetector.com/status/minecraft/
 
 Please log back in to your account at https://mineskin.org/account/minecraft?email=${account.email}
 
-${ account.getAccountType() === AccountType.MICROSOFT ? "You should also check https://account.live.com/Activity" : "" }
+${ account.accountType === AccountType.MICROSOFT ? "You should also check https://account.live.com/Activity" : "" }
 ${ this.supportLink(email) }
             `,
             acc => `
 ${ this.publicPrefix(acc) }
-MineSkin just lost access to one of your accounts (${ acc.getAccountType() })\n
+MineSkin just lost access to one of your accounts (${ acc.accountType })\n
 ${ this.trimmedAccountInfo(acc) }
 Please log back in at https://mineskin.org/account/minecraft\n
             `,
@@ -128,7 +128,7 @@ ${ this.accountInfo(acc, true) }
 <br/>
 <p><strong>Please log back in to your account at <a href="https://mineskin.org/account/minecraft?email=${account.email}">mineskin.org/account</a></strong></p>
 <br/>
-${ account.getAccountType() === AccountType.MICROSOFT ? "<p>You should also check <a href='https://account.live.com/Activity'>account.live.com/Activity</a></p>" : "" }
+${ account.accountType === AccountType.MICROSOFT ? "<p>You should also check <a href='https://account.live.com/Activity'>account.live.com/Activity</a></p>" : "" }
 <p>${ this.supportLink(true) }</p>
             `,
             acc => `MineSkin Notification ${ acc.playername || acc.uuid }`)
@@ -140,7 +140,7 @@ ${ account.getAccountType() === AccountType.MICROSOFT ? "<p>You should also chec
             "  UUID: " + account.uuid + "\n" +
             "  Error: " + err.msg + "\n" +
             "  Current Server: " + account.lastRequestServer + "/" + account.requestServer + "\n" +
-            "  Account Type: " + account.getAccountType() + "\n" +
+            "  Account Type: " + account.accountType + "\n" +
             "  Total Success/Error: " + account.totalSuccessCounter + "/" + account.totalErrorCounter + "\n" +
             "  Account Added: " + new Date((account.timeAdded || 0) * 1000).toUTCString() + "\n" +
             "  Linked to " + account.email + "/<@" + account.discordUser + ">");
@@ -155,12 +155,12 @@ The account won't be used for skin generation until the issues are resolved
 
 Please try to login at https://www.minecraft.net/login and check if there are any issues with your account and then log back in to your account at https://mineskin.org/account?email=${account.email}
 
-${ account.getAccountType() === AccountType.MICROSOFT ? "You should also check https://account.live.com/Activity" : "" }
+${ account.accountType === AccountType.MICROSOFT ? "You should also check https://account.live.com/Activity" : "" }
 ${ this.supportLink(email) }
             `,
             acc => `
 ${ this.publicPrefix(acc) }
-MineSkin just failed to login to one of your accounts (${ acc.getAccountType() })\n
+MineSkin just failed to login to one of your accounts (${ acc.accountType })\n
 ${ this.trimmedAccountInfo(acc) } 
 Please log back in at https://mineskin.org/account/minecraft\n
             `,
@@ -173,7 +173,7 @@ ${ this.accountInfo(acc, true) }
 <br/>
 <p>Please try to login at <a href="https://www.minecraft.net/login">minecraft.net</a> and check if there are any issues with your account and then <strong>log back in to your account at <a href="https://mineskin.org/account?email=${account.email}">mineskin.org/account</a></strong></p>
 <br/>
-${ account.getAccountType() === AccountType.MICROSOFT ? "<p>You should also check <a href='https://account.live.com/Activity'>account.live.com/Activity</a></p>" : "" }
+${ account.accountType === AccountType.MICROSOFT ? "<p>You should also check <a href='https://account.live.com/Activity'>account.live.com/Activity</a></p>" : "" }
 <p>${ this.supportLink(true) }</p>
             `,
             acc => `MineSkin Notification ${ acc.playername || acc.uuid }`)
@@ -184,7 +184,7 @@ ${ account.getAccountType() === AccountType.MICROSOFT ? "<p>You should also chec
         // Log channel
         Discord.postDiscordMessage("⚠️ 👤 Account #" + account.id + " has " + account.errorCounter + " errors!\n" +
             "  Current Server: " + account.lastRequestServer + "/" + account.requestServer + "\n" +
-            "  Account Type: " + account.getAccountType() + "\n" +
+            "  Account Type: " + account.accountType + "\n" +
             "  Latest Type: " + lastType + "\n" +
             "  Latest Cause: " + (err.code || err.msg || "n/a") + "\n" +
             "  Current Success/Error: " + account.successCounter + "/" + account.errorCounter + "\n" +
@@ -204,12 +204,12 @@ The account won't be used for skin generation until the issues are resolved.
 
 Please make sure the configured credentials & security questions are correct at https://mineskin.org/account?email=${account.email}  
 
-${ account.getAccountType() === AccountType.MICROSOFT ? "You should also check https://account.live.com/Activity" : "" }
+${ account.accountType === AccountType.MICROSOFT ? "You should also check https://account.live.com/Activity" : "" }
 ${ this.supportLink(email) }
             `,
             acc => `
 ${ this.publicPrefix(acc) }
-One of your accounts (${ acc.getAccountType() }) was just disabled since it failed to properly generate skin data recently. 
+One of your accounts (${ acc.accountType }) was just disabled since it failed to properly generate skin data recently. 
 ${ this.trimmedAccountInfo(acc) }
 Please log back in at https://mineskin.org/account/minecraft
             `,
@@ -222,7 +222,7 @@ ${ this.accountInfo(acc, true) }
 <br/>
 <p><strong>Please make sure the configured credentials & security questions are correct at <a href="https://mineskin.org/account?email=${account.email}">mineskin.org/account</a></strong></p>
 <br/>
-${ account.getAccountType() === AccountType.MICROSOFT ? "<p>You should also check <a href='https://account.live.com/Activity'>account.live.com/Activity</a></p>" : "" }
+${ account.accountType === AccountType.MICROSOFT ? "<p>You should also check <a href='https://account.live.com/Activity'>account.live.com/Activity</a></p>" : "" }
 <p>${ this.supportLink(true) }</p>
             `,
             acc => `MineSkin Notification ${ acc.playername || acc.uuid }`)

@@ -2,11 +2,10 @@ import { Application, Request, Response } from "express";
 import { base64encode, corsWithCredentialsMiddleware, random32BitNumber, sha256, sha512 } from "../util";
 import { debug, info } from "../util/colors";
 import { Caching } from "../generator/Caching";
-import { IApiKeyDocument } from "../typings/db/IApiKeyDocument";
-import { ApiKey } from "../database/schemas/ApiKey";
 import { getConfig } from "../typings/Configs";
 import { Discord } from "../util/Discord";
 import { getUserFromRequest } from "./account";
+import { ApiKey, IApiKeyDocument } from "@mineskin/database";
 
 
 export const register = (app: Application) => {
@@ -16,13 +15,13 @@ export const register = (app: Application) => {
     app.get("/apikey", async (req: Request, res: Response) => {
         const key: string = req.query["key"] as string;
         if (!key) {
-            res.status(400).json({ error: "missing key" });
+            res.status(400).json({error: "missing key"});
             return;
         }
 
-        const apiKey = await ApiKey.findKey(Caching.cachedSha512(key));
+        const apiKey = await ApiKey.findByKeyHash(Caching.cachedSha512(key));
         if (!apiKey) {
-            res.status(400).json({ error: "invalid key" });
+            res.status(400).json({error: "invalid key"});
             return;
         }
 
@@ -38,21 +37,21 @@ export const register = (app: Application) => {
             origins: apiKey.allowedOrigins,
             ips: apiKey.allowedIps,
             agents: apiKey.allowedAgents,
-            minDelay: await apiKey.getMinDelay()
+            minDelay: apiKey.getMinDelay((await getConfig()).delays.defaultApiKey)
         })
     })
 
     app.post("/apikey", async (req: Request, res: Response) => {
         const name: string = req.body["name"];
         if (!name) {
-            res.status(400).json({ error: "missing name" });
+            res.status(400).json({error: "missing name"});
             return;
         }
 
         const user = await getUserFromRequest(req, res, false);
 
         if (!user) {
-            res.status(400).json({ error: "invalid user" });
+            res.status(400).json({error: "invalid user"});
             return;
         }
 
@@ -62,7 +61,7 @@ export const register = (app: Application) => {
         const allowedIps: string[] = (req.body["ips"] || []).map((s: string) => s.trim()).filter((s: string) => s.length > 7 && s.length < 40);
         const allowedAgents: string[] = (req.body["agents"] || []).map((s: string) => s.trim().toLowerCase()).filter((s: string) => s.length > 5 && s.length < 30);
 
-        console.log(info(`Generating new API Key "${ name }" for ${ user.uuid}`));
+        console.log(info(`Generating new API Key "${ name }" for ${ user.uuid }`));
         console.log(debug(`Origins: ${ allowedOrigins }`));
         console.log(debug(`IPs:     ${ allowedIps }`));
         console.log(debug(`Agents:  ${ allowedAgents }`));
@@ -113,7 +112,7 @@ export const register = (app: Application) => {
             origins: apiKey.allowedOrigins,
             ips: apiKey.allowedIps,
             agents: apiKey.allowedAgents,
-            minDelay: await apiKey.getMinDelay()
+            minDelay: apiKey.getMinDelay((await getConfig()).delays.defaultApiKey)
         })
     });
 
@@ -121,23 +120,23 @@ export const register = (app: Application) => {
     app.put("/apikey", async (req: Request, res: Response) => {
         const key: string = req.body["key"];
         if (!key) {
-            res.status(400).json({ error: "missing key" });
+            res.status(400).json({error: "missing key"});
             return;
         }
         const secret: string = req.body["secret"];
         if (!secret) {
-            res.status(400).json({ error: "missing secret" });
+            res.status(400).json({error: "missing secret"});
             return;
         }
 
-        const apiKey = await ApiKey.findKey(Caching.cachedSha512(key));
+        const apiKey = await ApiKey.findByKeyHash(Caching.cachedSha512(key));
         if (!apiKey) {
-            res.status(400).json({ error: "invalid key" });
+            res.status(400).json({error: "invalid key"});
             return;
         }
 
         if (apiKey.secret !== Caching.cachedSha512(secret)) {
-            res.status(400).json({ error: "invalid secret" });
+            res.status(400).json({error: "invalid secret"});
             return;
         }
 
@@ -188,23 +187,23 @@ export const register = (app: Application) => {
         console.log(req.body)
         const key: string = req.body["key"];
         if (!key) {
-            res.status(400).json({ error: "missing key" });
+            res.status(400).json({error: "missing key"});
             return;
         }
         const secret: string = req.body["secret"];
         if (!secret) {
-            res.status(400).json({ error: "missing secret" });
+            res.status(400).json({error: "missing secret"});
             return;
         }
 
-        const apiKey = await ApiKey.findKey(Caching.cachedSha512(key));
+        const apiKey = await ApiKey.findByKeyHash(Caching.cachedSha512(key));
         if (!apiKey) {
-            res.status(400).json({ error: "invalid key" });
+            res.status(400).json({error: "invalid key"});
             return;
         }
 
         if (apiKey.secret !== Caching.cachedSha512(secret)) {
-            res.status(400).json({ error: "invalid secret" });
+            res.status(400).json({error: "invalid secret"});
             return;
         }
 

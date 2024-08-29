@@ -1,12 +1,13 @@
-import { Account, Skin, Stat, User } from "../database/schemas";
 import { MemoizeExpiring } from "@inventivetalent/typescript-memoize";
 import {
     base64decode,
     getHashFromMojangTextureUrl,
     hasOwnProperty,
     imgHash,
+    isTempFile,
     longAndShortUuid,
     Maybe,
+    PathHolder,
     ONE_MONTH_SECONDS,
     ONE_YEAR_SECONDS,
     random32BitNumber,
@@ -19,7 +20,7 @@ import * as Sentry from "@sentry/node";
 import { MINECRAFT_SERVICES_PROFILE, Requests } from "./Requests";
 import FormData from "form-data";
 import { URL } from "url";
-import { MOJ_DIR, Temp, TempFile, UPL_DIR, URL_DIR } from "./Temp";
+import { MOJ_DIR, Temp, UPL_DIR, URL_DIR } from "./Temp";
 import { AxiosError, AxiosResponse } from "axios";
 import imageSize from "image-size";
 import { promises as fs } from "fs";
@@ -27,19 +28,15 @@ import * as fileType from "file-type";
 import { FileTypeResult } from "file-type";
 import { ISizeCalculationResult } from "image-size/dist/types/interface";
 import { v4 as randomUuid } from "uuid";
-import * as Jimp from "jimp";
+import Jimp from "jimp";
 import { getConfig } from "../typings/Configs";
-import { IAccountDocument, ISkinDocument, MineSkinError } from "../typings";
 import { SkinData, SkinMeta, SkinValue } from "../typings/SkinData";
 import { GenerateOptions } from "../typings/GenerateOptions";
-import { GenerateType, SkinModel, SkinVariant, SkinVisibility } from "../typings/db/ISkinDocument";
 import { AllStats } from "../typings/AllStats";
 import { ClientInfo } from "../typings/ClientInfo";
 import { debug, error, info, warn } from "../util/colors";
-import { SkinInfo } from "../typings/SkinInfo";
 import { Bread } from "../typings/Bread";
 import { Notifications } from "../util/Notifications";
-import { IApiKeyDocument } from "../typings/db/IApiKeyDocument";
 import { MineSkinMetrics } from "../util/metrics";
 import { MineSkinOptimus } from "../util/optimus";
 import { Discord } from "../util/Discord";
@@ -59,8 +56,12 @@ import {
 } from "./Stats";
 import { IPoint } from "influx";
 import { DelayInfo } from "../typings/DelayInfo";
-import { FilterQuery } from "mongoose";
 import { Capes } from "../util/Capes";
+import { requestShutdown } from "../index";
+import { Account, IAccountDocument, IApiKeyDocument, ISkinDocument, Skin, SkinModel, Stat } from "@mineskin/database";
+import { GenerateType, SkinInfo, SkinVariant, SkinVisibility } from "@mineskin/types";
+import { MineSkinError } from "../typings";
+import { Accounts } from "./Accounts";
 import { redisClient, redisPub, trackRedisGenerated } from "../database/redis";
 import { shutdown } from "../index";
 
@@ -111,7 +112,7 @@ export class Generator {
                 millis: Math.ceil(Math.ceil(d * 1000) / 50) * 50
             }
         }
-        const d = Math.max(Math.min(config.delays.default, await apiKey.getMinDelay()), minDelay);
+        const d = Math.max(Math.min(config.delays.default, apiKey.getMinDelay((await getConfig()).delays.defaultApiKey)), minDelay);
         return {
             seconds: Math.ceil(d),
             millis: Math.ceil(Math.ceil(d * 1000) / 50) * 50
@@ -124,7 +125,7 @@ export class Generator {
     @MemoizeExpiring(30000)
     static async getMinDelay(): Promise<number> {
         const metrics = await MineSkinMetrics.get();
-        const delay = await Account.calculateMinDelay();
+        const delay = await Accounts.calculateMinDelay();
         try {
             metrics.metrics!.influx.writePoints([{
                 measurement: 'delay',
@@ -144,7 +145,7 @@ export class Generator {
     @MemoizeExpiring(30000)
     static async getPreferredAccountServer(accountType?: string): Promise<string> {
         const config = await getConfig();
-        return await Account.getPreferredAccountServer(accountType) || config.server;
+        return await Accounts.getPreferredAccountServer() || config.server;
     }
 
     // Stats
@@ -203,52 +204,6 @@ export class Generator {
         return proxy;
     }
 
-    public static async usableAccountsQuery(): Promise<FilterQuery<IAccountDocument>> {
-        const time = Math.floor(Date.now() / 1000);
-        const config = await getConfig();
-        let allowedRequestServers: string[] = ["default", ...await this.getRequestServers()];
-        return {
-            enabled: true,
-            id: {$nin: Caching.getLockedAccounts()},
-            $and: [
-                {
-                    $or: [
-                        {requestServer: {$exists: false}},
-                        {requestServer: null},
-                        {requestServer: {$in: allowedRequestServers}}
-                    ]
-                },
-                {
-                    $or: [
-                        {lastSelected: {$exists: false}},
-                        {lastSelected: {$lt: (time - MIN_ACCOUNT_DELAY)}}
-                    ]
-                },
-                {
-                    $or: [
-                        {lastUsed: {$exists: false}},
-                        {lastUsed: {$lt: (time - MIN_ACCOUNT_DELAY)}}
-                    ]
-                },
-                {
-                    $or: [
-                        {forcedTimeoutAt: {$exists: false}},
-                        {forcedTimeoutAt: {$lt: (time - 500)}}
-                    ]
-                },
-                {
-                    $or: [
-                        {hiatus: {$exists: false}},
-                        {'hiatus.enabled': false},
-                        {'hiatus.lastPing': {$lt: (time - 900)}}
-                    ]
-                }
-            ],
-            errorCounter: {$lt: (config.errorThreshold || 10)},
-            timeAdded: {$lt: (time - 60)}
-        };
-    }
-
 
     protected static async queryAccountStats(): Promise<void> {
         const start = Date.now();
@@ -266,14 +221,12 @@ export class Generator {
         } catch (e) {
             Sentry.captureException(e);
             console.error("Error counting server accounts, restarting")
-            setTimeout(() => {
-                shutdown('MONGO_ERROR', 1);
-            }, 1000);
+            requestShutdown('MONGO_ERROR', 1);
             return;
         }
         this.serverAccounts = serverAccounts;
 
-        const usableAccountDocs = await Account.find(await this.usableAccountsQuery(), {
+        const usableAccountDocs = await Account.find(await Accounts.usableAccountsQuery(), {
             _id: 0,
             requestServer: 1
         }).exec();
@@ -521,7 +474,7 @@ export class Generator {
 
             skin = await skin.save();
             //TODO: fix this message for user generate
-            console.log(info(options.breadcrumb + " New skin saved " + skin.uuid + " - generated in " + duration + "ms by " + result.account?.getAccountType() + " account #" + result.account?.id));
+            console.log(info(options.breadcrumb + " New skin saved " + skin.uuid + " - generated in " + duration + "ms by " + result.account?.accountType + " account #" + result.account?.id));
             Generator.lastSave = Date.now();
             return skin;
         })
@@ -820,7 +773,7 @@ export class Generator {
             //TODO: filter out requests for localhost 127.0.0.1 etc.
 
             let account: Maybe<IAccountDocument> = undefined;
-            let tempFile: Maybe<TempFile> = undefined;
+            let tempFile: Maybe<PathHolder> = undefined;
             try {
                 // Check original url for duplicate or for mineskin urls
                 const originalUrlDuplicate = await this.findDuplicateFromUrl(originalUrl, options, GenerateType.URL);
@@ -888,7 +841,7 @@ export class Generator {
                     dir: URL_DIR
                 });
                 try {
-                    await Temp.downloadImage(url, tempFile)
+                    tempFile = await Temp.downloadImage(url, tempFile)
                 } catch (e) {
                     span?.setStatus({
                         code: 2,
@@ -898,7 +851,7 @@ export class Generator {
                 }
 
                 // Validate downloaded image file
-                const tempFileValidation = await this.validateTempFile(tempFile, options, client, GenerateType.URL);
+                const tempFileValidation = await this.validateTempFile(tempFile.path, options, client, GenerateType.URL);
                 if (tempFileValidation.duplicate) {
                     // found a duplicate
                     return tempFileValidation;
@@ -927,7 +880,7 @@ export class Generator {
                 await this.handleGenerateError(e, GenerateType.URL, options, client, account);
                 throw e;
             } finally {
-                if (tempFile) {
+                if (tempFile && isTempFile(tempFile)) {
                     tempFile.remove();
                 }
             }
@@ -944,7 +897,7 @@ export class Generator {
             url: "/minecraft/profile/skins",
             headers: {
                 "Content-Type": "application/json",
-                "Authorization": account.authenticationHeader()
+                "Authorization": `Bearer ${ account.accessToken }`
             },
             data: body
         }, account, breadcrumb).catch(err => {
@@ -1033,14 +986,14 @@ export class Generator {
             name: "generateFromUpload"
         }, async span => {
             let account: Maybe<IAccountDocument> = undefined;
-            let tempFile: Maybe<TempFile> = undefined;
+            let tempFile: Maybe<PathHolder> = undefined;
             try {
                 // Copy uploaded file
                 tempFile = await Temp.file({
                     dir: UPL_DIR
                 });
                 try {
-                    await Temp.copyUploadedImage(file, tempFile);
+                    tempFile = await Temp.copyUploadedImage(file, tempFile);
                 } catch (e) {
                     span.setStatus({
                         code: 2,
@@ -1050,7 +1003,7 @@ export class Generator {
                 }
 
                 // Validate uploaded image file
-                const tempFileValidation = await this.validateTempFile(tempFile, options, client, GenerateType.UPLOAD);
+                const tempFileValidation = await this.validateTempFile(tempFile.path, options, client, GenerateType.UPLOAD);
                 if (tempFileValidation.duplicate) {
                     // found a duplicate
                     return tempFileValidation;
@@ -1079,7 +1032,7 @@ export class Generator {
                 await this.handleGenerateError(e, GenerateType.UPLOAD, options, client, account);
                 throw e;
             } finally {
-                if (tempFile) {
+                if (tempFile && isTempFile(tempFile)) {
                     tempFile.remove();
                 }
             }
@@ -1099,7 +1052,7 @@ export class Generator {
             method: "POST",
             url: "/minecraft/profile/skins",
             headers: body.getHeaders({
-                "Authorization": account.authenticationHeader()
+                "Authorization": `Bearer ${ account.accessToken }`
             }),
             data: body
         }, account, breadcrumb).catch(err => {
@@ -1230,7 +1183,7 @@ export class Generator {
             name: "getAndAuthenticateAccount"
         }, async span => {
             const metrics = await MineSkinMetrics.get();
-            let account = await Account.findUsable(bread);
+            let account = await Accounts.findUsable(bread);
             if (!account) {
                 console.warn(error(bread?.breadcrumb + " [Generator] No account available!"));
                 metrics.noAccounts
@@ -1243,12 +1196,12 @@ export class Generator {
                 throw new GeneratorError(GenError.NO_ACCOUNT_AVAILABLE, "No account available");
             }
             Sentry.setTag("account", account.id);
-            Sentry.setTag("account_type", account.getAccountType());
+            Sentry.setTag("account_type", account.accountType);
             account = await Authentication.authenticate(account, bread);
 
             account.lastUsed = Math.floor(Date.now() / 1000);
             if (!account.requestServer || !(await Generator.getRequestServers()).includes(account.requestServer)) {
-                account.updateRequestServer(metrics.config.server);
+                Accounts.updateAccountRequestServer(account, metrics.config.server)
             }
 
             return account;
@@ -1320,7 +1273,7 @@ export class Generator {
             .tag("state", "success")
             .tag("server", metrics.config.server)
             .tag("type", type)
-            .tag("visibility", options.visibility === SkinVisibility.PRIVATE ? "private" : "public")
+            .tag("visibility", options.visibility === SkinVisibility.UNLISTED ? "unlisted" : "public") //FIXME
             .tag("variant", options.variant)
             .tag("via", client.via)
             .tag("userAgent", client.userAgent.ua)
@@ -1365,7 +1318,7 @@ export class Generator {
             .tag("state", "fail")
             .tag("server", metrics.config.server)
             .tag("type", type)
-            .tag("visibility", options.visibility === SkinVisibility.PRIVATE ? "private" : "public")
+            .tag("visibility", options.visibility === SkinVisibility.UNLISTED ? "unlisted" : "public") //FIXME
             .tag("variant", options.variant)
             .tag("userAgent", client.userAgent.ua)
             .tag("apiKey", client.apiKey || "none")
@@ -1389,7 +1342,7 @@ export class Generator {
                 if (e instanceof AuthenticationError) {
                     account.forcedTimeoutAt = Math.floor(Date.now() / 1000);
                     console.warn(warn(options.breadcrumb + " [Generator] Account #" + account.id + " forced timeout"));
-                    account.updateRequestServer(null);
+                    Accounts.updateAccountRequestServer(account, null);
                 }
 
                 if (account.errorCounter > 0 && account.errorCounter % 10 === 0) {
@@ -1399,7 +1352,7 @@ export class Generator {
                 await account.save();
 
                 if (account.user) {
-                    User.updateMinecraftAccounts(account.user);
+                    Accounts.updateUserMinecraftAccounts(account.user);
                 }
             } catch (e1) {
                 Sentry.captureException(e1);
@@ -1422,13 +1375,13 @@ export class Generator {
         return response.headers["content-type"];
     }
 
-    protected static async validateTempFile(tempFile: TempFile, options: GenerateOptions, client: ClientInfo, type: GenerateType): Promise<TempFileValidationResult> {
+    protected static async validateTempFile(path: string, options: GenerateOptions, client: ClientInfo, type: GenerateType): Promise<TempFileValidationResult> {
         return await Sentry.startSpan({
             op: "generate_validateTempFile",
             name: "validateTempFile"
         }, async span => {
             // Validate downloaded image file
-            const imageBuffer = await fs.readFile(tempFile.path);
+            const imageBuffer = await fs.readFile(path);
             const size = imageBuffer.byteLength;
             Sentry.setExtra("generate_filesize", size);
             if (!size || size < 100 || size > MAX_IMAGE_SIZE) {
@@ -1607,8 +1560,8 @@ export class Generator {
             }
             // https://github.com/InventivetalentDev/MineRender/blob/master/src/skin/index.js#L146
             let allTransparent = true;
-            image.scan(54, 20, 2, 12, function (x, y, idx) {
-                let a = this.bitmap.data[idx + 3];
+            image.scan(54, 20, 2, 12, function (x: number, y: number, idx: number) {
+                let a = image.bitmap.data[idx + 3];
                 if (a === 255) {
                     allTransparent = false;
                 }

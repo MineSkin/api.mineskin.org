@@ -1,9 +1,9 @@
 import { Application, Request, Response } from "express";
 import * as Sentry from "@sentry/node";
-import { Skin, Stat } from "../database/schemas";
 import { Discord } from "../util/Discord";
 import { getConfig } from "../typings/Configs";
 import { MineSkinMetrics } from "../util/metrics";
+import { Skin, Stat } from "@mineskin/database";
 
 
 export const register = (app: Application) => {

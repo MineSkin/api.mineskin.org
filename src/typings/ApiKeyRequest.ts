@@ -1,4 +1,4 @@
-import { IApiKeyDocument } from "./db/IApiKeyDocument";
+import { IApiKeyDocument } from "@mineskin/database";
 
 export class ApiKeyRequest {
     apiKeyStr?: string;

@@ -1,12 +1,11 @@
 import { Application, Request, Response } from "express";
 import { Generator } from "../generator/Generator";
 import { Caching } from "../generator/Caching";
-import { Skin, Stat } from "../database/schemas";
 import { corsWithAuthMiddleware, getAndValidateRequestApiKey, getIp, getVariant, stripUuid } from "../util";
 import * as Sentry from "@sentry/node";
-import { ISkinDocument } from "../typings";
-import { GenerateType } from "../typings/db/ISkinDocument";
 import { GENERATED_UPLOAD_VIEWS, GENERATED_URL_VIEWS, GENERATED_USER_VIEWS, SKINS_VIEWS } from "../generator/Stats";
+import { ISkinDocument, Skin, Stat } from "@mineskin/database";
+import { GenerateType } from "@mineskin/types";
 
 export const register = (app: Application) => {
 

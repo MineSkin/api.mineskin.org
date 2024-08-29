@@ -4,10 +4,8 @@ import { logger, logtail } from "./util/log";
 import * as sourceMapSupport from "source-map-support";
 import * as Sentry from "@sentry/node";
 import * as path from "path";
-import * as fs from "fs";
 import express, { ErrorRequestHandler, Express, NextFunction, Request, Response } from "express";
 import "express-async-errors";
-import { connectToMongo } from "./database/database";
 import RotatingFileStream from "rotating-file-stream";
 import morgan from "morgan";
 import * as bodyParser from "body-parser";
@@ -23,7 +21,7 @@ import {
     testerRoute,
     utilRoute
 } from "./routes";
-import { MOJ_DIR, UPL_DIR, URL_DIR } from "./generator/Temp";
+import { Temp } from "./generator/Temp";
 import { getConfig, getLocalConfig, MineSkinConfig } from "./typings/Configs";
 import { isBreadRequest, MineSkinError } from "./typings";
 import { MineSkinMetrics } from "./util/metrics";
@@ -40,6 +38,7 @@ import { Balancer } from "./generator/Balancer";
 import { initRedis, redisClient } from "./database/redis";
 import UAParser from "ua-parser-js";
 import mongoose from "mongoose";
+import { connectToMongo } from "@mineskin/database";
 
 
 sourceMapSupport.install();
@@ -110,7 +109,7 @@ async function init() {
             !config.requestServers[config.server]
         ) {
             console.error(new Error("Invalid config"));
-            shutdown('CONFIG_ERROR', 1);
+            requestShutdown('CONFIG_ERROR', 1);
         }
 
         Requests.init(config);
@@ -121,21 +120,7 @@ async function init() {
     console.log(info("Version: " + version));
     Discord.postDiscordMessage('[' + config.server + '] Version: ' + version);
 
-    {
-        console.log("Creating temp directories");
-        try {
-            fs.mkdirSync(URL_DIR);
-        } catch (e) {
-        }
-        try {
-            fs.mkdirSync(UPL_DIR);
-        } catch (e) {
-        }
-        try {
-            fs.mkdirSync(MOJ_DIR);
-        } catch (e) {
-        }
-    }
+    Temp.mkdirs();
 
     app = express();
 
@@ -251,7 +236,7 @@ async function init() {
 
     {
         console.log("Connecting to database")
-        await connectToMongo(config);
+        await connectToMongo();
     }
 
     {
@@ -392,7 +377,7 @@ async function init() {
                     }).catch(e => Sentry.captureException(e));
                 });
         } else {
-            console.error("Unexpected Error", err);
+            logger.error("Unexpected Error", err);
             Sentry.captureException(err, {
                 level: "fatal"
             });
@@ -511,6 +496,7 @@ init().then(() => {
 // https://medium.com/@becintec/building-graceful-node-applications-in-docker-4d2cd4d5d392
 export function shutdown(signal: string, value: number) {
     console.log("shutdown");
+    Sentry.captureException(new Error(`Shutdown by ${ signal } with value ${ value }`));
     updatingApp = true;
     setTimeout(() => {
         server.close().then(() => {
@@ -519,11 +505,35 @@ export function shutdown(signal: string, value: number) {
                 process.exit(128 + value);
             });
         });
-    }, 100);
+    }, 100 + Math.random() * 1000);
     setTimeout(() => {
         console.error("shutdown timeout");
         process.exit(128 + value);
-    }, 10000);
+    }, 20000);
+}
+
+const shutdownCounts: Record<string, number> = {};
+(() => {
+    setInterval(() => {
+        Object.keys(shutdownCounts).forEach((signal) => {
+            if (shutdownCounts[signal] > 0) {
+                shutdownCounts[signal]--;
+            }
+        });
+    }, 1000 * 30);
+})();
+
+export function requestShutdown(signal: string, value: number) {
+    if (process.env.NODE_ENV === "development") {
+        return;
+    }
+    Sentry.captureMessage(`Requesting shutdown by ${ signal } with value ${ value }`);
+    if (!shutdownCounts[signal]) {
+        shutdownCounts[signal] = 0;
+    }
+    if (shutdownCounts[signal]++ >= 3) {
+        shutdown(signal, value);
+    }
 }
 
 const signals: Record<string, number> = {

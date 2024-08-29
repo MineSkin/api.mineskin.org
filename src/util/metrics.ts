@@ -2,11 +2,11 @@ import { IntervalFlusher, Metric, Metrics } from "metrics-node";
 import { NextFunction, Request, Response } from "express";
 import * as Sentry from "@sentry/node";
 import { getConfig, MineSkinConfig } from "../typings/Configs";
-import { GenerateType } from "../typings/db/ISkinDocument";
 import { GenerateOptions } from "../typings/GenerateOptions";
-import { IAccountDocument } from "../typings";
 import { isApiKeyRequest } from "../typings/ApiKeyRequest";
 import { Maybe } from "./index";
+import { GenerateType } from "@mineskin/types";
+import { IAccountDocument } from "@mineskin/database";
 
 let config: Maybe<MineSkinConfig>;
 
@@ -82,7 +82,7 @@ export class MineSkinMetrics {
                             .tag("path", path)
                             .tag("status", `${ res.statusCode }`);
                         if (isApiKeyRequest(req) && req.apiKey) {
-                            m.tag("apikey", `${ req.apiKey.key.substr(0, 8) } ${ req.apiKey?.name }`);
+                            m.tag("apikey", `${ req.apiKey.id.substr(0, 8) } ${ req.apiKey?.name }`);
                         }
                         m.inc();
                     }
