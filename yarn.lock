@@ -615,7 +615,7 @@ __metadata:
 
 "@mineskin/database@git+ssh://git@github.com/MineSkin/mineskin-database.git":
   version: 1.0.0
-  resolution: "@mineskin/database@git+ssh://git@github.com/MineSkin/mineskin-database.git#commit=60c18447f4996b8a3e6586a6f48ef19498497b6f"
+  resolution: "@mineskin/database@git+ssh://git@github.com/MineSkin/mineskin-database.git#commit=d0aee960c3fcd537706952d5ce7d9f42f7e56ef8"
   dependencies:
     "@mineskin/types": "git+ssh://git@github.com/MineSkin/mineskin-types.git"
     "@sentry/cli": "npm:^2.32.2"
