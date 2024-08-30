@@ -14,7 +14,7 @@ const logRotate: DailyRotateFile = new DailyRotateFile({
     datePattern: 'YYYY-MM-DD-HH',
     zippedArchive: true,
     maxSize: '20m',
-    maxFiles: '14d',
+    maxFiles: '7d',
     createSymlink: true,
 });
 
@@ -56,17 +56,9 @@ export const logger = winston.createLogger({
         ),
     ),
     transports: [
-        new winston.transports.File({filename: 'logs/error.log', level: 'error'}),
-        // new winston.transports.File({filename: 'logs/combined.log'}),
         logRotate,
         new winston.transports.Console({
             level: 'debug',
-            // format: winston.format.combine(
-            //     winston.format.colorize(),
-            //     winston.format.splat(),
-            //     winston.format.simple(),
-            //     winston.format.errors({ stack: true }),
-            // )
         })
     ],
 });
