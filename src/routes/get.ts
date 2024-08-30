@@ -6,6 +6,7 @@ import * as Sentry from "@sentry/node";
 import { GENERATED_UPLOAD_VIEWS, GENERATED_URL_VIEWS, GENERATED_USER_VIEWS, SKINS_VIEWS } from "../generator/Stats";
 import { ISkinDocument, Skin, Stat } from "@mineskin/database";
 import { GenerateType } from "@mineskin/types";
+import { getRedisLastRequest, getRedisNextRequest } from "../database/redis";
 
 export const register = (app: Application) => {
 
@@ -14,22 +15,31 @@ export const register = (app: Application) => {
     app.get("/get/delay", async (req: Request, res: Response) => {
         const apiKey = await getAndValidateRequestApiKey(req);
         const delayInfo = await Generator.getDelay(apiKey);
-        const lastRequest = apiKey ? await Caching.getTrafficRequestTimeByApiKey(apiKey) : await Caching.getTrafficRequestTimeByIp(getIp(req));
-        if (lastRequest) {
+        const lastRequest = await getRedisLastRequest({
+            apiKeyId: apiKey?.id,
+            ip: getIp(req),
+            time: Date.now()
+        });
+        const nextRequest = await getRedisNextRequest({
+            apiKeyId: apiKey?.id,
+            ip: getIp(req),
+            time: Date.now()
+        });
+        if (nextRequest) {
             res.json({
                 delay: delayInfo.seconds, // deprecated
-                next: Math.round((lastRequest.getTime() / 1000) + delayInfo.seconds), // deprecated
-                nextRelative: Math.round(Math.max(0, ((lastRequest.getTime() / 1000) + delayInfo.seconds) - (Date.now() / 1000))), // deprecated
+                next: Math.round(nextRequest / 1000), // deprecated
+                nextRelative: Math.round(Math.max(0, (nextRequest / 1000) - (Date.now() / 1000))), // deprecated
 
                 seconds: delayInfo.seconds,
                 millis: delayInfo.millis,
                 nextRequest: {
-                    time: Math.round(lastRequest.getTime() + delayInfo.millis),
-                    relative: Math.round(Math.max(100, ((lastRequest.getTime()) + delayInfo.millis) - Date.now()))
+                    time: Math.round(nextRequest),
+                    relative: Math.round(Math.max(100, nextRequest - Date.now()))
                 },
 
                 lastRequest: {
-                    time: lastRequest.getTime()
+                    time: lastRequest
                 }
             });
         } else {

@@ -77,7 +77,7 @@ function trackRedisGenerated0(trans: any, newOrDup: string, prefix: string) {
     });
 }
 
-export async function getRedisNextRequest(client: ClientInfo): Promise<number> {
+export async function getRedisNextRequest(client: Pick<ClientInfo, 'ip' | 'apiKeyId' | 'time'>): Promise<number> {
     return Sentry.startSpan({
         op: "redis_getNextRequest",
         name: "Get Next Request",
@@ -114,6 +114,40 @@ export async function getRedisNextRequest(client: ClientInfo): Promise<number> {
         const nextKeyRequest = nextKeyRequestStr ? parseInt(nextKeyRequestStr) : 0;
 
         return Math.max(nextIpRequest, nextKeyRequest);
+    });
+}
+
+export async function getRedisLastRequest(client: Pick<ClientInfo, 'ip' | 'apiKeyId' | 'time'>): Promise<number> {
+    return Sentry.startSpan({
+        op: "redis_getLastRequest",
+        name: "Get Last Request",
+    }, async span => {
+        if (!redisClient) {
+            return 0;
+        }
+
+        // clean up ipv6 etc.
+        const cleanIp = client.ip.replace(/[^a-zA-Z0-9]/g, '_');
+
+        let cachedByIp = Caching.nextRequestByIpCache.getIfPresent(cleanIp);
+        if (!!cachedByIp) {
+            return cachedByIp;
+        }
+
+        let trans = redisClient.multi()
+            .get(`mineskin:ratelimit:ip:${ cleanIp }:last`);
+        if (client.apiKeyId) {
+            trans = trans.get(`mineskin:ratelimit:apikey:${ client.apiKeyId }:last`);
+        }
+
+        const results = await trans.exec();
+        const lastIpRequestStr = results[0] as string;
+        const lastKeyRequestStr = client.apiKeyId ? results[1] as string : null;
+
+        const lastIpRequest = lastIpRequestStr ? parseInt(lastIpRequestStr) : 0;
+        const lastKeyRequest = lastKeyRequestStr ? parseInt(lastKeyRequestStr) : 0;
+
+        return Math.max(lastIpRequest, lastKeyRequest);
     });
 }
 
