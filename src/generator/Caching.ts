@@ -11,7 +11,7 @@ import * as Sentry from "@sentry/node";
 import { Maybe, sha512, stripUuid } from "../util";
 import { IPoint } from "influx";
 import { BasicMojangProfile } from "./Authentication";
-import { SkinData } from "../typings/SkinData";
+import { ProfileSkinData } from "../typings/SkinData";
 import { User } from "../typings/User";
 import { ProfileResponse } from "../typings/ProfileResponse";
 import { MineSkinMetrics } from "../util/metrics";
@@ -26,10 +26,10 @@ export class Caching {
 
     //// REQUESTS
 
-    protected static readonly skinDataCache: AsyncLoadingCache<string, SkinData> = Caches.builder()
+    protected static readonly skinDataCache: AsyncLoadingCache<string, ProfileSkinData> = Caches.builder()
         .expireAfterWrite(Time.seconds(30))
         .expirationInterval(Time.seconds(10))
-        .buildAsync<string, SkinData>(uuid => {
+        .buildAsync<string, ProfileSkinData>(uuid => {
             return Requests.dynamicRequestWithRandomProxy(MOJANG_SESSION, {
                 url: "/session/minecraft/profile/" + uuid + "?unsigned=false&t=" + Date.now(),
             }).then(response => {
@@ -37,7 +37,7 @@ export class Caching {
                     return undefined;
                 }
                 const body = response.data as ProfileResponse;
-                return body.properties[0] as SkinData;
+                return body.properties[0] as ProfileSkinData;
             }).catch(err => {
                 Sentry.captureException(err, {
                     level: 'warning',
@@ -290,7 +290,7 @@ export class Caching {
 
     /// REQUESTS
 
-    public static getSkinData(uuid: string): Promise<SkinData> {
+    public static getSkinData(uuid: string): Promise<ProfileSkinData> {
         return this.skinDataCache.get(uuid);
     }
 

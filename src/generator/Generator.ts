@@ -7,9 +7,9 @@ import {
     isTempFile,
     longAndShortUuid,
     Maybe,
-    PathHolder,
     ONE_MONTH_SECONDS,
     ONE_YEAR_SECONDS,
+    PathHolder,
     random32BitNumber,
     sleep,
     stripUuid
@@ -30,7 +30,7 @@ import { ISizeCalculationResult } from "image-size/dist/types/interface";
 import { v4 as randomUuid } from "uuid";
 import Jimp from "jimp";
 import { getConfig } from "../typings/Configs";
-import { SkinData, SkinMeta, SkinValue } from "../typings/SkinData";
+import { ProfileSkinData, SkinMeta, SkinValue } from "../typings/SkinData";
 import { GenerateOptions } from "../typings/GenerateOptions";
 import { AllStats } from "../typings/AllStats";
 import { ClientInfo } from "../typings/ClientInfo";
@@ -58,12 +58,21 @@ import { IPoint } from "influx";
 import { DelayInfo } from "../typings/DelayInfo";
 import { Capes } from "../util/Capes";
 import { requestShutdown } from "../index";
-import { Account, IAccountDocument, IApiKeyDocument, ISkinDocument, Skin, SkinModel, Stat } from "@mineskin/database";
+import {
+    Account,
+    IAccountDocument,
+    IApiKeyDocument,
+    ISkinDataDocument,
+    ISkinDocument,
+    Skin,
+    SkinData,
+    SkinModel,
+    Stat
+} from "@mineskin/database";
 import { GenerateType, SkinInfo, SkinVariant, SkinVisibility } from "@mineskin/types";
 import { MineSkinError } from "../typings";
 import { Accounts } from "./Accounts";
 import { redisClient, redisPub, trackRedisGenerated } from "../database/redis";
-import { shutdown } from "../index";
 
 
 // minimum delay for accounts to be used
@@ -372,7 +381,7 @@ export class Generator {
 
     static async getSkinDataWithRetry(accountOrUuid: IAccountDocument | {
         uuid: string
-    }, type: string, expectedUrl?: string, breadcrumb?: string, t: number = 2): Promise<SkinData> {
+    }, type: string, expectedUrl?: string, breadcrumb?: string, t: number = 2): Promise<ProfileSkinData> {
         let skinData = await this.getSkinData(accountOrUuid);
         if (expectedUrl) {
             if (expectedUrl !== skinData.decodedValue!.textures!.SKIN!.url) {
@@ -396,7 +405,7 @@ export class Generator {
         return skinData;
     }
 
-    static async getSkinData(accountOrUuid: IAccountDocument | { uuid: string }): Promise<SkinData> {
+    static async getSkinData(accountOrUuid: IAccountDocument | { uuid: string }): Promise<ProfileSkinData> {
         return await Sentry.startSpan({
             op: "generate_getSkinData",
             name: "getSkinData"
@@ -435,6 +444,33 @@ export class Generator {
             const skinUuid = stripUuid(randomUuid());
             const time = Date.now();
             const duration = time - start;
+
+            const textures = result.data!.decodedValue!.textures;
+            const mcTextureHash = getHashFromMojangTextureUrl(textures.SKIN!.url!);
+            const mcCapeTextureHash = textures.CAPE ? getHashFromMojangTextureUrl(textures.CAPE!.url!) : undefined;
+
+            let skinData = new SkinData(<ISkinDataDocument>{
+                hash: {
+                    skin: {
+                        minecraft: mcTextureHash,
+                        mineskin: result.meta?.imageHash
+                    },
+                    cape: {
+                        minecraft: mcCapeTextureHash
+                    }
+                },
+                value: result.data!.value,
+                signature: result.data!.signature,
+                meta: {
+                    variant: textures.SKIN?.metadata?.model || options.variant
+                },
+                generatedBy: {
+                    server: result.account?.requestServer || config.server,
+                    account: result.account?.uuid || "unknown"
+                }
+            });
+            skinData = await skinData.save();
+
             let skin = new Skin(<ISkinDocument>{
                 id: id,
                 skinUuid: skinUuid,
@@ -447,11 +483,13 @@ export class Generator {
                 variant: options.variant,
                 visibility: options.visibility,
 
+                data: skinData._id,
+
                 value: result.data!.value,
                 signature: result.data!.signature,
                 url: result.data!.decodedValue!.textures!.SKIN!.url!,
                 capeUrl: result.data?.decodedValue?.textures?.CAPE?.url,
-                minecraftTextureHash: getHashFromMojangTextureUrl(result.data!.decodedValue!.textures.SKIN!.url!),
+                minecraftTextureHash: mcTextureHash,
                 textureHash: result.meta?.mojangHash,
                 minecraftSkinId: result.meta?.minecraftSkinId,
 
@@ -1478,7 +1516,7 @@ export class Generator {
 
     }
 
-    protected static decodeValue(data: SkinData): SkinValue {
+    protected static decodeValue(data: ProfileSkinData): SkinValue {
         const decoded = JSON.parse(base64decode(data.value)) as SkinValue;
         data.decodedValue = decoded;
         return decoded;
@@ -1618,7 +1656,7 @@ export class SavedSkin {
 
 interface GenerateResult {
     duplicate?: ISkinDocument;
-    data?: SkinData;
+    data?: ProfileSkinData;
     meta?: SkinMeta;
     account?: IAccountDocument;
 }

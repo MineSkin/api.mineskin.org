@@ -203,7 +203,7 @@ export const register = (app: Application) => {
                 op: "skin_pagination_after_anchor_query",
                 name: "Skin Pagination After Anchor Query"
             }, async (span) => {
-                return await Caching.getSkinByUuid(after);
+                return await Caching.getSkinByUuid(after); //TODO: don't need the entire skin, just the time
             });
             if (!anchor) {
                 res.status(404).json({

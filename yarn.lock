@@ -613,9 +613,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@mineskin/database@git+ssh://git@github.com/MineSkin/mineskin-database.git":
+"@mineskin/database@git+ssh://git@github.com/MineSkin/mineskin-database.git#skindata":
   version: 1.0.0
-  resolution: "@mineskin/database@git+ssh://git@github.com/MineSkin/mineskin-database.git#commit=d0aee960c3fcd537706952d5ce7d9f42f7e56ef8"
+  resolution: "@mineskin/database@git+ssh://git@github.com/MineSkin/mineskin-database.git#commit=96ed15cc843be659ef7ff16acec47e40d1f5665f"
   dependencies:
     "@mineskin/types": "git+ssh://git@github.com/MineSkin/mineskin-types.git"
     "@sentry/cli": "npm:^2.32.2"
@@ -624,7 +624,7 @@ __metadata:
     dotenv: "npm:^16.4.5"
     mongoose: "npm:^8.5.3"
     uuid: "npm:^10.0.0"
-  checksum: 10c0/c7949a0cda39d14f59199ee4e14875feeb9b2aa278911a4a112d05b8a899bbca647549efdb4408b48114bb2b1b4dd22aadaece1aff1e9d6b419b6495fc9cea7c
+  checksum: 10c0/2b6899e391f4df943c397be7fe6678b408266d94b6fc755b12f686f17861cf631eb108ac0a9d74d4dfab13f9bafe462fcc449f966db709c1dd4e73c0bd7ed653
   languageName: node
   linkType: hard
 
@@ -635,12 +635,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@mineskin/types@git+ssh://git@github.com/MineSkin/mineskin-types.git#skindata":
+  version: 1.0.1
+  resolution: "@mineskin/types@git+ssh://git@github.com/MineSkin/mineskin-types.git#commit=c7cb425cf98036e6b25c8391f0750a4202fdc8af"
+  checksum: 10c0/49b67f10a491579ecc8a9b621dc29f5907ae33481428f1b3e4a4a512a148d524ec8f90fd261b2a21534a1774909306480d3664a1ee6fb491ecfe19d01f50cd02
+  languageName: node
+  linkType: hard
+
 "@mongodb-js/saslprep@npm:^1.1.5":
-  version: 1.1.8
-  resolution: "@mongodb-js/saslprep@npm:1.1.8"
+  version: 1.1.9
+  resolution: "@mongodb-js/saslprep@npm:1.1.9"
   dependencies:
     sparse-bitfield: "npm:^3.0.3"
-  checksum: 10c0/f7672a0843d104ec5825791d90bff77ee8e6e31f273a9863ee4050c53b634c84533ffc415ac4a7e72929119d4acb661d7c7bf6cadc0bcc787a9aee15287a1086
+  checksum: 10c0/2f391db96db7a69e6849cc906e4a0bcd14127ad0493f97fc4134790fa2f0d4af5abcd110382c9d97a996ca31766e0c358c2e08d154f6ddfa06144e2c8a036895
   languageName: node
   linkType: hard
 
@@ -2225,11 +2232,11 @@ __metadata:
   linkType: hard
 
 "@types/node@npm:*":
-  version: 22.5.1
-  resolution: "@types/node@npm:22.5.1"
+  version: 22.5.2
+  resolution: "@types/node@npm:22.5.2"
   dependencies:
     undici-types: "npm:~6.19.2"
-  checksum: 10c0/35373176d8a1d4e16004a1ed303e68d39e4c6341024dc056f2577982df98c1a045a6b677f12ed557796f09bbf7d621f428f6874cc37ed28f7b336fa604b5f6a6
+  checksum: 10c0/624a7fd76229eacc6c158eb3b9afd55b811d7f01976c5f92c630d5b9d47047cc218928c343988484a165ac400e5eb6fe70ea300fc7242deeb0e920c7724290f6
   languageName: node
   linkType: hard
 
@@ -2248,11 +2255,11 @@ __metadata:
   linkType: hard
 
 "@types/node@npm:^18.19.37":
-  version: 18.19.47
-  resolution: "@types/node@npm:18.19.47"
+  version: 18.19.48
+  resolution: "@types/node@npm:18.19.48"
   dependencies:
     undici-types: "npm:~5.26.4"
-  checksum: 10c0/ad476b633f216db2138bfd37723ebd24622c687f9513c266d151619c64ccf38c7f397d1d4b2f1212259ec8de372123f8117fdc03f089e0d76c33c0c31f3a97f9
+  checksum: 10c0/f07fc6636629bf5121d33e532f824470ecd44b14831c486fe11b95aac6c8bf7c838651a4cae82031fbc99888192b84f77e939a2cf27edb20935ed4a6d01d0b5d
   languageName: node
   linkType: hard
 
@@ -2592,8 +2599,8 @@ __metadata:
     "@inventivetalent/typescript-memoize": "npm:^1.0.0-alpha.5"
     "@logtail/node": "npm:^0.4.21"
     "@logtail/winston": "npm:^0.4.21"
-    "@mineskin/database": "git+ssh://git@github.com/MineSkin/mineskin-database.git"
-    "@mineskin/types": "git+ssh://git@github.com/MineSkin/mineskin-types.git"
+    "@mineskin/database": "git+ssh://git@github.com/MineSkin/mineskin-database.git#skindata"
+    "@mineskin/types": "git+ssh://git@github.com/MineSkin/mineskin-types.git#skindata"
     "@sentry/node": "npm:8.9.2"
     "@sentry/profiling-node": "npm:8.9.2"
     "@sentry/tracing": "npm:^7.117.0"

@@ -1,6 +1,6 @@
 import { ProfileProperty } from "./ProfileResponse";
 
-export interface SkinData extends ProfileProperty {
+export interface ProfileSkinData extends ProfileProperty {
     decodedValue?: SkinValue;
 }
 
