@@ -512,7 +512,7 @@ export class Generator {
 
             skin = await skin.save();
             //TODO: fix this message for user generate
-            console.log(info(options.breadcrumb + " New skin saved " + skin.uuid + " - generated in " + duration + "ms by " + result.account?.accountType + " account #" + result.account?.id));
+            console.log(info(options.breadcrumb + " New skin saved " + skin.skinUuid + " - generated in " + duration + "ms by " + result.account?.accountType + " account #" + result.account?.id));
             Generator.lastSave = Date.now();
             return skin;
         })
