@@ -8,6 +8,7 @@ console.log("Initializing Sentry")
 Sentry.init({
     dsn: process.env.SENTRY_DSN,
     release: process.env.SOURCE_COMMIT || "unknown",
+    environment: process.env.NODE_ENV || "development",
     integrations: [
         nodeProfilingIntegration()
     ],
