@@ -449,7 +449,7 @@ export class Generator {
             const mcTextureHash = getHashFromMojangTextureUrl(textures.SKIN!.url!);
             const mcCapeTextureHash = textures.CAPE ? getHashFromMojangTextureUrl(textures.CAPE!.url!) : undefined;
 
-            let skinData = new SkinData(<ISkinDataDocument>{
+            let skinData: Maybe<ISkinDataDocument> = new SkinData(<ISkinDataDocument>{
                 hash: {
                     skin: {
                         minecraft: mcTextureHash,
@@ -469,7 +469,13 @@ export class Generator {
                     account: result.account?.uuid || "unknown"
                 }
             });
-            skinData = await skinData.save();
+            try {
+                skinData = await skinData.save();
+            } catch (e) {
+                console.error("failed to save skin data", e);
+                Sentry.captureException(e);
+                skinData = undefined;
+            }
 
             let skin = new Skin(<ISkinDocument>{
                 id: id,
@@ -483,7 +489,7 @@ export class Generator {
                 variant: options.variant,
                 visibility: options.visibility,
 
-                data: skinData._id,
+                data: skinData?._id,
 
                 value: result.data!.value,
                 signature: result.data!.signature,
