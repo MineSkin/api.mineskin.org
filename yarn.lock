@@ -613,24 +613,24 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@mineskin/database@git+ssh://git@github.com/MineSkin/mineskin-database.git":
+"@mineskin/database@git+ssh://git@github.com/MineSkin/mineskin-database.git#skin2":
   version: 1.0.0
-  resolution: "@mineskin/database@git+ssh://git@github.com/MineSkin/mineskin-database.git#commit=f0917fca990e7d727979ef69b85a931be3867268"
+  resolution: "@mineskin/database@git+ssh://git@github.com/MineSkin/mineskin-database.git#commit=846fcb26d05dd4493eacd8dc132f036826846f92"
   dependencies:
-    "@mineskin/types": "git+ssh://git@github.com/MineSkin/mineskin-types.git"
+    "@mineskin/types": "git+ssh://git@github.com/MineSkin/mineskin-types.git#skin2"
     "@sentry/cli": "npm:^2.32.2"
     "@sentry/node": "npm:^8.18.0"
     "@sentry/profiling-node": "npm:^8.18.0"
     dotenv: "npm:^16.4.5"
     mongoose: "npm:^8.5.3"
     uuid: "npm:^10.0.0"
-  checksum: 10c0/ca40c87abd09b204c6d1d2224742992bcff97d58d2f82dbfd5d435ddc0836e1579e47a809277edc70fde33396b1075446a1ef84c9923bbdff425ecb36f0c23b0
+  checksum: 10c0/b95c087ac7a3d327d1c51fd5f5f04addd7676be3f149121243e3b7decbb69b45dd22aa4506e30c4f2ea6d718f626f91036edbfd7dc194d5b376a7e8a69eab682
   languageName: node
   linkType: hard
 
-"@mineskin/types@git+ssh://git@github.com/MineSkin/mineskin-types.git":
+"@mineskin/types@git+ssh://git@github.com/MineSkin/mineskin-types.git#skin2":
   version: 1.0.1
-  resolution: "@mineskin/types@git+ssh://git@github.com/MineSkin/mineskin-types.git#commit=1eaaa0dddcefa7e33a8ad6a5098c4d712683004f"
+  resolution: "@mineskin/types@git+ssh://git@github.com/MineSkin/mineskin-types.git#commit=4b323a2dcef2c9a63e236e06dc0832e8e928c32f"
   checksum: 10c0/30a08ad52f5ff26283a6bed18744c8e954232ca47a9a7f385cea24f8897c552f0acaf6fa45a7efc6e2e6c293a42f0a1ae2f70043e6b68bbf9a8a79901aa04345
   languageName: node
   linkType: hard
@@ -2592,8 +2592,8 @@ __metadata:
     "@inventivetalent/typescript-memoize": "npm:^1.0.0-alpha.5"
     "@logtail/node": "npm:^0.4.21"
     "@logtail/winston": "npm:^0.4.21"
-    "@mineskin/database": "git+ssh://git@github.com/MineSkin/mineskin-database.git"
-    "@mineskin/types": "git+ssh://git@github.com/MineSkin/mineskin-types.git"
+    "@mineskin/database": "git+ssh://git@github.com/MineSkin/mineskin-database.git#skin2"
+    "@mineskin/types": "git+ssh://git@github.com/MineSkin/mineskin-types.git#skin2"
     "@sentry/node": "npm:8.9.2"
     "@sentry/profiling-node": "npm:8.9.2"
     "@sentry/tracing": "npm:^7.117.0"

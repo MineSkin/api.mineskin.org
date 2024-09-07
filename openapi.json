@@ -1,0 +1,787 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "MineSkin API",
+    "version": "2.0.0",
+    "description": "Client implementations: [Java](https://github.com/InventivetalentDev/MineskinClient) \n[NodeJS](https://github.com/InventivetalentDev/mineskin-client)\n\n [Examples](https://github.com/MineSkin/examples)\n\n ",
+    "contact": {
+      "name": "inventivetalent",
+      "url": "https://discord.gg/nzAdvPc",
+      "email": "info@mineskin.org"
+    },
+    "license": {
+      "name": "MIT",
+      "url": "https://github.com/MineSkin/api.mineskin.org/blob/master/LICENSE"
+    },
+    "termsOfService": "https://legal.inventivetalent.org/terms/mineskin"
+  },
+  "servers": [
+    {
+      "url": "https://api.mineskin.org"
+    }
+  ],
+  "tags": [
+    {
+      "name": "generate"
+    },
+    {
+      "name": "get"
+    },
+    {
+      "name": "util"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "description": "API key header - Get your key from [account.mineskin.org](https://account.mineskin.org/keys)",
+        "type": "http",
+        "scheme": "bearer"
+      }
+    },
+    "schemas": {
+      "ValueAndSignature": {
+        "type": "object",
+        "required": [
+          "value",
+          "signature"
+        ],
+        "properties": {
+          "value": {
+            "type": "string",
+            "description": "Skin Value"
+          },
+          "signature": {
+            "type": "string",
+            "description": "Skin Signature"
+          }
+        }
+      },
+      "SkinVariant": {
+        "type": "string",
+        "enum": [
+          "classic",
+          "slim"
+        ]
+      },
+      "SkinVisibility": {
+        "type": "string",
+        "enum": [
+          "public",
+          "unlisted",
+          "private"
+        ],
+        "default": "public"
+      },
+      "SkinHashes": {
+        "type": "object",
+        "required": [
+          "skin"
+        ],
+        "properties": {
+          "skin": {
+            "type": "string",
+            "description": "Skin Hash"
+          },
+          "cape": {
+            "type": "string",
+            "description": "(optional) Cape Hash"
+          }
+        }
+      },
+      "SkinUrls": {
+        "type": "object",
+        "required": [
+          "skin"
+        ],
+        "properties": {
+          "skin": {
+            "type": "string",
+            "description": "Skin Texture Url"
+          },
+          "cape": {
+            "type": "string",
+            "description": "(optional) Cape Texture Url"
+          }
+        }
+      },
+      "GeneratorInfo": {
+        "type": "object",
+        "required": [
+          "version",
+          "timestamp",
+          "duration",
+          "account",
+          "server"
+        ],
+        "properties": {
+          "version": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "number"
+          },
+          "duration": {
+            "type": "number"
+          },
+          "account": {
+            "type": "string"
+          },
+          "server": {
+            "type": "string"
+          }
+        }
+      },
+      "SkinTexture": {
+        "type": "object",
+        "required": [
+          "data",
+          "hash",
+          "url"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ValueAndSignature"
+          },
+          "hash": {
+            "$ref": "#/components/schemas/SkinHashes"
+          },
+          "url": {
+            "$ref": "#/components/schemas/SkinUrls"
+          }
+        }
+      },
+      "SkinInfo": {
+        "type": "object",
+        "required": [
+          "uuid",
+          "variant",
+          "visibility",
+          "texture",
+          "generator",
+          "views",
+          "duplicate"
+        ],
+        "properties": {
+          "uuid": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "visibility": {
+            "$ref": "#/components/schemas/SkinVisibility"
+          },
+          "variant": {
+            "$ref": "#/components/schemas/SkinVariant"
+          },
+          "texture": {
+            "$ref": "#/components/schemas/SkinTexture"
+          },
+          "views": {
+            "type": "number"
+          },
+          "duplicate": {
+            "type": "boolean"
+          }
+        },
+        "example": {
+          "uuid": "c891dfac4cd247a2a55743e7e82ce76f",
+          "name": "Test Skin",
+          "visibility": "public",
+          "variant": "classic",
+          "views": 1,
+          "duplicate": false
+        }
+      },
+      "PartialSkinInfo": {
+        "type": "object",
+        "required": [
+          "uuid",
+          "variant",
+          "visibility",
+          "views"
+        ],
+        "properties": {
+          "uuid": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "visibility": {
+            "$ref": "#/components/schemas/SkinVisibility"
+          },
+          "variant": {
+            "$ref": "#/components/schemas/SkinVariant"
+          },
+          "views": {
+            "type": "number"
+          }
+        },
+        "example": {
+          "uuid": "c891dfac4cd247a2a55743e7e82ce76f",
+          "name": "Test Skin",
+          "visibility": "public",
+          "variant": "classic",
+          "views": 1,
+          "duplicate": false
+        }
+      },
+      "GenerateOptions": {
+        "type": "object",
+        "properties": {
+          "variant": {
+            "$ref": "#/components/schemas/SkinVariant"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "visibility": {
+            "$ref": "#/components/schemas/SkinVisibility"
+          }
+        },
+        "example": {
+          "variant": "classic",
+          "name": "My Example Skin",
+          "visibility": "public"
+        }
+      },
+      "CodeAndMessage": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "DelayInfo": {
+        "type": "object",
+        "description": "General delay info. Depends on the API key used in the request",
+        "properties": {
+            "millis": {
+              "type": "integer"
+            },
+            "seconds": {
+              "type": "integer"
+            }
+        }
+      },
+      "RateLimitInfo": {
+        "type": "object",
+        "properties": {
+          "delay": {
+            "$ref": "#/components/schemas/DelayInfo"
+          }
+        }
+      },
+      "GenericResponseBody": {
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CodeAndMessage"
+            }
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CodeAndMessage"
+            }
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CodeAndMessage"
+            }
+          }
+        }
+      },
+      "SuccessResponseBody": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/GenericResponseBody"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "success": {
+                "example": true
+              },
+              "errors": {
+                "example": [
+                ]
+              },
+              "messages": {
+                "example": [
+                  {
+                    "code": "ok",
+                    "message": "All good!"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "ErrorResponseBody": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/GenericResponseBody"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "success": {
+                "example": false
+              },
+              "errors": {
+                "example": [
+                  {
+                    "code": "generic_error",
+                    "message": "Something went wrong"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    "parameters": {
+      "userAgent": {
+        "name": "User-Agent",
+        "description": "Custom User-Agent for your application, see [user-agent.dev](https://user-agent.dev/) for implementation examples",
+        "example": "ExampleApp/v1.0",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    },
+    "responses": {
+      "GenericResponse": {
+        "description": "Generic Response",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/GenericResponseBody"
+            }
+          }
+        }
+      },
+      "GenerateSuccessResponse": {
+        "description": "Success Response",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "type": "object",
+                  "required": [
+                    "skin"
+                  ],
+                  "properties": {
+                    "skin": {
+                      "$ref": "#/components/schemas/SkinInfo"
+                    }
+                  }
+                },
+                {
+                  "$ref": "#/components/schemas/SuccessResponseBody"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "GenerateErrorResponse": {
+        "description": "Error Response",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/ErrorResponseBody"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "GenericErrorResponse": {
+        "description": "Error Response",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/ErrorResponseBody"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "NotFoundErrorResponse": {
+        "description": "Error Response",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/ErrorResponseBody"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "GenerateRateLimitResponse": {
+        "description": "Rate Limit Response",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/ErrorResponseBody"
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/v2/generate/url": {
+      "post": {
+        "tags": [
+          "generate"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/userAgent"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/GenerateOptions"
+                  },
+                  {
+                    "required": [
+                      "url"
+                    ],
+                    "properties": {
+                      "url": {
+                        "type": "string"
+                      }
+                    },
+                    "example": {
+                      "url": "https://i.imgur.com/kQPrtYw.png"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/GenerateSuccessResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/GenerateErrorResponse"
+          },
+          "429": {
+            "$ref": "#/components/responses/GenerateRateLimitResponse"
+          },
+          "500": {
+            "$ref": "#/components/responses/GenerateErrorResponse"
+          }
+        }
+      }
+    },
+    "/v2/generate/upload": {
+      "post": {
+        "tags": [
+          "generate"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/userAgent"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/GenerateOptions"
+                  },
+                  {
+                    "required": [
+                      "file"
+                    ],
+                    "properties": {
+                      "file": {
+                        "description": "PNG image file to upload. You should use a client library like [MineSkin Java Client](https://github.com/InventivetalentDev/MineskinClient) to properly handle file uploads. See [github/examples](https://github.com/MineSkin/examples)",
+                        "type": "string",
+                        "format": "binary",
+                        "externalDocs": {
+                          "description": "Example implementations",
+                          "url": "https://github.com/MineSkin/examples"
+                        }
+                      }
+                    }
+                  }
+                ]
+              },
+              "encoding": {
+                "file": {
+                  "contentType": "image/png"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/GenerateSuccessResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/GenerateErrorResponse"
+          },
+          "429": {
+            "$ref": "#/components/responses/GenerateRateLimitResponse"
+          },
+          "500": {
+            "$ref": "#/components/responses/GenerateErrorResponse"
+          }
+        }
+      }
+    },
+    "/v2/generate/user": {
+      "post": {
+        "tags": [
+          "generate"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/userAgent"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/GenerateOptions"
+                  },
+                  {
+                    "required": [
+                      "uuid"
+                    ],
+                    "properties": {
+                      "uuid": {
+                        "type": "string",
+                        "minLength": 32,
+                        "maxLength": 36
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/GenerateSuccessResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/GenerateErrorResponse"
+          },
+          "429": {
+            "$ref": "#/components/responses/GenerateRateLimitResponse"
+          },
+          "500": {
+            "$ref": "#/components/responses/GenerateErrorResponse"
+          }
+        }
+      }
+    },
+    "/get/delay": {
+      "get": {
+        "tags": [
+          "get"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/userAgent"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "millis": {
+                      "type": "integer"
+                    },
+                    "seconds": {
+                      "type": "integer"
+                    },
+                    "nextRequest": {
+                      "type": "object",
+                      "properties": {
+                        "time": {
+                          "type": "integer"
+                        },
+                        "relative": {
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    "lastRequest": {
+                      "type": "object",
+                      "required": "false,",
+                      "properties": {
+                        "time": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/skins/{uuid}": {
+      "get": {
+        "description": "Get a skin by UUID",
+        "tags": [
+          "get"
+        ],
+        "parameters": [
+          {
+            "name": "uuid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/userAgent"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Skin Info",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkinInfo"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundErrorResponse"
+          }
+        }
+      }
+    },
+    "/v2/skins": {
+      "get": {
+        "description": "Get a list of skins",
+        "tags": [
+          "get"
+        ],
+        "parameters": [
+          {
+            "name": "after",
+            "in": "query",
+            "description": "reference of the last skin in the previous page",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/userAgent"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Skin List",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "required": [
+                    "skins",
+                    "page"
+                  ],
+                  "properties": {
+                    "skins": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PartialSkinInfo"
+                      }
+                    },
+                    "page": {
+                      "type": "object",
+                      "properties": {
+                        "next": {
+                          "description": "for pagination, link to the next page",
+                          "type": "string",
+                          "format": "url"
+                        }
+                      }
+                    },
+                    "search": {
+                      "description": "search query used for this request",
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
