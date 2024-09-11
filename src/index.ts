@@ -499,17 +499,23 @@ export function shutdown(signal: string, value: number) {
     Sentry.captureException(new Error(`Shutdown by ${ signal } with value ${ value }`));
     updatingApp = true;
     setTimeout(() => {
-        server.close().then(() => {
-            console.warn(`server stopped by ${ signal } with value ${ value }`);
-            Sentry.close().then(() => {
-                process.exit(128 + value);
-            });
-        });
-    }, 100 + Math.random() * 1000);
-    setTimeout(() => {
         console.error("shutdown timeout");
         process.exit(128 + value);
     }, 20000);
+    setTimeout(async () => {
+        try {
+            await server.close();
+        } catch (e) {
+            console.error(e);
+        }
+        console.warn(`server stopped by ${ signal } with value ${ value }`);
+        try {
+            await Sentry.close();
+        } catch (e) {
+            console.error(e);
+        }
+        process.exit(128 + value);
+    }, 100 + Math.random() * 1000);
 }
 
 const shutdownCounts: Record<string, number> = {};
