@@ -2681,7 +2681,7 @@ __metadata:
     jimp: "npm:^0.22.12"
     jobqu: "npm:^2.0.5"
     jsonwebtoken: "npm:9.0.0"
-    metrics-node: "npm:1.0.0"
+    metrics-node: "npm:1.0.1"
     mongoose: "npm:^8.4.1"
     morgan: "npm:^1.10.0"
     multer: "npm:^1.4.5-lts.1"
@@ -4897,15 +4897,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"metrics-node@npm:1.0.0":
-  version: 1.0.0
-  resolution: "metrics-node@npm:1.0.0"
+"metrics-node@npm:1.0.1":
+  version: 1.0.1
+  resolution: "metrics-node@npm:1.0.1"
   dependencies:
     "@types/node": "npm:^14.14.12"
     influx: "npm:^5.6.3"
     ts-node: "npm:^9.1.1"
     typescript: "npm:^4.1.2"
-  checksum: 10c0/b8fc196a6968c61cf4b583480b67daefef528460ae76e5c78f90c3c6c17e314e2b6eea34810e4d193ab4abbe1cc8870398f8c9265fcf8d60f3c43fadf500e6b5
+  checksum: 10c0/98b0c0154564302e7d0f2e21c58677e2ab94581d496195b5e36d4678bbf8bb1dca604caff71f41fe87d97dd504feed5c6a8e11604d42134b10c26eecca6eeefe
   languageName: node
   linkType: hard
 
