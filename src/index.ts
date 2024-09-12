@@ -508,6 +508,17 @@ export function shutdown(signal: string, value: number) {
         } catch (e) {
             console.error(e);
         }
+        try {
+            await mongoose.disconnect();
+        } catch (e) {
+            console.error(e);
+        }
+        try {
+            await redisClient?.quit();
+        } catch (e) {
+            console.error(e);
+        }
+
         console.warn(`server stopped by ${ signal } with value ${ value }`);
         try {
             await Sentry.close();
