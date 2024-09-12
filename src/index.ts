@@ -498,7 +498,7 @@ export function shutdown(signal: string, value: number) {
     console.log("shutdown");
     Sentry.captureException(new Error(`Shutdown by ${ signal } with value ${ value }`));
     updatingApp = true;
-    setTimeout(() => {
+    setInterval(() => {
         console.error("shutdown timeout");
         process.exit(128 + value);
     }, 20000);
