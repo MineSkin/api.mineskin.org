@@ -19,7 +19,8 @@ import {
     hiatusRoute,
     renderRoute,
     testerRoute,
-    utilRoute
+    utilRoute,
+    v2generateRoute
 } from "./routes";
 import { Temp } from "./generator/Temp";
 import { getConfig, getLocalConfig, MineSkinConfig } from "./typings/Configs";
@@ -309,6 +310,9 @@ async function init() {
         utilRoute.register(app);
         apiKeyRoute.register(app);
         hiatusRoute.register(app);
+
+        v2generateRoute.register(app);
+
 
     }
 

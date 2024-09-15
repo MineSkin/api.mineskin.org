@@ -1,0 +1,1 @@
+export * as v2generateRoute from "./generate"

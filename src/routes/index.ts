@@ -7,3 +7,5 @@ export * as testerRoute from "./tester";
 export * as utilRoute from "./util";
 export * as apiKeyRoute from "./apikey";
 export * as hiatusRoute from "./hiatus";
+
+export * from "./v2";
