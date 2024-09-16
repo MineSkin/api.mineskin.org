@@ -1,4 +1,3 @@
-import { Temp } from "../../generator/Temp";
 import { GeneratorError, GenError, MAX_IMAGE_SIZE } from "../../generator/Generator";
 import { Maybe } from "../../util";
 import multer, { MulterError } from "multer";
@@ -13,12 +12,19 @@ import { logger } from "../../util/log";
 export const register = (app: Application) => {
 
     const upload = multer({
-        dest: Temp.tmpdir,
         limits: {
             fileSize: MAX_IMAGE_SIZE,
             files: 1,
             fields: 5
         }
+    })
+
+    const client = new GeneratorClient({
+        connection: {
+            host: process.env.REDIS_HOST,
+            port: parseInt(process.env.REDIS_PORT!)
+        },
+        blockingConnection: false
     })
 
     // app.use("/v2/generate", corsWithAuthMiddleware);
@@ -64,16 +70,31 @@ export const register = (app: Application) => {
             }
         }
 
+        logger.debug(req.body);
+
         const options = getAndValidateOptions(req, res);
         //const client = getClientInfo(req);
 
-        const file = req.file;
+        const file: Maybe<Express.Multer.File> = req.file;
         if (!file) {
             res.status(400).json({error: "no file uploaded"});
             return;
         }
 
+        logger.debug(client)
+
+        logger.debug(file);
+
         logger.debug(`${ req.breadcrumb } FILE:        "${ file.filename }"`);
+
+        // let   tempFile = await Temp.file({
+        //     dir: UPL_DIR
+        // });
+        // await Temp.copyUploadedImage(file, tempFile);
+        //
+        // console.log(tempFile.path)
+        // const imageBuffer = await fs.readFile(tempFile.path);
+        // console.log(imageBuffer.byteLength);
 
         //TODO: validate file
 
@@ -87,13 +108,13 @@ export const register = (app: Application) => {
             // });
             throw new GeneratorError(GenError.INVALID_IMAGE, `Failed to get image hash: ${ e.message }`, 400, undefined, e);
         }
-        logger.debug(req.breadcrumb + " Image hash: " + hashes);
+        logger.debug(req.breadcrumb + " Image hash: ", hashes);
 
-        const uploadedImage = await GeneratorClient.insertUploadedImage(hashes.minecraft, file.buffer);
+        const imageUploaded = await client.insertUploadedImage(hashes.minecraft, file.buffer);
 
         const request: GenerateRequest = {
             breadcrumb: req.breadcrumb || "????",
-            image: uploadedImage.hash,
+            image: hashes.minecraft,
             options: options,
             client: { //FIXME
                 date: new Date(),
@@ -101,7 +122,8 @@ export const register = (app: Application) => {
                 ip:"unknown"
             }
         }
-        await GeneratorClient.submitRequest(request);
+        logger.debug(request);
+        await client.submitRequest(request);
 
     });
 
