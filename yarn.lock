@@ -695,7 +695,7 @@ __metadata:
 
 "@mineskin/database@git+ssh://git@github.com/MineSkin/mineskin-database.git#skin2":
   version: 1.0.0
-  resolution: "@mineskin/database@git+ssh://git@github.com/MineSkin/mineskin-database.git#commit=2c5be2d62843bddd2d760bc2701079fba1b62fe0"
+  resolution: "@mineskin/database@git+ssh://git@github.com/MineSkin/mineskin-database.git#commit=b0c6299b38225fecd39cf65576347bc5e85f0fef"
   dependencies:
     "@mineskin/types": "git+ssh://git@github.com/MineSkin/mineskin-types.git#skin2"
     "@sentry/cli": "npm:^2.32.2"
@@ -704,13 +704,13 @@ __metadata:
     dotenv: "npm:^16.4.5"
     mongoose: "npm:^8.5.3"
     uuid: "npm:^10.0.0"
-  checksum: 10c0/b1283ccf53ce6cfba3e92a321fdf392280591cb7e5ca67a92028025996667850384de3e003a1ec9b4c62f7acf1b3dc1541c3aa71b2a63406acef92817ef19478
+  checksum: 10c0/cda66f9fda2d1ca5e8e8acc568235483a647fae0178bff1799d8718a029db821175738372bfb2eb780b96938b1ba8b31f192885de090c96321b45d36fcf7c8c8
   languageName: node
   linkType: hard
 
 "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git":
   version: 0.0.0
-  resolution: "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git#commit=cad43d829847e4210a70ecd381b357430f9b8167"
+  resolution: "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git#commit=8ebc33578304a80997ceb8e1c944778a7cd4f45d"
   dependencies:
     "@inventivetalent/imghash": "npm:^1.1.1"
     "@inventivetalent/loading-cache": "npm:^0.7.1"
@@ -740,7 +740,7 @@ __metadata:
     uuid: "npm:^10.0.0"
     winston: "npm:^3.14.2"
     winston-daily-rotate-file: "npm:^5.0.0"
-  checksum: 10c0/18ffbc8b8b63c78519b4fb733a4671663fe072356c2a5a01fce3629f17cf504d5d4493b1dfa6378a4573d15fca73d9f81ed8201ea8b988ef52261b60fa16ad2d
+  checksum: 10c0/1c6a4a86c9c7484f205322d91cb25a253268eceb6ed28bd7559d1905516030edc5fb438ccf6cef4d1e3be965a50c8749b89a09e9e5cd46f200db540c1bef90a5
   languageName: node
   linkType: hard
 
@@ -772,8 +772,8 @@ __metadata:
 
 "@mineskin/types@git+ssh://git@github.com/MineSkin/mineskin-types.git#skin2":
   version: 1.0.1
-  resolution: "@mineskin/types@git+ssh://git@github.com/MineSkin/mineskin-types.git#commit=8fb47b43a0a28e7d0ea632cda8d5d0ad356dd720"
-  checksum: 10c0/721b2ee0a5a26a1151174ee118cbce3badf233409e96be30aceb369a9c0c0f620931a4caeb2ff791c19bfdc33964543b6c632f4a77990511532719d7dcd4ad2d
+  resolution: "@mineskin/types@git+ssh://git@github.com/MineSkin/mineskin-types.git#commit=4f277712514bd4dd54090ae5c62c34382fca1477"
+  checksum: 10c0/56b57463c2f79938d48838072de2befac50db1a8a892b2b9e41ab228032c8d438af8ed21a50c5d8d6413bc88ddd3f99b3cc83699d6df641006a68a598f6e3223
   languageName: node
   linkType: hard
 
@@ -971,8 +971,8 @@ __metadata:
   linkType: hard
 
 "@npmcli/package-json@npm:^5.0.0, @npmcli/package-json@npm:^5.1.0":
-  version: 5.2.0
-  resolution: "@npmcli/package-json@npm:5.2.0"
+  version: 5.2.1
+  resolution: "@npmcli/package-json@npm:5.2.1"
   dependencies:
     "@npmcli/git": "npm:^5.0.0"
     glob: "npm:^10.2.2"
@@ -981,7 +981,7 @@ __metadata:
     normalize-package-data: "npm:^6.0.0"
     proc-log: "npm:^4.0.0"
     semver: "npm:^7.5.3"
-  checksum: 10c0/bdce8c7eed0dee1d272bf8ba500c4bce6d8ed2b4dd2ce43075d3ba02ffd3bb70c46dbcf8b3a35e19d9492d039b720dc3a4b30d1a2ddc30b7918e1d5232faa1f7
+  checksum: 10c0/b852e31e3121a0afe5fa20bbf4faa701a59dbc9d9dd7141f7fd57b8e919ce22c1285dcdfea490851fe410fa0f7bc9c397cafba0d268aaa53420a12d7c561dde1
   languageName: node
   linkType: hard
 
@@ -5517,8 +5517,8 @@ __metadata:
   linkType: hard
 
 "mongoose@npm:^8.4.1, mongoose@npm:^8.5.3":
-  version: 8.6.2
-  resolution: "mongoose@npm:8.6.2"
+  version: 8.6.3
+  resolution: "mongoose@npm:8.6.3"
   dependencies:
     bson: "npm:^6.7.0"
     kareem: "npm:2.6.3"
@@ -5527,7 +5527,7 @@ __metadata:
     mquery: "npm:5.0.0"
     ms: "npm:2.1.3"
     sift: "npm:17.1.3"
-  checksum: 10c0/f03c7758c824f26b4a4c62a9ffbb5ca28a7b3c9215e323c3da390bb933473e24a82937009f78e0e87ad0bd5a196c476cbeb67e76026678a567e2162c221812ec
+  checksum: 10c0/60d4333077ed0248916e546efc7f4c8d08d0ad4f69f7aea625c009afeb38089b0d260561ae5bbeaef33f2cff8ce009c0a8774fda3b00be2453bd97083b61e9a7
   languageName: node
   linkType: hard
 

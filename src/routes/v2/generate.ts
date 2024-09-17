@@ -4,8 +4,9 @@ import { Application, Response } from "express";
 import { GenerateV2Request } from "./types";
 import * as Sentry from "@sentry/node";
 import { debug } from "../../util/colors";
-import { GenerateType, SkinVariant, SkinVisibility2 } from "@mineskin/types";
+import { ErrorSource, GenerateType, SkinInfo2, SkinVariant, SkinVisibility2 } from "@mineskin/types";
 import {
+    DuplicateChecker,
     GenerateOptions,
     GenerateRequest,
     GenerateResult,
@@ -13,6 +14,7 @@ import {
     GeneratorError,
     GenError,
     ImageService,
+    ImageValidation,
     MAX_IMAGE_SIZE,
     SkinService
 } from "@mineskin/generator";
@@ -20,6 +22,11 @@ import { logger } from "../../util/log";
 import { apiKeyMiddleware } from "../../middleware/apikey";
 import { mineskinClientMiddleware } from "../../middleware/client";
 import { breadcrumbMiddleware } from "../../middleware/breadcrumb";
+import { V2SkinResponse } from "../../typings/v2/V2SkinResponse";
+import { V2Response } from "../../typings/v2/V2Response";
+import { IPopulatedSkin2Document, ISkinDocument, isPopulatedSkin2Document } from "@mineskin/database";
+
+const MC_TEXTURE_PREFIX = "https://textures.minecraft.net/texture/";
 
 export const register = (app: Application) => {
 
@@ -62,7 +69,7 @@ export const register = (app: Application) => {
     app.use("/v2/generate", mineskinClientMiddleware);
 
 
-    app.post("/v2/generate/upload", async (req: GenerateV2Request, res: Response) => {
+    app.post("/v2/generate/upload", async (req: GenerateV2Request, res: Response<V2Response | V2SkinResponse>) => {
         try {
             await new Promise<void>((resolve, reject) => {
                 upload.single('file')(req, res, function (err) {
@@ -76,10 +83,26 @@ export const register = (app: Application) => {
         } catch (e) {
             Sentry.captureException(e);
             if (e instanceof MulterError) {
-                res.status(400).json({error: `invalid file: ${ e.message } (${ e.code })`});
+                res.status(400).json({
+                    success: false,
+                    errors: [
+                        {
+                            code: e.code || 'invalid_file',
+                            message: `invalid file: ${ e.message }`
+                        }
+                    ]
+                });
                 return;
             } else {
-                res.status(500).json({error: "upload error"});
+                res.status(500).json({
+                    success: false,
+                    errors: [
+                        {
+                            code: 'upload_error',
+                            message: `upload error: ${ e.message }`
+                        }
+                    ]
+                });
                 return;
             }
         }
@@ -89,19 +112,31 @@ export const register = (app: Application) => {
         const options = getAndValidateOptions(req, res);
         //const client = getClientInfo(req);
         if (!req.client) {
-            res.status(500).json({error: "no client info"});
+            res.status(500).json({
+                success: false,
+                errors: [
+                    {
+                        code: 'invalid_client',
+                        message: `no client info`
+                    }
+                ]
+            });
             return;
         }
 
         const file: Maybe<Express.Multer.File> = req.file;
         if (!file) {
-            res.status(400).json({error: "no file uploaded"});
+            res.status(500).json({
+                success: false,
+                errors: [
+                    {
+                        code: 'missing_file',
+                        message: `no file uploaded`
+                    }
+                ]
+            });
             return;
         }
-
-        logger.debug(client)
-
-        logger.debug(file);
 
         logger.debug(`${ req.breadcrumbC } FILE:        "${ file.filename }"`);
 
@@ -117,6 +152,23 @@ export const register = (app: Application) => {
         //TODO: validate file
 
         //TODO: check duplicates
+
+        const validation = await ImageValidation.validateImageBuffer(file.buffer);
+        logger.debug(validation);
+
+        //TODO: ideally don't do this here and in the generator
+        if (options.variant === SkinVariant.UNKNOWN) {
+            if (validation.variant === SkinVariant.UNKNOWN) {
+                throw new GeneratorError(GenError.UNKNOWN_VARIANT, "Unknown variant", {
+                    source: ErrorSource.CLIENT,
+                    httpCode: 400
+                });
+            }
+            logger.info(req.breadcrumb + " Switching unknown skin variant to " + validation.variant + " from detection");
+            Sentry.setExtra("generate_detected_variant", validation.variant);
+            options.variant = validation.variant;
+        }
+
 
         let hashes;
         try {
@@ -135,6 +187,20 @@ export const register = (app: Application) => {
 
         console.log(file.buffer.byteLength);
 
+        const duplicateResult = await DuplicateChecker.findDuplicateFromImageHash(hashes, options, req.client, GenerateType.UPLOAD, req.breadcrumb || "????");
+        logger.debug(JSON.stringify(duplicateResult, null, 2));
+        if (duplicateResult.existing && isV1SkinDocument(duplicateResult.existing)) {
+            return res.json({
+                success: true,
+                skin: v1SkinToV2Json(duplicateResult.existing, true)
+            });
+        } else if (duplicateResult.existing && isPopulatedSkin2Document(duplicateResult.existing)) {
+            return res.json({
+                success: true,
+                skin: skinToJson(duplicateResult.existing, true)
+            });
+        }
+
         const imageUploaded = await client.insertUploadedImage(hashes.minecraft, file.buffer);
 
         const request: GenerateRequest = {
@@ -146,15 +212,99 @@ export const register = (app: Application) => {
         }
         logger.debug(request);
         const job = await client.submitRequest(request);
-        const result = await job.waitUntilFinished(client.queueEvents,10_000) as GenerateResult;
+        const result = await job.waitUntilFinished(client.queueEvents, 10_000) as GenerateResult;
 
         const skin = await SkinService.findForUuid(result.skin);
+        if (!skin || !isPopulatedSkin2Document(skin) || !skin.data) {
+            return res.status(500).json({
+                success: false,
+                errors: [
+                    {
+                        code: 'skin_not_found',
+                        message: `skin not found`
+                    }
+                ]
+            });
+        }
 
         //TODO: proper response
         return res.json({
-            skin: skin
+            success: true,
+            skin: skinToJson(skin)
         });
     });
+
+    function isV1SkinDocument(skin: any): skin is ISkinDocument {
+        return 'skinUuid' in skin || 'minecraftTextureHash' in skin;
+    }
+
+    function v1SkinToV2Json(skin: ISkinDocument, duplicate: boolean = false): SkinInfo2 {
+        return {
+            uuid: skin.skinUuid || skin.uuid,
+            name: skin.name,
+            visibility: skin.visibility == 2 ? SkinVisibility2.PRIVATE : skin.visibility == 1 ? SkinVisibility2.UNLISTED : SkinVisibility2.PUBLIC,
+            variant: skin.variant,
+            texture: {
+                data: {
+                    value: skin.value,
+                    signature: skin.signature
+                },
+                hash: {
+                    skin: skin.minecraftTextureHash || skin.hash
+                },
+                url: {
+                    skin: skin.url
+                }
+            },
+            generator: {
+                timestamp: skin.time,
+                account: `${ skin.account }`,
+                server: skin.server || 'unknown',
+                worker: 'none',
+                version: 'unknown',
+                duration: 0
+            },
+            views: skin.views,
+            duplicate: duplicate
+        };
+    }
+
+    function skinToJson(skin: IPopulatedSkin2Document, duplicate: boolean = false): SkinInfo2 {
+        if (!skin.data) {
+            throw new Error("Skin data is missing");
+        }
+        logger.debug(JSON.stringify(skin.data, null, 2));
+        return {
+            uuid: skin.uuid,
+            name: skin.meta.name,
+            visibility: skin.meta.visibility,
+            variant: skin.meta.variant,
+            texture: {
+                data: {
+                    value: skin.data.value,
+                    signature: skin.data.signature
+                },
+                hash: {
+                    skin: skin.data.hash?.skin.minecraft,
+                    cape: skin.data.hash?.cape?.minecraft
+                },
+                url: {
+                    skin: MC_TEXTURE_PREFIX + skin.data.hash?.skin.minecraft,
+                    cape: skin.data.hash?.cape?.minecraft ? (MC_TEXTURE_PREFIX + skin.data.hash?.cape?.minecraft) : undefined
+                }
+            },
+            generator: {
+                timestamp: skin.data.createdAt.getTime(),
+                account: skin.data.generatedBy.account,
+                server: skin.data.generatedBy.server,
+                worker: skin.data.generatedBy.worker,
+                version: 'unknown', //TODO
+                duration: 0 //TODO
+            },
+            views: skin.views,
+            duplicate: duplicate
+        };
+    }
 
     function getAndValidateOptions(req: GenerateV2Request, res: Response): GenerateOptions {
         return Sentry.startSpan({
