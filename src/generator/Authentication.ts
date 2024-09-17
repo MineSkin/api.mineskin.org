@@ -13,8 +13,7 @@ import { epochSeconds, Maybe, toEpochSeconds } from "../util";
 import { MineSkinMetrics } from "../util/metrics";
 import { MicrosoftAuthInfo } from "../typings/MicrosoftAuthInfo";
 import { Generator } from "./Generator";
-import { AccessTokenSource, AccountType } from "@mineskin/types";
-import { MineSkinError } from "../typings";
+import { AccessTokenSource, AccountType, ErrorSource, MineSkinError } from "@mineskin/types";
 import { Accounts } from "./Accounts";
 
 const ACCESS_TOKEN_EXPIRATION_MOJANG = 86360;
@@ -31,7 +30,7 @@ export class Mojang {
     /**@deprecated**/
     public static async authenticate(account: IAccountDocument, bread?: Bread): Promise<IAccountDocument> {
         if (account.accountType !== AccountType.MOJANG) {
-            throw new AuthenticationError(AuthError.UNSUPPORTED_ACCOUNT, "Can't authenticate microsoft account via mojang auth", account);
+            throw new AuthenticationError(AuthError.UNSUPPORTED_ACCOUNT, "Can't authenticate microsoft account via mojang auth", {account});
         }
 
         if (!account.accessToken) { // Needs login
@@ -84,7 +83,7 @@ export class Mojang {
     static async login(account: IAccountDocument, bread?: Bread): Promise<IAccountDocument> {
         const config = await getConfig();
         if (account.accountType !== AccountType.MOJANG) {
-            throw new AuthenticationError(AuthError.UNSUPPORTED_ACCOUNT, "Can't login microsoft account via mojang auth", account);
+            throw new AuthenticationError(AuthError.UNSUPPORTED_ACCOUNT, "Can't login microsoft account via mojang auth", {account});
         }
 
         throw new Error("not implemented");
@@ -95,7 +94,7 @@ export class Mojang {
     /**@deprecated**/
     static async validateAccessToken(account: IAccountDocument, bread?: Bread): Promise<boolean> {
         if (account && account.accountType !== AccountType.MOJANG) {
-            throw new AuthenticationError(AuthError.UNSUPPORTED_ACCOUNT, "Can't validate microsoft account access token via mojang auth", account);
+            throw new AuthenticationError(AuthError.UNSUPPORTED_ACCOUNT, "Can't validate microsoft account access token via mojang auth", {account});
         }
 
         throw new Error("not implemented");
@@ -110,7 +109,7 @@ export class Mojang {
     static async refreshAccessToken(account: IAccountDocument, bread?: Bread): Promise<IAccountDocument> {
         const config = await getConfig();
         if (account.accountType !== AccountType.MOJANG) {
-            throw new AuthenticationError(AuthError.UNSUPPORTED_ACCOUNT, "Can't refresh microsoft account access token via mojang auth", account);
+            throw new AuthenticationError(AuthError.UNSUPPORTED_ACCOUNT, "Can't refresh microsoft account access token via mojang auth", {account});
         }
 
         throw new Error("not implemented");
@@ -186,12 +185,12 @@ export class Microsoft {
 
     public static async authenticate(account: IAccountDocument, bread?: Bread): Promise<IAccountDocument> {
         if (account.accountType !== AccountType.MICROSOFT) {
-            throw new AuthenticationError(AuthError.UNSUPPORTED_ACCOUNT, "Can't authenticate non-microsoft account via microsoft auth", account);
+            throw new AuthenticationError(AuthError.UNSUPPORTED_ACCOUNT, "Can't authenticate non-microsoft account via microsoft auth", {account});
         }
 
         if (!account.accessToken) { // Needs login
             //return await Microsoft.login(account, bread);
-            throw new AuthenticationError(AuthError.MISSING_CREDENTIALS, "Account has no access token", account);
+            throw new AuthenticationError(AuthError.MISSING_CREDENTIALS, "Account has no access token", {account});
         }
 
         // Check token expiration
@@ -223,10 +222,10 @@ export class Microsoft {
     static async login(account: IAccountDocument, bread?: Bread): Promise<IAccountDocument> {
         const config = await getConfig();
         if (account.accountType !== AccountType.MICROSOFT) {
-            throw new AuthenticationError(AuthError.UNSUPPORTED_ACCOUNT, "Can't login non-microsoft account via microsoft auth", account);
+            throw new AuthenticationError(AuthError.UNSUPPORTED_ACCOUNT, "Can't login non-microsoft account via microsoft auth", {account});
         }
 
-        throw new AuthenticationError(AuthError.MISSING_CREDENTIALS, "Account has no password", account);
+        throw new AuthenticationError(AuthError.MISSING_CREDENTIALS, "Account has no password", {account});
     }
 
     static async refreshAccessTokenOrLogin(account: IAccountDocument, bread?: Bread): Promise<IAccountDocument> {
@@ -246,10 +245,10 @@ export class Microsoft {
     static async refreshAccessToken(account: IAccountDocument, bread?: Bread): Promise<IAccountDocument> {
         const config = await getConfig();
         if (account.accountType !== AccountType.MICROSOFT) {
-            throw new AuthenticationError(AuthError.UNSUPPORTED_ACCOUNT, "Can't refresh token of non-microsoft account via microsoft auth", account);
+            throw new AuthenticationError(AuthError.UNSUPPORTED_ACCOUNT, "Can't refresh token of non-microsoft account via microsoft auth", {account});
         }
         if (!account.microsoftAuth?.auth.refreshToken) {
-            throw new AuthenticationError(AuthError.MICROSOFT_REFRESH_FAILED, "Account has no refresh token", account);
+            throw new AuthenticationError(AuthError.MICROSOFT_REFRESH_FAILED, "Account has no refresh token", {account});
         }
 
         console.log(debug(bread?.breadcrumb + " [Auth] Refreshing " + account.toSimplifiedString()));
@@ -259,7 +258,10 @@ export class Microsoft {
             if (err.response || err.name === "XboxReplayError") {
                 console.warn(err);
                 Sentry.captureException(err);
-                throw new AuthenticationError(AuthError.MICROSOFT_REFRESH_FAILED, "Failed to refresh token via microsoft", account, err);
+                throw new AuthenticationError(AuthError.MICROSOFT_REFRESH_FAILED, "Failed to refresh token via microsoft", {
+                    account,
+                    error: err
+                });
             }
             throw err;
         })
@@ -631,7 +633,13 @@ export enum AuthError {
 }
 
 export class AuthenticationError extends MineSkinError {
-    constructor(code: AuthError, msg: string, public account?: IAccountDocument, public details?: any) {
+    constructor(code: AuthError, msg: string, public meta?: {
+        httpCode?: number;
+        source?: ErrorSource;
+        account?: IAccountDocument;
+        error?: Error;
+        details?: any;
+    }) {
         super(code, msg);
         Object.setPrototypeOf(this, AuthenticationError.prototype);
     }

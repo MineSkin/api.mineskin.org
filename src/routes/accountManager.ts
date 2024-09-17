@@ -28,7 +28,7 @@ import { Requests } from "../generator/Requests";
 import qs from "querystring";
 import { Discord } from "../util/Discord";
 import { getConfig, MineSkinConfig } from "../typings/Configs";
-import { MineSkinError, MineSkinRequest } from "../typings";
+import { MineSkinRequest } from "../typings";
 import { info, warn } from "../util/colors";
 import * as Sentry from "@sentry/node";
 import { Time } from "@inventivetalent/time";
@@ -38,7 +38,7 @@ import { Buffer } from "buffer";
 import { randomBytes } from "crypto";
 import { MicrosoftAuthInfo } from "../typings/MicrosoftAuthInfo";
 import { getUserFromRequest } from "./account";
-import { AccessTokenSource, AccountType } from "@mineskin/types";
+import { AccessTokenSource, AccountType, MineSkinError } from "@mineskin/types";
 import { Account, IAccountDocument } from "@mineskin/database";
 import { Accounts } from "../generator/Accounts";
 
@@ -60,7 +60,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
     app.post("/accountManager/mojang/login", async (req: AccountManagerRequest, res: Response) => {
         await regenerateSession(req);
         if (!req.body["email"] || !req.body["password"]) {
-            res.status(400).json({ error: "missing login data" });
+            res.status(400).json({error: "missing login data"});
             return;
         }
 
@@ -81,16 +81,16 @@ export const register = (app: Application, config: MineSkinConfig) => {
 
         const loginResponse = await Mojang.loginWithCredentials(req.body["email"], base64decode(req.body["password"]), md5(req.body["email"] + "_" + ip)).catch(err => {
             if (err.response) {
-                throw new AuthenticationError(AuthError.MOJANG_AUTH_FAILED, "Failed to authenticate via mojang", undefined, err);
+                throw new AuthenticationError(AuthError.MOJANG_AUTH_FAILED, "Failed to authenticate via mojang", {error: err});
             }
             throw err;
         })
         if (loginResponse.selectedProfile!.legacy) {
-            res.status(400).json({ error: "cannot add legacy profile" });
+            res.status(400).json({error: "cannot add legacy profile"});
             return;
         }
         if (loginResponse.selectedProfile!.suspended) {
-            res.status(400).json({ error: "cannot add suspended profile" });
+            res.status(400).json({error: "cannot add suspended profile"});
             return;
         }
         req.session.account = {
@@ -111,7 +111,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
 
         const challengeResponse = await Mojang.getChallenges(req.session.account!.token!).catch(err => {
             if (err.response) {
-                throw new AuthenticationError(AuthError.MOJANG_CHALLENGES_FAILED, "Failed to get security challenges", undefined, err);
+                throw new AuthenticationError(AuthError.MOJANG_CHALLENGES_FAILED, "Failed to get security challenges", {error:err});
             }
             throw err;
         });
@@ -126,7 +126,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
         if (!validateSessionAndToken(req, res)) return;
 
         if (!req.body["securityAnswers"]) {
-            res.status(400).json({ error: "missing answers" });
+            res.status(400).json({error: "missing answers"});
             return;
         }
         if (!validateMultiSecurityAnswers(req.body["securityAnswers"], req, res)) return;
@@ -134,7 +134,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
 
         const solveResponse = await Mojang.submitChallengeAnswers(req.session.account!.token!, answers).catch(err => {
             if (err.response) {
-                throw new AuthenticationError(AuthError.MOJANG_CHALLENGES_FAILED, "Failed to complete security challenges", undefined, err);
+                throw new AuthenticationError(AuthError.MOJANG_CHALLENGES_FAILED, "Failed to complete security challenges", {error:err});
             }
             throw err;
         })
@@ -151,7 +151,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
     app.post("/accountManager/microsoft/login", async (req: AccountManagerRequest, res: Response) => {
         await regenerateSession(req);
         if (!req.body["email"] || !req.body["password"]) {
-            res.status(400).json({ error: "missing login data" });
+            res.status(400).json({error: "missing login data"});
             return;
         }
 
@@ -174,7 +174,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
         }).catch(err => {
             console.log(err);
             if (err.name === "XboxReplayError") {
-                throw new AuthenticationError(AuthError.MICROSOFT_AUTH_FAILED, "Failed to login", undefined, err);
+                throw new AuthenticationError(AuthError.MICROSOFT_AUTH_FAILED, "Failed to login", {error:err});
             }
             throw err;
         });
@@ -194,7 +194,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
 
     app.post("/accountManager/microsoft/login/finalize", async (req: AccountManagerRequest, res: Response) => {
         if (!req.session || !req.session.account || !req.session.account.token) {
-            res.status(400).json({ error: "invalid session (token)" });
+            res.status(400).json({error: "invalid session (token)"});
             return;
         }
 
@@ -202,7 +202,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
         const ownsMinecraft = await Microsoft.checkGameOwnership(minecraftAccessToken)
             .catch(err => {
                 if (err.response) {
-                    throw new AuthenticationError(AuthError.DOES_NOT_OWN_MINECRAFT, "Failed to check game ownership", undefined, err);
+                    throw new AuthenticationError(AuthError.DOES_NOT_OWN_MINECRAFT, "Failed to check game ownership", {error:err});
                 }
                 throw err;
             });
@@ -211,10 +211,10 @@ export const register = (app: Application, config: MineSkinConfig) => {
                 console.warn(warn("User " + req.session.account.email + " does not own minecraft, but apparently it's a game pass account!"));
                 const profile = await Caching.getProfileByAccessToken(minecraftAccessToken);
                 if (!profile || !profile.id) {
-                    throw new AuthenticationError(AuthError.DOES_NOT_OWN_MINECRAFT, "User does not own minecraft (game pass)", undefined);
+                    throw new AuthenticationError(AuthError.DOES_NOT_OWN_MINECRAFT, "User does not own minecraft (game pass)");
                 }
             } else {
-                throw new AuthenticationError(AuthError.DOES_NOT_OWN_MINECRAFT, "User does not own minecraft", undefined);
+                throw new AuthenticationError(AuthError.DOES_NOT_OWN_MINECRAFT, "User does not own minecraft");
             }
         }
 
@@ -232,7 +232,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
     app.get("/accountManager/microsoft/oauth/start", async (req: AccountManagerRequest, res: Response) => {
         const config = await getConfig();
         if (!config.microsoft?.clientId) {
-            res.status(500).json({ error: "server can't handle microsoft auth" });
+            res.status(500).json({error: "server can't handle microsoft auth"});
             return;
         }
 
@@ -257,16 +257,16 @@ export const register = (app: Application, config: MineSkinConfig) => {
 
     app.get("/accountManager/microsoft/oauth/callback", async (req: AccountManagerRequest, res: Response) => {
         if (req.query["error_description"]) {
-            res.status(400).json({ error: req.query["error_description"] });
+            res.status(400).json({error: req.query["error_description"]});
             return;
         }
 
         if (!req.query["state"]) {
-            res.status(400).json({ error: "missing state" });
+            res.status(400).json({error: "missing state"});
             return;
         }
         if (!req.query["code"]) {
-            res.status(400).json({ error: "missing code" });
+            res.status(400).json({error: "missing code"});
             return;
         }
 
@@ -279,7 +279,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
 
         const pendingLink = Caching.getPendingMicrosoftLink(req.query["state"] as string);
         if (!pendingLink) {
-            res.status(403).json({ error: "invalid state" });
+            res.status(403).json({error: "invalid state"});
             return;
         }
         const code = req.query["code"] as string;
@@ -327,7 +327,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
             });
         } catch (e) {
             Sentry.captureException(e);
-            res.status(404).json({ error: "failed to get server" });
+            res.status(404).json({error: "failed to get server"});
         }
     })
 
@@ -338,7 +338,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
 
         const profile = await Caching.getProfileByAccessToken(req.session.account!.token!);
         if (!profile) {
-            res.status(400).json({ error: "invalid session (profile)" });
+            res.status(400).json({error: "invalid session (profile)"});
             return;
         }
         if (req.session && req.session.account) {
@@ -350,14 +350,14 @@ export const register = (app: Application, config: MineSkinConfig) => {
     app.post("/accountManager/myAccount", async (req: AccountManagerRequest, res: Response) => {
         if (!validateSessionAndToken(req, res)) return;
         if (!req.session || !req.session.account) {
-            res.status(400).json({ error: "invalid session (account)" });
+            res.status(400).json({error: "invalid session (account)"});
             return;
         }
 
         const config = await getConfig();
         const profileValidation = await getAndValidateMojangProfile(req.session.account!.token!, req.body["uuid"]);
         if (!profileValidation.valid || !profileValidation.profile) {
-            res.status(400).json({ error: "profile validation failed" });
+            res.status(400).json({error: "profile validation failed"});
             return;
         }
 
@@ -473,13 +473,13 @@ export const register = (app: Application, config: MineSkinConfig) => {
             // query["microsoftUserId"] = req.session.account.microsoftInfo.userId
             query["minecraftXboxUsername"] = req.session.account.microsoftInfo.username;
         } else {
-            res.status(400).json({ error: "invalid account request" });
+            res.status(400).json({error: "invalid account request"});
             return undefined;
         }
         console.log(query);
         const account = await Account.findOne(query).exec();
         if (!account) {
-            res.status(404).json({ error: "account not found" });
+            res.status(404).json({error: "account not found"});
             return undefined;
         }
         return account;
@@ -488,7 +488,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
     app.put("/accountManager/settings/:setting", async (req: AccountManagerRequest, res: Response) => {
         if (!validateSessionAndToken(req, res)) return;
         if (!req.session || !req.session.account) {
-            res.status(400).json({ error: "invalid session (account)" });
+            res.status(400).json({error: "invalid session (account)"});
             return;
         }
         const profileValidation = await getAndValidateMojangProfile(req.session.account!.token!, req.body["uuid"]);
@@ -545,7 +545,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
                 }
                 break;
             default:
-                res.status(404).json({ error: "unknown setting" });
+                res.status(404).json({error: "unknown setting"});
                 return;
         }
         if (!updater) return;
@@ -576,34 +576,34 @@ export const register = (app: Application, config: MineSkinConfig) => {
     app.post("/accountManager/confirmAccountSubmission", async (req: AccountManagerRequest, res: Response) => {
         if (!validateSessionAndToken(req, res)) return;
         if (!req.session || !req.session.account) {
-            res.status(400).json({ error: "invalid session (account)" });
+            res.status(400).json({error: "invalid session (account)"});
             return;
         }
         if (req.session.account.type === AccountType.MOJANG) {
             if (req.body["email"] !== req.session.account.email) {
-                res.status(400).json({ error: "invalid session (email)" });
+                res.status(400).json({error: "invalid session (email)"});
                 return;
             }
             console.log(req.session.account)
             console.log(sha512(req.body["password"]))
             if (sha512(req.body["password"]) !== req.session.account.passwordHash) {
-                res.status(400).json({ error: "invalid session (password)" });
+                res.status(400).json({error: "invalid session (password)"});
                 return;
             }
         }
         if (!req.body["uuid"]) {
-            res.status(400).json({ error: "missing uuid" });
+            res.status(400).json({error: "missing uuid"});
             return;
         }
         if (req.body["uuid"] !== req.session.account.uuid) {
-            res.status(400).json({ error: "invalid session (uuid)" });
+            res.status(400).json({error: "invalid session (uuid)"});
             return;
         }
         const profileValidation = await getAndValidateMojangProfile(req.session.account!.token!, req.body["uuid"]);
         if (!profileValidation.valid || !profileValidation.profile) return;
 
         if (!req.body["checks"] || !req.body["checks"]["readTerms"] || !req.body["checks"]["acceptSkins"] || !req.body["checks"]["acceptPassword"]) {
-            res.status(400).json({ error: "invalid checks" });
+            res.status(400).json({error: "invalid checks"});
             return;
         }
 
@@ -614,7 +614,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
             console.warn("Got /confirmAccountSubmission but preferred server is " + preferredServer);
         }
 
-        const lastAccount = await Account.findOne({}, "id").sort({ id: -1 }).lean().exec();
+        const lastAccount = await Account.findOne({}, "id").sort({id: -1}).lean().exec();
         const lastId = lastAccount?.id!;
 
         const account = new Account(<IAccountDocument>{
@@ -684,7 +684,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
         // Disable mojang accounts just migrated to microsoft
         //  or accounts that just managed to sneak in twice
         Account.updateMany({
-            id: { $ne: account.id },
+            id: {$ne: account.id},
             enabled: true,
             uuid: account.uuid
         }, {
@@ -707,7 +707,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
     app.delete("/accountManager/deleteAccount", async (req: AccountManagerRequest, res: Response) => {
         if (!validateSessionAndToken(req, res)) return;
         if (!req.session || !req.session.account) {
-            res.status(400).json({ error: "invalid session (account)" });
+            res.status(400).json({error: "invalid session (account)"});
             return;
         }
         const profileValidation = await getAndValidateMojangProfile(req.session.account!.token!, req.body["uuid"]);
@@ -718,16 +718,16 @@ export const register = (app: Application, config: MineSkinConfig) => {
             uuid: profileValidation.profile.id,
             accountType: req.session.account.type,
             $or: [
-                { email: req.session.account.email },
-                { username: req.session.account.email }
+                {email: req.session.account.email},
+                {username: req.session.account.email}
             ]
         }).exec();
         if (!account) {
-            res.status(404).json({ error: "account not found" });
+            res.status(404).json({error: "account not found"});
             return;
         }
         if (account.enabled) {
-            res.status(400).json({ error: "account needs to be disabled first" });
+            res.status(400).json({error: "account needs to be disabled first"});
             return;
         }
 
@@ -780,19 +780,19 @@ export const register = (app: Application, config: MineSkinConfig) => {
     app.get("/accountManager/discord/oauth/start", async (req: AccountManagerRequest, res: Response) => {
         const config = await getConfig();
         if (!config.discordAccount) {
-            res.status(400).json({ error: "server can't handle discord auth" });
+            res.status(400).json({error: "server can't handle discord auth"});
             return;
         }
         if (!req.session || !req.session.account) {
-            res.status(400).json({ error: "invalid session (account)" });
+            res.status(400).json({error: "invalid session (account)"});
             return;
         }
         if (!req.session.account.token) {
-            res.status(400).json({ error: "invalid session (token)" });
+            res.status(400).json({error: "invalid session (token)"});
             return;
         }
         if (!req.session || !req.session.account) {
-            res.status(400).json({ error: "invalid session (account)" });
+            res.status(400).json({error: "invalid session (account)"});
             return;
         }
         const profileValidation = await getAndValidateMojangProfile(req.session.account!.token!, req.query["uuid"] as string);
@@ -833,14 +833,14 @@ export const register = (app: Application, config: MineSkinConfig) => {
             return;
         }
         if (!config.discordAccount) {
-            res.status(400).json({ error: "server can't handle discord auth" });
+            res.status(400).json({error: "server can't handle discord auth"});
             return;
         }
 
         const pendingLink: Maybe<PendingDiscordAccountLink> = Caching.getPendingDiscordLink(req.query["state"] as string);
         if (!pendingLink) {
             console.warn("Got a discord OAuth callback but the API wasn't expecting that linking request");
-            res.status(400).json({ error: "invalid state" });
+            res.status(400).json({error: "invalid state"});
             return;
         }
         Caching.invalidatePendingDiscordLink(req.query["state"] as string);
@@ -848,7 +848,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
         // Make sure the session isn't doing anything weird
         if (!req.session || !req.session.account) {
             console.warn("discord account link callback had invalid session");
-            res.status(400).json({ error: "invalid session (account)" });
+            res.status(400).json({error: "invalid session (account)"});
             return;
         }
         const profileValidation = await getAndValidateMojangProfile(req.session.account.token!, pendingLink.uuid!);
@@ -881,7 +881,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
         const accessToken = tokenBody["access_token"];
         if (!accessToken) {
             console.warn("Failed to get access token from discord");
-            res.status(500).json({ error: "Discord API error" });
+            res.status(500).json({error: "Discord API error"});
             return;
         }
 
@@ -900,7 +900,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
         const discordId = userBody["id"];
         if (!discordId) {
             console.warn("Discord response did not have an id field")
-            res.status(404).json({ error: "Discord API error" });
+            res.status(404).json({error: "Discord API error"});
             return;
         }
 
@@ -944,16 +944,16 @@ export const register = (app: Application, config: MineSkinConfig) => {
 
 function validateSessionAndToken(req: AccountManagerRequest, res: Response): boolean {
     if (!req.headers.authorization || !req.headers.authorization.startsWith("Bearer ")) {
-        res.status(400).json({ error: "invalid session (bearer)" });
+        res.status(400).json({error: "invalid session (bearer)"});
         return false;
     }
     const headerToken = req.headers.authorization.replace("Bearer ", "");
     if (!req.session || !req.session.account) {
-        res.status(400).json({ error: "invalid session (account)" });
+        res.status(400).json({error: "invalid session (account)"});
         return false;
     }
     if (headerToken !== req.session.account.token) {
-        res.status(400).json({ error: "invalid session (token)" });
+        res.status(400).json({error: "invalid session (token)"});
         return false;
     }
     return true;
@@ -961,12 +961,12 @@ function validateSessionAndToken(req: AccountManagerRequest, res: Response): boo
 
 function validateMultiSecurityAnswers(answers: any, req: Request, res: Response) {
     if (typeof answers !== "object" || answers.length < 3) {
-        res.status(400).json({ error: "invalid security answers object (not an object / empty)" });
+        res.status(400).json({error: "invalid security answers object (not an object / empty)"});
         return false;
     }
     for (let i = 0; i < answers.length; i++) {
         if ((!answers[i].hasOwnProperty("id") || !answers[i].hasOwnProperty("answer")) || (typeof answers[i].id !== "number" || typeof answers[i].answer !== "string")) {
-            res.status(400).json({ error: "invalid security answers object (missing id / answer)" });
+            res.status(400).json({error: "invalid security answers object (missing id / answer)"});
             return false;
         }
     }
@@ -974,7 +974,7 @@ function validateMultiSecurityAnswers(answers: any, req: Request, res: Response)
 }
 
 async function getAndValidateMojangProfile(accessToken: string, uuid: string): Promise<MojangProfileValidation> {
-    if (!uuid || uuid.length < 32 || !accessToken) return { valid: false };
+    if (!uuid || uuid.length < 32 || !accessToken) return {valid: false};
     const shortUuid = stripUuid(uuid);
     const profile = await Caching.getProfileByAccessToken(accessToken);
     if (!profile || shortUuid !== profile.id) {

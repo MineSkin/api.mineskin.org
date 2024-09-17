@@ -69,10 +69,10 @@ import {
     SkinModel,
     Stat
 } from "@mineskin/database";
-import { GenerateType, SkinInfo, SkinVariant, SkinVisibility } from "@mineskin/types";
-import { MineSkinError } from "../typings";
+import { GenerateType, MineSkinError, SkinInfo, SkinVariant, SkinVisibility } from "@mineskin/types";
 import { Accounts } from "./Accounts";
 import { redisClient, redisPub, trackRedisGenerated } from "../database/redis";
+import { GeneratorError, GenError } from "@mineskin/generator";
 
 
 // minimum delay for accounts to be used
@@ -417,7 +417,11 @@ export class Generator {
                     code: 2,
                     message: "internal_error"
                 });
-                throw new GeneratorError(GenError.INVALID_SKIN_DATA, "Skin data was invalid", 500, hasOwnProperty(accountOrUuid, "id") ? accountOrUuid as IAccountDocument : undefined, data);
+                throw new GeneratorError(GenError.INVALID_SKIN_DATA, "Skin data was invalid", {
+                    httpCode: 500,
+                    account: hasOwnProperty(accountOrUuid, "id") ? accountOrUuid as IAccountDocument : undefined,
+                    details: data
+                });
             }
             const decodedValue = this.decodeValue(data);
             if (!decodedValue || !decodedValue.textures || !decodedValue.textures.SKIN) {
@@ -425,7 +429,11 @@ export class Generator {
                     code: 2,
                     message: "internal_error"
                 });
-                throw new GeneratorError(GenError.INVALID_SKIN_DATA, "Skin data has no skin info", 500, hasOwnProperty(accountOrUuid, "id") ? accountOrUuid as IAccountDocument : undefined, data);
+                throw new GeneratorError(GenError.INVALID_SKIN_DATA, "Skin data has no skin info", {
+                    httpCode: 500,
+                    account: hasOwnProperty(accountOrUuid, "id") ? accountOrUuid as IAccountDocument : undefined,
+                    details: data
+                });
             }
             return data;
         })
@@ -842,7 +850,7 @@ export class Generator {
                     });
                     throw new GeneratorError(GenError.INVALID_IMAGE_URL,
                         "Failed to find image from url" + (typeof followResponse === 'string' ? ": " + followResponse : ""),
-                        400, undefined, originalUrl);
+                        {httpCode: 400, details: originalUrl});
                 }
                 // Validate response headers
                 const url = this.getUrlFromResponse(followResponse, originalUrl);
@@ -851,7 +859,10 @@ export class Generator {
                         code: 2,
                         message: "invalid_argument"
                     });
-                    throw new GeneratorError(GenError.INVALID_IMAGE_URL, "Failed to follow url", 400, undefined, originalUrl);
+                    throw new GeneratorError(GenError.INVALID_IMAGE_URL, "Failed to follow url", {
+                        httpCode: 400,
+                        details: originalUrl
+                    });
                 }
                 Sentry.setExtra("generate_url_followed", url);
                 // Check for duplicate from url again, if the followed url is different
@@ -872,7 +883,10 @@ export class Generator {
                         code: 2,
                         message: "invalid_argument"
                     });
-                    throw new GeneratorError(GenError.INVALID_IMAGE, "Invalid image content type: " + contentType, 400, undefined, originalUrl);
+                    throw new GeneratorError(GenError.INVALID_IMAGE, "Invalid image content type: " + contentType, {
+                        httpCode: 400,
+                        details: originalUrl
+                    });
                 }
                 const size = this.getSizeFromResponse(followResponse);
                 console.log(debug(options.breadcrumb + " size: " + size));
@@ -882,7 +896,9 @@ export class Generator {
                         code: 2,
                         message: "invalid_argument"
                     });
-                    throw new GeneratorError(GenError.INVALID_IMAGE, "Invalid image file size", 400, undefined, originalUrl);
+                    throw new GeneratorError(GenError.INVALID_IMAGE, "Invalid image file size", {
+                        httpCode: 400
+                    });
                 }
 
                 // Download the image temporarily
@@ -896,7 +912,7 @@ export class Generator {
                         code: 2,
                         message: "internal_error"
                     });
-                    throw new GeneratorError(GenError.INVALID_IMAGE, "Failed to download image", 500, undefined, e);
+                    throw new GeneratorError(GenError.INVALID_IMAGE, "Failed to download image", {httpCode: 500});
                 }
 
                 // Validate downloaded image file
@@ -911,7 +927,7 @@ export class Generator {
                         code: 2,
                         message: "not_found"
                     });
-                    throw new GeneratorError(GenError.NO_DUPLICATE, "No duplicate found", 404, undefined)
+                    throw new GeneratorError(GenError.NO_DUPLICATE, "No duplicate found", {httpCode: 404})
                 }
 
                 /// Run generation for new skin
@@ -952,7 +968,11 @@ export class Generator {
         }, account, breadcrumb).catch(err => {
             if (err.response) {
                 let msg = (err.response as AxiosResponse).data?.errorMessage ?? "Failed to change skin";
-                throw new GeneratorError(GenError.SKIN_CHANGE_FAILED, msg, (err.response as AxiosResponse).status, account, err);
+                throw new GeneratorError(GenError.SKIN_CHANGE_FAILED, msg, {
+                    httpCode: (err.response as AxiosResponse).status,
+                    account,
+                    error: err
+                });
             }
             throw err;
         });
@@ -1048,7 +1068,10 @@ export class Generator {
                         code: 2,
                         message: "internal_error"
                     });
-                    throw new GeneratorError(GenError.INVALID_IMAGE, "Failed to upload image", 500, undefined, e);
+                    throw new GeneratorError(GenError.INVALID_IMAGE, "Failed to upload image", {
+                        httpCode: 500,
+                        error: e
+                    });
                 }
 
                 // Validate uploaded image file
@@ -1063,7 +1086,7 @@ export class Generator {
                         code: 2,
                         message: "not_found"
                     });
-                    throw new GeneratorError(GenError.NO_DUPLICATE, "No duplicate found", 404, undefined)
+                    throw new GeneratorError(GenError.NO_DUPLICATE, "No duplicate found", {httpCode: 400})
                 }
 
                 /// Run generation for new skin
@@ -1107,7 +1130,11 @@ export class Generator {
         }, account, breadcrumb).catch(err => {
             if (err.response) {
                 let msg = (err.response as AxiosResponse).data?.errorMessage ?? "Failed to change skin";
-                throw new GeneratorError(GenError.SKIN_CHANGE_FAILED, msg, (err.response as AxiosResponse).status, account, err);
+                throw new GeneratorError(GenError.SKIN_CHANGE_FAILED, msg, {
+                    httpCode: (err.response as AxiosResponse).status,
+                    account,
+                    error: err
+                });
             }
             throw err;
         });
@@ -1314,6 +1341,7 @@ export class Generator {
     }
 
     /// SUCCESS / ERROR HANDLERS
+    private static GenError: any;
 
     protected static async handleGenerateSuccess(type: GenerateType, options: GenerateOptions, client: ClientInfo, account: IAccountDocument): Promise<void> {
         const metrics = await MineSkinMetrics.get();
@@ -1348,7 +1376,7 @@ export class Generator {
     protected static async handleGenerateError(e: any, type: GenerateType, options: GenerateOptions, client: ClientInfo, account?: IAccountDocument): Promise<void> {
         const metrics = await MineSkinMetrics.get();
         if (e instanceof GeneratorError) {
-            if (e.code == GenError.NO_DUPLICATE) {
+            if (e.code == this.GenError.NO_DUPLICATE) {
                 return;
             }
         }
@@ -1357,7 +1385,7 @@ export class Generator {
 
         if (!account) {
             if (e instanceof AuthenticationError || e instanceof GeneratorError) {
-                account = e.account;
+                account = e.meta?.account;
             }
         }
 
@@ -1440,7 +1468,7 @@ export class Generator {
                     code: 2,
                     message: "invalid_argument"
                 });
-                throw new GeneratorError(GenError.INVALID_IMAGE, `Invalid file size (${ size })`, 400);
+                throw new GeneratorError(GenError.INVALID_IMAGE, `Invalid file size (${ size })`, {httpCode: 400});
             }
 
             let fType;
@@ -1451,7 +1479,10 @@ export class Generator {
                     code: 2,
                     message: "invalid_argument"
                 });
-                throw new GeneratorError(GenError.INVALID_IMAGE, "Failed to determine file type", 400, undefined, e);
+                throw new GeneratorError(GenError.INVALID_IMAGE, "Failed to determine file type", {
+                    httpCode: 400,
+                    error: e
+                });
             }
             Sentry.setExtra("generate_mime", fType?.mime)
             if (!fType || !fType.mime.startsWith("image") || !ALLOWED_IMAGE_TYPES.includes(fType.mime)) {
@@ -1459,7 +1490,7 @@ export class Generator {
                     code: 2,
                     message: "invalid_argument"
                 });
-                throw new GeneratorError(GenError.INVALID_IMAGE, "Invalid file type: " + fType, 400);
+                throw new GeneratorError(GenError.INVALID_IMAGE, "Invalid file type: " + fType, {httpCode: 400});
             }
 
             let dimensions;
@@ -1470,7 +1501,10 @@ export class Generator {
                     code: 2,
                     message: "invalid_argument"
                 });
-                throw new GeneratorError(GenError.INVALID_IMAGE, "Failed to determine image dimensions", 400, undefined, e);
+                throw new GeneratorError(GenError.INVALID_IMAGE, "Failed to determine image dimensions", {
+                    httpCode: 400,
+                    error: e
+                });
             }
             Sentry.setExtra("generate_dimensions", `${ dimensions.width }x${ dimensions.height }`);
             if ((dimensions.width !== 64) || (dimensions.height !== 64 && dimensions.height !== 32)) {
@@ -1478,7 +1512,7 @@ export class Generator {
                     code: 2,
                     message: "invalid_argument"
                 });
-                throw new GeneratorError(GenError.INVALID_IMAGE, "Invalid image dimensions. Must be 64x32 or 64x64 (Were " + dimensions.width + "x" + dimensions.height + ")", 400);
+                throw new GeneratorError(GenError.INVALID_IMAGE, "Invalid image dimensions. Must be 64x32 or 64x64 (Were " + dimensions.width + "x" + dimensions.height + ")", {httpCode: 400});
             }
 
             // Get the imageHash
@@ -1490,7 +1524,9 @@ export class Generator {
                     code: 2,
                     message: "invalid_argument"
                 });
-                throw new GeneratorError(GenError.INVALID_IMAGE, `Failed to get image hash: ${ e.message }`, 400, undefined, e);
+                throw new GeneratorError(GenError.INVALID_IMAGE, `Failed to get image hash: ${ e.message }`, {
+                    httpCode: 400, error: e
+                });
             }
             console.log(debug(options.breadcrumb + " Image hash: " + imageHash));
             // Check duplicate from imageHash
@@ -1514,7 +1550,10 @@ export class Generator {
                     code: 2,
                     message: "invalid_argument"
                 });
-                throw new GeneratorError(GenError.INVALID_IMAGE, "Failed to validate image data", 400, undefined, e);
+                throw new GeneratorError(GenError.INVALID_IMAGE, "Failed to validate image data", {
+                    httpCode: 400,
+                    error: e
+                });
             }
 
             return {
@@ -1601,7 +1640,7 @@ export class Generator {
                     code: 2,
                     message: "invalid_argument"
                 });
-                throw new GeneratorError(GenError.INVALID_IMAGE, "Invalid image dimensions. Must be 64x32 or 64x64 (Were " + width + "x" + height + ")", 400);
+                throw new GeneratorError(GenError.INVALID_IMAGE, "Invalid image dimensions. Must be 64x32 or 64x64 (Were " + width + "x" + height + ")", {httpCode: 400});
             }
             if (height < 64) {
                 return {
@@ -1703,28 +1742,6 @@ interface SkinChangeSkin {
     id: string;
     state: string;
     url: string;
-}
-
-export enum GenError {
-    FAILED_TO_CREATE_ID = "failed_to_create_id",
-    NO_ACCOUNT_AVAILABLE = "no_account_available",
-    SKIN_CHANGE_FAILED = "skin_change_failed",
-    INVALID_IMAGE = "invalid_image",
-    INVALID_IMAGE_URL = "invalid_image_url",
-    INVALID_IMAGE_UPLOAD = "invalid_image_upload",
-    INVALID_SKIN_DATA = "invalid_skin_data",
-    NO_DUPLICATE = "no_duplicate"
-}
-
-export class GeneratorError extends MineSkinError {
-    constructor(code: GenError, msg: string, httpCode: number = 500, public account?: IAccountDocument, public details?: any) {
-        super(code, msg, httpCode);
-        Object.setPrototypeOf(this, GeneratorError.prototype);
-    }
-
-    get name(): string {
-        return 'GeneratorError';
-    }
 }
 
 export enum DuplicateSource {

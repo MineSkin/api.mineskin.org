@@ -10,14 +10,14 @@ import readChunk from "read-chunk";
 import * as crypto from "crypto";
 import { Caching } from "../generator/Caching";
 import { MineSkinMetrics } from "./metrics";
-import { MineSkinError, MineSkinRequest } from "../typings";
+import { MineSkinRequest } from "../typings";
 import { imageHash } from "@inventivetalent/imghash";
 import { ClientInfo } from "../typings/ClientInfo";
 import UAParser from "ua-parser-js";
 import { getRedisNextRequest, updateRedisNextRequest } from "../database/redis";
 import { logger } from "./log";
 import { IApiKeyDocument, ISkinDocument, SkinModel } from "@mineskin/database";
-import { SkinVariant } from "@mineskin/types";
+import { MineSkinError, SkinVariant } from "@mineskin/types";
 import { TempFile } from "../generator/Temp";
 
 export function resolveHostname() {
@@ -155,6 +155,7 @@ export async function updateTraffic(client: ClientInfo, time: Date = new Date())
 }
 
 
+/**@deprecated**/
 export async function getAndValidateRequestApiKey(req: MineSkinRequest): Promise<Maybe<IApiKeyDocument>> {
     let keyStr;
 
@@ -172,7 +173,7 @@ export async function getAndValidateRequestApiKey(req: MineSkinRequest): Promise
 
         const key = await Caching.getApiKey(Caching.cachedSha512(keyStr));
         if (!key) {
-            throw new MineSkinError("invalid_api_key", "Invalid API Key", 403);
+            throw new MineSkinError("invalid_api_key", "Invalid API Key", {httpCode:403});
         }
 
         key.updateLastUsed(new Date()); // don't await, don't really care
@@ -184,13 +185,13 @@ export async function getAndValidateRequestApiKey(req: MineSkinRequest): Promise
             const ip = getIp(req);
             if (!ip || key.allowedIps.includes(ip.trim())) {
                 console.log(debug(`Client ${ ip } not allowed`));
-                throw new MineSkinError("invalid_api_key", "Client not allowed", 403);
+                throw new MineSkinError("invalid_api_key", "Client not allowed", {httpCode:403});
             }
         } else if (key.allowedOrigins && key.allowedOrigins.length > 0) {
             const origin = req.headers.origin;
             if (!origin || !key.allowedOrigins.includes(origin.trim().toLowerCase())) {
                 console.log(debug(`Origin ${ origin } not allowed`));
-                throw new MineSkinError("invalid_api_key", "Origin not allowed", 403);
+                throw new MineSkinError("invalid_api_key", "Origin not allowed", {httpCode:403});
             }
         }
 
@@ -198,7 +199,7 @@ export async function getAndValidateRequestApiKey(req: MineSkinRequest): Promise
             const agent = req.headers["user-agent"];
             if (!agent || !key.allowedAgents.includes(agent.trim().toLowerCase())) {
                 console.log(debug(`Agent ${ agent } not allowed`));
-                throw new MineSkinError("invalid_api_key", "Agent not allowed", 403);
+                throw new MineSkinError("invalid_api_key", "Agent not allowed", {httpCode:403});
             }
         }
 

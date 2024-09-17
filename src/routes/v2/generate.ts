@@ -1,4 +1,3 @@
-import { GeneratorError, GenError, MAX_IMAGE_SIZE } from "../../generator/Generator";
 import { Maybe } from "../../util";
 import multer, { MulterError } from "multer";
 import { Application, Response } from "express";
@@ -11,7 +10,10 @@ import {
     GenerateRequest,
     GenerateResult,
     GeneratorClient,
+    GeneratorError,
+    GenError,
     ImageService,
+    MAX_IMAGE_SIZE,
     SkinService
 } from "@mineskin/generator";
 import { logger } from "../../util/log";
@@ -124,7 +126,10 @@ export const register = (app: Application) => {
             //     code: 2,
             //     message: "invalid_argument"
             // });
-            throw new GeneratorError(GenError.INVALID_IMAGE, `Failed to get image hash: ${ e.message }`, 400, undefined, e);
+            throw new GeneratorError(GenError.INVALID_IMAGE, `Failed to get image hash: ${ e.message }`, {
+                httpCode: 400,
+                error: e
+            });
         }
         logger.debug(req.breadcrumbC + " Image hash: ", hashes);
 

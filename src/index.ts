@@ -24,11 +24,11 @@ import {
 } from "./routes";
 import { Temp } from "./generator/Temp";
 import { getConfig, getLocalConfig, MineSkinConfig } from "./typings/Configs";
-import { isBreadRequest, MineSkinError } from "./typings";
+import { isBreadRequest } from "./typings";
 import { MineSkinMetrics } from "./util/metrics";
 import { corsMiddleware, getAndValidateRequestApiKey, resolveHostname, simplifyUserAgent } from "./util";
 import { AuthenticationError } from "./generator/Authentication";
-import { Generator, GeneratorError } from "./generator/Generator";
+import { Generator } from "./generator/Generator";
 import { GitConfig } from "@inventivetalent/gitconfig";
 import { GithubWebhook } from "@inventivetalent/express-github-webhook/dist/src";
 import { Stats } from "./generator/Stats";
@@ -40,6 +40,8 @@ import { initRedis, redisClient } from "./database/redis";
 import UAParser from "ua-parser-js";
 import mongoose from "mongoose";
 import { connectToMongo } from "@mineskin/database";
+import { MineSkinError } from "@mineskin/types";
+import { GeneratorError } from "@mineskin/generator";
 
 
 sourceMapSupport.install();
@@ -334,9 +336,9 @@ async function init() {
             if (err instanceof AuthenticationError || err instanceof GeneratorError) {
                 addErrorDetailsToSentry(err);
             }
-            if (err.httpCode) {
-                Sentry.setTag("error_httpcode", `${ err.httpCode }`);
-                res.status(err.httpCode);
+            if (err.meta?.httpCode) {
+                Sentry.setTag("error_httpcode", `${ err.meta?.httpCode }`);
+                res.status(err.meta?.httpCode);
             } else {
                 res.status(500);
             }
@@ -465,16 +467,16 @@ async function init() {
 }
 
 function addErrorDetailsToSentry(err: AuthenticationError | GeneratorError): void {
-    Sentry.setExtra("error_account", err.account?.id);
-    Sentry.setExtra("error_details", err.details);
-    if (err.details instanceof Error) {
-        console.warn(warn(err.details.message));
-        Sentry.setExtra("error_details_error", err.details.name);
-        Sentry.setExtra("error_details_message", err.details.message);
+    Sentry.setExtra("error_account", err.meta?.account?.id);
+    Sentry.setExtra("error_details", err.meta?.details);
+    if (err.meta?.error instanceof Error) {
+        console.warn(warn(err.meta?.error.message));
+        Sentry.setExtra("error_details_error", err.meta.error.name);
+        Sentry.setExtra("error_details_message", err.meta.error.message);
     }
-    if (err.details && err.details.response) {
-        Sentry.setExtra("error_response", err.details.response);
-        Sentry.setExtra("error_response_data", err.details.response.data);
+    if (err.meta?.details && err.meta?.details.response) {
+        Sentry.setExtra("error_response", err.meta.details.response);
+        Sentry.setExtra("error_response_data", err.meta.details.response.data);
     }
 }
 

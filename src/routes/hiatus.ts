@@ -4,8 +4,8 @@ import { debug, warn } from "../util/colors";
 import { Discord } from "../util/Discord";
 import { Generator } from "../generator/Generator";
 import { Account, IAccountDocument } from "@mineskin/database";
-import { MineSkinError } from "../typings";
 import { Accounts } from "../generator/Accounts";
+import { MineSkinError } from "@mineskin/types";
 
 export const register = (app: Application) => {
 

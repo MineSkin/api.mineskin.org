@@ -1,10 +1,9 @@
 import * as Sentry from "@sentry/node";
-import { MineSkinError } from "../typings";
 import { Discord, OWNER_CHANNEL, SUPPORT_CHANNEL } from "./Discord";
 import { Email } from "./Email";
 import { MineSkinMetrics } from "./metrics";
 import { IAccountDocument } from "@mineskin/database";
-import { AccountType, GenerateType } from "@mineskin/types";
+import { AccountType, GenerateType, MineSkinError } from "@mineskin/types";
 
 const ERROR_THRESHOLD = 3;
 

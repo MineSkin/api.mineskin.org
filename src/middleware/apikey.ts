@@ -1,10 +1,10 @@
 import { Caching } from "../generator/Caching";
-import { MineSkinError } from "../typings";
 import { debug } from "../util/colors";
 import { getIp } from "../util";
 import { MineSkinV2Request } from "../routes/v2/types";
 import { NextFunction, Response } from "express";
 import * as Sentry from "@sentry/node";
+import { MineSkinError } from "@mineskin/types";
 
 export const apiKeyMiddleware = async (req: MineSkinV2Request, res: Response, next: NextFunction) => {
     let keyStr;
@@ -19,7 +19,7 @@ export const apiKeyMiddleware = async (req: MineSkinV2Request, res: Response, ne
 
         const key = await Caching.getApiKey(Caching.cachedSha512(keyStr));
         if (!key) {
-            throw new MineSkinError("invalid_api_key", "Invalid API Key", 403);
+            throw new MineSkinError("invalid_api_key", "Invalid API Key", {httpCode: 403});
         }
 
         key.updateLastUsed(new Date()); // don't await, don't really care
@@ -37,13 +37,13 @@ export const apiKeyMiddleware = async (req: MineSkinV2Request, res: Response, ne
             const ip = getIp(req);
             if (!ip || key.allowedIps.includes(ip.trim())) {
                 console.log(debug(`Client ${ ip } not allowed`));
-                throw new MineSkinError("invalid_api_key", "Client not allowed", 403);
+                throw new MineSkinError("invalid_api_key", "Client not allowed", {httpCode: 403});
             }
         } else if (key.allowedOrigins && key.allowedOrigins.length > 0) {
             const origin = req.headers.origin;
             if (!origin || !key.allowedOrigins.includes(origin.trim().toLowerCase())) {
                 console.log(debug(`Origin ${ origin } not allowed`));
-                throw new MineSkinError("invalid_api_key", "Origin not allowed", 403);
+                throw new MineSkinError("invalid_api_key", "Origin not allowed", {httpCode: 403});
             }
         }
 
@@ -51,7 +51,7 @@ export const apiKeyMiddleware = async (req: MineSkinV2Request, res: Response, ne
             const agent = req.headers["user-agent"];
             if (!agent || !key.allowedAgents.includes(agent.trim().toLowerCase())) {
                 console.log(debug(`Agent ${ agent } not allowed`));
-                throw new MineSkinError("invalid_api_key", "Agent not allowed", 403);
+                throw new MineSkinError("invalid_api_key", "Agent not allowed", {httpCode: 403});
             }
         }
 
