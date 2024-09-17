@@ -556,6 +556,7 @@ export class Generator {
                     .tag("server", metrics.config.server)
                     .tag("type", type)
                     .tag("userAgent", client.userAgent.ua)
+                    .tag("genEnv", "api")
                     .inc();
             } catch (e) {
                 Sentry.captureException(e);
@@ -646,6 +647,7 @@ export class Generator {
                             .tag("server", metrics.config.server)
                             .tag("source", DuplicateSource.MINESKIN_URL)
                             .tag("type", type)
+                            .tag("genEnv", "api")
                             .inc();
                     } catch (e) {
                         Sentry.captureException(e);
@@ -684,6 +686,7 @@ export class Generator {
                             .tag("server", metrics.config.server)
                             .tag("source", DuplicateSource.TEXTURE_URL)
                             .tag("type", type)
+                            .tag("genEnv", "api")
                             .inc();
                     } catch (e) {
                         Sentry.captureException(e);
@@ -726,6 +729,7 @@ export class Generator {
                         .tag("source", DuplicateSource.IMAGE_HASH)
                         .tag("type", type)
                         .tag("userAgent", client.userAgent.ua)
+                        .tag("genEnv", "api")
                         .inc();
                 } catch (e) {
                     Sentry.captureException(e);
@@ -771,6 +775,7 @@ export class Generator {
                         .tag("server", metrics.config.server)
                         .tag("source", DuplicateSource.USER_UUID)
                         .tag("type", type)
+                        .tag("genEnv", "api")
                         .inc();
                 } catch (e) {
                     Sentry.captureException(e);
@@ -1324,6 +1329,7 @@ export class Generator {
             .tag("account", account.id)
             .tag("accountType", account.accountType || "unknown")
             .tag("apiKey", client.apiKey || "none")
+            .tag("genEnv", "api")
             .inc();
         await Stat.inc(GENERATE_SUCCESS);
         await redisClient?.incr("mineskin:generated:total:success");
@@ -1366,7 +1372,8 @@ export class Generator {
             .tag("variant", options.variant)
             .tag("userAgent", client.userAgent.ua)
             .tag("apiKey", client.apiKey || "none")
-            .tag("via", client.via);
+            .tag("via", client.via)
+            .tag("genEnv", "api");
         if (account) {
             m.tag("account", account.id)
                 .tag("accountType", account.accountType || "unknown")

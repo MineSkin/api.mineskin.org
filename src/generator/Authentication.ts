@@ -555,7 +555,8 @@ export class Authentication {
             const metric = metrics.authentication
                 .tag("server", metrics.config.server)
                 .tag("type", account.accountType || AccountType.MICROSOFT)
-                .tag("account", account.id);
+                .tag("account", account.id)
+                .tag("genEnv", "api");
             try {
                 let prevAccessTokenExpiration = account.accessTokenExpiration;
                 let result: IAccountDocument;
