@@ -17,6 +17,7 @@ import {
 import { logger } from "../../util/log";
 import { apiKeyMiddleware } from "../../middleware/apikey";
 import { mineskinClientMiddleware } from "../../middleware/client";
+import { breadcrumbMiddleware } from "../../middleware/breadcrumb";
 
 export const register = (app: Application) => {
 
@@ -54,6 +55,7 @@ export const register = (app: Application) => {
     //     }
     // })
 
+    app.use("/v2/generate", breadcrumbMiddleware);
     app.use("/v2/generate", apiKeyMiddleware);
     app.use("/v2/generate", mineskinClientMiddleware);
 
@@ -99,7 +101,7 @@ export const register = (app: Application) => {
 
         logger.debug(file);
 
-        logger.debug(`${ req.breadcrumb } FILE:        "${ file.filename }"`);
+        logger.debug(`${ req.breadcrumbC } FILE:        "${ file.filename }"`);
 
         // let   tempFile = await Temp.file({
         //     dir: UPL_DIR
@@ -112,6 +114,8 @@ export const register = (app: Application) => {
 
         //TODO: validate file
 
+        //TODO: check duplicates
+
         let hashes;
         try {
             hashes = await ImageService.getImageHashes(file.buffer);
@@ -122,7 +126,7 @@ export const register = (app: Application) => {
             // });
             throw new GeneratorError(GenError.INVALID_IMAGE, `Failed to get image hash: ${ e.message }`, 400, undefined, e);
         }
-        logger.debug(req.breadcrumb + " Image hash: ", hashes);
+        logger.debug(req.breadcrumbC + " Image hash: ", hashes);
 
         console.log(file.buffer.byteLength);
 
@@ -137,7 +141,6 @@ export const register = (app: Application) => {
         }
         logger.debug(request);
         const job = await client.submitRequest(request);
-        logger.debug(job);
         const result = await job.waitUntilFinished(client.queueEvents,10_000) as GenerateResult;
 
         const skin = await SkinService.findForUuid(result.skin);
@@ -159,12 +162,11 @@ export const register = (app: Application) => {
 
             const checkOnly = !!(req.body["checkOnly"] || req.query["checkOnly"]); //TODO: implement this
 
-            const breadcrumb = req.breadcrumb;
 
             // console.log(debug(`${ breadcrumb } Type:        ${ type }`))
-            console.log(debug(`${ breadcrumb } Variant:     ${ variant }`));
-            console.log(debug(`${ breadcrumb } Visibility:  ${ visibility }`));
-            console.log(debug(`${ breadcrumb } Name:        "${ name ?? '' }"`));
+            console.log(debug(`${ req.breadcrumbC } Variant:     ${ variant }`));
+            console.log(debug(`${ req.breadcrumbC } Visibility:  ${ visibility }`));
+            console.log(debug(`${ req.breadcrumbC } Name:        "${ name ?? '' }"`));
             // if (checkOnly) {
             //     console.log(debug(`${ breadcrumb } Check Only:  true`));
             // }

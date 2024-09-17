@@ -24,20 +24,20 @@ export const mineskinClientMiddleware = async (req: MineSkinV2Request, res: Resp
 
     const userAgent = simplifyUserAgent(rawUserAgent);
 
-    logger.debug(`${ req.breadcrumb } Agent:       ${ req.headers["user-agent"] }`, {
+    logger.debug(`${ req.breadcrumbC } Agent:       ${ req.headers["user-agent"] }`, {
         breadcrumb: req.breadcrumb,
         userAgent: req.headers["user-agent"]
     });
     if (req.headers['origin']) {
-        logger.debug(`${ req.breadcrumb } Origin:      ${ req.headers['origin'] }`, {
+        logger.debug(`${ req.breadcrumbC } Origin:      ${ req.headers['origin'] }`, {
             breadcrumb: req.breadcrumb,
             origin: req.headers['origin']
         });
     }
-    console.log(debug(`${ req.breadcrumb } Key:         ${ req.apiKey?.name ?? "none" } ${ req.apiKey?._id ?? "" }`));
+    console.log(debug(`${ req.breadcrumbC } Key:         ${ req.apiKey?.name ?? "none" } ${ req.apiKey?._id ?? "" }`));
 
     const client: ClientInfo = {
-        date: new Date(),
+        time: Date.now(),
         key: req.apiKeyId,
         agent: userAgent.ua,
         origin: origin,
