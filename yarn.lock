@@ -194,6 +194,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@jimp/core@npm:1.6.0, @jimp/core@npm:^1.6.0":
+  version: 1.6.0
+  resolution: "@jimp/core@npm:1.6.0"
+  dependencies:
+    "@jimp/file-ops": "npm:1.6.0"
+    "@jimp/types": "npm:1.6.0"
+    "@jimp/utils": "npm:1.6.0"
+    await-to-js: "npm:^3.0.0"
+    exif-parser: "npm:^0.1.12"
+    file-type: "npm:^16.0.0"
+    mime: "npm:3"
+  checksum: 10c0/8a0b4e661ac21be553ed0374b4fd442b5178f57d52a3f67bc111bfb3d2f91ca39dd9b3062fbbe577fe0529168c8f51184928280906177ff5165f4ae077e9d47f
+  languageName: node
+  linkType: hard
+
 "@jimp/core@npm:^0.22.12":
   version: 0.22.12
   resolution: "@jimp/core@npm:0.22.12"
@@ -219,6 +234,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@jimp/file-ops@npm:1.6.0":
+  version: 1.6.0
+  resolution: "@jimp/file-ops@npm:1.6.0"
+  checksum: 10c0/71829fa1896362e962f40830d13869483bdf591a9eb315b61881b221a961c390f33601f7b981948955ec922142ab9ba3e4ded1fde17af2b5bf07022e813d335d
+  languageName: node
+  linkType: hard
+
 "@jimp/gif@npm:^0.22.12":
   version: 0.22.12
   resolution: "@jimp/gif@npm:0.22.12"
@@ -241,6 +263,17 @@ __metadata:
   peerDependencies:
     "@jimp/custom": ">=0.3.5"
   checksum: 10c0/3ff0e72d6cb86d2ae968b8e82a4a01b828f0c21b95b2b74c9c9d17ab2f3ededbdbb87590659a3bd4d62a0b3e759818080d47a09aa6fca82388eda68106ae1b70
+  languageName: node
+  linkType: hard
+
+"@jimp/js-png@npm:^1.6.0":
+  version: 1.6.0
+  resolution: "@jimp/js-png@npm:1.6.0"
+  dependencies:
+    "@jimp/core": "npm:1.6.0"
+    "@jimp/types": "npm:1.6.0"
+    pngjs: "npm:^7.0.0"
+  checksum: 10c0/7386abd8f4629ffb59924b249045d650737f4535ec0b6027eb2a1dae14ec5f4fe06dd1a45edfed760bba587fdf5a03394f83b0cf5dd5e70fd6fa1be49f17d941
   languageName: node
   linkType: hard
 
@@ -548,6 +581,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@jimp/types@npm:1.6.0":
+  version: 1.6.0
+  resolution: "@jimp/types@npm:1.6.0"
+  dependencies:
+    zod: "npm:^3.23.8"
+  checksum: 10c0/b974bd6d776499036dd8606ca642c62f497cc4c10a1f4032cf2383b1ca8f0a8948da8b1a848956b2dd69cf5e186c65f2d75d6159d7b6386a49fcfcef7fd0a73a
+  languageName: node
+  linkType: hard
+
 "@jimp/types@npm:^0.22.12":
   version: 0.22.12
   resolution: "@jimp/types@npm:0.22.12"
@@ -561,6 +603,16 @@ __metadata:
   peerDependencies:
     "@jimp/custom": ">=0.3.5"
   checksum: 10c0/62440b2ca490f7dca5943dde8b9c2f154240d1349563263faf299d476365b93bb94a7e892ce4685cc817ca087850ffc0914c27662164f5be90f4d4dad97fc46e
+  languageName: node
+  linkType: hard
+
+"@jimp/utils@npm:1.6.0":
+  version: 1.6.0
+  resolution: "@jimp/utils@npm:1.6.0"
+  dependencies:
+    "@jimp/types": "npm:1.6.0"
+    tinycolor2: "npm:^1.6.0"
+  checksum: 10c0/3d4b5b08675abc5c9ab3d962b8e9c7328bd0f2d300c7a04e042097187c8ba4b7b885fb3e9dc807a4e69e3ea54aa2d57dc9905b42b61ac13215776877dd9e7892
   languageName: node
   linkType: hard
 
@@ -631,7 +683,7 @@ __metadata:
 
 "@mineskin/auth@git+ssh://git@github.com/MineSkin/mineskin-auth.git":
   version: 1.0.0
-  resolution: "@mineskin/auth@git+ssh://git@github.com/MineSkin/mineskin-auth.git#commit=606e39c34b3e4dfc106524cd7a12c895c359f6e0"
+  resolution: "@mineskin/auth@git+ssh://git@github.com/MineSkin/mineskin-auth.git#commit=7fb7be5bf6690f29115813d470e2c391ffb95102"
   dependencies:
     "@xboxreplay/xboxlive-auth": "npm:^4.0.0"
     axios: "npm:^1.7.2"
@@ -643,7 +695,7 @@ __metadata:
 
 "@mineskin/database@git+ssh://git@github.com/MineSkin/mineskin-database.git#skin2":
   version: 1.0.0
-  resolution: "@mineskin/database@git+ssh://git@github.com/MineSkin/mineskin-database.git#commit=e76d4fa55aeb2dafc914174b9eeff7eec7e229d3"
+  resolution: "@mineskin/database@git+ssh://git@github.com/MineSkin/mineskin-database.git#commit=3bcfb12c8e24830c4cef1241f7e573aa3a1285b8"
   dependencies:
     "@mineskin/types": "git+ssh://git@github.com/MineSkin/mineskin-types.git#skin2"
     "@sentry/cli": "npm:^2.32.2"
@@ -652,17 +704,20 @@ __metadata:
     dotenv: "npm:^16.4.5"
     mongoose: "npm:^8.5.3"
     uuid: "npm:^10.0.0"
-  checksum: 10c0/80776bf4791a4a084f771dc9ab5a4d4e330dec9f07326ada538fed65da68e7366621f73063b1a933596b280fd3b24640f34389fe7dba30983ac232ae56605ecc
+  checksum: 10c0/e38de6c035319d6f114e5e7a7b1dc6abe24402b0f1d172dd0bae52ba681913f8072296aa30c220620963fd1f225338d331d845249b956f98e6102a6b71e0f0ab
   languageName: node
   linkType: hard
 
 "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git":
   version: 0.0.0
-  resolution: "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git#commit=d33ff877c86de5444752d3446a8619a7d2612709"
+  resolution: "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git#commit=bd928f5a0cb50e827f7acb72e582226ab48df87b"
   dependencies:
     "@inventivetalent/imghash": "npm:^1.1.1"
     "@inventivetalent/loading-cache": "npm:^0.7.1"
     "@inventivetalent/time": "npm:^1.0.3"
+    "@jimp/core": "npm:^1.6.0"
+    "@jimp/js-png": "npm:^1.6.0"
+    "@jimp/png": "npm:^0.22.12"
     "@mineskin/auth": "git+ssh://git@github.com/MineSkin/mineskin-auth.git"
     "@mineskin/database": "git+ssh://git@github.com/MineSkin/mineskin-database.git#skin2"
     "@mineskin/hash-rust": "npm:^1.0.3"
@@ -674,16 +729,18 @@ __metadata:
     axios: "npm:^1.7.7"
     bullmq: "npm:^5.13.0"
     dotenv: "npm:^16.4.5"
+    file-type: "npm:^16.1.0"
     flagsmith-nodejs: "npm:^3.3.3"
     form-data: "npm:^4.0.0"
     https-proxy-agent: "npm:^5.0.1"
+    image-size: "npm:^1.1.1"
     metrics-node: "npm:^1.0.1"
     mongoose: "npm:^8.5.3"
     redis: "npm:^4.7.0"
     uuid: "npm:^10.0.0"
     winston: "npm:^3.14.2"
     winston-daily-rotate-file: "npm:^5.0.0"
-  checksum: 10c0/2dda1fb12aec748a1c9878ed6aac91623c78605971fe284d275537b5a388b4372f2fbaf061dcfdb14067328868345b268395460067a214ae8b0120ca93624700
+  checksum: 10c0/a41a29ce9bb66af6d4891a5116193c8186c689719df318d2d9113ff9ee17e91a539fbe3844541c4cfc7bec28556961aade9fc2862e519eec4f75dbcf378f9f2b
   languageName: node
   linkType: hard
 
@@ -696,7 +753,7 @@ __metadata:
 
 "@mineskin/requests@git+ssh://git@github.com/MineSkin/mineskin-requests.git":
   version: 1.0.1
-  resolution: "@mineskin/requests@git+ssh://git@github.com/MineSkin/mineskin-requests.git#commit=6cf8133c41db7504c3ecc9ada6360c8b6deaf4e7"
+  resolution: "@mineskin/requests@git+ssh://git@github.com/MineSkin/mineskin-requests.git#commit=a1afd206d3a67e30854bed883055019eebae2dd6"
   dependencies:
     "@inventivetalent/axios-rate-limit": "npm:^1.3.5"
     "@inventivetalent/time": "npm:^1.0.3"
@@ -709,14 +766,14 @@ __metadata:
     dotenv: "npm:^16.4.5"
     https-proxy-agent: "npm:^5.0.1"
     jobqu: "npm:^2.0.5"
-  checksum: 10c0/fa8c55381f3f6f936a664e906511cb12618544d71912dcbba0b2a8f4b3ec8f76b8213d5585fe4dc418e40cdb67a5dc1e85f4b955df338ecf73386c7d1bd8f0e4
+  checksum: 10c0/89326dcfeb860a68da7aeba35136f545ea7a768fa1f5b44a234e0c24e63d24e5b1d2b9918694002bcf777c92a891b910bc88787b8a2f48213d9aaa730dd85d32
   languageName: node
   linkType: hard
 
 "@mineskin/types@git+ssh://git@github.com/MineSkin/mineskin-types.git#skin2":
   version: 1.0.1
-  resolution: "@mineskin/types@git+ssh://git@github.com/MineSkin/mineskin-types.git#commit=61e24acc9f7eefb20d6351560a3d2590cd0b752f"
-  checksum: 10c0/ed29b1b524dbcc7873d56b8fde5f9d96c9d30feb1f6312152fc0f131034d0cae9455f570922195eb29127331abcd4d4a4e2a8ad4fea09c338c2e41ee6b16bfcc
+  resolution: "@mineskin/types@git+ssh://git@github.com/MineSkin/mineskin-types.git#commit=7ada844b7b590b8cc439b0ea49dec79af24e722d"
+  checksum: 10c0/d9c5641e79e4c739c3333abcd9164bbcf5932241c8ffd68c2f059b009d61bc6df5d009046e8a19d5082d01cfc5df316efa73b6d86de24916c1c7bae27581600c
   languageName: node
   linkType: hard
 
@@ -2912,6 +2969,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"await-to-js@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "await-to-js@npm:3.0.0"
+  checksum: 10c0/1e6184cf4090acf24f6573a475901623ec25df494a3e4b9c27eab9cd4a9f1c0bdb8150c41dbb98e719fd2513dbf32ab8cb88d2ac2c2c4c2fa57024e82128a3db
+  languageName: node
+  linkType: hard
+
 "aws-sign2@npm:~0.7.0":
   version: 0.7.0
   resolution: "aws-sign2@npm:0.7.0"
@@ -4001,7 +4065,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"file-type@npm:^16.1.0, file-type@npm:^16.5.4":
+"file-type@npm:^16.0.0, file-type@npm:^16.1.0, file-type@npm:^16.5.4":
   version: 16.5.4
   resolution: "file-type@npm:16.5.4"
   dependencies:
@@ -4518,7 +4582,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"image-size@npm:*":
+"image-size@npm:*, image-size@npm:^1.1.1":
   version: 1.1.1
   resolution: "image-size@npm:1.1.1"
   dependencies:
@@ -5237,6 +5301,15 @@ __metadata:
   bin:
     mime: cli.js
   checksum: 10c0/b92cd0adc44888c7135a185bfd0dddc42c32606401c72896a842ae15da71eb88858f17669af41e498b463cd7eb998f7b48939a25b08374c7924a9c8a6f8a81b0
+  languageName: node
+  linkType: hard
+
+"mime@npm:3":
+  version: 3.0.0
+  resolution: "mime@npm:3.0.0"
+  bin:
+    mime: cli.js
+  checksum: 10c0/402e792a8df1b2cc41cb77f0dcc46472b7944b7ec29cb5bbcd398624b6b97096728f1239766d3fdeb20551dd8d94738344c195a6ea10c4f906eb0356323b0531
   languageName: node
   linkType: hard
 
@@ -7861,7 +7934,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"zod@npm:^3.21.4":
+"zod@npm:^3.21.4, zod@npm:^3.23.8":
   version: 3.23.8
   resolution: "zod@npm:3.23.8"
   checksum: 10c0/8f14c87d6b1b53c944c25ce7a28616896319d95bc46a9660fe441adc0ed0a81253b02b5abdaeffedbeb23bdd25a0bf1c29d2c12dd919aef6447652dd295e3e69

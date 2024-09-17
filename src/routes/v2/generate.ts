@@ -5,9 +5,18 @@ import { Application, Response } from "express";
 import { GenerateV2Request } from "./types";
 import * as Sentry from "@sentry/node";
 import { debug } from "../../util/colors";
-import { SkinVariant, SkinVisibility2 } from "@mineskin/types";
-import { GenerateOptions, GenerateRequest, GeneratorClient, ImageService } from "@mineskin/generator";
+import { GenerateType, SkinVariant, SkinVisibility2 } from "@mineskin/types";
+import {
+    GenerateOptions,
+    GenerateRequest,
+    GenerateResult,
+    GeneratorClient,
+    ImageService,
+    SkinService
+} from "@mineskin/generator";
 import { logger } from "../../util/log";
+import { apiKeyMiddleware } from "../../middleware/apikey";
+import { mineskinClientMiddleware } from "../../middleware/client";
 
 export const register = (app: Application) => {
 
@@ -33,19 +42,20 @@ export const register = (app: Application) => {
     //     next();
     // });
     // app.use("/generate", generateLimiter);
-    // app.use("/generate", async (req: MineSkinRequest, res, next) => {
+    // app.use("/v2/generate", async (req: MineSkinV2Request, res, next) => {
     //     try {
     //         const key = await getAndValidateRequestApiKey(req);
-    //         const delay = await Generator.getDelay(key);
+    //         const delay = await GeneratorV1.getDelay(key);
     //         req.delayInfo = delay;
-    //         res.header("X-MineSkin-Delay", `${ delay.seconds || 5 }`); //deprecated
-    //         res.header("X-MineSkin-Delay-Seconds", `${ delay.seconds || 5 }`);
     //         res.header("X-MineSkin-Delay-Millis", `${ delay.millis || 5000 }`);
     //         next();
     //     } catch (e) {
     //         next(e);
     //     }
     // })
+
+    app.use("/v2/generate", apiKeyMiddleware);
+    app.use("/v2/generate", mineskinClientMiddleware);
 
 
     app.post("/v2/generate/upload", async (req: GenerateV2Request, res: Response) => {
@@ -74,6 +84,10 @@ export const register = (app: Application) => {
 
         const options = getAndValidateOptions(req, res);
         //const client = getClientInfo(req);
+        if (!req.client) {
+            res.status(500).json({error: "no client info"});
+            return;
+        }
 
         const file: Maybe<Express.Multer.File> = req.file;
         if (!file) {
@@ -110,21 +124,28 @@ export const register = (app: Application) => {
         }
         logger.debug(req.breadcrumb + " Image hash: ", hashes);
 
+        console.log(file.buffer.byteLength);
+
         const imageUploaded = await client.insertUploadedImage(hashes.minecraft, file.buffer);
 
         const request: GenerateRequest = {
             breadcrumb: req.breadcrumb || "????",
+            type: GenerateType.UPLOAD,
             image: hashes.minecraft,
             options: options,
-            client: { //FIXME
-                date: new Date(),
-                agent:"unknown",
-                ip:"unknown"
-            }
+            client: req.client
         }
         logger.debug(request);
-        await client.submitRequest(request);
+        const job = await client.submitRequest(request);
+        logger.debug(job);
+        const result = await job.waitUntilFinished(client.queueEvents,10_000) as GenerateResult;
 
+        const skin = await SkinService.findForUuid(result.skin);
+
+        //TODO: proper response
+        return res.json({
+            skin: skin
+        });
     });
 
     function getAndValidateOptions(req: GenerateV2Request, res: Response): GenerateOptions {
