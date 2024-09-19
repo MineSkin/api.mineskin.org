@@ -66,7 +66,7 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
             success: false,
             errors: [
                 {
-                    code: 'request_too_soon',
+                    code: 'rate_limit',
                     message: `request too soon, next request in ${ ((Math.round(nextRequest - now) / 100) * 100) }ms`
                 }
             ]
