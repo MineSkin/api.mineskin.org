@@ -1,1 +1,1 @@
-export * as v2generateRoute from "./generate"
+export { v2GenerateRouter } from "./generate"
