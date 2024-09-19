@@ -4,7 +4,7 @@ import { Application, Response } from "express";
 import { GenerateV2Request } from "./types";
 import * as Sentry from "@sentry/node";
 import { debug } from "../../util/colors";
-import { ErrorSource, GenerateType, SkinInfo2, SkinVariant, SkinVisibility2 } from "@mineskin/types";
+import { ErrorSource, GenerateType, SkinInfo2, SkinVariant, SkinVisibility2, UUID } from "@mineskin/types";
 import {
     DuplicateChecker,
     GenerateOptions,
@@ -187,7 +187,26 @@ export const register = (app: Application) => {
 
         console.log(file.buffer.byteLength);
 
-        const duplicateResult = await DuplicateChecker.findDuplicateFromImageHash(hashes, options, req.client, GenerateType.UPLOAD, req.breadcrumb || "????");
+        // duplicate check V2, same as in generator
+        //  just to avoid unnecessary submissions to generator
+        const duplicateV2Data = await DuplicateChecker.findDuplicateDataFromImageHash(hashes, options.variant, GenerateType.UPLOAD, req.breadcrumb || "????");
+        if (duplicateV2Data.existing) {
+            // found existing data
+            const skinForDuplicateData = await DuplicateChecker.findV2ForData(duplicateV2Data.existing);
+            const result = await DuplicateChecker.handleV2DuplicateResult({
+                source: duplicateV2Data.source,
+                existing: skinForDuplicateData,
+                data: duplicateV2Data.existing
+            }, options, req.client, req.breadcrumb || "????");
+            await DuplicateChecker.handleDuplicateResultMetrics(result, GenerateType.UPLOAD, options, req.client);
+            if (!!result.existing) {
+                // full duplicate, return existing skin
+                return await queryAndSendSkin(req, res, result.existing.uuid);
+            }
+            // otherwise, continue with generator
+        }
+
+        const duplicateResult = await DuplicateChecker.findDuplicateDataFromImageHash(hashes, options.variant, GenerateType.UPLOAD, req.breadcrumb || "????");
         logger.debug(JSON.stringify(duplicateResult, null, 2));
         if (duplicateResult.existing && isV1SkinDocument(duplicateResult.existing)) {
             return res.json({
@@ -214,7 +233,11 @@ export const register = (app: Application) => {
         const job = await client.submitRequest(request);
         const result = await job.waitUntilFinished(client.queueEvents, 10_000) as GenerateResult;
 
-        const skin = await SkinService.findForUuid(result.skin);
+        return await queryAndSendSkin(req, res, result.skin);
+    });
+
+    async function queryAndSendSkin(req: GenerateV2Request, res: Response, uuid: UUID) {
+        const skin = await SkinService.findForUuid(uuid);
         if (!skin || !isPopulatedSkin2Document(skin) || !skin.data) {
             return res.status(500).json({
                 success: false,
@@ -232,7 +255,7 @@ export const register = (app: Application) => {
             success: true,
             skin: skinToJson(skin)
         });
-    });
+    }
 
     function isV1SkinDocument(skin: any): skin is ISkinDocument {
         return 'skinUuid' in skin || 'minecraftTextureHash' in skin;
