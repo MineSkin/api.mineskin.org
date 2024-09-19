@@ -108,7 +108,7 @@ The account won't be used for skin generation until the issues are resolved.
 It's recommended to check if Mojang/Microsoft is having issues. If that's the case, you're probably fine ignoring this message for the time being.
 https://downdetector.com/status/minecraft/
 
-Please log back in to your account at https://mineskin.org/account/minecraft?email=${account.email}
+Please log back in to your account at https://mineskin.org/account/minecraft?email=${ account.email }
 
 ${ account.accountType === AccountType.MICROSOFT ? "You should also check https://account.live.com/Activity" : "" }
 ${ this.supportLink(email) }
@@ -126,7 +126,7 @@ ${ this.accountInfo(acc, true) }
 <p></p>
 <p>The account won't be used for skin generation until the issues are resolved.</p>
 <br/>
-<p><strong>Please log back in to your account at <a href="https://mineskin.org/account/minecraft?email=${account.email}">mineskin.org/account</a></strong></p>
+<p><strong>Please log back in to your account at <a href="https://mineskin.org/account/minecraft?email=${ account.email }">mineskin.org/account</a></strong></p>
 <br/>
 ${ account.accountType === AccountType.MICROSOFT ? "<p>You should also check <a href='https://account.live.com/Activity'>account.live.com/Activity</a></p>" : "" }
 <p>${ this.supportLink(true) }</p>
@@ -153,7 +153,7 @@ ${ this.accountInfo(acc, false) }
 
 The account won't be used for skin generation until the issues are resolved  
 
-Please try to login at https://www.minecraft.net/login and check if there are any issues with your account and then log back in to your account at https://mineskin.org/account?email=${account.email}
+Please try to login at https://www.minecraft.net/login and check if there are any issues with your account and then log back in to your account at https://mineskin.org/account?email=${ account.email }
 
 ${ account.accountType === AccountType.MICROSOFT ? "You should also check https://account.live.com/Activity" : "" }
 ${ this.supportLink(email) }
@@ -171,7 +171,7 @@ ${ this.accountInfo(acc, true) }
 <p></p>
 <p>The account won't be used for skin generation until the issues are resolved.</p>
 <br/>
-<p>Please try to login at <a href="https://www.minecraft.net/login">minecraft.net</a> and check if there are any issues with your account and then <strong>log back in to your account at <a href="https://mineskin.org/account?email=${account.email}">mineskin.org/account</a></strong></p>
+<p>Please try to login at <a href="https://www.minecraft.net/login">minecraft.net</a> and check if there are any issues with your account and then <strong>log back in to your account at <a href="https://mineskin.org/account?email=${ account.email }">mineskin.org/account</a></strong></p>
 <br/>
 ${ account.accountType === AccountType.MICROSOFT ? "<p>You should also check <a href='https://account.live.com/Activity'>account.live.com/Activity</a></p>" : "" }
 <p>${ this.supportLink(true) }</p>
@@ -186,7 +186,7 @@ ${ account.accountType === AccountType.MICROSOFT ? "<p>You should also check <a 
             "  Current Server: " + account.lastRequestServer + "/" + account.requestServer + "\n" +
             "  Account Type: " + account.accountType + "\n" +
             "  Latest Type: " + lastType + "\n" +
-            "  Latest Cause: " + (err.code || err.msg || "n/a") + "\n" +
+            "  Latest Cause: " + (err.code || err.msg || "n/a") + " " + (err.message || err.msg || 'n/a') + "\n" +
             "  Current Success/Error: " + account.successCounter + "/" + account.errorCounter + "\n" +
             "  Total Success/Error: " + account.totalSuccessCounter + "/" + account.totalErrorCounter + "\n" +
             "  Account Added: " + new Date((account.timeAdded || 0) * 1000).toUTCString() + "\n" +
@@ -202,7 +202,7 @@ ${ this.accountInfo(acc, false) }
 
 The account won't be used for skin generation until the issues are resolved.  
 
-Please make sure the configured credentials & security questions are correct at https://mineskin.org/account?email=${account.email}  
+Please make sure the configured credentials & security questions are correct at https://mineskin.org/account?email=${ account.email }  
 
 ${ account.accountType === AccountType.MICROSOFT ? "You should also check https://account.live.com/Activity" : "" }
 ${ this.supportLink(email) }
@@ -220,7 +220,7 @@ ${ this.accountInfo(acc, true) }
 <p></p>
 <p>The account won't be used for skin generation until the issues are resolved.</p>
 <br/>
-<p><strong>Please make sure the configured credentials & security questions are correct at <a href="https://mineskin.org/account?email=${account.email}">mineskin.org/account</a></strong></p>
+<p><strong>Please make sure the configured credentials & security questions are correct at <a href="https://mineskin.org/account?email=${ account.email }">mineskin.org/account</a></strong></p>
 <br/>
 ${ account.accountType === AccountType.MICROSOFT ? "<p>You should also check <a href='https://account.live.com/Activity'>account.live.com/Activity</a></p>" : "" }
 <p>${ this.supportLink(true) }</p>

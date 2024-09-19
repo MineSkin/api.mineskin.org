@@ -1380,9 +1380,12 @@ export class Generator {
         if (account) {
             try {
                 account.successCounter = 0;
-                account.errorCounter++;
+                if (!(e instanceof GeneratorError)) {
+                    account.errorCounter++;
+                }
                 account.totalErrorCounter++;
                 account.lastErrorCode = e.code;
+                account.lastErrorMessage = e.message;
                 if (e instanceof AuthenticationError) {
                     account.forcedTimeoutAt = Math.floor(Date.now() / 1000);
                     console.warn(warn(options.breadcrumb + " [Generator] Account #" + account.id + " forced timeout"));

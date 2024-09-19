@@ -240,7 +240,11 @@ paths:
                 - properties:
                     url:
                       type: string
-                      example: "https://i.imgur.com/kQPrtYw.png"
+            example:
+              url: "https://i.imgur.com/kQPrtYw.png"
+              visibility: 0
+              name: ""
+              variant: "classic"
       responses:
         200:
           $ref: '#/components/responses/GeneratedSkin'
@@ -300,6 +304,11 @@ paths:
                       type: string
                       minLength: 32
                       maxLength: 36
+              example:
+                uuid: "bcd2033c63ec4bf88aca680b22461340"
+                visibility: 0
+                name: ""
+                variant: "slim"
       responses:
         200:
           $ref: '#/components/responses/GeneratedSkin'
