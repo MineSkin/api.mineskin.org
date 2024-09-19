@@ -1415,7 +1415,9 @@ export class Generator {
         if (account) {
             try {
                 account.successCounter = 0;
-                account.errorCounter++;
+                if (!(e instanceof GeneratorError)) {
+                    account.errorCounter++;
+                }
                 account.totalErrorCounter++;
                 account.lastErrorCode = e.code;
                 account.lastErrorMessage = e.message;
