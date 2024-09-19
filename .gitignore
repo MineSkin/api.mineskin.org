@@ -12,6 +12,7 @@ config.js
 
 *.docker-compose.yml
 
+.npmrc
 .env*
 .flaskenv*
 !.env.project
