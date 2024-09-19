@@ -19,8 +19,7 @@ import {
     hiatusRoute,
     renderRoute,
     testerRoute,
-    utilRoute,
-    v2generateRoute
+    utilRoute
 } from "./routes";
 import { Temp } from "./generator/Temp";
 import { getConfig, getLocalConfig, MineSkinConfig } from "./typings/Configs";
@@ -42,6 +41,7 @@ import mongoose from "mongoose";
 import { connectToMongo } from "@mineskin/database";
 import { MineSkinError } from "@mineskin/types";
 import { GeneratorError } from "@mineskin/generator";
+import { v2GenerateRouter } from "./routes/v2/generate";
 
 
 sourceMapSupport.install();
@@ -313,8 +313,7 @@ async function init() {
         apiKeyRoute.register(app);
         hiatusRoute.register(app);
 
-        v2generateRoute.register(app);
-
+        app.use("/v2/generate", v2GenerateRouter);
 
     }
 
