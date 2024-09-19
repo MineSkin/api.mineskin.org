@@ -14,7 +14,8 @@ import {
     ImageService,
     ImageValidation,
     MAX_IMAGE_SIZE,
-    SkinService
+    SkinService,
+    TrafficService
 } from "@mineskin/generator";
 import { ErrorSource, GenerateType, SkinInfo2, SkinVariant, SkinVisibility2, UUID } from "@mineskin/types";
 import { IPopulatedSkin2Document, ISkinDocument, isPopulatedSkin2Document } from "@mineskin/database";
@@ -40,6 +41,38 @@ const client = new GeneratorClient({
 });
 
 export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response<V2Response | V2SkinResponse>) {
+
+    const options = getAndValidateOptions(req, res);
+    //const client = getClientInfo(req);
+    if (!req.client) {
+        res.status(500).json({
+            success: false,
+            errors: [
+                {
+                    code: 'invalid_client',
+                    message: `no client info`
+                }
+            ]
+        });
+        return;
+    }
+
+    // check rate limit
+    const nextRequest = await TrafficService.getNextRequest(req.client);
+    const now = Date.now();
+    if (nextRequest > now) {
+        //TODO: full delay response
+        return res.status(429).json({
+            success: false,
+            errors: [
+                {
+                    code: 'request_too_soon',
+                    message: `request too soon, next request in ${ ((Math.round(nextRequest - now) / 100) * 100) }ms`
+                }
+            ]
+        });
+    }
+
     try {
         await new Promise<void>((resolve, reject) => {
             upload.single('file')(req, res, function (err) {
@@ -79,21 +112,6 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
 
     logger.debug(req.body);
 
-    const options = getAndValidateOptions(req, res);
-    //const client = getClientInfo(req);
-    if (!req.client) {
-        res.status(500).json({
-            success: false,
-            errors: [
-                {
-                    code: 'invalid_client',
-                    message: `no client info`
-                }
-            ]
-        });
-        return;
-    }
-
     const file: Maybe<Express.Multer.File> = req.file;
     if (!file) {
         res.status(500).json({
@@ -110,18 +128,9 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
 
     logger.debug(`${ req.breadcrumbC } FILE:        "${ file.filename }"`);
 
-    // let   tempFile = await Temp.file({
-    //     dir: UPL_DIR
-    // });
-    // await Temp.copyUploadedImage(file, tempFile);
-    //
-    // console.log(tempFile.path)
-    // const imageBuffer = await fs.readFile(tempFile.path);
-    // console.log(imageBuffer.byteLength);
+    // preliminary rate limiting
+    await TrafficService.updateLastAndNextRequest(req.client, 200);
 
-    //TODO: validate file
-
-    //TODO: check duplicates
 
     const validation = await ImageValidation.validateImageBuffer(file.buffer);
     logger.debug(validation);

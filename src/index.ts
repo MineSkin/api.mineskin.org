@@ -41,7 +41,7 @@ import UAParser from "ua-parser-js";
 import mongoose from "mongoose";
 import { connectToMongo } from "@mineskin/database";
 import { MineSkinError } from "@mineskin/types";
-import { GeneratorError } from "@mineskin/generator";
+import { GeneratorError, TrafficService } from "@mineskin/generator";
 
 
 sourceMapSupport.install();
@@ -245,6 +245,8 @@ async function init() {
     {
         console.info("Connecting to Redis...")
         await initRedis();
+
+        TrafficService.init();
     }
 
     {
