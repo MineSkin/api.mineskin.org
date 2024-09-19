@@ -171,11 +171,12 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
         await DuplicateChecker.handleDuplicateResultMetrics(result, GenerateType.UPLOAD, options, req.client);
         if (!!result.existing) {
             // full duplicate, return existing skin
-            return await queryAndSendSkin(req, res, result.existing.uuid);
+            return await queryAndSendSkin(req, res, result.existing.uuid, true);
         }
         // otherwise, continue with generator
     }
 
+    /*
     const duplicateResult = await DuplicateChecker.findDuplicateDataFromImageHash(hashes, options.variant, GenerateType.UPLOAD, req.breadcrumb || "????");
     logger.debug(JSON.stringify(duplicateResult, null, 2));
     if (duplicateResult.existing && isV1SkinDocument(duplicateResult.existing)) {
@@ -189,6 +190,7 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
             skin: skinToJson(duplicateResult.existing, true)
         });
     }
+     */
 
     const imageUploaded = await client.insertUploadedImage(hashes.minecraft, file.buffer);
 
@@ -206,7 +208,7 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
     return await queryAndSendSkin(req, res, result.skin);
 }
 
-async function queryAndSendSkin(req: GenerateV2Request, res: Response, uuid: UUID) {
+async function queryAndSendSkin(req: GenerateV2Request, res: Response, uuid: UUID, duplicate: boolean = false) {
     const skin = await SkinService.findForUuid(uuid);
     if (!skin || !isPopulatedSkin2Document(skin) || !skin.data) {
         return res.status(500).json({
@@ -223,7 +225,7 @@ async function queryAndSendSkin(req: GenerateV2Request, res: Response, uuid: UUI
     //TODO: proper response
     return res.json({
         success: true,
-        skin: skinToJson(skin)
+        skin: skinToJson(skin, duplicate)
     });
 }
 
