@@ -93,7 +93,11 @@ httpLogRotate.on('rotate', (oldFilename, newFilename) => {
 export const httpLogger = winston.createLogger({
     level: 'http',
     format: format.combine(
-        format.timestamp({format: 'YYYY-MM-DD HH:mm:ss.SSS'})
+        format.timestamp({format: 'YYYY-MM-DD HH:mm:ss.SSS'}),
+        format.printf(
+            ({ level, message, timestamp, label }) =>
+                `${timestamp} ${label || '-'} ${level}: ${message}`,
+        ),
     ),
     transports: [
         httpLogRotate,
