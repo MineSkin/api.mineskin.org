@@ -66,18 +66,17 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
     }
 
     // check rate limit
-    req.nextRequest = await TrafficService.getNextRequest(req.client);
-    req.minDelay = await TrafficService.getMinDelay(req.client, req.apiKey) * 1000;
-    const now = Date.now();
-    if (req.nextRequest > now) {
-        //TODO: full delay response
+    const trafficService = TrafficService.getInstance();
+    req.nextRequest = await trafficService.getNextRequest(req.client);
+    req.minDelay = await trafficService.getMinDelaySeconds(req.client, req.apiKey) * 1000;
+    if (req.nextRequest > req.client.time) {
         return res.status(429).json({
             success: false,
             rateLimit: makeRateLimitInfo(req),
             errors: [
                 {
                     code: 'rate_limit',
-                    message: `request too soon, next request in ${ ((Math.round(req.nextRequest - now) / 100) * 100) }ms`
+                    message: `request too soon, next request in ${ ((Math.round(req.nextRequest - Date.now()) / 100) * 100) }ms`
                 }
             ]
         });
@@ -139,7 +138,8 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
     logger.debug(`${ req.breadcrumbC } FILE:        "${ file.filename }"`);
 
     // preliminary rate limiting
-    req.nextRequest = await TrafficService.updateLastAndNextRequest(req.client, 200);
+    req.nextRequest = await trafficService.updateLastAndNextRequest(req.client, 200)
+    logger.debug(`next request at ${ req.nextRequest }`);
 
 
     const validation = await ImageValidation.validateImageBuffer(file.buffer);

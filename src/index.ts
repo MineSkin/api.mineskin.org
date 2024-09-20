@@ -34,7 +34,7 @@ import { Requests } from "./generator/Requests";
 import { debug, info, warn } from "./util/colors";
 import { Discord } from "./util/Discord";
 import { Balancer } from "./generator/Balancer";
-import { initRedis, redisClient } from "./database/redis";
+import { initRedis, redisClient, redisPub, redisSub } from "./database/redis";
 import UAParser from "ua-parser-js";
 import mongoose from "mongoose";
 import { connectToMongo } from "@mineskin/database";
@@ -243,7 +243,7 @@ async function init() {
         console.info("Connecting to Redis...")
         await initRedis();
 
-        TrafficService.init();
+        TrafficService.init(redisClient!, redisPub!, redisSub!);
     }
 
     {
