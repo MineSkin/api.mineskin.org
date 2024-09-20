@@ -17,12 +17,20 @@ import {
     SkinService,
     TrafficService
 } from "@mineskin/generator";
-import { ErrorSource, GenerateType, SkinInfo2, SkinVariant, SkinVisibility2, UUID } from "@mineskin/types";
+import {
+    ErrorSource,
+    GenerateType,
+    RateLimitInfo,
+    SkinInfo2,
+    SkinVariant,
+    SkinVisibility2,
+    UUID
+} from "@mineskin/types";
 import { IPopulatedSkin2Document, ISkinDocument, isPopulatedSkin2Document } from "@mineskin/database";
 import { Response } from "express";
-import { V2Response } from "../../typings/v2/V2Response";
 import { V2SkinResponse } from "../../typings/v2/V2SkinResponse";
 import { debug } from "../../util/colors";
+import { V2GenerateResponse } from "../../typings/v2/V2GenerateResponse";
 
 const upload = multer({
     limits: {
@@ -40,7 +48,7 @@ const client = new GeneratorClient({
     blockingConnection: false
 });
 
-export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response<V2Response | V2SkinResponse>) {
+export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response<V2GenerateResponse | V2SkinResponse>) {
 
     const options = getAndValidateOptions(req, res);
     //const client = getClientInfo(req);
@@ -58,16 +66,18 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
     }
 
     // check rate limit
-    const nextRequest = await TrafficService.getNextRequest(req.client);
+    req.nextRequest = await TrafficService.getNextRequest(req.client);
+    req.minDelay = await TrafficService.getMinDelay(req.client, req.apiKey) * 1000;
     const now = Date.now();
-    if (nextRequest > now) {
+    if (req.nextRequest > now) {
         //TODO: full delay response
         return res.status(429).json({
             success: false,
+            rateLimit: makeRateLimitInfo(req),
             errors: [
                 {
                     code: 'rate_limit',
-                    message: `request too soon, next request in ${ ((Math.round(nextRequest - now) / 100) * 100) }ms`
+                    message: `request too soon, next request in ${ ((Math.round(req.nextRequest - now) / 100) * 100) }ms`
                 }
             ]
         });
@@ -129,7 +139,7 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
     logger.debug(`${ req.breadcrumbC } FILE:        "${ file.filename }"`);
 
     // preliminary rate limiting
-    await TrafficService.updateLastAndNextRequest(req.client, 200);
+    req.nextRequest = await TrafficService.updateLastAndNextRequest(req.client, 200);
 
 
     const validation = await ImageValidation.validateImageBuffer(file.buffer);
@@ -212,9 +222,35 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
     }
     logger.debug(request);
     const job = await client.submitRequest(request);
-    const result = await job.waitUntilFinished(client.queueEvents, 10_000) as GenerateResult;
+    try {
+        const result = await job.waitUntilFinished(client.queueEvents, 10_000) as GenerateResult; //TODO: configure timeout
+        return await queryAndSendSkin(req, res, result.skin);
+    } catch (e) {
+        console.warn(e);
+        if (e.message.includes('timed out before finishing')) { // this kinda sucks
+            return res.status(500).json({
+                success: false,
+                rateLimit: makeRateLimitInfo(req),
+                errors: [
+                    {
+                        code: 'generator_timeout',
+                        message: `generator request timed out`
+                    }
+                ]
+            });
+        }
+    }
 
-    return await queryAndSendSkin(req, res, result.skin);
+    return res.status(500).json({
+        success: false,
+        rateLimit: makeRateLimitInfo(req),
+        errors: [
+            {
+                code: 'unexpected_error',
+                message: `unexpected error`
+            }
+        ]
+    });
 }
 
 async function queryAndSendSkin(req: GenerateV2Request, res: Response, uuid: UUID, duplicate: boolean = false) {
@@ -234,8 +270,23 @@ async function queryAndSendSkin(req: GenerateV2Request, res: Response, uuid: UUI
     //TODO: proper response
     return res.json({
         success: true,
-        skin: skinToJson(skin, duplicate)
+        skin: skinToJson(skin, duplicate),
+        rateLimit: makeRateLimitInfo(req)
     });
+}
+
+function makeRateLimitInfo(req: GenerateV2Request): RateLimitInfo {
+    const now = Date.now();
+    return {
+        next: {
+            absolute: req.nextRequest || now,
+            relative: Math.max(0, (req.nextRequest || now) - now)
+        },
+        delay: {
+            millis: req.minDelay || 0,
+            seconds: req.minDelay ? req.minDelay / 1000 : 0
+        }
+    };
 }
 
 function isV1SkinDocument(skin: any): skin is ISkinDocument {

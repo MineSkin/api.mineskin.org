@@ -3,7 +3,7 @@ import { Breadcrumb, ClientInfo } from "@mineskin/types";
 import { IApiKeyDocument } from "@mineskin/database";
 import { Chalk } from "chalk";
 
-export interface MineSkinV2Request extends Request{
+export interface MineSkinV2Request extends Request {
     breadcrumb?: Breadcrumb;
     breadcrumbColor?: Chalk;
     breadcrumbC?: string;
@@ -16,4 +16,7 @@ export interface MineSkinV2Request extends Request{
     client?: ClientInfo;
 }
 
-export type GenerateV2Request = MineSkinV2Request;
+export interface GenerateV2Request extends MineSkinV2Request {
+    minDelay?: number;
+    nextRequest?: number;
+}
