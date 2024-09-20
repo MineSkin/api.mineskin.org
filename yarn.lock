@@ -615,7 +615,7 @@ __metadata:
 
 "@mineskin/database@git+ssh://git@github.com/MineSkin/mineskin-database.git":
   version: 1.0.0
-  resolution: "@mineskin/database@git+ssh://git@github.com/MineSkin/mineskin-database.git#commit=c3a5cd7272c5b3653fced3ee27013a4c5b953922"
+  resolution: "@mineskin/database@git+ssh://git@github.com/MineSkin/mineskin-database.git#commit=da4954f1a761d1d9e87f8baf896c69fb3e01291d"
   dependencies:
     "@mineskin/types": "git+ssh://git@github.com/MineSkin/mineskin-types.git#skin2"
     "@sentry/cli": "npm:^2.32.2"
@@ -624,7 +624,7 @@ __metadata:
     dotenv: "npm:^16.4.5"
     mongoose: "npm:^8.5.3"
     uuid: "npm:^10.0.0"
-  checksum: 10c0/7dcb8a836bb021920e8e7b2e20f940485858cec3e10888be80fe0eab84f8e12545217f32a16a741bb27517c33cc5b260f90c60bd709211d5f7359a57aaf72cdd
+  checksum: 10c0/c17496b978c5ed9850e67da582430ce4d8a7db6ab128f43a6522b58d5e22e439cba536f11149692e51343aa504525861bc64ec376c04f064ea400534ff077ad7
   languageName: node
   linkType: hard
 
@@ -5234,11 +5234,11 @@ __metadata:
   linkType: hard
 
 "node-abi@npm:^3.61.0":
-  version: 3.67.0
-  resolution: "node-abi@npm:3.67.0"
+  version: 3.68.0
+  resolution: "node-abi@npm:3.68.0"
   dependencies:
     semver: "npm:^7.3.5"
-  checksum: 10c0/72ce2edbdfb84745bc201a4e48aa7146fd88a0d2c80046b6b17f28439c9a7683eab846f40f1e819349c31f7d9331ed5c50d1e741208d938dd5f38b29cab2275e
+  checksum: 10c0/0f20cdb1216485ef399f581fe8fad300f1321cc66e08a7e2e7c6c6a1d89006799c464943e45dae19ec39ba581f6417dff4af21324a09c1e74a4e2fc1bceb0f83
   languageName: node
   linkType: hard
 
