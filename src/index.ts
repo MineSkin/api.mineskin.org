@@ -1,6 +1,6 @@
 import "dotenv/config"
 import "./instrument"
-import { logger, logtail } from "./util/log";
+import { httpLogger, logger, logtail } from "./util/log";
 import * as sourceMapSupport from "source-map-support";
 import * as Sentry from "@sentry/node";
 import express, { ErrorRequestHandler, Express, NextFunction, Request, Response } from "express";
@@ -132,7 +132,7 @@ async function init() {
         app.use(morgan('combined', {
             stream: {
                 write(str: string) {
-                    logger.http(str.trim())
+                    httpLogger.http(str.trim())
                 }
             }
         }))
