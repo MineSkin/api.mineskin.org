@@ -44,7 +44,7 @@ const transform: winston.Logform.TransformFunction = (info) => {
 const utilFormatter = format(transform);
 
 export const logger = winston.createLogger({
-    level: 'info',
+    level: 'http',
     format: format.combine(
         format.timestamp({format: 'YYYY-MM-DD HH:mm:ss.SSS'}),
         format.errors({ stack: true }),
