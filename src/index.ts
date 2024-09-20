@@ -3,8 +3,10 @@ import "./instrument"
 import { logger, logtail } from "./util/log";
 import * as sourceMapSupport from "source-map-support";
 import * as Sentry from "@sentry/node";
+import * as path from "path";
 import express, { ErrorRequestHandler, Express, NextFunction, Request, Response } from "express";
 import "express-async-errors";
+import RotatingFileStream from "rotating-file-stream";
 import morgan from "morgan";
 import * as bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
@@ -125,14 +127,15 @@ async function init() {
     {
         console.log("Creating logger")
 
+        // create a rotating write stream
+        const accessLogStream = RotatingFileStream('access.log', {
+            interval: '1d', // rotate daily
+            path: path.join(__dirname, 'log'),
+            compress: "gzip"
+        });
+
         // setup the logger
-        app.use(morgan('combined', {
-            stream: {
-                write(str: string) {
-                    logger.http(str.trim())
-                }
-            }
-        }))
+        app.use(morgan('combined', {stream: accessLogStream}))
         morgan.token('remote-addr', (req, res): string => {
             return req.headers['x-real-ip'] as string || req.headers['x-forwarded-for'] as string || req.connection.remoteAddress || "";
         });
