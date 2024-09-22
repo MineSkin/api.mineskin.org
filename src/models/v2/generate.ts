@@ -267,7 +267,6 @@ async function queryAndSendSkin(req: GenerateV2Request, res: Response, uuid: UUI
         });
     }
 
-    //TODO: proper response
     return res.json({
         success: true,
         skin: skinToJson(skin, duplicate),
@@ -291,37 +290,6 @@ function makeRateLimitInfo(req: GenerateV2Request): RateLimitInfo {
 
 function isV1SkinDocument(skin: any): skin is ISkinDocument {
     return 'skinUuid' in skin || 'minecraftTextureHash' in skin;
-}
-
-function v1SkinToV2Json(skin: ISkinDocument, duplicate: boolean = false): SkinInfo2 {
-    return {
-        uuid: skin.skinUuid || skin.uuid,
-        name: skin.name,
-        visibility: skin.visibility == 2 ? SkinVisibility2.PRIVATE : skin.visibility == 1 ? SkinVisibility2.UNLISTED : SkinVisibility2.PUBLIC,
-        variant: skin.variant,
-        texture: {
-            data: {
-                value: skin.value,
-                signature: skin.signature
-            },
-            hash: {
-                skin: skin.minecraftTextureHash || skin.hash
-            },
-            url: {
-                skin: skin.url
-            }
-        },
-        generator: {
-            timestamp: skin.time,
-            account: `${ skin.account }`,
-            server: skin.server || 'unknown',
-            worker: 'none',
-            version: 'unknown',
-            duration: 0
-        },
-        views: skin.views,
-        duplicate: duplicate
-    };
 }
 
 const MC_TEXTURE_PREFIX = "https://textures.minecraft.net/texture/";
@@ -356,7 +324,7 @@ function skinToJson(skin: IPopulatedSkin2Document, duplicate: boolean = false): 
             server: skin.data.generatedBy.server,
             worker: skin.data.generatedBy.worker,
             version: 'unknown', //TODO
-            duration: 0 //TODO
+            duration: skin.data.queue.end.getTime() - skin.data.queue.start.getTime()
         },
         views: skin.views,
         duplicate: duplicate
