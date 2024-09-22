@@ -43,6 +43,7 @@ export const mineskinClientMiddleware = async (req: MineSkinV2Request, res: Resp
         origin: origin,
         ip: ip,
         billable: billable,
+        breadcrumb: req.breadcrumb || '00000000',
         user: undefined //TODO
     };
     req.client = client;
