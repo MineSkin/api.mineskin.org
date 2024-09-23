@@ -46,6 +46,7 @@ export const register = (app: Application) => {
     app.use("/generate", corsWithAuthMiddleware);
     app.use("/generate", (req: GenerateRequest, res: Response, next) => {
         addBreadcrumb(req, res);
+        res.header("X-MineSkin-Api-Version", "v1");
         next();
     });
     app.use("/generate", generateLimiter);

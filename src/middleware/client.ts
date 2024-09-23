@@ -48,5 +48,7 @@ export const mineskinClientMiddleware = async (req: MineSkinV2Request, res: Resp
     };
     req.client = client;
 
+    res.header("X-MineSkin-Api-Version", "v2");
+
     next();
 }
