@@ -9,5 +9,8 @@ export const breadcrumbMiddleware = (req: MineSkinV2Request, res: Response, next
     req.breadcrumb = id;
     req.breadcrumbColor = color;
     req.breadcrumbC = color(id);
+
+    res.header("X-MineSkin-Breadcrumb", req.breadcrumb);
+
     next();
 }
