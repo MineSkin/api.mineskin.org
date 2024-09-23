@@ -31,6 +31,7 @@ import { Response } from "express";
 import { V2SkinResponse } from "../../typings/v2/V2SkinResponse";
 import { debug } from "../../util/colors";
 import { V2GenerateResponse } from "../../typings/v2/V2GenerateResponse";
+import { GenerateReq, GenerateReqUrl, GenerateReqUser } from "../../runtype/GenerateReq";
 
 const upload = multer({
     limits: {
@@ -82,67 +83,74 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
         });
     }
 
-    try {
-        await new Promise<void>((resolve, reject) => {
-            upload.single('file')(req, res, function (err) {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve();
-                }
-            })
-        });
-    } catch (e) {
-        Sentry.captureException(e);
-        if (e instanceof MulterError) {
-            res.status(400).json({
+    logger.debug(req.body);
+
+    let imageBuffer: Buffer;
+
+    const contentType = req.header("content-type");
+    switch (contentType) {
+        case 'multipart/form-data': {
+            const fileUploaded = await tryHandleFileUpload(req, res);
+            if (!fileUploaded) {
+                return;
+            }
+
+            const file: Maybe<Express.Multer.File> = req.file;
+            if (!file) {
+                res.status(500).json({
+                    success: false,
+                    errors: [
+                        {
+                            code: 'missing_file',
+                            message: `no file uploaded`
+                        }
+                    ]
+                });
+                return;
+            }
+
+            logger.debug(`${ req.breadcrumbC } FILE:        "${ file.filename }"`);
+
+            imageBuffer = file.buffer;
+            break;
+        }
+        case 'application/json': {
+            if ('url' in req.body) {
+                const {url} = GenerateReqUrl.check(req.body);
+                logger.debug(`${ req.breadcrumbC } URL:         "${ url }"`);
+
+                const originalUrlV2Duplicate = await DuplicateChecker.findDuplicateV2FromUrl(url, options, req.breadcrumb || "????");
+
+                //TODO: duplicate checks
+                //TODO: download image
+            }
+            if ('user' in req.body) {
+                const {user} = GenerateReqUser.check(req.body);
+                logger.debug(`${ req.breadcrumbC } USER:        "${ user }"`);
+                //TODO
+            }
+            break;
+        }
+        default: {
+            return res.status(400).json({
                 success: false,
                 errors: [
                     {
-                        code: e.code || 'invalid_file',
-                        message: `invalid file: ${ e.message }`
+                        code: 'invalid_content_type',
+                        message: `invalid content type: ${ contentType } (expected multipart/form-data or application/json)`
                     }
                 ]
             });
-            return;
-        } else {
-            res.status(500).json({
-                success: false,
-                errors: [
-                    {
-                        code: 'upload_error',
-                        message: `upload error: ${ e.message }`
-                    }
-                ]
-            });
-            return;
         }
     }
 
-    logger.debug(req.body);
-
-    const file: Maybe<Express.Multer.File> = req.file;
-    if (!file) {
-        res.status(500).json({
-            success: false,
-            errors: [
-                {
-                    code: 'missing_file',
-                    message: `no file uploaded`
-                }
-            ]
-        });
-        return;
-    }
-
-    logger.debug(`${ req.breadcrumbC } FILE:        "${ file.filename }"`);
 
     // preliminary rate limiting
     req.nextRequest = await trafficService.updateLastAndNextRequest(req.client, 200)
     logger.debug(`next request at ${ req.nextRequest }`);
 
 
-    const validation = await ImageValidation.validateImageBuffer(file.buffer);
+    const validation = await ImageValidation.validateImageBuffer(imageBuffer);
     logger.debug(validation);
 
     //TODO: ideally don't do this here and in the generator
@@ -161,7 +169,7 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
 
     let hashes;
     try {
-        hashes = await ImageService.getImageHashes(file.buffer);
+        hashes = await ImageService.getImageHashes(imageBuffer);
     } catch (e) {
         // span?.setStatus({
         //     code: 2,
@@ -174,7 +182,7 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
     }
     logger.debug(req.breadcrumbC + " Image hash: ", hashes);
 
-    console.log(file.buffer.byteLength);
+    console.log(imageBuffer.byteLength);
 
     // duplicate check V2, same as in generator
     //  just to avoid unnecessary submissions to generator
@@ -251,6 +259,46 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
             }
         ]
     });
+}
+
+async function tryHandleFileUpload(req: GenerateV2Request, res: Response): Promise<boolean> {
+    try {
+        await new Promise<void>((resolve, reject) => {
+            upload.single('file')(req, res, function (err) {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve();
+                }
+            })
+        });
+        return true;
+    } catch (e) {
+        Sentry.captureException(e);
+        if (e instanceof MulterError) {
+            res.status(400).json({
+                success: false,
+                errors: [
+                    {
+                        code: e.code || 'invalid_file',
+                        message: `invalid file: ${ e.message }`
+                    }
+                ]
+            });
+            return false;
+        } else {
+            res.status(500).json({
+                success: false,
+                errors: [
+                    {
+                        code: 'upload_error',
+                        message: `upload error: ${ e.message }`
+                    }
+                ]
+            });
+            return false;
+        }
+    }
 }
 
 async function queryAndSendSkin(req: GenerateV2Request, res: Response, uuid: UUID, duplicate: boolean = false) {
@@ -336,11 +384,18 @@ function getAndValidateOptions(req: GenerateV2Request, res: Response): GenerateO
         op: "v2_generate_getAndValidateOptions",
         name: "getAndValidateOptions"
     }, (span) => {
-        const variant = validateVariant(req.body["variant"] || req.query["variant"]);
-        const visibility = validateVisibility(req.body["visibility"] || req.query["visibility"]);
-        const name = validateName(req.body["name"] || req.query["name"]);
 
-        const checkOnly = !!(req.body["checkOnly"] || req.query["checkOnly"]); //TODO: implement this
+        const {
+            variant,
+            visibility,
+            name
+        } = GenerateReq.check(req.body);
+
+        // const variant = validateVariant(req.body["variant"] || req.query["variant"]);
+        // const visibility = validateVisibility(req.body["visibility"] || req.query["visibility"]);
+        // const name = validateName(req.body["name"] || req.query["name"]);
+        //
+        // const checkOnly = !!(req.body["checkOnly"] || req.query["checkOnly"]); //TODO: implement this
 
 
         // console.log(debug(`${ breadcrumb } Type:        ${ type }`))

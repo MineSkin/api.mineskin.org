@@ -2885,6 +2885,7 @@ __metadata:
     read-chunk: "npm:^3.2.0"
     redis: "npm:^4.6.15"
     rotating-file-stream: "npm:^1.4.4"
+    runtypes: "npm:^6.7.0"
     source-map-support: "npm:^0.5.19"
     tmp: "npm:0.2.1"
     tunnel-ssh: "npm:^4.1.4"
@@ -6770,6 +6771,13 @@ __metadata:
   version: 1.4.6
   resolution: "rotating-file-stream@npm:1.4.6"
   checksum: 10c0/6ee6560b06f94e1c9fcb8220bbcd80cd3f37b281dd1298c211db672b7242b159c06938f486b98d8bcf4397a92657c2b4e57fca02b2fb48d9d32cbde7a27f1145
+  languageName: node
+  linkType: hard
+
+"runtypes@npm:^6.7.0":
+  version: 6.7.0
+  resolution: "runtypes@npm:6.7.0"
+  checksum: 10c0/9799065e3cb9d924d5dbfd0253cf49d90cd0506e0d1ac42f491b5287829d9353f7b5861c5ed3a97e094bf5948225ababfc62e909f3f26cd8e5eba2bb64290a07
   languageName: node
   linkType: hard
 

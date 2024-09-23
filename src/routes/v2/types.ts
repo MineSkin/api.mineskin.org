@@ -19,4 +19,10 @@ export interface MineSkinV2Request extends Request {
 export interface GenerateV2Request extends MineSkinV2Request {
     minDelay?: number;
     nextRequest?: number;
+
+    file?: Express.Multer.File;
+    body: {
+        url?: string;
+        user?: string;
+    }
 }

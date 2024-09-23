@@ -64,6 +64,7 @@
     "read-chunk": "^3.2.0",
     "redis": "^4.6.15",
     "rotating-file-stream": "^1.4.4",
+    "runtypes": "^6.7.0",
     "source-map-support": "^0.5.19",
     "tmp": "0.2.1",
     "tunnel-ssh": "^4.1.4",
