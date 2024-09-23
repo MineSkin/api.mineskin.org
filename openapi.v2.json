@@ -523,7 +523,7 @@
 
     "/v2/generate/upload": {
       "post": {
-        "description":"Generate skin data from an uploaded image (PNG) file",
+        "description":"Generate skin data from an uploaded image",
         "tags": [
           "generate"
         ],
@@ -585,7 +585,7 @@
     },
     "/v2/generate/url": {
       "post": {
-        "description":"Generate skin data an image (PNG) URL",
+        "description":"Generate skin data an image URL",
         "tags": [
           "generate"
         ],
