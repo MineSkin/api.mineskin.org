@@ -61,7 +61,6 @@
       },
       "SkinVariant": {
         "type": "string",
-        "description":"Skin variant. If not provided, will be determined automatically from the image content",
         "enum": [
           "classic",
           "slim"
@@ -69,7 +68,6 @@
       },
       "SkinVisibility": {
         "type": "string",
-        "description": "Visibility of the generated skin in the gallery\n\n * `public` - visible to everyone\n * `unlisted` - visible to everyone with the skin url or uuid\n * `private` - visible only to yourself by providing the same API key (Note: only available to members)",
         "enum": [
           "public",
           "unlisted",
@@ -316,6 +314,7 @@
           }
         }
       },
+
       "GenericResponseBody": {
         "type": "object",
         "required": [
@@ -390,6 +389,76 @@
                     "message": "Something went wrong"
                   }
                 ]
+              }
+            }
+          }
+        ]
+      },
+
+      "UploadGenerateBody": {
+        "type": "object",
+        "description":"File Upload Generate Request Body",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/GenerateOptions"
+          },
+          {
+            "required": [
+              "file"
+            ],
+            "properties": {
+              "file": {
+                "description": "PNG image file to upload. You should use a client library like [MineSkin Java Client](https://github.com/InventivetalentDev/MineskinClient) to properly handle file uploads. See [github/examples](https://github.com/MineSkin/examples)",
+                "type": "string",
+                "format": "binary",
+                "externalDocs": {
+                  "description": "Example implementations",
+                  "url": "https://github.com/MineSkin/examples"
+                }
+              }
+            }
+          }
+        ]
+      },
+
+      "UrlGenerateBody": {
+        "type": "object",
+        "description":"URL Generate Request Body",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/GenerateOptions"
+          },
+          {
+            "required": [
+              "url"
+            ],
+            "properties": {
+              "url": {
+                "type": "string"
+              }
+            },
+            "example": {
+              "url": "https://i.imgur.com/kQPrtYw.png"
+            }
+          }
+        ]
+      },
+      "UserGenerateBody": {
+        "type": "object",
+        "description":"User Generate Request Body",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/GenerateOptions"
+          },
+          {
+            "required": [
+              "uuid"
+            ],
+            "properties": {
+              "uuid": {
+                "type": "string",
+                "minLength": 32,
+                "maxLength": 36
               }
             }
           }
@@ -520,10 +589,8 @@
     }
   },
   "paths": {
-
-    "/v2/generate/upload": {
+    "/v2/generate": {
       "post": {
-        "description":"Generate skin data from an uploaded image",
         "tags": [
           "generate"
         ],
@@ -535,27 +602,31 @@
         "requestBody": {
           "required": true,
           "content": {
+
+            "application/json":{
+              "schema": {
+                "oneOf": [
+                    {
+                        "$ref": "#/components/schemas/UrlGenerateBody"
+                    },
+                    {
+                        "$ref": "#/components/schemas/UserGenerateBody"
+                    }
+                  ]
+              }
+            },
             "multipart/form-data": {
               "schema": {
-                "allOf": [
+                "description":"File Upload Generate Request",
+                "oneOf": [
                   {
-                    "$ref": "#/components/schemas/GenerateOptions"
+                    "$ref": "#/components/schemas/UploadGenerateBody"
                   },
                   {
-                    "required": [
-                      "file"
-                    ],
-                    "properties": {
-                      "file": {
-                        "description": "PNG image file to upload. You should use a client library like [MineSkin Java Client](https://github.com/InventivetalentDev/MineskinClient) to properly handle file uploads. See [github/examples](https://github.com/MineSkin/examples)",
-                        "type": "string",
-                        "format": "binary",
-                        "externalDocs": {
-                          "description": "Example implementations",
-                          "url": "https://github.com/MineSkin/examples"
-                        }
-                      }
-                    }
+                    "$ref": "#/components/schemas/UrlGenerateBody"
+                  },
+                  {
+                    "$ref": "#/components/schemas/UserGenerateBody"
                   }
                 ]
               },
@@ -563,115 +634,6 @@
                 "file": {
                   "contentType": "image/png"
                 }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/GenerateSuccessResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/GenerateErrorResponse"
-          },
-          "429": {
-            "$ref": "#/components/responses/GenerateRateLimitResponse"
-          },
-          "500": {
-            "$ref": "#/components/responses/GenerateErrorResponse"
-          }
-        }
-      }
-    },
-    "/v2/generate/url": {
-      "post": {
-        "description":"Generate skin data an image URL",
-        "tags": [
-          "generate"
-        ],
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/userAgent"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "allOf": [
-                  {
-                    "$ref": "#/components/schemas/GenerateOptions"
-                  },
-                  {
-                    "required": [
-                      "url"
-                    ],
-                    "properties": {
-                      "url": {
-                        "type": "string",
-                        "description":"Image URL. Needs to be a valid PNG file."
-                      }
-                    },
-                    "example": {
-                      "url": "https://i.imgur.com/kQPrtYw.png"
-                    }
-                  }
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/GenerateSuccessResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/GenerateErrorResponse"
-          },
-          "429": {
-            "$ref": "#/components/responses/GenerateRateLimitResponse"
-          },
-          "500": {
-            "$ref": "#/components/responses/GenerateErrorResponse"
-          }
-        }
-      }
-    },
-    "/v2/generate/user": {
-
-      "post": {
-        "description":"Generate skin data from a player",
-        "tags": [
-          "generate"
-        ],
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/userAgent"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "allOf": [
-                  {
-                    "$ref": "#/components/schemas/GenerateOptions"
-                  },
-                  {
-                    "required": [
-                      "uuid"
-                    ],
-                    "properties": {
-                      "uuid": {
-                        "type": "string",
-                        "minLength": 32,
-                        "maxLength": 36
-                      }
-                    }
-                  }
-                ]
               }
             }
           }
