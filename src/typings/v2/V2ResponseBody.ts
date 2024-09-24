@@ -1,6 +1,6 @@
 import { CodeAndMessage } from "./CodeAndMessage";
 
-export interface V2Response {
+export interface V2ResponseBody {
     success: boolean;
     messages?: CodeAndMessage[];
     errors?: CodeAndMessage[];

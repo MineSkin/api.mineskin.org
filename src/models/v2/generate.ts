@@ -30,7 +30,7 @@ import { IPopulatedSkin2Document, ISkinDocument, isPopulatedSkin2Document } from
 import { Response } from "express";
 import { V2SkinResponse } from "../../typings/v2/V2SkinResponse";
 import { debug } from "../../util/colors";
-import { V2GenerateResponse } from "../../typings/v2/V2GenerateResponse";
+import { V2GenerateResponseBody } from "../../typings/v2/V2GenerateResponseBody";
 import { GenerateReq, GenerateReqUrl, GenerateReqUser } from "../../runtype/GenerateReq";
 
 const upload = multer({
@@ -49,7 +49,7 @@ const client = new GeneratorClient({
     blockingConnection: false
 });
 
-export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response<V2GenerateResponse | V2SkinResponse>) {
+export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response<V2GenerateResponseBody | V2SkinResponse>) {
 
     const options = getAndValidateOptions(req, res);
     //const client = getClientInfo(req);
