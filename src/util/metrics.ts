@@ -24,8 +24,17 @@ export class MineSkinMetrics {
     public readonly authentication: Metric;
     public readonly requests: Metric;
 
+    /**@deprecated**/
     public readonly newDuplicate: Metric;
+    public readonly genNew: Metric;
+    public readonly genDuplicate: Metric;
+    /**@deprecated**/
     public readonly successFail: Metric;
+    public readonly genSuccess: Metric;
+    public readonly genFail: Metric;
+
+    public readonly genClients: Metric;
+    public readonly genAccounts: Metric;
 
     public readonly noAccounts: Metric;
     public readonly hashMismatch: Metric;
@@ -57,16 +66,25 @@ export class MineSkinMetrics {
         this.apiRequests = this.metrics.metric('mineskin', 'api_requests');
         this.rateLimit = this.metrics.metric('mineskin', 'api_rate_limit');
         this.urlHosts = this.metrics.metric('mineskin', 'generate_url_hosts');
-        this.requests = this.metrics.metric('mineskin', 'requests');
+        this.requests = this.metrics.metric('mineskin', 'requests', 'one_month');
         this.authentication = this.metrics.metric('mineskin', 'authentication');
+
         this.newDuplicate = this.metrics.metric('mineskin', 'generate_new_duplicate');
+        this.genNew = this.metrics.metric('mineskin', 'generate_new');
+        this.genDuplicate = this.metrics.metric('mineskin', 'generate_duplicate');
+
         this.successFail = this.metrics.metric('mineskin', 'generate_success_fail');
+        this.genSuccess = this.metrics.metric('mineskin', 'generate_success');
+        this.genFail = this.metrics.metric('mineskin', 'generate_fail');
+        this.genClients = this.metrics.metric('mineskin', 'generate_clients', 'one_year');
+        this.genAccounts = this.metrics.metric('mineskin', 'generate_accounts');
+
         this.noAccounts = this.metrics.metric('mineskin', 'no_accounts');
-        this.hashMismatch = this.metrics.metric('mineskin', 'hash_mismatch');
-        this.urlMismatch = this.metrics.metric('mineskin', 'url_mismatch');
+        this.hashMismatch = this.metrics.metric('mineskin', 'hash_mismatch', 'one_month');
+        this.urlMismatch = this.metrics.metric('mineskin', 'url_mismatch', 'one_month');
         this.tester = this.metrics.metric('mineskin', 'tester');
-        this.accountNotifications = this.metrics.metric('mineskin', 'account_notifications');
-        this.accountCapes = this.metrics.metric('mineskin', 'account_capes');
+        this.accountNotifications = this.metrics.metric('mineskin', 'account_notifications', 'one_month');
+        this.accountCapes = this.metrics.metric('mineskin', 'account_capes', 'one_year');
     }
 
     apiRequestsMiddleware(req: Request, res: Response, next: NextFunction) {

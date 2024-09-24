@@ -83,6 +83,17 @@ const MAX_ID_TRIES = 10;
 const MINESKIN_URL_REGEX = /https?:\/\/minesk(\.in|in\.org)\/([0-9a-zA-Z]+)/i;
 const MINECRAFT_TEXTURE_REGEX = /https?:\/\/textures\.minecraft\.net\/texture\/([0-9a-z]+)/i;
 
+export const URL_REGEX = /https?:\/\/.+/i;
+const BLOCKED_URL_HOSTS: RegExp[] = [
+    /localhost/i,
+    /127\.0\.0\.1/i,
+    /0\.0\.0\.0/i,
+    /::1/i,
+    /192\.168\./i,
+    /10\./i,
+    /172\.(1[6-9]|2[0-9]|3[01])\./i
+]
+
 const URL_REWRITES = new Map<RegExp, string>([
     [/https?:\/\/imgur\.com\/(.+)/, 'https://i.imgur.com/$1.png'],
     [/https?:\/\/.+namemc\.com\/skin\/(.+)/, 'https://namemc.com/texture/$1.png'],
@@ -551,6 +562,12 @@ export class Generator {
         }
         if (result.data) {
             try {
+                metrics.genNew
+                    .tag("server", metrics.config.server)
+                    .tag("type", type)
+                    .tag("userAgent", client.userAgent.ua)
+                    .inc();
+                //TODO: remove
                 metrics.newDuplicate
                     .tag("newOrDuplicate", "new")
                     .tag("server", metrics.config.server)
@@ -641,6 +658,12 @@ export class Generator {
                     console.log(debug(options.breadcrumb + " Found existing skin from mineskin url"));
                     existingSkin.duplicate++;
                     try {
+                        metrics.genDuplicate
+                            .tag("server", metrics.config.server)
+                            .tag("source", DuplicateSource.MINESKIN_URL)
+                            .tag("type", type)
+                            .inc();
+                        //TODO: remove
                         metrics.newDuplicate
                             .tag("newOrDuplicate", "duplicate")
                             .tag("server", metrics.config.server)
@@ -679,6 +702,12 @@ export class Generator {
                     console.log(debug(options.breadcrumb + " Found existing skin with same minecraft texture url/hash"));
                     existingSkin.duplicate++;
                     try {
+                        metrics.genDuplicate
+                            .tag("server", metrics.config.server)
+                            .tag("source", DuplicateSource.TEXTURE_URL)
+                            .tag("type", type)
+                            .inc();
+                        //TODO: remove
                         metrics.newDuplicate
                             .tag("newOrDuplicate", "duplicate")
                             .tag("server", metrics.config.server)
@@ -720,6 +749,13 @@ export class Generator {
                 console.log(debug(options.breadcrumb + " Found existing skin with same image hash"));
                 existingSkin.duplicate++;
                 try {
+                    metrics.genDuplicate
+                        .tag("server", metrics.config.server)
+                        .tag("source", DuplicateSource.IMAGE_HASH)
+                        .tag("type", type)
+                        .tag("userAgent", client.userAgent.ua)
+                        .inc();
+                    //TODO: remove
                     metrics.newDuplicate
                         .tag("newOrDuplicate", "duplicate")
                         .tag("server", metrics.config.server)
@@ -766,6 +802,11 @@ export class Generator {
                 console.log(debug(options.breadcrumb + " Found existing skin for user"));
                 existingSkin.duplicate++;
                 try {
+                    metrics.genDuplicate
+                        .tag("server", metrics.config.server)
+                        .tag("source", DuplicateSource.USER_UUID)
+                        .tag("type", type)
+                        .inc();
                     metrics.newDuplicate
                         .tag("newOrDuplicate", "duplicate")
                         .tag("server", metrics.config.server)
@@ -806,9 +847,19 @@ export class Generator {
             op: "generate_generateFromUrl",
             name: "generateFromUrl"
         }, async span => {
+            for (let host of BLOCKED_URL_HOSTS) {
+                if (host.test(new URL(originalUrl).host)) {
+                    span?.setStatus({
+                        code: 2,
+                        message: "invalid_argument"
+                    });
+                    throw new GeneratorError(GenError.INVALID_IMAGE_URL, "Invalid host", 400, undefined, originalUrl);
+                }
+            }
+
             try {
                 metrics.urlHosts
-                    .tag('host', new URL(originalUrl).host)
+                    .tag('host', new URL(originalUrl).host.replace(/[0-9]/g, 'x').substring(0, 32))
                     .inc();
             } catch (e) {
                 Sentry.captureException(e);
@@ -1313,6 +1364,25 @@ export class Generator {
     protected static async handleGenerateSuccess(type: GenerateType, options: GenerateOptions, client: ClientInfo, account: IAccountDocument): Promise<void> {
         const metrics = await MineSkinMetrics.get();
         console.log(info(options.breadcrumb + "   ==> SUCCESS"));
+        metrics.genSuccess
+            .tag("server", metrics.config.server)
+            .tag("type", type)
+            .tag("visibility", options.visibility === SkinVisibility.PRIVATE ? "private" : options.visibility === SkinVisibility.UNLISTED ? "unlisted" : "public") //FIXME
+            .tag("variant", options.variant)
+            .inc();
+        metrics.genClients
+            .tag("state", "success")
+            .tag("type", type)
+            .tag("visibility", options.visibility === SkinVisibility.PRIVATE ? "private" : options.visibility === SkinVisibility.UNLISTED ? "unlisted" : "public") //FIXME
+            .tag("variant", options.variant)
+            .tag("userAgent", client.userAgent.ua)
+            .tag("apiKey", client.apiKey || "none")
+            .inc();
+        metrics.genAccounts
+            .tag("state", "success")
+            .tag("account", account.uuid)
+            .inc();
+        //TODO: remove
         metrics.successFail
             .tag("state", "success")
             .tag("server", metrics.config.server)
@@ -1358,6 +1428,28 @@ export class Generator {
         await Stat.inc(GENERATE_FAIL);
         await redisClient?.incr("mineskin:generated:total:fail");
 
+        metrics.genFail
+            .tag("server", metrics.config.server)
+            .tag("type", type)
+            .tag("visibility", options.visibility === SkinVisibility.PRIVATE ? "private" : options.visibility === SkinVisibility.UNLISTED ? "unlisted" : "public") //FIXME
+            .tag("variant", options.variant)
+            .tag("error", e instanceof MineSkinError ? e.code : e.name)
+            .inc();
+        metrics.genClients
+            .tag("state", "fail")
+            .tag("type", type)
+            .tag("visibility", options.visibility === SkinVisibility.PRIVATE ? "private" : options.visibility === SkinVisibility.UNLISTED ? "unlisted" : "public") //FIXME
+            .tag("variant", options.variant)
+            .tag("userAgent", client.userAgent.ua)
+            .tag("apiKey", client.apiKey || "none")
+            .inc();
+        if (account) {
+            metrics.genAccounts
+                .tag("state", "fail")
+                .tag("account", account.uuid)
+                .inc();
+        }
+        //TODO: remove
         let m = metrics.successFail
             .tag("state", "fail")
             .tag("server", metrics.config.server)
