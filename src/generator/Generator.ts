@@ -83,6 +83,17 @@ const MAX_ID_TRIES = 10;
 const MINESKIN_URL_REGEX = /https?:\/\/minesk(\.in|in\.org)\/([0-9a-zA-Z]+)/i;
 const MINECRAFT_TEXTURE_REGEX = /https?:\/\/textures\.minecraft\.net\/texture\/([0-9a-z]+)/i;
 
+export const URL_REGEX = /https?:\/\/.+/i;
+const BLOCKED_URL_HOSTS: RegExp[] = [
+    /localhost/i,
+    /127\.0\.0\.1/i,
+    /0\.0\.0\.0/i,
+    /::1/i,
+    /192\.168\./i,
+    /10\./i,
+    /172\.(1[6-9]|2[0-9]|3[01])\./i
+]
+
 const URL_REWRITES = new Map<RegExp, string>([
     [/https?:\/\/imgur\.com\/(.+)/, 'https://i.imgur.com/$1.png'],
     [/https?:\/\/.+namemc\.com\/skin\/(.+)/, 'https://namemc.com/texture/$1.png'],
@@ -806,6 +817,16 @@ export class Generator {
             op: "generate_generateFromUrl",
             name: "generateFromUrl"
         }, async span => {
+            for (let host of BLOCKED_URL_HOSTS) {
+                if (host.test(new URL(originalUrl).host)) {
+                    span?.setStatus({
+                        code: 2,
+                        message: "invalid_argument"
+                    });
+                    throw new GeneratorError(GenError.INVALID_IMAGE_URL, "Invalid host", 400, undefined, originalUrl);
+                }
+            }
+
             try {
                 metrics.urlHosts
                     .tag('host', new URL(originalUrl).host.replace(/[0-9]/g, 'x').substring(0, 32))
