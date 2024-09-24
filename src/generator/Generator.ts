@@ -1334,6 +1334,25 @@ export class Generator {
     protected static async handleGenerateSuccess(type: GenerateType, options: GenerateOptions, client: ClientInfo, account: IAccountDocument): Promise<void> {
         const metrics = await MineSkinMetrics.get();
         console.log(info(options.breadcrumb + "   ==> SUCCESS"));
+        metrics.genSuccess
+            .tag("server", metrics.config.server)
+            .tag("type", type)
+            .tag("visibility", options.visibility === SkinVisibility.PRIVATE ? "private" : options.visibility === SkinVisibility.UNLISTED ? "unlisted" : "public") //FIXME
+            .tag("variant", options.variant)
+            .inc();
+        metrics.genClients
+            .tag("state", "success")
+            .tag("type", type)
+            .tag("visibility", options.visibility === SkinVisibility.PRIVATE ? "private" : options.visibility === SkinVisibility.UNLISTED ? "unlisted" : "public") //FIXME
+            .tag("variant", options.variant)
+            .tag("userAgent", client.userAgent.ua)
+            .tag("apiKey", client.apiKey || "none")
+            .inc();
+        metrics.genAccounts
+            .tag("state", "success")
+            .tag("account", account.uuid)
+            .inc();
+        //TODO: remove
         metrics.successFail
             .tag("state", "success")
             .tag("server", metrics.config.server)
@@ -1379,6 +1398,28 @@ export class Generator {
         await Stat.inc(GENERATE_FAIL);
         await redisClient?.incr("mineskin:generated:total:fail");
 
+        metrics.genFail
+            .tag("server", metrics.config.server)
+            .tag("type", type)
+            .tag("visibility", options.visibility === SkinVisibility.PRIVATE ? "private" : options.visibility === SkinVisibility.UNLISTED ? "unlisted" : "public") //FIXME
+            .tag("variant", options.variant)
+            .tag("error", e instanceof MineSkinError ? e.code : e.name)
+            .inc();
+        metrics.genClients
+            .tag("state", "fail")
+            .tag("type", type)
+            .tag("visibility", options.visibility === SkinVisibility.PRIVATE ? "private" : options.visibility === SkinVisibility.UNLISTED ? "unlisted" : "public") //FIXME
+            .tag("variant", options.variant)
+            .tag("userAgent", client.userAgent.ua)
+            .tag("apiKey", client.apiKey || "none")
+            .inc();
+        if (account) {
+            metrics.genAccounts
+                .tag("state", "fail")
+                .tag("account", account.uuid)
+                .inc();
+        }
+        //TODO: remove
         let m = metrics.successFail
             .tag("state", "fail")
             .tag("server", metrics.config.server)
