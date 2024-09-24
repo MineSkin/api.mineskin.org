@@ -1,4 +1,5 @@
-FROM ghcr.io/mineskin/mineskin-api:dependencies AS BUILD_IMAGE
+ARG GIT_BRANCH="master"
+FROM ghcr.io/mineskin/mineskin-api:${GIT_BRANCH}-dependencies AS BUILD_IMAGE
 RUN apk add --no-cache bash git
 
 RUN mkdir -p /opt/app
@@ -13,7 +14,7 @@ RUN yarn build
 
 ######
 
-FROM ghcr.io/mineskin/mineskin-api:dependencies AS APP_IMAGE
+FROM ghcr.io/mineskin/mineskin-api:${GIT_BRANCH}-dependencies AS APP_IMAGE
 
 ARG SOURCE_COMMIT=0
 ENV SOURCE_COMMIT=$SOURCE_COMMIT
