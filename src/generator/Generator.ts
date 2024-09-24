@@ -808,7 +808,7 @@ export class Generator {
         }, async span => {
             try {
                 metrics.urlHosts
-                    .tag('host', new URL(originalUrl).host)
+                    .tag('host', new URL(originalUrl).host.replace(/[0-9]/g, 'x'))
                     .inc();
             } catch (e) {
                 Sentry.captureException(e);
