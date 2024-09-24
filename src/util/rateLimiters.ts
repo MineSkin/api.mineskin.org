@@ -32,7 +32,7 @@ export const generateLimiter = rateLimit({
     handler: (request: Request, response: Response, next: NextFunction, options: Options) => {
         // onLimitReached code here
         const agent = simplifyUserAgent(request.headers["user-agent"] as string);
-        logger.warn(`${ agent } ${ getIp(request) } reached their rate limit`);
+        logger.warn(`${ agent.ua } ${ getIp(request) } reached their rate limit`);
         MineSkinMetrics.get().then(metrics => {
             metrics.rateLimit
                 .tag("server", metrics.config.server)
