@@ -76,7 +76,7 @@ export class MineSkinMetrics {
         this.successFail = this.metrics.metric('mineskin', 'generate_success_fail');
         this.genSuccess = this.metrics.metric('mineskin', 'generate_success');
         this.genFail = this.metrics.metric('mineskin', 'generate_fail');
-        this.genClients = this.metrics.metric('mineskin', 'generate_clients');
+        this.genClients = this.metrics.metric('mineskin', 'generate_clients', 'one_year');
         this.genAccounts = this.metrics.metric('mineskin', 'generate_accounts');
 
         this.noAccounts = this.metrics.metric('mineskin', 'no_accounts');
