@@ -383,7 +383,7 @@ export class Requests {
                 if (["api.minecraftservices.com", "api.mojang.com", "authserver.mojang.com", "sessionserver.mojang.com"].includes(url.hostname)) {
                     let endpoint = url.pathname;
                     if (url.hostname === "sessionserver.mojang.com") {
-                        if (endpoint.startsWith("/session/minecraft/profile")) {
+                        if (endpoint.includes("/session/minecraft/profile")) {
                             let unsigned = endpoint.includes("?unsigned=false")
                             endpoint = "/session/minecraft/profile/xxx";
                             if (unsigned) {
@@ -392,10 +392,10 @@ export class Requests {
                         }
                     }
                     if (url.hostname === "api.mojang.com") {
-                        if (endpoint.startsWith("/user/profiles") && endpoint.endsWith("/names")) {
+                        if (endpoint.includes("/user/profiles") && endpoint.endsWith("/names")) {
                             endpoint = "/user/profiles/xxx/names";
                         }
-                        if (endpoint.startsWith("/users/profiles/minecraft")) {
+                        if (endpoint.includes("/users/profiles/minecraft")) {
                             endpoint = "/users/profiles/minecraft/xxx";
                         }
                     }
