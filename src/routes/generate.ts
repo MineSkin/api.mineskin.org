@@ -14,7 +14,7 @@ import {
     validateUrl,
     variantToModel
 } from "../util";
-import { Generator, MAX_IMAGE_SIZE, SavedSkin } from "../generator/Generator";
+import { Generator, MAX_IMAGE_SIZE, SavedSkin, URL_REGEX } from "../generator/Generator";
 import { generateLimiter } from "../util/rateLimiters";
 import { ClientInfo } from "../typings/ClientInfo";
 import { GenerateOptions } from "../typings/GenerateOptions";
@@ -68,7 +68,7 @@ export const register = (app: Application) => {
 
     app.post("/generate/url", upload.none(), async (req: GenerateRequest, res: Response) => {
         const url = validateUrl(req.body["url"] || req.query["url"]);
-        if (!url) {
+        if (!url || !URL_REGEX.test(url)) {
             res.status(400).json({error: "invalid url"});
             return;
         }
@@ -267,7 +267,7 @@ export const register = (app: Application) => {
         if (isApiKeyRequest(req) && req.apiKey) {
             apiKeyId = req.apiKey.id;
             apiKey = `${ apiKeyId?.substring(0, 8) } ${ req.apiKey?.name }`;
-            billable = req.apiKey.billable||false;
+            billable = req.apiKey.billable || false;
         }
         let delayInfo: Maybe<DelayInfo>;
         if ('delayInfo' in req) {

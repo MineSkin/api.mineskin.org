@@ -84,7 +84,7 @@ export async function checkTraffic(client: ClientInfo, req: Request, res: Respon
                 },
                 now: client.time
             });
-            logger.warn(`Request too soon (${ nextRequest } > ${ client.time } = ${ nextRequest - client.time })`);
+            logger.warn(`${ client.userAgent.ua } Request too soon (${ nextRequest } > ${ client.time } = ${ nextRequest - client.time })`);
             MineSkinMetrics.get().then(metrics => {
                 metrics.rateLimit
                     .tag("server", metrics.config.server)
@@ -509,7 +509,7 @@ export function simplifyUserAgent(ua: string): SimplifiedUserAgent {
 
 export type SimplifiedUserAgent = { generic: boolean; ua: string; original: string; };
 
-export type PathHolder = { path: string;}
+export type PathHolder = { path: string; }
 
 export function isTempFile(obj: any): obj is TempFile {
     return obj && 'path' in obj && 'fd' in obj && 'remove' in obj;
