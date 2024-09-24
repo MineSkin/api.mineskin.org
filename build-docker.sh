@@ -13,4 +13,4 @@ echo "GIT_BRANCH: $GIT_BRANCH"
 
 IMAGE_BASE="ghcr.io/mineskin/mineskin-api"
 
-docker build --build-arg="SOURCE_COMMIT=$SOURCE_COMMIT" -t "$IMAGE_BASE:$GIT_BRANCH" -t "$IMAGE_BASE:latest" -t "$IMAGE_BASE:$SOURCE_COMMIT" .
+docker build --build-arg="SOURCE_COMMIT=$SOURCE_COMMIT" --build-arg="GIT_BRANCH=$GIT_BRANCH" -t "$IMAGE_BASE:$GIT_BRANCH" -t "$IMAGE_BASE:latest" -t "$IMAGE_BASE:$SOURCE_COMMIT" .
