@@ -574,6 +574,7 @@ export class Generator {
                     .tag("server", metrics.config.server)
                     .tag("type", type)
                     .tag("userAgent", client.userAgent.ua)
+                    .tag("genEnv", "api")
                     .inc();
                 //TODO: remove
                 metrics.newDuplicate
@@ -671,6 +672,7 @@ export class Generator {
                             .tag("server", metrics.config.server)
                             .tag("source", DuplicateSource.MINESKIN_URL)
                             .tag("type", type)
+                            .tag("genEnv", "api")
                             .inc();
                         //TODO: remove
                         metrics.newDuplicate
@@ -716,6 +718,7 @@ export class Generator {
                             .tag("server", metrics.config.server)
                             .tag("source", DuplicateSource.TEXTURE_URL)
                             .tag("type", type)
+                            .tag("genEnv", "api")
                             .inc();
                         //TODO: remove
                         metrics.newDuplicate
@@ -765,6 +768,7 @@ export class Generator {
                         .tag("source", DuplicateSource.IMAGE_HASH)
                         .tag("type", type)
                         .tag("userAgent", client.userAgent.ua)
+                        .tag("genEnv", "api")
                         .inc();
                     //TODO: remove
                     metrics.newDuplicate
@@ -818,6 +822,7 @@ export class Generator {
                         .tag("server", metrics.config.server)
                         .tag("source", DuplicateSource.USER_UUID)
                         .tag("type", type)
+                        .tag("genEnv", "api")
                         .inc();
                     metrics.newDuplicate
                         .tag("newOrDuplicate", "duplicate")
