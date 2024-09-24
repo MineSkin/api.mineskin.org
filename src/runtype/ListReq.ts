@@ -3,7 +3,9 @@ import { UUID } from "./misc";
 
 export const ListReqSize = Number.withConstraint(n => n > 0 && n <= 128).Or(Literal(16));
 export const ListReqAfter = UUID.optional();
-export const ListReqFilter = String.withConstraint(s => s.length > 0 && s.length < 32).withConstraint(s => /[a-z0-9-_]/.test(s)).optional();
+export const ListReqFilter = String
+    .withConstraint(s => s.length > 0 && s.length < 32)
+    .withConstraint(s => /^[a-z0-9-_ ]+$/.test(s)).optional();
 
 export const ListReqQuery = Record({
     after: ListReqAfter,
