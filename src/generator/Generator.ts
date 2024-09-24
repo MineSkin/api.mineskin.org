@@ -562,6 +562,12 @@ export class Generator {
         }
         if (result.data) {
             try {
+                metrics.genNew
+                    .tag("server", metrics.config.server)
+                    .tag("type", type)
+                    .tag("userAgent", client.userAgent.ua)
+                    .inc();
+                //TODO: remove
                 metrics.newDuplicate
                     .tag("newOrDuplicate", "new")
                     .tag("server", metrics.config.server)
@@ -652,6 +658,12 @@ export class Generator {
                     console.log(debug(options.breadcrumb + " Found existing skin from mineskin url"));
                     existingSkin.duplicate++;
                     try {
+                        metrics.genDuplicate
+                            .tag("server", metrics.config.server)
+                            .tag("source", DuplicateSource.MINESKIN_URL)
+                            .tag("type", type)
+                            .inc();
+                        //TODO: remove
                         metrics.newDuplicate
                             .tag("newOrDuplicate", "duplicate")
                             .tag("server", metrics.config.server)
@@ -690,6 +702,12 @@ export class Generator {
                     console.log(debug(options.breadcrumb + " Found existing skin with same minecraft texture url/hash"));
                     existingSkin.duplicate++;
                     try {
+                        metrics.genDuplicate
+                            .tag("server", metrics.config.server)
+                            .tag("source", DuplicateSource.TEXTURE_URL)
+                            .tag("type", type)
+                            .inc();
+                        //TODO: remove
                         metrics.newDuplicate
                             .tag("newOrDuplicate", "duplicate")
                             .tag("server", metrics.config.server)
@@ -731,6 +749,13 @@ export class Generator {
                 console.log(debug(options.breadcrumb + " Found existing skin with same image hash"));
                 existingSkin.duplicate++;
                 try {
+                    metrics.genDuplicate
+                        .tag("server", metrics.config.server)
+                        .tag("source", DuplicateSource.IMAGE_HASH)
+                        .tag("type", type)
+                        .tag("userAgent", client.userAgent.ua)
+                        .inc();
+                    //TODO: remove
                     metrics.newDuplicate
                         .tag("newOrDuplicate", "duplicate")
                         .tag("server", metrics.config.server)
@@ -777,6 +802,11 @@ export class Generator {
                 console.log(debug(options.breadcrumb + " Found existing skin for user"));
                 existingSkin.duplicate++;
                 try {
+                    metrics.genDuplicate
+                        .tag("server", metrics.config.server)
+                        .tag("source", DuplicateSource.USER_UUID)
+                        .tag("type", type)
+                        .inc();
                     metrics.newDuplicate
                         .tag("newOrDuplicate", "duplicate")
                         .tag("server", metrics.config.server)

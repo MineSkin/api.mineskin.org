@@ -24,7 +24,10 @@ export class MineSkinMetrics {
     public readonly authentication: Metric;
     public readonly requests: Metric;
 
+    /**@deprecated**/
     public readonly newDuplicate: Metric;
+    public readonly genNew: Metric;
+    public readonly genDuplicate: Metric;
     /**@deprecated**/
     public readonly successFail: Metric;
     public readonly genSuccess: Metric;
@@ -65,7 +68,10 @@ export class MineSkinMetrics {
         this.urlHosts = this.metrics.metric('mineskin', 'generate_url_hosts');
         this.requests = this.metrics.metric('mineskin', 'requests', 'one_month');
         this.authentication = this.metrics.metric('mineskin', 'authentication');
+
         this.newDuplicate = this.metrics.metric('mineskin', 'generate_new_duplicate');
+        this.genNew = this.metrics.metric('mineskin', 'generate_new');
+        this.genDuplicate = this.metrics.metric('mineskin', 'generate_duplicate');
 
         this.successFail = this.metrics.metric('mineskin', 'generate_success_fail');
         this.genSuccess = this.metrics.metric('mineskin', 'generate_success');
