@@ -378,10 +378,11 @@ export class Requests {
                 const url = new URL(axios.getUri(request), instance?.defaults.baseURL || request.baseURL);
                 m.tag("proxy", this.getInstanceSubkey(request))
                     .tag("method", request.method || "GET")
-                    .tag("host", url.hostname);
+                    .tag("host", url.hostname.replace(/[0-9]/g, 'x'));
 
                 if (["api.minecraftservices.com", "api.mojang.com", "authserver.mojang.com", "sessionserver.mojang.com"].includes(url.hostname)) {
                     let endpoint = url.pathname;
+                    endpoint = endpoint.replace(url.hostname, ''); // for some reason it sometimes includes the hostname
                     if (url.hostname === "sessionserver.mojang.com") {
                         if (endpoint.includes("/session/minecraft/profile")) {
                             let unsigned = endpoint.includes("?unsigned=false")
