@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  pull_request:
+    branches: ['*']
+  push:
+    branches: ['*']
+
+permissions:
+  contents: read
+
+jobs:
+  test-typescript:
+    name: TypeScript Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/create-github-app-token@v1
+        name: Generate Token
+        id: app-token
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: "mineskin-generator,mineskin-types,mineskin-database,mineskin-requests,mineskin-hash-rust"
+      - uses: actions/checkout@v4
+      - name: Enable Corepack
+        run: corepack enable
+      - name: Use Node.js 18.20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18.20.x"
+          cache: 'yarn'
+      - run: git config --global url."https://github-actions:${{ steps.app-token.outputs.token }}@github.com/".insteadOf ssh://git@github.com/
+      - name: Install dependencies
+        run: yarn install --immutable
+      - name: Run tests
+        run: yarn test
+      - name: Run build
+        run: yarn build
+
