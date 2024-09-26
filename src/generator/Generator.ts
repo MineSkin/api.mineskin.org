@@ -1188,15 +1188,15 @@ export class Generator {
 
             const hashesMatch = await this.compareImageAndMojangHash(tempFileValidation.hash!, mojangHash!.hash!, type, options, account);
             if (!hashesMatch) {
-                Discord.postDiscordMessageWithAttachment("⚠ Hash mismatch\n" +
-                    "  Server: " + config.server + "\n" +
-                    "  Account: " + account.id + "/" + account.uuid + "\n" +
-                    "  Image:  " + tempFileValidation.hash + "\n" +
-                    "  Mojang: " + mojangHash.hash + "\n" +
-                    "  Expected: " + expectedUrl + "\n" +
-                    "  Got: " + data.decodedValue!.textures!.SKIN!.url + "\n" +
-                    "  Account's Last URL: " + account.lastTextureUrl,
-                    tempFileValidation!.buffer!, "image.png");
+                // Discord.postDiscordMessageWithAttachment("⚠ Hash mismatch\n" +
+                //     "  Server: " + config.server + "\n" +
+                //     "  Account: " + account.id + "/" + account.uuid + "\n" +
+                //     "  Image:  " + tempFileValidation.hash + "\n" +
+                //     "  Mojang: " + mojangHash.hash + "\n" +
+                //     "  Expected: " + expectedUrl + "\n" +
+                //     "  Got: " + data.decodedValue!.textures!.SKIN!.url + "\n" +
+                //     "  Account's Last URL: " + account.lastTextureUrl,
+                //     tempFileValidation!.buffer!, "image.png");
                 console.log(skinChangeResponse);
                 //TODO: maybe retry getting the skin data if the urls don't match
             }
