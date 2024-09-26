@@ -11,7 +11,6 @@
     "build": "yarn run compile",
     "test": "yarn jest",
     "start": "node dist/index.js",
-    "test": "yarn jest",
     "pm2": "pm2 start ecosystem.config.js",
     "licenses": "npx generate-license-file --input package.json --output third-party-licenses.txt --overwrite"
   },
