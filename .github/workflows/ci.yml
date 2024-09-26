@@ -22,7 +22,7 @@ jobs:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
-          repositories: "mineskin-generator,mineskin-types,mineskin-database,mineskin-requests,mineskin-hash-rust"
+          repositories: "mineskin-generator,mineskin-types,mineskin-database,mineskin-requests,mineskin-hash-rust,mineskin-auth"
       - uses: actions/checkout@v4
       - name: Enable Corepack
         run: corepack enable
