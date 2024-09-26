@@ -14,6 +14,9 @@ jobs:
     name: TypeScript Tests
     runs-on: ubuntu-latest
 
+    env:
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
     steps:
       - uses: actions/create-github-app-token@v1
         name: Generate Token
@@ -32,10 +35,24 @@ jobs:
           node-version: "18.20.x"
           cache: 'yarn'
       - run: git config --global url."https://github-actions:${{ steps.app-token.outputs.token }}@github.com/".insteadOf ssh://git@github.com/
+      - name: Create .npmrc
+        run: |
+          echo "@mineskin:registry=https://npm.pkg.github.com" > .npmrc
+          echo "//npm.pkg.github.com/:_authToken=${{ secrets.GH_NPM_TOKEN }}" >> .npmrc
+      - name: Create .yarnrc.yml
+        run: |
+          echo "nodeLinker: node-modules" > .yarnrc.yml
+          echo "npmScopes:" >> .yarnrc.yml
+          echo "  mineskin:" >> .yarnrc.yml
+          echo "    npmPublishRegistry: \"https://npm.pkg.github.com\"" >> .yarnrc.yml
+          echo "    npmRegistryServer: \"https://npm.pkg.github.com\"" >> .yarnrc.yml
+          echo "    npmAuthToken: \"${{ secrets.GH_NPM_TOKEN }}\"" >> .yarnrc.yml
+          echo "    npmAlwaysAuth: true" >> .yarnrc.yml
       - name: Install dependencies
         run: yarn install --immutable
-      - name: Run tests
-        run: yarn test
       - name: Run build
         run: yarn build
+      - name: Run tests
+        run: yarn test
+
 
