@@ -27,7 +27,7 @@
     "@inventivetalent/typescript-memoize": "^1.0.0-alpha.5",
     "@logtail/node": "^0.4.21",
     "@logtail/winston": "^0.4.21",
-    "@mineskin/database": "git+ssh://git@github.com/MineSkin/mineskin-database.git#skin2",
+    "@mineskin/database": "git+ssh://git@github.com/MineSkin/mineskin-database.git",
     "@mineskin/types": "git+ssh://git@github.com/MineSkin/mineskin-types.git#skin2",
     "@sentry/node": "8.9.2",
     "@sentry/profiling-node": "8.9.2",
