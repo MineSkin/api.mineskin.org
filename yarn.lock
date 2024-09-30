@@ -1366,19 +1366,19 @@ __metadata:
 
 "@mineskin/auth@git+ssh://git@github.com/MineSkin/mineskin-auth.git":
   version: 1.0.0
-  resolution: "@mineskin/auth@git+ssh://git@github.com/MineSkin/mineskin-auth.git#commit=7fb7be5bf6690f29115813d470e2c391ffb95102"
+  resolution: "@mineskin/auth@git+ssh://git@github.com/MineSkin/mineskin-auth.git#commit=ab5dfd86d676774ace293af634aa7e0012af16fb"
   dependencies:
     "@xboxreplay/xboxlive-auth": "npm:^4.0.0"
     axios: "npm:^1.7.2"
     qs: "npm:^6.12.3"
     winston: "npm:^3.14.2"
-  checksum: 10c0/931109a9e458f7fd39b7404a00d634fbaf63fd29f450619fe4f651d57cfe0a3b018b29a764c5ae882a893a38e22d2edf2c4d26542aa2678217523638eba7dd95
+  checksum: 10c0/bec47b4a65c795d74c63425d60d61895991bd465cfb63b1e67c7e6d2d737fbced4d7c4b625c49b5b81ea8d60176ccd54ad3d62aef8103b54e259bda5c3e1c584
   languageName: node
   linkType: hard
 
 "@mineskin/database@git+ssh://git@github.com/MineSkin/mineskin-database.git":
   version: 1.0.0
-  resolution: "@mineskin/database@git+ssh://git@github.com/MineSkin/mineskin-database.git#commit=e601dd2286c4e8feb7756f79d6508a711768122c"
+  resolution: "@mineskin/database@git+ssh://git@github.com/MineSkin/mineskin-database.git#commit=0b0082769b1d64f10c58f6b662a432254ab28683"
   dependencies:
     "@mineskin/types": "git+ssh://git@github.com/MineSkin/mineskin-types.git#skin2"
     "@sentry/cli": "npm:^2.32.2"
@@ -1387,13 +1387,13 @@ __metadata:
     dotenv: "npm:^16.4.5"
     mongoose: "npm:^8.5.3"
     uuid: "npm:^10.0.0"
-  checksum: 10c0/4fcb4e32e0a52cf0eef79f06dfacc8550aa724aab54d4d8988f80823fcf0cc6ee1ed78def30f086a9fd20330b373aedcec424878086c4cadcf148d4c9d448122
+  checksum: 10c0/a84072ed3d5c59e73481ad0e37249118f77655ecb711a905a67e0e80452c8f6c7775626ef858795923d4ecdeec8f2c98d6045baf50ee7010f98357cc77d3f28d
   languageName: node
   linkType: hard
 
 "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git":
   version: 0.0.0
-  resolution: "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git#commit=6fef46ac2ede38b1c4c03947643d86e7eaf560df"
+  resolution: "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git#commit=05eaaedf8b5c57a8f135b9c14055f47eb10cb920"
   dependencies:
     "@inventivetalent/imghash": "npm:^1.1.1"
     "@inventivetalent/loading-cache": "npm:^0.7.1"
@@ -1423,7 +1423,7 @@ __metadata:
     uuid: "npm:^10.0.0"
     winston: "npm:^3.14.2"
     winston-daily-rotate-file: "npm:^5.0.0"
-  checksum: 10c0/a61ff105bc63edc01b7612f2f8b46d577b57fca35ed931b03c42d12640d10a513e5822145d6cfbada893dbbe6fedd04d7ae247445bc36e0b7474495867c6911d
+  checksum: 10c0/3291b362317a14cae8089f4e32fbb39bef9e43307112ba70ae4ac777ff74cdc8e32a139ee994c10527a1d9e100cdcc366b9c5ea642a33b3fb42f9386497585b3
   languageName: node
   linkType: hard
 
@@ -1455,8 +1455,8 @@ __metadata:
 
 "@mineskin/types@git+ssh://git@github.com/MineSkin/mineskin-types.git#skin2":
   version: 1.0.1
-  resolution: "@mineskin/types@git+ssh://git@github.com/MineSkin/mineskin-types.git#commit=8b549977a47e53eda24df02f0d048ff00a459968"
-  checksum: 10c0/a4c954bd75aeaa53722305eef54024cf78c903b9e2cc2f983167eae6b769e705b4a1c0843c36a84259c579711d44bf57faa07abcf7468c514fd3a3aba9b74506
+  resolution: "@mineskin/types@git+ssh://git@github.com/MineSkin/mineskin-types.git#commit=fe2c4f4e4a8edb244982356ad32c62bbbc897073"
+  checksum: 10c0/e29cfa2e0e6e62c6b42d9b09059ffde18cfcbae121607a803f6311be042e322846603e2942b90d5a3319c9906b8a46d6b047a89415d2141592aee10657bd0fc9
   languageName: node
   linkType: hard
 
@@ -2490,66 +2490,66 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sentry/cli-darwin@npm:2.36.2":
-  version: 2.36.2
-  resolution: "@sentry/cli-darwin@npm:2.36.2"
+"@sentry/cli-darwin@npm:2.36.3":
+  version: 2.36.3
+  resolution: "@sentry/cli-darwin@npm:2.36.3"
   conditions: os=darwin
   languageName: node
   linkType: hard
 
-"@sentry/cli-linux-arm64@npm:2.36.2":
-  version: 2.36.2
-  resolution: "@sentry/cli-linux-arm64@npm:2.36.2"
+"@sentry/cli-linux-arm64@npm:2.36.3":
+  version: 2.36.3
+  resolution: "@sentry/cli-linux-arm64@npm:2.36.3"
   conditions: (os=linux | os=freebsd) & cpu=arm64
   languageName: node
   linkType: hard
 
-"@sentry/cli-linux-arm@npm:2.36.2":
-  version: 2.36.2
-  resolution: "@sentry/cli-linux-arm@npm:2.36.2"
+"@sentry/cli-linux-arm@npm:2.36.3":
+  version: 2.36.3
+  resolution: "@sentry/cli-linux-arm@npm:2.36.3"
   conditions: (os=linux | os=freebsd) & cpu=arm
   languageName: node
   linkType: hard
 
-"@sentry/cli-linux-i686@npm:2.36.2":
-  version: 2.36.2
-  resolution: "@sentry/cli-linux-i686@npm:2.36.2"
+"@sentry/cli-linux-i686@npm:2.36.3":
+  version: 2.36.3
+  resolution: "@sentry/cli-linux-i686@npm:2.36.3"
   conditions: (os=linux | os=freebsd) & (cpu=x86 | cpu=ia32)
   languageName: node
   linkType: hard
 
-"@sentry/cli-linux-x64@npm:2.36.2":
-  version: 2.36.2
-  resolution: "@sentry/cli-linux-x64@npm:2.36.2"
+"@sentry/cli-linux-x64@npm:2.36.3":
+  version: 2.36.3
+  resolution: "@sentry/cli-linux-x64@npm:2.36.3"
   conditions: (os=linux | os=freebsd) & cpu=x64
   languageName: node
   linkType: hard
 
-"@sentry/cli-win32-i686@npm:2.36.2":
-  version: 2.36.2
-  resolution: "@sentry/cli-win32-i686@npm:2.36.2"
+"@sentry/cli-win32-i686@npm:2.36.3":
+  version: 2.36.3
+  resolution: "@sentry/cli-win32-i686@npm:2.36.3"
   conditions: os=win32 & (cpu=x86 | cpu=ia32)
   languageName: node
   linkType: hard
 
-"@sentry/cli-win32-x64@npm:2.36.2":
-  version: 2.36.2
-  resolution: "@sentry/cli-win32-x64@npm:2.36.2"
+"@sentry/cli-win32-x64@npm:2.36.3":
+  version: 2.36.3
+  resolution: "@sentry/cli-win32-x64@npm:2.36.3"
   conditions: os=win32 & cpu=x64
   languageName: node
   linkType: hard
 
 "@sentry/cli@npm:^2.32.2":
-  version: 2.36.2
-  resolution: "@sentry/cli@npm:2.36.2"
+  version: 2.36.3
+  resolution: "@sentry/cli@npm:2.36.3"
   dependencies:
-    "@sentry/cli-darwin": "npm:2.36.2"
-    "@sentry/cli-linux-arm": "npm:2.36.2"
-    "@sentry/cli-linux-arm64": "npm:2.36.2"
-    "@sentry/cli-linux-i686": "npm:2.36.2"
-    "@sentry/cli-linux-x64": "npm:2.36.2"
-    "@sentry/cli-win32-i686": "npm:2.36.2"
-    "@sentry/cli-win32-x64": "npm:2.36.2"
+    "@sentry/cli-darwin": "npm:2.36.3"
+    "@sentry/cli-linux-arm": "npm:2.36.3"
+    "@sentry/cli-linux-arm64": "npm:2.36.3"
+    "@sentry/cli-linux-i686": "npm:2.36.3"
+    "@sentry/cli-linux-x64": "npm:2.36.3"
+    "@sentry/cli-win32-i686": "npm:2.36.3"
+    "@sentry/cli-win32-x64": "npm:2.36.3"
     https-proxy-agent: "npm:^5.0.0"
     node-fetch: "npm:^2.6.7"
     progress: "npm:^2.0.3"
@@ -2572,7 +2572,7 @@ __metadata:
       optional: true
   bin:
     sentry-cli: bin/sentry-cli
-  checksum: 10c0/49f672ac9d9a949677ed27005f9754b3767b8efa0a82f3901ade7c8354e9e521b869a136a3e6b891ab505008d62fe063323570db04ccc979b28220c49da53861
+  checksum: 10c0/13de83f770b63fa95ad30c41a5545e23c1ffae48d12f9f5a234819f7e931a51eeb3902cbcc6222c7db58026f1e9b6db3a70f265ef899eeb2c0490c60ff0de52c
   languageName: node
   linkType: hard
 
@@ -3315,11 +3315,11 @@ __metadata:
   linkType: hard
 
 "@types/node@npm:*":
-  version: 22.7.2
-  resolution: "@types/node@npm:22.7.2"
+  version: 22.7.3
+  resolution: "@types/node@npm:22.7.3"
   dependencies:
     undici-types: "npm:~6.19.2"
-  checksum: 10c0/987e4df034e4af0ce76b938c2c0d94373da376b228f1c93081a661c77e682795c599bcad47c93c70a25b8ea443587137cf23088fb7f62ef442955f13046eae3d
+  checksum: 10c0/0e579813528b0370454337a952f43b792cd12731e10fdca0fdb627158e980c1219bba99e9048c134b6a19325d817016059afe016ccd372326c838a1b85a51574
   languageName: node
   linkType: hard
 
@@ -5063,7 +5063,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"escalade@npm:^3.1.1, escalade@npm:^3.1.2":
+"escalade@npm:^3.1.1, escalade@npm:^3.2.0":
   version: 3.2.0
   resolution: "escalade@npm:3.2.0"
   checksum: 10c0/ced4dd3a78e15897ed3be74e635110bbf3b08877b0a41be50dcb325ee0e0b5f65fc2d50e9845194d7c4633f327e2e1c6cce00a71b617c5673df0374201d67f65
@@ -6022,14 +6022,14 @@ __metadata:
   linkType: hard
 
 "import-in-the-middle@npm:^1.11.0, import-in-the-middle@npm:^1.8.1":
-  version: 1.11.0
-  resolution: "import-in-the-middle@npm:1.11.0"
+  version: 1.11.1
+  resolution: "import-in-the-middle@npm:1.11.1"
   dependencies:
     acorn: "npm:^8.8.2"
     acorn-import-attributes: "npm:^1.9.5"
     cjs-module-lexer: "npm:^1.2.2"
     module-details-from-path: "npm:^1.0.3"
-  checksum: 10c0/b5b52b635450f69640289b9b597fef796ef9aa6c231ae22583a1c2e97bd1b61aa0048d7fc143b4af3ec5bffb7d64131302ed0882f62e0e2d60f0a4f009daff3f
+  checksum: 10c0/a9571c16da84b1cddafe4814f7c527707394cbc7b4e8507949428be22ff59bfdddfcaa1b9b5f37d798de183f489e0eebde80f90d62dc9ee20d4710b954e5edf7
   languageName: node
   linkType: hard
 
@@ -7536,8 +7536,8 @@ __metadata:
   linkType: hard
 
 "mongoose@npm:^8.4.1, mongoose@npm:^8.5.3":
-  version: 8.6.3
-  resolution: "mongoose@npm:8.6.3"
+  version: 8.6.4
+  resolution: "mongoose@npm:8.6.4"
   dependencies:
     bson: "npm:^6.7.0"
     kareem: "npm:2.6.3"
@@ -7546,7 +7546,7 @@ __metadata:
     mquery: "npm:5.0.0"
     ms: "npm:2.1.3"
     sift: "npm:17.1.3"
-  checksum: 10c0/60d4333077ed0248916e546efc7f4c8d08d0ad4f69f7aea625c009afeb38089b0d260561ae5bbeaef33f2cff8ce009c0a8774fda3b00be2453bd97083b61e9a7
+  checksum: 10c0/3c032a2237b16a2e4e9959a4428c0c4b1cf559af08132968865384c6a622207fb84ff5320e4f627c9a067a17eafd334bb7be803133b2047011148ddda28c1e1d
   languageName: node
   linkType: hard
 
@@ -8073,9 +8073,9 @@ __metadata:
   linkType: hard
 
 "package-json-from-dist@npm:^1.0.0":
-  version: 1.0.0
-  resolution: "package-json-from-dist@npm:1.0.0"
-  checksum: 10c0/e3ffaf6ac1040ab6082a658230c041ad14e72fabe99076a2081bb1d5d41210f11872403fc09082daf4387fc0baa6577f96c9c0e94c90c394fd57794b66aa4033
+  version: 1.0.1
+  resolution: "package-json-from-dist@npm:1.0.1"
+  checksum: 10c0/62ba2785eb655fec084a257af34dbe24292ab74516d6aecef97ef72d4897310bc6898f6c85b5cd22770eaa1ce60d55a0230e150fb6a966e3ecd6c511e23d164b
   languageName: node
   linkType: hard
 
@@ -8300,7 +8300,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"picocolors@npm:^1.0.0, picocolors@npm:^1.0.1":
+"picocolors@npm:^1.0.0, picocolors@npm:^1.1.0":
   version: 1.1.0
   resolution: "picocolors@npm:1.1.0"
   checksum: 10c0/86946f6032148801ef09c051c6fb13b5cf942eaf147e30ea79edb91dd32d700934edebe782a1078ff859fb2b816792e97ef4dab03d7f0b804f6b01a0df35e023
@@ -9965,16 +9965,16 @@ __metadata:
   linkType: hard
 
 "update-browserslist-db@npm:^1.1.0":
-  version: 1.1.0
-  resolution: "update-browserslist-db@npm:1.1.0"
+  version: 1.1.1
+  resolution: "update-browserslist-db@npm:1.1.1"
   dependencies:
-    escalade: "npm:^3.1.2"
-    picocolors: "npm:^1.0.1"
+    escalade: "npm:^3.2.0"
+    picocolors: "npm:^1.1.0"
   peerDependencies:
     browserslist: ">= 4.21.0"
   bin:
     update-browserslist-db: cli.js
-  checksum: 10c0/a7452de47785842736fb71547651c5bbe5b4dc1e3722ccf48a704b7b34e4dcf633991eaa8e4a6a517ffb738b3252eede3773bef673ef9021baa26b056d63a5b9
+  checksum: 10c0/536a2979adda2b4be81b07e311bd2f3ad5e978690987956bc5f514130ad50cac87cd22c710b686d79731e00fbee8ef43efe5fcd72baa241045209195d43dcc80
   languageName: node
   linkType: hard
 

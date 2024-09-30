@@ -125,8 +125,8 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
                 //TODO: download image
             }
             if ('user' in req.body) {
-                const {user} = GenerateReqUser.check(req.body);
-                logger.debug(`${ req.breadcrumbC } USER:        "${ user }"`);
+                const {uuid} = GenerateReqUser.check(req.body);
+                logger.debug(`${ req.breadcrumbC } USER:        "${ uuid }"`);
                 //TODO
             }
             break;
