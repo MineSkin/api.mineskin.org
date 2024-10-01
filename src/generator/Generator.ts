@@ -607,6 +607,7 @@ export class Generator {
                             Credit.findFirstValidForUser(client.user).then(credit => {
                                 if (!credit) {
                                     console.warn(warn(options.breadcrumb + " No credit for user"));
+                                    Sentry.captureException(new Error("No valid credit for user"));
                                 } else {
                                     credit.decrement(1).catch(e => {
                                         console.log(e);
