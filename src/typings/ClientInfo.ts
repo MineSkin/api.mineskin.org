@@ -11,5 +11,8 @@ export interface ClientInfo {
     apiKeyId?: string;
     delayInfo?: DelayInfo;
     nextRequest?: number;
+
     billable?: boolean;
+    metered?: boolean;
+    useCredits?: boolean;
 }

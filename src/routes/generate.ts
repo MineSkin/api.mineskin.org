@@ -263,10 +263,14 @@ export const register = (app: Application) => {
         let apiKeyId: Maybe<string>;
         let apiKey;
         let billable = false;
+        let metered = false;
+        let useCredits = false;
         if (isApiKeyRequest(req) && req.apiKey) {
             apiKeyId = req.apiKey.id;
             apiKey = `${ apiKeyId?.substring(0, 8) } ${ req.apiKey?.name }`;
             billable = req.apiKey.billable || false;
+            metered = req.apiKey.metered || false;
+            useCredits = req.apiKey.useCredits || false;
         }
         let delayInfo: Maybe<DelayInfo>;
         if ('delayInfo' in req) {
@@ -276,7 +280,9 @@ export const register = (app: Application) => {
         Sentry.setTags({
             "generate_via": via,
             "generate_api_key": apiKey ?? "none",
-            "generate_billable": billable
+            "generate_billable": billable,
+            "generate_metered": metered,
+            "generate_use_credits": useCredits
         });
 
         const userAgent = simplifyUserAgent(rawUserAgent);
@@ -304,7 +310,9 @@ export const register = (app: Application) => {
             apiKey,
             apiKeyId,
             delayInfo,
-            billable
+            billable,
+            metered,
+            useCredits
         };
     }
 

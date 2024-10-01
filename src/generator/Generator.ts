@@ -582,23 +582,30 @@ export class Generator {
             } catch (e) {
                 Sentry.captureException(e);
             }
-            if (!!client.billable) {
+            if (!!client.billable || !!client.metered) {
                 try {
                     const date = new Date();
-                    const usageKey = `mineskin:usage:apikey:${ client.apiKeyId }:meter`;
                     const billableKeyMonth = `mineskin:generated:apikey:${ client.apiKeyId }:${ date.getFullYear() }:${ date.getMonth() + 1 }:billable`
                     const billableKeyDate = `mineskin:generated:apikey:${ client.apiKeyId }:${ date.getFullYear() }:${ date.getMonth() + 1 }:${ date.getDate() }:billable`
-                    const incr = await redisClient?.incr(usageKey);
+
+                    if (!!client.metered) {
+                        const usageKey = `mineskin:usage:apikey:${ client.apiKeyId }:meter`;
+                        const incr = await redisClient?.incr(usageKey);
+
+                        if (incr && (incr % 20 === 0)) {
+                            await redisPub?.publish(`mineskin:invalidations:billable`, `${ client.apiKeyId }`);
+                        }
+
+                        redisClient?.expire(usageKey, ONE_MONTH_SECONDS * 3);
+                    }
+
                     await redisClient?.multi()
                         ?.incr(billableKeyMonth)
                         ?.incr(billableKeyDate)
                         ?.expire(billableKeyMonth, ONE_YEAR_SECONDS * 2)
                         ?.expire(billableKeyDate, ONE_MONTH_SECONDS * 3)
-                        ?.expire(usageKey, ONE_MONTH_SECONDS * 3)
                         .exec();
-                    if (incr && (incr % 20 === 0)) {
-                        await redisPub?.publish(`mineskin:invalidations:billable`, `${ client.apiKeyId }`);
-                    }
+
                 } catch (e) {
                     Sentry.captureException(e);
                 }
