@@ -60,6 +60,7 @@ import { Capes } from "../util/Capes";
 import { requestShutdown } from "../index";
 import {
     Account,
+    Credit,
     IAccountDocument,
     IApiKeyDocument,
     ISkinDataDocument,
@@ -582,11 +583,9 @@ export class Generator {
             } catch (e) {
                 Sentry.captureException(e);
             }
-            if (!!client.billable || !!client.metered) {
+            if (!!client.billable || !!client.metered || !!client.useCredits) {
                 try {
                     const date = new Date();
-                    const billableKeyMonth = `mineskin:generated:apikey:${ client.apiKeyId }:${ date.getFullYear() }:${ date.getMonth() + 1 }:billable`
-                    const billableKeyDate = `mineskin:generated:apikey:${ client.apiKeyId }:${ date.getFullYear() }:${ date.getMonth() + 1 }:${ date.getDate() }:billable`
 
                     if (!!client.metered) {
                         const usageKey = `mineskin:usage:apikey:${ client.apiKeyId }:meter`;
@@ -598,6 +597,31 @@ export class Generator {
 
                         redisClient?.expire(usageKey, ONE_MONTH_SECONDS * 3);
                     }
+
+                    //TODO: actually check if client has enough credits
+                    if (!!client.useCredits) {
+                        if (!client.user) {
+                            console.warn(warn(options.breadcrumb + " No user for credit usage"));
+                            Sentry.captureException(new Error("No user for credit usage"));
+                        } else {
+                            Credit.findFirstValidForUser(client.user).then(credit => {
+                                if (!credit) {
+                                    console.warn(warn(options.breadcrumb + " No credit for user"));
+                                } else {
+                                    credit.decrement(1).catch(e => {
+                                        console.log(e);
+                                        Sentry.captureException(e);
+                                    })
+                                }
+                            }).catch(e => {
+                                console.log(e);
+                                Sentry.captureException(e);
+                            })
+                        }
+                    }
+
+                    const billableKeyMonth = `mineskin:generated:apikey:${ client.apiKeyId }:${ date.getFullYear() }:${ date.getMonth() + 1 }:billable`;
+                    const billableKeyDate = `mineskin:generated:apikey:${ client.apiKeyId }:${ date.getFullYear() }:${ date.getMonth() + 1 }:${ date.getDate() }:billable`
 
                     await redisClient?.multi()
                         ?.incr(billableKeyMonth)

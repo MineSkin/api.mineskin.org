@@ -28,7 +28,7 @@ import { getUserFromRequest } from "./account";
 import multer, { MulterError } from "multer";
 import { logger } from "../util/log";
 import { DelayInfo } from "../typings/DelayInfo";
-import { GenerateType, SkinVariant, SkinVisibility } from "@mineskin/types";
+import { GenerateType, SkinVariant, SkinVisibility, UUID } from "@mineskin/types";
 import { SkinModel } from "@mineskin/database";
 import { Temp } from "../generator/Temp";
 
@@ -265,9 +265,11 @@ export const register = (app: Application) => {
         let billable = false;
         let metered = false;
         let useCredits = false;
+        let user: Maybe<UUID>;
         if (isApiKeyRequest(req) && req.apiKey) {
             apiKeyId = req.apiKey.id;
             apiKey = `${ apiKeyId?.substring(0, 8) } ${ req.apiKey?.name }`;
+            user = req.apiKey.user;
             billable = req.apiKey.billable || false;
             metered = req.apiKey.metered || false;
             useCredits = req.apiKey.useCredits || false;
@@ -310,6 +312,7 @@ export const register = (app: Application) => {
             apiKey,
             apiKeyId,
             delayInfo,
+            user,
             billable,
             metered,
             useCredits
