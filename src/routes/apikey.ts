@@ -30,6 +30,7 @@ export const register = (app: Application) => {
         const json: any = {
             success: true,
             server: config.server,
+            id: apiKey.id,
             name: apiKey.name,
             owner: apiKey.owner,
             key: key,
