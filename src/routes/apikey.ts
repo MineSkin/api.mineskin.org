@@ -27,9 +27,10 @@ export const register = (app: Application) => {
 
         const config = await getConfig();
 
-        res.json({
+        const json: any = {
             success: true,
             server: config.server,
+            id: apiKey.id,
             name: apiKey.name,
             owner: apiKey.owner,
             key: key,
@@ -38,7 +39,14 @@ export const register = (app: Application) => {
             ips: apiKey.allowedIps,
             agents: apiKey.allowedAgents,
             minDelay: apiKey.getMinDelay((await getConfig()).delays.defaultApiKey)
-        })
+        };
+        if (apiKey.metered) {
+            json['metered'] = true;
+        }
+        if (apiKey.useCredits) {
+            json['useCredits'] = true;
+        }
+        res.json(json);
     })
 
     app.post("/apikey", async (req: Request, res: Response) => {
