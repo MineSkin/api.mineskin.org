@@ -51,6 +51,6 @@ function skinToSimpleJson(skin: ISkin2Document): ListedSkin {
         name: skin.meta.name,
         visibility: skin.meta.visibility,
         variant: skin.meta.variant,
-        views: skin.views
+        views: skin.interaction.views
     };
 }

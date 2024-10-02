@@ -903,7 +903,10 @@ export class Generator {
                         code: 2,
                         message: "invalid_argument"
                     });
-                    throw new GeneratorError(GenError.INVALID_IMAGE_URL, "Invalid host", 400, undefined, originalUrl);
+                    throw new GeneratorError(GenError.INVALID_IMAGE_URL, "Invalid host", {
+                        httpCode: 400,
+                        details: originalUrl
+                    });
                 }
             }
 
