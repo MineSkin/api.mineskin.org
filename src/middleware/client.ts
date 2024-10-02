@@ -4,7 +4,7 @@ import { getIp, getVia, simplifyUserAgent } from "../util";
 import * as Sentry from "@sentry/node";
 import { logger } from "../util/log";
 import { debug } from "../util/colors";
-import { ClientInfo } from "@mineskin/types";
+import { BillableClient, ClientInfo, CreditType, Maybe } from "@mineskin/types";
 
 export const mineskinClientMiddleware = async (req: MineSkinV2Request, res: Response, next: NextFunction) => {
     const rawUserAgent = req.header("user-agent") || "n/a";
@@ -12,9 +12,16 @@ export const mineskinClientMiddleware = async (req: MineSkinV2Request, res: Resp
     const ip = getIp(req);
     const via = getVia(req);
 
+    let user: Maybe<string>;
     let billable = false;
+    let metered = false;
+    let useCredits = false;
     if (req.apiKey) {
+        user = req.apiKey.user;
         billable = req.apiKey.billable || false;
+        metered = req.apiKey.metered || false;
+        useCredits = req.apiKey.useCredits || false;
+        billable = billable || metered || useCredits;
     }
 
     Sentry.setTags({
@@ -36,15 +43,18 @@ export const mineskinClientMiddleware = async (req: MineSkinV2Request, res: Resp
     }
     console.log(debug(`${ req.breadcrumbC } Key:         ${ req.apiKey?.name ?? "none" } ${ req.apiKey?._id ?? "" }`));
 
-    const client: ClientInfo = {
+    const client: ClientInfo | BillableClient = {
         time: Date.now(),
         key: req.apiKeyId,
         agent: userAgent.ua,
         origin: origin,
         ip: ip,
-        billable: billable,
         breadcrumb: req.breadcrumb || '00000000',
-        user: undefined //TODO
+        user: user,
+
+        billable: billable,
+        metered: metered,
+        credits: useCredits ? CreditType.AUTO : undefined //TODO: maybe allow specifying type of credits
     };
     req.client = client;
 

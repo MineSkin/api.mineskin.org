@@ -39,7 +39,7 @@ import UAParser from "ua-parser-js";
 import mongoose from "mongoose";
 import { connectToMongo } from "@mineskin/database";
 import { MineSkinError } from "@mineskin/types";
-import { GeneratorError, TrafficService } from "@mineskin/generator";
+import { BillingService, GeneratorError, TrafficService } from "@mineskin/generator";
 import { v2SkinsRouter } from "./routes/v2/skins";
 
 
@@ -244,7 +244,8 @@ async function init() {
         console.info("Connecting to Redis...")
         await initRedis();
 
-        TrafficService.init(redisClient!, redisPub!, redisSub!);
+        TrafficService.init(redisClient!, redisPub!, redisSub!, logger.child({label: "Traffic"}));
+        BillingService.init(redisClient!, redisPub!, redisSub!, logger.child({label: "Billing"}));
     }
 
     {

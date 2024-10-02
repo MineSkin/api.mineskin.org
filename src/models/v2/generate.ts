@@ -4,6 +4,7 @@ import multer, { MulterError } from "multer";
 import { logger } from "../../util/log";
 import { Maybe } from "../../util";
 import {
+    BillingService,
     DuplicateChecker,
     GenerateOptions,
     GenerateRequest,
@@ -20,6 +21,7 @@ import {
 import {
     ErrorSource,
     GenerateType,
+    isBillableClient,
     RateLimitInfo,
     SkinInfo2,
     SkinVariant,
@@ -81,6 +83,50 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
                 }
             ]
         });
+    }
+
+    // check credits
+    if (isBillableClient(req.client)) {
+        const billingService = BillingService.getInstance();
+        if (req.client.credits) {
+            const credit = await billingService.getClientCredits(req.client);
+            if (!credit) {
+                return res.status(400).json({
+                    success: false,
+                    errors: [
+                        {
+                            code: 'no_credits',
+                            message: `no credits`
+                        }
+                    ]
+                });
+            }
+            if (credit.isValid()) {
+                return res.status(400).json({
+                    success: false,
+                    errors: [
+                        {
+                            code: 'invalid_credits',
+                            message: `invalid credits`
+                        }
+                    ]
+                });
+            }
+            if (credit.balance <= 0) {
+                return res.status(429).json({
+                    success: false,
+                    rateLimit: makeRateLimitInfo(req),
+                    errors: [
+                        {
+                            code: 'insufficient_credits',
+                            message: `insufficient credits`
+                        }
+                    ]
+                });
+            }
+            res.header('X-MineSkin-Credits-Type', credit.type);
+            res.header('X-MineSkin-Credits-Balance', `${ credit.balance }`);
+        }
     }
 
     logger.debug(req.body);
