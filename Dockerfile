@@ -1,6 +1,5 @@
 ARG GIT_BRANCH="master"
 FROM ghcr.io/mineskin/mineskin-api:${GIT_BRANCH}-dependencies AS BUILD_IMAGE
-RUN apk add --no-cache bash git
 
 RUN mkdir -p /opt/app
 WORKDIR /opt/app

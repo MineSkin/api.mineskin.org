@@ -1,5 +1,6 @@
 import { SimplifiedUserAgent } from "../util";
 import { DelayInfo } from "./DelayInfo";
+import { UUID } from "@mineskin/types";
 
 export interface ClientInfo {
     time: number;
@@ -11,5 +12,9 @@ export interface ClientInfo {
     apiKeyId?: string;
     delayInfo?: DelayInfo;
     nextRequest?: number;
+
+    user?: UUID;
     billable?: boolean;
+    metered?: boolean;
+    useCredits?: boolean;
 }

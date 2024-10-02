@@ -28,7 +28,7 @@ import { getUserFromRequest } from "./account";
 import multer, { MulterError } from "multer";
 import { logger } from "../util/log";
 import { DelayInfo } from "../typings/DelayInfo";
-import { GenerateType, SkinVariant, SkinVisibility } from "@mineskin/types";
+import { GenerateType, SkinVariant, SkinVisibility, UUID } from "@mineskin/types";
 import { SkinModel } from "@mineskin/database";
 import { Temp } from "../generator/Temp";
 
@@ -264,10 +264,16 @@ export const register = (app: Application) => {
         let apiKeyId: Maybe<string>;
         let apiKey;
         let billable = false;
+        let metered = false;
+        let useCredits = false;
+        let user: Maybe<UUID>;
         if (isApiKeyRequest(req) && req.apiKey) {
             apiKeyId = req.apiKey.id;
             apiKey = `${ apiKeyId?.substring(0, 8) } ${ req.apiKey?.name }`;
+            user = req.apiKey.user;
             billable = req.apiKey.billable || false;
+            metered = req.apiKey.metered || false;
+            useCredits = req.apiKey.useCredits || false;
         }
         let delayInfo: Maybe<DelayInfo>;
         if ('delayInfo' in req) {
@@ -277,7 +283,9 @@ export const register = (app: Application) => {
         Sentry.setTags({
             "generate_via": via,
             "generate_api_key": apiKey ?? "none",
-            "generate_billable": billable
+            "generate_billable": billable,
+            "generate_metered": metered,
+            "generate_use_credits": useCredits
         });
 
         const userAgent = simplifyUserAgent(rawUserAgent);
@@ -305,7 +313,10 @@ export const register = (app: Application) => {
             apiKey,
             apiKeyId,
             delayInfo,
-            billable
+            user,
+            billable,
+            metered,
+            useCredits
         };
     }
 

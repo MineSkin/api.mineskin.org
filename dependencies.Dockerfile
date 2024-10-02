@@ -1,5 +1,5 @@
 FROM node:18.20.3-alpine3.19 AS DEPS_IMAGE
-RUN apk add --no-cache bash git openssh-client
+RUN apk update && apk add --no-cache bash git openssh-client && rm -rf /var/cache/apk/*
 
 RUN mkdir -p /opt/app
 WORKDIR /opt/app
