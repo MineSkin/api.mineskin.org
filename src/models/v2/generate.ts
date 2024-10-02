@@ -33,7 +33,7 @@ import { Response } from "express";
 import { V2SkinResponse } from "../../typings/v2/V2SkinResponse";
 import { debug } from "../../util/colors";
 import { V2GenerateResponseBody } from "../../typings/v2/V2GenerateResponseBody";
-import { GenerateReq, GenerateReqUrl, GenerateReqUser } from "../../runtype/GenerateReq";
+import { GenerateReqOptions, GenerateReqUrl, GenerateReqUser } from "../../runtype/GenerateReq";
 
 const upload = multer({
     limits: {
@@ -52,6 +52,18 @@ const client = new GeneratorClient({
 });
 
 export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response<V2GenerateResponseBody | V2SkinResponse>) {
+
+    // need to call multer stuff first so fields are parsed
+    if (req.is('multipart/form-data')) {
+        console.debug('multipart/form-data') //TODO: remove
+        const fileUploaded = await tryHandleFileUpload(req, res);
+        if (!fileUploaded) {
+            return;
+        }
+        console.debug("file uploaded"); //TODO: remove
+    }else{
+        upload.none();
+    }
 
     const options = getAndValidateOptions(req, res);
     //const client = getClientInfo(req);
@@ -133,86 +145,81 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
 
     let imageBuffer: Buffer;
 
-    const contentType = req.header("content-type");
-    switch (contentType) {
-        case 'multipart/form-data': {
-            const fileUploaded = await tryHandleFileUpload(req, res);
-            if (!fileUploaded) {
-                return;
-            }
+    if (req.is('multipart/form-data')) {
+        // console.debug('multipart/form-data') //TODO: remove
+        // const fileUploaded = await tryHandleFileUpload(req, res);
+        // if (!fileUploaded) {
+        //     return;
+        // }
 
-            const file: Maybe<Express.Multer.File> = req.file;
-            if (!file) {
-                res.status(500).json({
-                    success: false,
-                    errors: [
-                        {
-                            code: 'missing_file',
-                            message: `no file uploaded`
-                        }
-                    ]
-                });
-                return;
-            }
-
-            logger.debug(`${ req.breadcrumbC } FILE:        "${ file.filename }"`);
-
-            imageBuffer = file.buffer;
-            break;
-        }
-        case 'application/json': {
-            if ('url' in req.body) {
-                const {url} = GenerateReqUrl.check(req.body);
-                logger.debug(`${ req.breadcrumbC } URL:         "${ url }"`);
-
-                const originalUrlV2Duplicate = await DuplicateChecker.findDuplicateV2FromUrl(url, options, req.breadcrumb || "????");
-                if (originalUrlV2Duplicate.existing) {
-                    // found existing
-                    const result = await DuplicateChecker.handleV2DuplicateResult({
-                        source: originalUrlV2Duplicate.source,
-                        existing: originalUrlV2Duplicate.existing,
-                        data: originalUrlV2Duplicate.existing.data
-                    }, options, req.client, req.breadcrumb || "????");
-                    await DuplicateChecker.handleDuplicateResultMetrics(result, GenerateType.URL, options, req.client);
-                    if (!!result.existing) {
-                        // full duplicate, return existing skin
-                        return await queryAndSendSkin(req, res, result.existing.uuid, true);
+        const file: Maybe<Express.Multer.File> = req.file;
+        if (!file) {
+            res.status(500).json({
+                success: false,
+                errors: [
+                    {
+                        code: 'missing_file',
+                        message: `no file uploaded`
                     }
-                    // otherwise, continue with generator
-                }
-
-                //TODO: duplicate checks
-                //TODO: download image
-                throw new Error("Not implemented");
-            } else if ('user' in req.body) {
-                const {uuid} = GenerateReqUser.check(req.body);
-                logger.debug(`${ req.breadcrumbC } USER:        "${ uuid }"`);
-                //TODO
-                throw new Error("Not implemented");
-            } else {
-                return res.status(400).json({
-                    success: false,
-                    errors: [
-                        {
-                            code: 'invalid_request',
-                            message: `invalid request properties (expected url or user)`
-                        }
-                    ]
-                });
-            }
-            break;
+                ]
+            });
+            return;
         }
-        default: {
+
+        logger.debug(`${ req.breadcrumbC } FILE:        "${ file.filename }"`);
+
+        imageBuffer = file.buffer;
+    } else if (req.is('application/json')) {
+        console.debug('application/json') //TODO: remove
+        if ('url' in req.body) {
+            const {url} = GenerateReqUrl.check(req.body);
+            logger.debug(`${ req.breadcrumbC } URL:         "${ url }"`);
+
+            const originalUrlV2Duplicate = await DuplicateChecker.findDuplicateV2FromUrl(url, options, req.breadcrumb || "????");
+            if (originalUrlV2Duplicate.existing) {
+                // found existing
+                const result = await DuplicateChecker.handleV2DuplicateResult({
+                    source: originalUrlV2Duplicate.source,
+                    existing: originalUrlV2Duplicate.existing,
+                    data: originalUrlV2Duplicate.existing.data
+                }, options, req.client, req.breadcrumb || "????");
+                await DuplicateChecker.handleDuplicateResultMetrics(result, GenerateType.URL, options, req.client);
+                if (!!result.existing) {
+                    // full duplicate, return existing skin
+                    return await queryAndSendSkin(req, res, result.existing.uuid, true);
+                }
+                // otherwise, continue with generator
+            }
+
+            //TODO: duplicate checks
+            //TODO: download image
+            throw new Error("Not implemented");
+        } else if ('user' in req.body) {
+            const {uuid} = GenerateReqUser.check(req.body);
+            logger.debug(`${ req.breadcrumbC } USER:        "${ uuid }"`);
+            //TODO
+            throw new Error("Not implemented");
+        } else {
             return res.status(400).json({
                 success: false,
                 errors: [
                     {
-                        code: 'invalid_content_type',
-                        message: `invalid content type: ${ contentType } (expected multipart/form-data or application/json)`
+                        code: 'invalid_request',
+                        message: `invalid request properties (expected url or user)`
                     }
                 ]
             });
         }
+    } else {
+        return res.status(400).json({
+            success: false,
+            errors: [
+                {
+                    code: 'invalid_content_type',
+                    message: `invalid content type: ${ req.header('content-type') } (expected multipart/form-data or application/json)`
+                }
+            ]
+        });
     }
 
 
@@ -455,12 +462,18 @@ function getAndValidateOptions(req: GenerateV2Request, res: Response): GenerateO
         op: "v2_generate_getAndValidateOptions",
         name: "getAndValidateOptions"
     }, (span) => {
+        console.debug(req.header('content-type'))
 
-        const {
+        logger.debug(JSON.stringify(req.body));//TODO: remove
+        let {
             variant,
             visibility,
             name
-        } = GenerateReq.check(req.body);
+        } = GenerateReqOptions.check(req.body);
+
+        variant = validateVariant(variant);
+        visibility = validateVisibility(visibility);
+        name = validateName(name);
 
         // const variant = validateVariant(req.body["variant"] || req.query["variant"]);
         // const visibility = validateVisibility(req.body["visibility"] || req.query["visibility"]);
@@ -484,9 +497,9 @@ function getAndValidateOptions(req: GenerateV2Request, res: Response): GenerateO
         });
 
         return {
-            variant,
-            visibility,
-            name
+            variant: variant!,
+            visibility:visibility!,
+            name:name
         };
     })
 

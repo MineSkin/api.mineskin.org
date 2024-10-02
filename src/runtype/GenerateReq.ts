@@ -10,11 +10,12 @@ export const GenerateReqOptions = Record({
         Literal(SkinVisibility2.PUBLIC),
         Literal(SkinVisibility2.UNLISTED),
         Literal(SkinVisibility2.PRIVATE)
-    ).Or(Literal(SkinVisibility2.PUBLIC)),
+    ).optional(),
     variant: Union(
         Literal(SkinVariant.CLASSIC),
-        Literal(SkinVariant.SLIM)
-    ).Or(Literal(SkinVariant.CLASSIC))
+        Literal(SkinVariant.SLIM),
+        Literal(SkinVariant.UNKNOWN)
+    ).optional()
 });
 
 export const GenerateReqUrl = Intersect(
