@@ -166,14 +166,39 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
                 logger.debug(`${ req.breadcrumbC } URL:         "${ url }"`);
 
                 const originalUrlV2Duplicate = await DuplicateChecker.findDuplicateV2FromUrl(url, options, req.breadcrumb || "????");
+                if (originalUrlV2Duplicate.existing) {
+                    // found existing
+                    const result = await DuplicateChecker.handleV2DuplicateResult({
+                        source: originalUrlV2Duplicate.source,
+                        existing: originalUrlV2Duplicate.existing,
+                        data: originalUrlV2Duplicate.existing.data
+                    }, options, req.client, req.breadcrumb || "????");
+                    await DuplicateChecker.handleDuplicateResultMetrics(result, GenerateType.URL, options, req.client);
+                    if (!!result.existing) {
+                        // full duplicate, return existing skin
+                        return await queryAndSendSkin(req, res, result.existing.uuid, true);
+                    }
+                    // otherwise, continue with generator
+                }
 
                 //TODO: duplicate checks
                 //TODO: download image
-            }
-            if ('user' in req.body) {
+                throw new Error("Not implemented");
+            } else if ('user' in req.body) {
                 const {uuid} = GenerateReqUser.check(req.body);
                 logger.debug(`${ req.breadcrumbC } USER:        "${ uuid }"`);
                 //TODO
+                throw new Error("Not implemented");
+            } else {
+                return res.status(400).json({
+                    success: false,
+                    errors: [
+                        {
+                            code: 'invalid_request',
+                            message: `invalid request properties (expected url or user)`
+                        }
+                    ]
+                });
             }
             break;
         }
@@ -265,7 +290,7 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
     }
      */
 
-    const imageUploaded = await client.insertUploadedImage(hashes.minecraft, file.buffer);
+    const imageUploaded = await client.insertUploadedImage(hashes.minecraft, imageBuffer);
 
     const request: GenerateRequest = {
         breadcrumb: req.breadcrumb || "????",
@@ -420,7 +445,7 @@ function skinToJson(skin: IPopulatedSkin2Document, duplicate: boolean = false): 
             version: 'unknown', //TODO
             duration: skin.data.queue.end.getTime() - skin.data.queue.start.getTime()
         },
-        views: skin.views,
+        views: skin.interaction.views,
         duplicate: duplicate
     };
 }
