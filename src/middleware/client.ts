@@ -30,6 +30,12 @@ export const mineskinClientMiddleware = async (req: MineSkinV2Request, res: Resp
     });
 
     const userAgent = simplifyUserAgent(rawUserAgent);
+    if (userAgent.generic) {
+        req.warnings.push({
+            code: "generic_user_agent",
+            message: "User agent is generic. Please use a more specific user agent."
+        })
+    }
 
     logger.debug(`${ req.breadcrumbC } Agent:       ${ req.headers["user-agent"] }`, {
         breadcrumb: req.breadcrumb,
@@ -41,7 +47,7 @@ export const mineskinClientMiddleware = async (req: MineSkinV2Request, res: Resp
             origin: req.headers['origin']
         });
     }
-    console.log(debug(`${ req.breadcrumbC } Key:         ${ req.apiKey?.name ?? "none" } ${ req.apiKey?._id ?? "" }`));
+    console.log(debug(`${ req.breadcrumbC } Key:         ${ req.apiKeyRef ?? "none" }`));
 
     const client: ClientInfo | BillableClient = {
         time: Date.now(),

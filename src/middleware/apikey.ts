@@ -9,7 +9,7 @@ import { MineSkinError } from "@mineskin/types";
 export const apiKeyMiddleware = async (req: MineSkinV2Request, res: Response, next: NextFunction) => {
     let keyStr;
 
-    const authHeader = req.headers['Authorization'] as string;
+    const authHeader = req.header("authorization");
     if (authHeader && authHeader.startsWith("Bearer ")) {
         keyStr = authHeader.substring("Bearer ".length);
     }
@@ -55,7 +55,12 @@ export const apiKeyMiddleware = async (req: MineSkinV2Request, res: Response, ne
             }
         }
 
-        return;
+    } else {
+        console.log(debug(`${ req.breadcrumbC } Key:         none`));
+        req.warnings.push({
+            code: "no_api_key",
+            message: "No API Key provided"
+        })
     }
 
     next();
