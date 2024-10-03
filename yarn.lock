@@ -1393,7 +1393,7 @@ __metadata:
 
 "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git#credit":
   version: 0.0.0
-  resolution: "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git#commit=177b2768f9149afc2b4a148af6409ca0d4c68959"
+  resolution: "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git#commit=f0b0f9efac0f504ecd246bfa6be0f536c3d7323d"
   dependencies:
     "@inventivetalent/imghash": "npm:^1.1.1"
     "@inventivetalent/loading-cache": "npm:^0.7.1"
@@ -1423,7 +1423,7 @@ __metadata:
     uuid: "npm:^10.0.0"
     winston: "npm:^3.14.2"
     winston-daily-rotate-file: "npm:^5.0.0"
-  checksum: 10c0/b14cc03028aae0f49286eaf79688cdb997177622c1824bb99f8c9c8c48e9024f74f53f402c95970e5c0206f51a42149ddd8dc5ca3e4da34dd55054afd4884082
+  checksum: 10c0/b6af3e6a2e03c62f6332bb3e10588be3192b64dc8cbffc4a303643116f7219c4f65f35cdd2dc1d5306d39d2e55af695041b67b090784817edd024d22002ce8a7
   languageName: node
   linkType: hard
 
@@ -3825,6 +3825,7 @@ __metadata:
     multer: "npm:^1.4.5-lts.1"
     nodemailer: "npm:^6.5.0"
     querystring: "npm:^0.2.1"
+    random-png: "npm:^1.0.0"
     read-chunk: "npm:^3.2.0"
     redis: "npm:^4.6.15"
     rotating-file-stream: "npm:^1.4.4"
@@ -8678,6 +8679,15 @@ __metadata:
   version: 1.0.0
   resolution: "random-bytes@npm:1.0.0"
   checksum: 10c0/71e7a600e0976e9ebc269793a0577d47b965fa678fcc9e9623e427f909d1b3669db5b3a178dbf61229f0724ea23dba64db389f0be0ba675c6a6b837c02f29b8f
+  languageName: node
+  linkType: hard
+
+"random-png@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "random-png@npm:1.0.0"
+  dependencies:
+    pngjs: "npm:^7.0.0"
+  checksum: 10c0/7e9d091946be23b166cf904b42ca4d6d1d0977acbbfdb26f7223cd42afe15b1edd70562e93b0a2fdb68f920d8240390c2bd5d2ed7747429470b19c27b0f8694a
   languageName: node
   linkType: hard
 

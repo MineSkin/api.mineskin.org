@@ -97,6 +97,8 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
         });
     }
 
+    logger.debug(req.client)
+
     // check credits
     if (isBillableClient(req.client)) {
         const billingService = BillingService.getInstance();
@@ -113,7 +115,7 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
                     ]
                 });
             }
-            if (credit.isValid()) {
+            if (!credit.isValid()) {
                 return res.status(400).json({
                     success: false,
                     errors: [
@@ -153,6 +155,7 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
         // }
 
         const file: Maybe<Express.Multer.File> = req.file;
+        logger.debug(file);
         if (!file) {
             res.status(500).json({
                 success: false,
