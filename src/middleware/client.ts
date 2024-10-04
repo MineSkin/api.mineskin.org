@@ -2,9 +2,9 @@ import { MineSkinV2Request } from "../routes/v2/types";
 import { NextFunction, Response } from "express";
 import { getIp, getVia, simplifyUserAgent } from "../util";
 import * as Sentry from "@sentry/node";
-import { logger } from "../util/log";
 import { debug } from "../util/colors";
 import { BillableClient, ClientInfo, CreditType, Maybe } from "@mineskin/types";
+import { Log } from "@mineskin/generator";
 
 export const mineskinClientMiddleware = async (req: MineSkinV2Request, res: Response, next: NextFunction) => {
     const rawUserAgent = req.header("user-agent") || "n/a";
@@ -37,12 +37,12 @@ export const mineskinClientMiddleware = async (req: MineSkinV2Request, res: Resp
         })
     }
 
-    logger.debug(`${ req.breadcrumbC } Agent:       ${ req.headers["user-agent"] }`, {
+    Log.l.debug(`${ req.breadcrumbC } Agent:       ${ req.headers["user-agent"] }`, {
         breadcrumb: req.breadcrumb,
         userAgent: req.headers["user-agent"]
     });
     if (req.headers['origin']) {
-        logger.debug(`${ req.breadcrumbC } Origin:      ${ req.headers['origin'] }`, {
+        Log.l.debug(`${ req.breadcrumbC } Origin:      ${ req.headers['origin'] }`, {
             breadcrumb: req.breadcrumb,
             origin: req.headers['origin']
         });

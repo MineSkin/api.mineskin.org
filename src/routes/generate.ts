@@ -26,11 +26,11 @@ import { Caching } from "../generator/Caching";
 import { isApiKeyRequest } from "../typings/ApiKeyRequest";
 import { getUserFromRequest } from "./account";
 import multer, { MulterError } from "multer";
-import { logger } from "../util/log";
 import { DelayInfo } from "../typings/DelayInfo";
 import { GenerateType, SkinVariant, SkinVisibility, UUID } from "@mineskin/types";
 import { SkinModel } from "@mineskin/database";
 import { Temp } from "../generator/Temp";
+import { Log } from "@mineskin/generator";
 
 export const register = (app: Application) => {
 
@@ -292,12 +292,12 @@ export const register = (app: Application) => {
 
         const time = Date.now();
 
-        logger.info(debug(`${ req.breadcrumb } Agent:       ${ req.headers["user-agent"] }`), {
+        Log.l.info(debug(`${ req.breadcrumb } Agent:       ${ req.headers["user-agent"] }`), {
             breadcrumb: req.breadcrumb,
             userAgent: req.headers["user-agent"]
         });
         if (req.headers['origin']) {
-            logger.info(debug(`${ req.breadcrumb } Origin:      ${ req.headers['origin'] }`), {
+            Log.l.info(debug(`${ req.breadcrumb } Origin:      ${ req.headers['origin'] }`), {
                 breadcrumb: req.breadcrumb,
                 origin: req.headers['origin']
             });

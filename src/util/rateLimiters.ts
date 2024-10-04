@@ -3,7 +3,7 @@ import rateLimit, { Options } from "express-rate-limit";
 import { getAndValidateRequestApiKey, getIp, simplifyUserAgent } from "./index";
 import { Generator } from "../generator/Generator";
 import { MineSkinMetrics } from "./metrics";
-import { logger } from "./log";
+import { Log } from "@mineskin/generator";
 
 function keyGenerator(req: Request): string {
     return getIp(req);
@@ -32,7 +32,7 @@ export const generateLimiter = rateLimit({
     handler: (request: Request, response: Response, next: NextFunction, options: Options) => {
         // onLimitReached code here
         const agent = simplifyUserAgent(request.headers["user-agent"] as string);
-        logger.warn(`${ agent.ua } ${ getIp(request) } reached their rate limit`);
+        Log.l.warn(`${ agent.ua } ${ getIp(request) } reached their rate limit`);
         MineSkinMetrics.get().then(metrics => {
             metrics.rateLimit
                 .tag("server", metrics.config.server)

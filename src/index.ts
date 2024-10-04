@@ -1,6 +1,6 @@
 import "dotenv/config"
 import "./instrument"
-import { httpLogger, logger, logtail } from "./util/log";
+import { httpLogger, initApiLogger } from "./util/log";
 import * as sourceMapSupport from "source-map-support";
 import * as Sentry from "@sentry/node";
 import express, { ErrorRequestHandler, Express, NextFunction, Request, Response } from "express";
@@ -39,11 +39,13 @@ import UAParser from "ua-parser-js";
 import mongoose from "mongoose";
 import { connectToMongo } from "@mineskin/database";
 import { MineSkinError } from "@mineskin/types";
-import { BillingService, GeneratorError, TrafficService } from "@mineskin/generator";
+import { BillingService, GeneratorError, Log, TrafficService } from "@mineskin/generator";
 import { v2SkinsRouter } from "./routes/v2/skins";
 
 
 sourceMapSupport.install();
+
+initApiLogger();
 
 let config: MineSkinConfig;
 let port: number;
@@ -52,7 +54,9 @@ let updatingApp = true;
 
 const hostname = resolveHostname();
 
-logger.info("\n" +
+
+
+Log.l.info("\n" +
     "  ==== STARTING UP ==== \n" +
     "" + process.env.NODE_ENV + "\n" +
     "" + process.env.SOURCE_COMMIT + "\n" +
@@ -244,8 +248,8 @@ async function init() {
         console.info("Connecting to Redis...")
         await initRedis();
 
-        TrafficService.init(redisClient!, redisPub!, redisSub!, logger.child({label: "Traffic"}));
-        BillingService.init(redisClient!, redisPub!, redisSub!, logger.child({label: "Billing"}));
+        TrafficService.init(redisClient!, redisPub!, redisSub!, Log.l.child({label: "Traffic"}));
+        BillingService.init(redisClient!, redisPub!, redisSub!, Log.l.child({label: "Billing"}));
     }
 
     {
@@ -321,7 +325,6 @@ async function init() {
 
     // flush logs
     app.use((req, res, next) => {
-        logtail?.flush();
         next();
     })
 
@@ -384,7 +387,7 @@ async function init() {
                     }).catch(e => Sentry.captureException(e));
                 });
         } else {
-            logger.error("Unexpected Error", err);
+            Log.l.error("Unexpected Error", err);
             Sentry.captureException(err, {
                 level: "fatal"
             });

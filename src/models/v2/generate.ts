@@ -1,7 +1,6 @@
 import { GenerateV2Request } from "../../routes/v2/types";
 import * as Sentry from "@sentry/node";
 import multer, { MulterError } from "multer";
-import { logger } from "../../util/log";
 import { Maybe } from "../../util";
 import {
     BillingService,
@@ -14,6 +13,7 @@ import {
     GenError,
     ImageService,
     ImageValidation,
+    Log,
     MAX_IMAGE_SIZE,
     SkinService,
     TrafficService
@@ -97,7 +97,7 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
         });
     }
 
-    logger.debug(req.client)
+    Log.l.debug(req.client)
 
     // check credits
     if (isBillableClient(req.client)) {
@@ -143,7 +143,7 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
         }
     }
 
-    logger.debug(req.body);
+    Log.l.debug(req.body);
 
     let imageBuffer: Buffer;
 
@@ -155,7 +155,7 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
         // }
 
         const file: Maybe<Express.Multer.File> = req.file;
-        logger.debug(file);
+        Log.l.debug(file);
         if (!file) {
             res.status(500).json({
                 success: false,
@@ -169,14 +169,14 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
             return;
         }
 
-        logger.debug(`${ req.breadcrumbC } FILE:        "${ file.filename }"`);
+        Log.l.debug(`${ req.breadcrumbC } FILE:        "${ file.filename }"`);
 
         imageBuffer = file.buffer;
     } else if (req.is('application/json')) {
         console.debug('application/json') //TODO: remove
         if ('url' in req.body) {
             const {url} = GenerateReqUrl.check(req.body);
-            logger.debug(`${ req.breadcrumbC } URL:         "${ url }"`);
+            Log.l.debug(`${ req.breadcrumbC } URL:         "${ url }"`);
 
             const originalUrlV2Duplicate = await DuplicateChecker.findDuplicateV2FromUrl(url, options, req.breadcrumb || "????");
             if (originalUrlV2Duplicate.existing) {
@@ -199,7 +199,7 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
             throw new Error("Not implemented");
         } else if ('user' in req.body) {
             const {uuid} = GenerateReqUser.check(req.body);
-            logger.debug(`${ req.breadcrumbC } USER:        "${ uuid }"`);
+            Log.l.debug(`${ req.breadcrumbC } USER:        "${ uuid }"`);
             //TODO
             throw new Error("Not implemented");
         } else {
@@ -228,11 +228,11 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
 
     // preliminary rate limiting
     req.nextRequest = await trafficService.updateLastAndNextRequest(req.client, 200)
-    logger.debug(`next request at ${ req.nextRequest }`);
+    Log.l.debug(`next request at ${ req.nextRequest }`);
 
 
     const validation = await ImageValidation.validateImageBuffer(imageBuffer);
-    logger.debug(validation);
+    Log.l.debug(validation);
 
     //TODO: ideally don't do this here and in the generator
     if (options.variant === SkinVariant.UNKNOWN) {
@@ -242,7 +242,7 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
                 httpCode: 400
             });
         }
-        logger.info(req.breadcrumb + " Switching unknown skin variant to " + validation.variant + " from detection");
+        Log.l.info(req.breadcrumb + " Switching unknown skin variant to " + validation.variant + " from detection");
         Sentry.setExtra("generate_detected_variant", validation.variant);
         options.variant = validation.variant;
     }
@@ -261,7 +261,7 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
             error: e
         });
     }
-    logger.debug(req.breadcrumbC + " Image hash: ", hashes);
+    Log.l.debug(req.breadcrumbC + " Image hash: ", hashes);
 
     console.log(imageBuffer.byteLength);
 
@@ -286,7 +286,7 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
 
     /*
     const duplicateResult = await DuplicateChecker.findDuplicateDataFromImageHash(hashes, options.variant, GenerateType.UPLOAD, req.breadcrumb || "????");
-    logger.debug(JSON.stringify(duplicateResult, null, 2));
+    Log.l.debug(JSON.stringify(duplicateResult, null, 2));
     if (duplicateResult.existing && isV1SkinDocument(duplicateResult.existing)) {
         return res.json({
             success: true,
@@ -309,7 +309,7 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
         options: options,
         client: req.client
     }
-    logger.debug(request);
+    Log.l.debug(request);
     const job = await client.submitRequest(request);
     try {
         const result = await job.waitUntilFinished(client.queueEvents, 10_000) as GenerateResult; //TODO: configure timeout
@@ -427,7 +427,7 @@ function skinToJson(skin: IPopulatedSkin2Document, duplicate: boolean = false): 
     if (!skin.data) {
         throw new Error("Skin data is missing");
     }
-    logger.debug(JSON.stringify(skin.data, null, 2));
+    Log.l.debug(JSON.stringify(skin.data, null, 2));
     return {
         uuid: skin.uuid,
         name: skin.meta.name,
@@ -467,7 +467,7 @@ function getAndValidateOptions(req: GenerateV2Request, res: Response): GenerateO
     }, (span) => {
         console.debug(req.header('content-type'))
 
-        logger.debug(JSON.stringify(req.body));//TODO: remove
+        Log.l.debug(JSON.stringify(req.body));//TODO: remove
         let {
             variant,
             visibility,

@@ -4,7 +4,7 @@ import { apiKeyMiddleware } from "../../middleware/apikey";
 import { mineskinClientMiddleware } from "../../middleware/client";
 import { v2SkinList } from "../../models/v2/skins";
 
-export const v2SkinsRouter = Router();
+export const v2SkinsRouter: Router = Router();
 
 
 v2SkinsRouter.use("/", breadcrumbMiddleware);

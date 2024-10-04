@@ -15,10 +15,10 @@ import { imageHash } from "@inventivetalent/imghash";
 import { ClientInfo } from "../typings/ClientInfo";
 import UAParser from "ua-parser-js";
 import { getRedisNextRequest, updateRedisNextRequest } from "../database/redis";
-import { logger } from "./log";
 import { IApiKeyDocument, ISkinDocument, SkinModel } from "@mineskin/database";
 import { MineSkinError, SkinVariant } from "@mineskin/types";
 import { TempFile } from "../generator/Temp";
+import { Log } from "@mineskin/generator";
 
 export function resolveHostname() {
     if (process.env.NODE_HOSTNAME && !process.env.NODE_HOSTNAME.startsWith("{{")) {
@@ -84,7 +84,7 @@ export async function checkTraffic(client: ClientInfo, req: Request, res: Respon
                 },
                 now: client.time
             });
-            logger.warn(`${ client.userAgent.ua } Request too soon (${ nextRequest } > ${ client.time } = ${ nextRequest - client.time })`);
+            Log.l.warn(`${ client.userAgent.ua } Request too soon (${ nextRequest } > ${ client.time } = ${ nextRequest - client.time })`);
             MineSkinMetrics.get().then(metrics => {
                 metrics.rateLimit
                     .tag("server", metrics.config.server)

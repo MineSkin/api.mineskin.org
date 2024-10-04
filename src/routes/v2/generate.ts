@@ -7,7 +7,7 @@ import { MineSkinError } from "@mineskin/types";
 import { V2GenerateResponseBody } from "../../typings/v2/V2GenerateResponseBody";
 import { ValidationError } from "runtypes";
 import * as Sentry from "@sentry/node";
-import { logger } from "../../util/log";
+import { Log } from "@mineskin/generator";
 
 export const v2GenerateRouter: Router = Router();
 
@@ -45,7 +45,7 @@ v2GenerateRouter.use("/", (err: Error, req: Request, res: Response<V2GenerateRes
         });
     }
 
-    logger.error(err);
+    Log.l.error(err);
     Sentry.captureException(err, {
         level: "fatal"
     });
