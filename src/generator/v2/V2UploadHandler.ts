@@ -1,10 +1,10 @@
 import { BufferResult, V2GenerateHandler } from "./V2GenerateHandler";
 import { Response } from "express";
-import { Maybe } from "../util";
 import { GenerateOptions, GeneratorError, Log } from "@mineskin/generator";
-import { GenerateV2Request } from "../routes/v2/types";
-import { V2GenerateResponseBody } from "../typings/v2/V2GenerateResponseBody";
-import { V2SkinResponse } from "../typings/v2/V2SkinResponse";
+import { V2GenerateResponseBody } from "../../typings/v2/V2GenerateResponseBody";
+import { V2SkinResponse } from "../../typings/v2/V2SkinResponse";
+import { GenerateV2Request } from "../../routes/v2/types";
+import { Maybe } from "@mineskin/types";
 
 export class V2UploadHandler extends V2GenerateHandler {
 

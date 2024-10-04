@@ -23,9 +23,9 @@ import { V2SkinResponse } from "../../typings/v2/V2SkinResponse";
 import { debug } from "../../util/colors";
 import { V2GenerateResponseBody } from "../../typings/v2/V2GenerateResponseBody";
 import { GenerateReqOptions, GenerateReqUser } from "../../runtype/GenerateReq";
-import { V2GenerateHandler } from "../../generator/V2GenerateHandler";
-import { V2UploadHandler } from "../../generator/V2UploadHandler";
-import { V2UrlHandler } from "../../generator/V2UrlHandler";
+import { V2GenerateHandler } from "../../generator/v2/V2GenerateHandler";
+import { V2UploadHandler } from "../../generator/v2/V2UploadHandler";
+import { V2UrlHandler } from "../../generator/v2/V2UrlHandler";
 
 const upload = multer({
     limits: {

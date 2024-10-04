@@ -1,5 +1,4 @@
 import { BufferResult, V2GenerateHandler } from "./V2GenerateHandler";
-import { GenerateV2Request } from "../routes/v2/types";
 import { Response } from "express";
 import {
     ALLOWED_IMAGE_TYPES,
@@ -8,16 +7,17 @@ import {
     GeneratorError,
     GenError,
     Log,
+    MAX_IMAGE_SIZE,
     UrlHandler
 } from "@mineskin/generator";
 import { GenerateType, UUID } from "@mineskin/types";
-import { V2GenerateResponseBody } from "../typings/v2/V2GenerateResponseBody";
-import { V2SkinResponse } from "../typings/v2/V2SkinResponse";
-import { GenerateReqUrl } from "../runtype/GenerateReq";
-import { Temp, URL_DIR } from "./Temp";
-import { PathHolder } from "../util";
-import { MAX_IMAGE_SIZE } from "./Generator";
 import { readFile } from "fs/promises";
+import { GenerateV2Request } from "../../routes/v2/types";
+import { V2GenerateResponseBody } from "../../typings/v2/V2GenerateResponseBody";
+import { V2SkinResponse } from "../../typings/v2/V2SkinResponse";
+import { GenerateReqUrl } from "../../runtype/GenerateReq";
+import { PathHolder } from "../../util";
+import { Temp, URL_DIR } from "../Temp";
 
 export class V2UrlHandler extends V2GenerateHandler {
 

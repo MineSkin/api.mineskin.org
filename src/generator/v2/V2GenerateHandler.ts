@@ -1,10 +1,10 @@
-import { GenerateV2Request } from "../routes/v2/types";
 import { Response } from "express";
 import { GenerateOptions, Log, SkinService } from "@mineskin/generator";
 import { RateLimitInfo, SkinInfo2, UUID } from "@mineskin/types";
 import { IPopulatedSkin2Document, ISkinDocument, isPopulatedSkin2Document } from "@mineskin/database";
-import { V2GenerateResponseBody } from "../typings/v2/V2GenerateResponseBody";
-import { V2SkinResponse } from "../typings/v2/V2SkinResponse";
+import { GenerateV2Request } from "../../routes/v2/types";
+import { V2GenerateResponseBody } from "../../typings/v2/V2GenerateResponseBody";
+import { V2SkinResponse } from "../../typings/v2/V2SkinResponse";
 
 export const MC_TEXTURE_PREFIX = "https://textures.minecraft.net/texture/";
 
