@@ -7,8 +7,7 @@ import {
     GeneratorError,
     GenError,
     Log,
-    MAX_IMAGE_SIZE,
-    UrlHandler
+    MAX_IMAGE_SIZE
 } from "@mineskin/generator";
 import { GenerateType, UUID } from "@mineskin/types";
 import { readFile } from "fs/promises";
@@ -18,6 +17,7 @@ import { V2SkinResponse } from "../../typings/v2/V2SkinResponse";
 import { GenerateReqUrl } from "../../runtype/GenerateReq";
 import { PathHolder } from "../../util";
 import { Temp, URL_DIR } from "../Temp";
+import { UrlHandler } from "./UrlHandler";
 
 export class V2UrlHandler extends V2GenerateHandler {
 
