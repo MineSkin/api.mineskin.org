@@ -24,6 +24,10 @@ export const mineskinClientMiddleware = async (req: MineSkinV2Request, res: Resp
         billable = billable || metered || useCredits;
     }
 
+    if (billable) {
+        res.header("X-MineSkin-Billable", "true");
+    }
+
     Sentry.setTags({
         "generate_via": via,
         "generate_billable": billable

@@ -15,25 +15,17 @@ import {
     ImageValidation,
     Log,
     MAX_IMAGE_SIZE,
-    SkinService,
     TrafficService
 } from "@mineskin/generator";
-import {
-    ErrorSource,
-    GenerateType,
-    isBillableClient,
-    RateLimitInfo,
-    SkinInfo2,
-    SkinVariant,
-    SkinVisibility2,
-    UUID
-} from "@mineskin/types";
-import { IPopulatedSkin2Document, ISkinDocument, isPopulatedSkin2Document } from "@mineskin/database";
+import { ErrorSource, GenerateType, isBillableClient, SkinVariant, SkinVisibility2 } from "@mineskin/types";
 import { Response } from "express";
 import { V2SkinResponse } from "../../typings/v2/V2SkinResponse";
 import { debug } from "../../util/colors";
 import { V2GenerateResponseBody } from "../../typings/v2/V2GenerateResponseBody";
-import { GenerateReqOptions, GenerateReqUrl, GenerateReqUser } from "../../runtype/GenerateReq";
+import { GenerateReqOptions, GenerateReqUser } from "../../runtype/GenerateReq";
+import { V2GenerateHandler } from "../../generator/V2GenerateHandler";
+import { V2UploadHandler } from "../../generator/V2UploadHandler";
+import { V2UrlHandler } from "../../generator/V2UrlHandler";
 
 const upload = multer({
     limits: {
@@ -55,13 +47,11 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
 
     // need to call multer stuff first so fields are parsed
     if (req.is('multipart/form-data')) {
-        console.debug('multipart/form-data') //TODO: remove
         const fileUploaded = await tryHandleFileUpload(req, res);
         if (!fileUploaded) {
             return;
         }
-        console.debug("file uploaded"); //TODO: remove
-    }else{
+    } else {
         upload.none();
     }
 
@@ -87,7 +77,7 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
     if (req.nextRequest > req.client.time) {
         return res.status(429).json({
             success: false,
-            rateLimit: makeRateLimitInfo(req),
+            rateLimit: V2GenerateHandler.makeRateLimitInfo(req),
             errors: [
                 {
                     code: 'rate_limit',
@@ -129,7 +119,7 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
             if (credit.balance <= 0) {
                 return res.status(429).json({
                     success: false,
-                    rateLimit: makeRateLimitInfo(req),
+                    rateLimit: V2GenerateHandler.makeRateLimitInfo(req),
                     errors: [
                         {
                             code: 'insufficient_credits',
@@ -145,63 +135,19 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
 
     Log.l.debug(req.body);
 
-    let imageBuffer: Buffer;
+    let handler: V2GenerateHandler;
 
     if (req.is('multipart/form-data')) {
-        // console.debug('multipart/form-data') //TODO: remove
-        // const fileUploaded = await tryHandleFileUpload(req, res);
-        // if (!fileUploaded) {
-        //     return;
-        // }
-
-        const file: Maybe<Express.Multer.File> = req.file;
-        Log.l.debug(file);
-        if (!file) {
-            res.status(500).json({
-                success: false,
-                errors: [
-                    {
-                        code: 'missing_file',
-                        message: `no file uploaded`
-                    }
-                ]
-            });
-            return;
-        }
-
-        Log.l.debug(`${ req.breadcrumbC } FILE:        "${ file.filename }"`);
-
-        imageBuffer = file.buffer;
+        handler = new V2UploadHandler(req, res, options);
     } else if (req.is('application/json')) {
         console.debug('application/json') //TODO: remove
         if ('url' in req.body) {
-            const {url} = GenerateReqUrl.check(req.body);
-            Log.l.debug(`${ req.breadcrumbC } URL:         "${ url }"`);
-
-            const originalUrlV2Duplicate = await DuplicateChecker.findDuplicateV2FromUrl(url, options, req.breadcrumb || "????");
-            if (originalUrlV2Duplicate.existing) {
-                // found existing
-                const result = await DuplicateChecker.handleV2DuplicateResult({
-                    source: originalUrlV2Duplicate.source,
-                    existing: originalUrlV2Duplicate.existing,
-                    data: originalUrlV2Duplicate.existing.data
-                }, options, req.client, req.breadcrumb || "????");
-                await DuplicateChecker.handleDuplicateResultMetrics(result, GenerateType.URL, options, req.client);
-                if (!!result.existing) {
-                    // full duplicate, return existing skin
-                    return await queryAndSendSkin(req, res, result.existing.uuid, true);
-                }
-                // otherwise, continue with generator
-            }
-
-            //TODO: duplicate checks
-            //TODO: download image
-            throw new Error("Not implemented");
+            handler = new V2UrlHandler(req, res, options);
         } else if ('user' in req.body) {
             const {uuid} = GenerateReqUser.check(req.body);
             Log.l.debug(`${ req.breadcrumbC } USER:        "${ uuid }"`);
             //TODO
-            throw new Error("Not implemented");
+            throw new Error("User generation is currently not supported");
         } else {
             return res.status(400).json({
                 success: false,
@@ -225,10 +171,18 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
         });
     }
 
-
     // preliminary rate limiting
-    req.nextRequest = await trafficService.updateLastAndNextRequest(req.client, 200)
+    req.nextRequest = await trafficService.updateLastAndNextRequest(req.client, 200);
     Log.l.debug(`next request at ${ req.nextRequest }`);
+
+    const imageResult = await handler.getImageBuffer();
+    if (imageResult.existing) {
+        return await handler.queryAndSendSkin(req, res, imageResult.existing, true);
+    }
+    const imageBuffer = imageResult.buffer;
+    if (!imageBuffer) {
+        throw new GeneratorError(GenError.INVALID_IMAGE, "Failed to get image buffer", {httpCode: 500});
+    }
 
 
     const validation = await ImageValidation.validateImageBuffer(imageBuffer);
@@ -279,7 +233,7 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
         await DuplicateChecker.handleDuplicateResultMetrics(result, GenerateType.UPLOAD, options, req.client);
         if (!!result.existing) {
             // full duplicate, return existing skin
-            return await queryAndSendSkin(req, res, result.existing.uuid, true);
+            return await handler.queryAndSendSkin(req, res, result.existing.uuid, true);
         }
         // otherwise, continue with generator
     }
@@ -313,13 +267,13 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
     const job = await client.submitRequest(request);
     try {
         const result = await job.waitUntilFinished(client.queueEvents, 10_000) as GenerateResult; //TODO: configure timeout
-        return await queryAndSendSkin(req, res, result.skin);
+        return await handler.queryAndSendSkin(req, res, result.skin);
     } catch (e) {
         console.warn(e);
         if (e.message.includes('timed out before finishing')) { // this kinda sucks
             return res.status(500).json({
                 success: false,
-                rateLimit: makeRateLimitInfo(req),
+                rateLimit: V2GenerateHandler.makeRateLimitInfo(req),
                 errors: [
                     {
                         code: 'generator_timeout',
@@ -332,7 +286,7 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
 
     return res.status(500).json({
         success: false,
-        rateLimit: makeRateLimitInfo(req),
+        rateLimit: V2GenerateHandler.makeRateLimitInfo(req),
         errors: [
             {
                 code: 'unexpected_error',
@@ -340,124 +294,6 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
             }
         ]
     });
-}
-
-async function tryHandleFileUpload(req: GenerateV2Request, res: Response): Promise<boolean> {
-    try {
-        await new Promise<void>((resolve, reject) => {
-            upload.single('file')(req, res, function (err) {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve();
-                }
-            })
-        });
-        return true;
-    } catch (e) {
-        Sentry.captureException(e);
-        if (e instanceof MulterError) {
-            res.status(400).json({
-                success: false,
-                errors: [
-                    {
-                        code: e.code || 'invalid_file',
-                        message: `invalid file: ${ e.message }`
-                    }
-                ]
-            });
-            return false;
-        } else {
-            res.status(500).json({
-                success: false,
-                errors: [
-                    {
-                        code: 'upload_error',
-                        message: `upload error: ${ e.message }`
-                    }
-                ]
-            });
-            return false;
-        }
-    }
-}
-
-async function queryAndSendSkin(req: GenerateV2Request, res: Response, uuid: UUID, duplicate: boolean = false) {
-    const skin = await SkinService.findForUuid(uuid);
-    if (!skin || !isPopulatedSkin2Document(skin) || !skin.data) {
-        return res.status(500).json({
-            success: false,
-            errors: [
-                {
-                    code: 'skin_not_found',
-                    message: `skin not found`
-                }
-            ]
-        });
-    }
-
-    return res.json({
-        success: true,
-        skin: skinToJson(skin, duplicate),
-        rateLimit: makeRateLimitInfo(req)
-    });
-}
-
-function makeRateLimitInfo(req: GenerateV2Request): RateLimitInfo {
-    const now = Date.now();
-    return {
-        next: {
-            absolute: req.nextRequest || now,
-            relative: Math.max(0, (req.nextRequest || now) - now)
-        },
-        delay: {
-            millis: req.minDelay || 0,
-            seconds: req.minDelay ? req.minDelay / 1000 : 0
-        }
-    };
-}
-
-function isV1SkinDocument(skin: any): skin is ISkinDocument {
-    return 'skinUuid' in skin || 'minecraftTextureHash' in skin;
-}
-
-const MC_TEXTURE_PREFIX = "https://textures.minecraft.net/texture/";
-
-function skinToJson(skin: IPopulatedSkin2Document, duplicate: boolean = false): SkinInfo2 {
-    if (!skin.data) {
-        throw new Error("Skin data is missing");
-    }
-    Log.l.debug(JSON.stringify(skin.data, null, 2));
-    return {
-        uuid: skin.uuid,
-        name: skin.meta.name,
-        visibility: skin.meta.visibility,
-        variant: skin.meta.variant,
-        texture: {
-            data: {
-                value: skin.data.value,
-                signature: skin.data.signature
-            },
-            hash: {
-                skin: skin.data.hash?.skin.minecraft,
-                cape: skin.data.hash?.cape?.minecraft
-            },
-            url: {
-                skin: MC_TEXTURE_PREFIX + skin.data.hash?.skin.minecraft,
-                cape: skin.data.hash?.cape?.minecraft ? (MC_TEXTURE_PREFIX + skin.data.hash?.cape?.minecraft) : undefined
-            }
-        },
-        generator: {
-            timestamp: skin.data.createdAt.getTime(),
-            account: skin.data.generatedBy.account,
-            server: skin.data.generatedBy.server,
-            worker: skin.data.generatedBy.worker,
-            version: 'unknown', //TODO
-            duration: skin.data.queue.end.getTime() - skin.data.queue.start.getTime()
-        },
-        views: skin.interaction.views,
-        duplicate: duplicate
-    };
 }
 
 function getAndValidateOptions(req: GenerateV2Request, res: Response): GenerateOptions {
@@ -501,8 +337,8 @@ function getAndValidateOptions(req: GenerateV2Request, res: Response): GenerateO
 
         return {
             variant: variant!,
-            visibility:visibility!,
-            name:name
+            visibility: visibility!,
+            name: name
         };
     })
 
@@ -539,3 +375,47 @@ function validateName(name?: string): Maybe<string> {
     if (name.length === 0) return undefined;
     return name;
 }
+
+
+async function tryHandleFileUpload(req: GenerateV2Request, res: Response): Promise<boolean> {
+    try {
+        await new Promise<void>((resolve, reject) => {
+            upload.single('file')(req, res, function (err) {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve();
+                }
+            })
+        });
+        return true;
+    } catch (e) {
+        Sentry.captureException(e);
+        if (e instanceof MulterError) {
+            res.status(400).json({
+                success: false,
+                errors: [
+                    {
+                        code: e.code || 'invalid_file',
+                        message: `invalid file: ${ e.message }`
+                    }
+                ]
+            });
+            return false;
+        } else {
+            res.status(500).json({
+                success: false,
+                errors: [
+                    {
+                        code: 'upload_error',
+                        message: `upload error: ${ e.message }`
+                    }
+                ]
+            });
+            return false;
+        }
+    }
+}
+
+
+
