@@ -394,7 +394,7 @@ export class Generator {
     static async getSkinDataWithRetry(accountOrUuid: IAccountDocument | {
         uuid: string
     }, type: string, expectedUrl?: string, breadcrumb?: string, t: number = 2): Promise<ProfileSkinData> {
-        let skinData = await this.getSkinData(accountOrUuid);
+        let skinData = await this.getSkinData(accountOrUuid, t == 1);
         if (expectedUrl) {
             if (expectedUrl !== skinData.decodedValue!.textures!.SKIN!.url) {
                 console.warn(warn(breadcrumb + " Skin url returned by skin change does not match url returned by data query (" + t + ") (" + expectedUrl + " != " + skinData.decodedValue!.textures!.SKIN!.url + ")"));
@@ -409,7 +409,7 @@ export class Generator {
                 m.inc()
 
                 if (t > 0) {
-                    await sleep(5000);
+                    await sleep(3000);
                     return await this.getSkinDataWithRetry(accountOrUuid, type, expectedUrl, breadcrumb, t - 1);
                 }
             }
@@ -417,13 +417,13 @@ export class Generator {
         return skinData;
     }
 
-    static async getSkinData(accountOrUuid: IAccountDocument | { uuid: string }): Promise<ProfileSkinData> {
+    static async getSkinData(accountOrUuid: IAccountDocument | { uuid: string }, invalidate?: boolean): Promise<ProfileSkinData> {
         return await Sentry.startSpan({
             op: "generate_getSkinData",
             name: "getSkinData"
         }, async span => {
             const uuid = stripUuid(accountOrUuid.uuid);
-            const data = await Caching.getSkinData(uuid);
+            const data = await Caching.getSkinData(uuid, invalidate);
             if (!data || !data.value) {
                 span?.setStatus({
                     code: 2,
