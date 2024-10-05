@@ -1215,6 +1215,8 @@ export class Generator {
                     "  Account:      " + account.id + "/" + account.uuid + "\n" +
                     "  Changed to:   " + skinChangeResponse.skins[0].url + "\n" +
                     "  Texture Data: " + data.decodedValue!.textures!.SKIN!.url);
+                account.forcedTimeoutAt = Math.floor(Date.now() / 1000);
+                console.warn(warn(options.breadcrumb + " [Generator] Account #" + account.id + " forced timeout (url mismatch)"));
             }
             const mojangHash = await this.getMojangHash(data.decodedValue!.textures!.SKIN!.url, options);
 
@@ -1512,7 +1514,7 @@ export class Generator {
                 account.lastErrorMessage = e.message;
                 if (e instanceof AuthenticationError) {
                     account.forcedTimeoutAt = Math.floor(Date.now() / 1000);
-                    console.warn(warn(options.breadcrumb + " [Generator] Account #" + account.id + " forced timeout"));
+                    console.warn(warn(options.breadcrumb + " [Generator] Account #" + account.id + " forced timeout (auth error)"));
                     Accounts.updateAccountRequestServer(account, null);
                 }
 
