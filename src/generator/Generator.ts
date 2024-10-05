@@ -417,7 +417,9 @@ export class Generator {
         return skinData;
     }
 
-    static async getSkinData(accountOrUuid: IAccountDocument | { uuid: string }, invalidate?: boolean): Promise<ProfileSkinData> {
+    static async getSkinData(accountOrUuid: IAccountDocument | {
+        uuid: string
+    }, invalidate?: boolean): Promise<ProfileSkinData> {
         return await Sentry.startSpan({
             op: "generate_getSkinData",
             name: "getSkinData"
@@ -1216,6 +1218,8 @@ export class Generator {
                     "  Changed to:   " + skinChangeResponse.skins[0].url + "\n" +
                     "  Texture Data: " + data.decodedValue!.textures!.SKIN!.url);
                 account.forcedTimeoutAt = Math.floor(Date.now() / 1000);
+                account.errorCounter++;
+                account.totalErrorCounter++;
                 console.warn(warn(options.breadcrumb + " [Generator] Account #" + account.id + " forced timeout (url mismatch)"));
                 console.debug(JSON.stringify(skinChangeResponse));
             }
