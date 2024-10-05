@@ -1217,6 +1217,7 @@ export class Generator {
                     "  Texture Data: " + data.decodedValue!.textures!.SKIN!.url);
                 account.forcedTimeoutAt = Math.floor(Date.now() / 1000);
                 console.warn(warn(options.breadcrumb + " [Generator] Account #" + account.id + " forced timeout (url mismatch)"));
+                console.debug(JSON.stringify(skinChangeResponse));
             }
             const mojangHash = await this.getMojangHash(data.decodedValue!.textures!.SKIN!.url, options);
 
