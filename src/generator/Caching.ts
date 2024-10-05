@@ -290,7 +290,10 @@ export class Caching {
 
     /// REQUESTS
 
-    public static getSkinData(uuid: string): Promise<ProfileSkinData> {
+    public static getSkinData(uuid: string, invalidate?: boolean): Promise<ProfileSkinData> {
+        if (invalidate) {
+            this.skinDataCache.invalidate(uuid);
+        }
         return this.skinDataCache.get(uuid);
     }
 
