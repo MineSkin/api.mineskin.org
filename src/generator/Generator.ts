@@ -393,7 +393,7 @@ export class Generator {
     static async getSkinDataWithRetry(accountOrUuid: IAccountDocument | {
         uuid: string
     }, type: string, expectedUrl?: string, breadcrumb?: string, t: number = 2): Promise<ProfileSkinData> {
-        let skinData = await this.getSkinData(accountOrUuid);
+        let skinData = await this.getSkinData(accountOrUuid, t == 1);
         if (expectedUrl) {
             if (expectedUrl !== skinData.decodedValue!.textures!.SKIN!.url) {
                 console.warn(warn(breadcrumb + " Skin url returned by skin change does not match url returned by data query (" + t + ") (" + expectedUrl + " != " + skinData.decodedValue!.textures!.SKIN!.url + ")"));
@@ -408,7 +408,7 @@ export class Generator {
                 m.inc()
 
                 if (t > 0) {
-                    await sleep(5000);
+                    await sleep(3000);
                     return await this.getSkinDataWithRetry(accountOrUuid, type, expectedUrl, breadcrumb, t - 1);
                 }
             }
@@ -416,13 +416,15 @@ export class Generator {
         return skinData;
     }
 
-    static async getSkinData(accountOrUuid: IAccountDocument | { uuid: string }): Promise<ProfileSkinData> {
+    static async getSkinData(accountOrUuid: IAccountDocument | {
+        uuid: string
+    }, invalidate?: boolean): Promise<ProfileSkinData> {
         return await Sentry.startSpan({
             op: "generate_getSkinData",
             name: "getSkinData"
         }, async span => {
             const uuid = stripUuid(accountOrUuid.uuid);
-            const data = await Caching.getSkinData(uuid);
+            const data = await Caching.getSkinData(uuid, invalidate);
             if (!data || !data.value) {
                 span?.setStatus({
                     code: 2,
@@ -1254,6 +1256,11 @@ export class Generator {
                     "  Account:      " + account.id + "/" + account.uuid + "\n" +
                     "  Changed to:   " + skinChangeResponse.skins[0].url + "\n" +
                     "  Texture Data: " + data.decodedValue!.textures!.SKIN!.url);
+                account.forcedTimeoutAt = Math.floor(Date.now() / 1000);
+                account.errorCounter++;
+                account.totalErrorCounter++;
+                console.warn(warn(options.breadcrumb + " [Generator] Account #" + account.id + " forced timeout (url mismatch)"));
+                console.debug(JSON.stringify(skinChangeResponse));
             }
             const mojangHash = await this.getMojangHash(data.decodedValue!.textures!.SKIN!.url, options);
 
@@ -1554,7 +1561,7 @@ export class Generator {
                 account.lastErrorMessage = e.message;
                 if (e instanceof AuthenticationError) {
                     account.forcedTimeoutAt = Math.floor(Date.now() / 1000);
-                    console.warn(warn(options.breadcrumb + " [Generator] Account #" + account.id + " forced timeout"));
+                    console.warn(warn(options.breadcrumb + " [Generator] Account #" + account.id + " forced timeout (auth error)"));
                     Accounts.updateAccountRequestServer(account, null);
                 }
 
