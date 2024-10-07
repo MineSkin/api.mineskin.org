@@ -26,6 +26,8 @@ import { GenerateReqOptions, GenerateReqUser } from "../../runtype/GenerateReq";
 import { V2GenerateHandler } from "../../generator/v2/V2GenerateHandler";
 import { V2UploadHandler } from "../../generator/v2/V2UploadHandler";
 import { V2UrlHandler } from "../../generator/v2/V2UrlHandler";
+import { Job } from "bullmq";
+import { V2JobResponse } from "../../typings/v2/V2JobResponse";
 
 const upload = multer({
     limits: {
@@ -43,7 +45,82 @@ const client = new GeneratorClient({
     blockingConnection: false
 });
 
-export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response<V2GenerateResponseBody | V2SkinResponse>) {
+export async function v2GenerateAndWait(req: GenerateV2Request, res: Response<V2GenerateResponseBody | V2SkinResponse>) {
+    const job = await v2SubmitGeneratorJob(req, res);
+    if (!job) {
+        return;
+    }
+    try {
+        const result = await job.waitUntilFinished(client.queueEvents, 10_000) as GenerateResult; //TODO: configure timeout
+        return await V2GenerateHandler.queryAndSendSkin(req, res, result.skin);
+    } catch (e) {
+        console.warn(e);
+        if (e.message.includes('timed out before finishing')) { // this kinda sucks
+            res.status(500).json({
+                success: false,
+                rateLimit: V2GenerateHandler.makeRateLimitInfo(req),
+                errors: [
+                    {
+                        code: 'generator_timeout',
+                        message: `generator request timed out`
+                    }
+                ]
+            });
+            return;
+        }
+        res.status(500).json({
+            success: false,
+            rateLimit: V2GenerateHandler.makeRateLimitInfo(req),
+            errors: [
+                {
+                    code: 'unexpected_error',
+                    message: `unexpected error`
+                }
+            ]
+        });
+        return;
+    }
+}
+
+export async function v2GenerateEnqueue(req: GenerateV2Request, res: Response<V2GenerateResponseBody | V2JobResponse>) {
+    const job = await v2SubmitGeneratorJob(req, res);
+    if (!job) {
+        return;
+    }
+    return res.json({
+        success: true,
+        job: {
+            id: job.id || '',
+            status: await job.getState()
+        }
+    });
+}
+
+export async function v2GetJob(req: GenerateV2Request, res: Response<V2GenerateResponseBody | V2JobResponse>) {
+    const jobId = req.params.jobId;
+    const job = await client.getJob(jobId);
+    if (!job) {
+        res.status(404).json({
+            success: false,
+            errors: [
+                {
+                    code: 'job_not_found',
+                    message: `job not found`
+                }
+            ]
+        });
+        return;
+    }
+    return res.json({
+        success: true,
+        job: {
+            id: job.id || '',
+            status: await job.getState()
+        }
+    });
+}
+
+async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2GenerateResponseBody | V2SkinResponse>): Promise<Job<GenerateRequest, GenerateResult> | undefined> {
 
     // need to call multer stuff first so fields are parsed
     if (req.is('multipart/form-data')) {
@@ -75,7 +152,7 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
     req.nextRequest = await trafficService.getNextRequest(req.client);
     req.minDelay = await trafficService.getMinDelaySeconds(req.client, req.apiKey) * 1000;
     if (req.nextRequest > req.client.time) {
-        return res.status(429).json({
+        res.status(429).json({
             success: false,
             rateLimit: V2GenerateHandler.makeRateLimitInfo(req),
             errors: [
@@ -85,6 +162,7 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
                 }
             ]
         });
+        return;
     }
 
     Log.l.debug(req.client)
@@ -95,7 +173,7 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
         if (req.client.credits) {
             const credit = await billingService.getClientCredits(req.client);
             if (!credit) {
-                return res.status(400).json({
+                res.status(400).json({
                     success: false,
                     errors: [
                         {
@@ -104,9 +182,10 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
                         }
                     ]
                 });
+                return;
             }
             if (!credit.isValid()) {
-                return res.status(400).json({
+                res.status(400).json({
                     success: false,
                     errors: [
                         {
@@ -115,9 +194,10 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
                         }
                     ]
                 });
+                return;
             }
             if (credit.balance <= 0) {
-                return res.status(429).json({
+                res.status(429).json({
                     success: false,
                     rateLimit: V2GenerateHandler.makeRateLimitInfo(req),
                     errors: [
@@ -127,6 +207,7 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
                         }
                     ]
                 });
+                return;
             }
             res.header('X-MineSkin-Credits-Type', credit.type);
             res.header('X-MineSkin-Credits-Balance', `${ credit.balance }`);
@@ -149,7 +230,7 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
             //TODO
             throw new Error("User generation is currently not supported");
         } else {
-            return res.status(400).json({
+            res.status(400).json({
                 success: false,
                 errors: [
                     {
@@ -158,9 +239,10 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
                     }
                 ]
             });
+            return;
         }
     } else {
-        return res.status(400).json({
+        res.status(400).json({
             success: false,
             errors: [
                 {
@@ -169,6 +251,7 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
                 }
             ]
         });
+        return;
     }
 
     // preliminary rate limiting
@@ -177,7 +260,8 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
 
     const imageResult = await handler.getImageBuffer();
     if (imageResult.existing) {
-        return await handler.queryAndSendSkin(req, res, imageResult.existing, true);
+        await V2GenerateHandler.queryAndSendSkin(req, res, imageResult.existing, true);
+        return;
     }
     const imageBuffer = imageResult.buffer;
     if (!imageBuffer) {
@@ -233,7 +317,8 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
         await DuplicateChecker.handleDuplicateResultMetrics(result, GenerateType.UPLOAD, options, req.client);
         if (!!result.existing) {
             // full duplicate, return existing skin
-            return await handler.queryAndSendSkin(req, res, result.existing.uuid, true);
+            await V2GenerateHandler.queryAndSendSkin(req, res, result.existing.uuid, true);
+            return;
         }
         // otherwise, continue with generator
     }
@@ -265,35 +350,8 @@ export async function v2GenerateFromUpload(req: GenerateV2Request, res: Response
     }
     Log.l.debug(request);
     const job = await client.submitRequest(request);
-    try {
-        const result = await job.waitUntilFinished(client.queueEvents, 10_000) as GenerateResult; //TODO: configure timeout
-        return await handler.queryAndSendSkin(req, res, result.skin);
-    } catch (e) {
-        console.warn(e);
-        if (e.message.includes('timed out before finishing')) { // this kinda sucks
-            return res.status(500).json({
-                success: false,
-                rateLimit: V2GenerateHandler.makeRateLimitInfo(req),
-                errors: [
-                    {
-                        code: 'generator_timeout',
-                        message: `generator request timed out`
-                    }
-                ]
-            });
-        }
-    }
-
-    return res.status(500).json({
-        success: false,
-        rateLimit: V2GenerateHandler.makeRateLimitInfo(req),
-        errors: [
-            {
-                code: 'unexpected_error',
-                message: `unexpected error`
-            }
-        ]
-    });
+    Log.l.debug(job);
+    return job;
 }
 
 function getAndValidateOptions(req: GenerateV2Request, res: Response): GenerateOptions {

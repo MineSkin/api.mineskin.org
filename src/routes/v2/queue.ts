@@ -2,23 +2,24 @@ import { NextFunction, Request, Response, Router } from "express";
 import { apiKeyMiddleware } from "../../middleware/apikey";
 import { mineskinClientMiddleware } from "../../middleware/client";
 import { breadcrumbMiddleware } from "../../middleware/breadcrumb";
-import { v2GenerateAndWait } from "../../models/v2/generate";
+import { v2GenerateEnqueue, v2GetJob } from "../../models/v2/generate";
 import { MineSkinError } from "@mineskin/types";
 import { V2GenerateResponseBody } from "../../typings/v2/V2GenerateResponseBody";
 import { ValidationError } from "runtypes";
 import * as Sentry from "@sentry/node";
 import { Log } from "@mineskin/generator";
 
-export const v2GenerateRouter: Router = Router();
+export const v2QueueRouter: Router = Router();
 
-v2GenerateRouter.use("/", breadcrumbMiddleware);
-v2GenerateRouter.use("/", apiKeyMiddleware);
-v2GenerateRouter.use("/", mineskinClientMiddleware);
+v2QueueRouter.use("/", breadcrumbMiddleware);
+v2QueueRouter.use("/", apiKeyMiddleware);
+v2QueueRouter.use("/", mineskinClientMiddleware);
 
 
-v2GenerateRouter.post("/", v2GenerateAndWait);
+v2QueueRouter.post("/", v2GenerateEnqueue);
+v2QueueRouter.get("/:jobId", v2GetJob);
 
-v2GenerateRouter.use("/", (err: Error, req: Request, res: Response<V2GenerateResponseBody>, next: NextFunction) => {
+v2QueueRouter.use("/", (err: Error, req: Request, res: Response<V2GenerateResponseBody>, next: NextFunction) => {
     if (err instanceof MineSkinError) {
         return res.status(err.meta?.httpCode || 500).json({
             success: false,

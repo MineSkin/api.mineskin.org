@@ -21,7 +21,7 @@ export class V2GenerateHandler {
         throw new Error("not implemented");
     }
 
-    async queryAndSendSkin(req: GenerateV2Request, res: Response, uuid: UUID, duplicate: boolean = false) {
+    static async queryAndSendSkin(req: GenerateV2Request, res: Response, uuid: UUID, duplicate: boolean = false) {
         const skin = await SkinService.findForUuid(uuid);
         if (!skin || !isPopulatedSkin2Document(skin) || !skin.data) {
             return res.status(500).json({
