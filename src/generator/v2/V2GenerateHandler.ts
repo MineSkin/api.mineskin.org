@@ -78,7 +78,7 @@ export class V2GenerateHandler {
                 server: skin.data.generatedBy.server,
                 worker: skin.data.generatedBy.worker,
                 version: 'unknown', //TODO
-                duration: skin.data.queue.end.getTime() - skin.data.queue.start.getTime()
+                duration: skin.data.queue?.end?.getTime() - skin.data.queue?.start?.getTime() || 0
             },
             views: skin.interaction.views,
             duplicate: duplicate
