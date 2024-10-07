@@ -16,8 +16,7 @@ v2GenerateRouter.use("/", apiKeyMiddleware);
 v2GenerateRouter.use("/", mineskinClientMiddleware);
 
 
-v2GenerateRouter.post("/upload", v2GenerateFromUpload);
-v2GenerateRouter.post("/url", v2GenerateFromUpload);
+v2GenerateRouter.post("/", v2GenerateFromUpload);
 
 v2GenerateRouter.use("/", (err: Error, req: Request, res: Response<V2GenerateResponseBody>, next: NextFunction) => {
     if (err instanceof MineSkinError) {
