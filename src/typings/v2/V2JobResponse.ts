@@ -5,6 +5,6 @@ export interface V2JobResponse extends V2GenerateResponseBody {
     job: {
         id: string;
         status: string;
-        skin?: SkinInfo2;
-    }
+    };
+    skin?: SkinInfo2;
 }

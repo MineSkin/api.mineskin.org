@@ -15,9 +15,10 @@ import {
     ImageValidation,
     Log,
     MAX_IMAGE_SIZE,
+    SkinService,
     TrafficService
 } from "@mineskin/generator";
-import { ErrorSource, GenerateType, isBillableClient, SkinVariant, SkinVisibility2 } from "@mineskin/types";
+import { ErrorSource, GenerateType, isBillableClient, SkinVariant, SkinVisibility2, UUID } from "@mineskin/types";
 import { Response } from "express";
 import { V2SkinResponse } from "../../typings/v2/V2SkinResponse";
 import { debug } from "../../util/colors";
@@ -28,6 +29,7 @@ import { V2UploadHandler } from "../../generator/v2/V2UploadHandler";
 import { V2UrlHandler } from "../../generator/v2/V2UrlHandler";
 import { Job } from "bullmq";
 import { V2JobResponse } from "../../typings/v2/V2JobResponse";
+import { IPopulatedSkin2Document, isPopulatedSkin2Document } from "@mineskin/database";
 
 const upload = multer({
     limits: {
@@ -46,7 +48,14 @@ const client = new GeneratorClient({
 });
 
 export async function v2GenerateAndWait(req: GenerateV2Request, res: Response<V2GenerateResponseBody | V2SkinResponse>) {
-    const job = await v2SubmitGeneratorJob(req, res);
+    const submitted = await v2SubmitGeneratorJob(req, res);
+    if (!submitted) {
+        return;
+    }
+    const {skin, job} = submitted;
+    if (skin) {
+        return await V2GenerateHandler.queryAndSendSkin(req, res, skin.id, skin.duplicate);
+    }
     if (!job) {
         return;
     }
@@ -83,16 +92,30 @@ export async function v2GenerateAndWait(req: GenerateV2Request, res: Response<V2
 }
 
 export async function v2GenerateEnqueue(req: GenerateV2Request, res: Response<V2GenerateResponseBody | V2JobResponse>) {
-    const job = await v2SubmitGeneratorJob(req, res);
-    if (!job) {
+    const submitted = await v2SubmitGeneratorJob(req, res);
+    if (!submitted) {
         return;
+    }
+    const {skin, job} = submitted;
+    if (skin) {
+        const queried = await querySkinOrThrow(skin.id);
+
+        return res.json({
+            success: true,
+            job: {
+                id: job?.id || 'unknown',
+                status: (await job?.getState()) || 'completed'
+            },
+            skin: V2GenerateHandler.skinToJson(queried, skin.duplicate),
+            rateLimit: V2GenerateHandler.makeRateLimitInfo(req)
+        });
     }
     return res.json({
         success: true,
         job: {
-            id: job.id || '',
-            status: await job.getState()
-        }
+            id: job?.id || 'unknown',
+            status: (await job?.getState()) || 'unknown'
+        },
     });
 }
 
@@ -111,16 +134,29 @@ export async function v2GetJob(req: GenerateV2Request, res: Response<V2GenerateR
         });
         return;
     }
+    if (await job.isCompleted()) {
+        const result = job.returnvalue as GenerateResult;
+        const queried = await querySkinOrThrow(result.skin);
+        return res.json({
+            success: true,
+            job: {
+                id: job?.id || 'unknown',
+                status: (await job?.getState()) || 'completed'
+            },
+            skin: V2GenerateHandler.skinToJson(queried, !!result.duplicate),
+            rateLimit: V2GenerateHandler.makeRateLimitInfo(req)
+        });
+    }
     return res.json({
         success: true,
         job: {
-            id: job.id || '',
-            status: await job.getState()
-        }
+            id: job?.id || 'unknown',
+            status: (await job?.getState()) || 'unknown'
+        },
     });
 }
 
-async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2GenerateResponseBody | V2SkinResponse>): Promise<Job<GenerateRequest, GenerateResult> | undefined> {
+async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2GenerateResponseBody | V2SkinResponse>): Promise<JobWithSkin | undefined> {
 
     // need to call multer stuff first so fields are parsed
     if (req.is('multipart/form-data')) {
@@ -135,16 +171,7 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
     const options = getAndValidateOptions(req, res);
     //const client = getClientInfo(req);
     if (!req.client) {
-        res.status(500).json({
-            success: false,
-            errors: [
-                {
-                    code: 'invalid_client',
-                    message: `no client info`
-                }
-            ]
-        });
-        return;
+        throw new GeneratorError('invalid_client', "no client info", {httpCode: 500});
     }
 
     // check rate limit
@@ -173,41 +200,13 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
         if (req.client.credits) {
             const credit = await billingService.getClientCredits(req.client);
             if (!credit) {
-                res.status(400).json({
-                    success: false,
-                    errors: [
-                        {
-                            code: 'no_credits',
-                            message: `no credits`
-                        }
-                    ]
-                });
-                return;
+                throw new GeneratorError('no_credits', "no credits", {httpCode: 400});
             }
             if (!credit.isValid()) {
-                res.status(400).json({
-                    success: false,
-                    errors: [
-                        {
-                            code: 'invalid_credits',
-                            message: `invalid credits`
-                        }
-                    ]
-                });
-                return;
+                throw new GeneratorError('invalid_credits', "invalid credits", {httpCode: 400});
             }
             if (credit.balance <= 0) {
-                res.status(429).json({
-                    success: false,
-                    rateLimit: V2GenerateHandler.makeRateLimitInfo(req),
-                    errors: [
-                        {
-                            code: 'insufficient_credits',
-                            message: `insufficient credits`
-                        }
-                    ]
-                });
-                return;
+                throw new GeneratorError('insufficient_credits', "insufficient credits", {httpCode: 429});
             }
             res.header('X-MineSkin-Credits-Type', credit.type);
             res.header('X-MineSkin-Credits-Balance', `${ credit.balance }`);
@@ -260,8 +259,13 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
 
     const imageResult = await handler.getImageBuffer();
     if (imageResult.existing) {
-        await V2GenerateHandler.queryAndSendSkin(req, res, imageResult.existing, true);
-        return;
+        // await V2GenerateHandler.queryAndSendSkin(req, res, imageResult.existing, true);
+        return {
+            skin: {
+                id: imageResult.existing,
+                duplicate: true
+            }
+        };
     }
     const imageBuffer = imageResult.buffer;
     if (!imageBuffer) {
@@ -317,8 +321,13 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
         await DuplicateChecker.handleDuplicateResultMetrics(result, GenerateType.UPLOAD, options, req.client);
         if (!!result.existing) {
             // full duplicate, return existing skin
-            await V2GenerateHandler.queryAndSendSkin(req, res, result.existing.uuid, true);
-            return;
+            //await V2GenerateHandler.queryAndSendSkin(req, res, result.existing.uuid, true);
+            return {
+                skin: {
+                    id: result.existing.uuid,
+                    duplicate: true
+                }
+            };
         }
         // otherwise, continue with generator
     }
@@ -351,7 +360,7 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
     Log.l.debug(request);
     const job = await client.submitRequest(request);
     Log.l.debug(job);
-    return job;
+    return {job};
 }
 
 function getAndValidateOptions(req: GenerateV2Request, res: Response): GenerateOptions {
@@ -475,5 +484,18 @@ async function tryHandleFileUpload(req: GenerateV2Request, res: Response): Promi
     }
 }
 
+async function querySkinOrThrow(uuid: UUID): Promise<IPopulatedSkin2Document> {
+    const skin = await SkinService.findForUuid(uuid);
+    if (!skin || !isPopulatedSkin2Document(skin) || !skin.data) {
+        throw new GeneratorError('skin_not_found', `Skin not found: ${ uuid }`, {httpCode: 404});
+    }
+    return skin;
+}
 
-
+interface JobWithSkin {
+    job?: Job<GenerateRequest, GenerateResult>;
+    skin?: {
+        id: UUID;
+        duplicate?: boolean;
+    };
+}
