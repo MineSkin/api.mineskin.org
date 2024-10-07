@@ -18,8 +18,16 @@ import {
     SkinService,
     TrafficService
 } from "@mineskin/generator";
-import { ErrorSource, GenerateType, isBillableClient, SkinVariant, SkinVisibility2, UUID } from "@mineskin/types";
-import { Response } from "express";
+import {
+    ErrorSource,
+    GenerateType,
+    isBillableClient,
+    MineSkinError,
+    SkinVariant,
+    SkinVisibility2,
+    UUID
+} from "@mineskin/types";
+import { NextFunction, Response } from "express";
 import { V2SkinResponse } from "../../typings/v2/V2SkinResponse";
 import { debug } from "../../util/colors";
 import { V2GenerateResponseBody } from "../../typings/v2/V2GenerateResponseBody";
@@ -30,6 +38,7 @@ import { V2UrlHandler } from "../../generator/v2/V2UrlHandler";
 import { Job } from "bullmq";
 import { V2JobResponse } from "../../typings/v2/V2JobResponse";
 import { IPopulatedSkin2Document, isPopulatedSkin2Document } from "@mineskin/database";
+import { ValidationError } from "runtypes";
 
 const upload = multer({
     limits: {
@@ -65,29 +74,9 @@ export async function v2GenerateAndWait(req: GenerateV2Request, res: Response<V2
     } catch (e) {
         console.warn(e);
         if (e.message.includes('timed out before finishing')) { // this kinda sucks
-            res.status(500).json({
-                success: false,
-                rateLimit: V2GenerateHandler.makeRateLimitInfo(req),
-                errors: [
-                    {
-                        code: 'generator_timeout',
-                        message: `generator request timed out`
-                    }
-                ]
-            });
-            return;
+            throw new GeneratorError('generator_timeout', "generator request timed out", {httpCode: 500, error: e});
         }
-        res.status(500).json({
-            success: false,
-            rateLimit: V2GenerateHandler.makeRateLimitInfo(req),
-            errors: [
-                {
-                    code: 'unexpected_error',
-                    message: `unexpected error`
-                }
-            ]
-        });
-        return;
+        throw new GeneratorError('unexpected_error', "unexpected error", {httpCode: 500, error: e});
     }
 }
 
@@ -123,16 +112,7 @@ export async function v2GetJob(req: GenerateV2Request, res: Response<V2GenerateR
     const jobId = req.params.jobId;
     const job = await client.getJob(jobId);
     if (!job) {
-        res.status(404).json({
-            success: false,
-            errors: [
-                {
-                    code: 'job_not_found',
-                    message: `job not found`
-                }
-            ]
-        });
-        return;
+        throw new GeneratorError('job_not_found', `Job not found: ${ jobId }`, {httpCode: 404});
     }
     if (await job.isCompleted()) {
         const result = job.returnvalue as GenerateResult;
@@ -361,6 +341,46 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
     const job = await client.submitRequest(request);
     Log.l.debug(job);
     return {job};
+}
+
+export function v2ErrorHandler(err: Error, req: GenerateV2Request, res: Response<V2GenerateResponseBody>, next: NextFunction) {
+    if (err instanceof MineSkinError) {
+        return res.status(err.meta?.httpCode || 500).json({
+            success: false,
+            rateLimit: V2GenerateHandler.makeRateLimitInfo(req),
+            errors: [{
+                code: err.code,
+                message: err.msg || err.message
+            }]
+        });
+    }
+    if (err instanceof ValidationError) {
+        return res.status(400).json({
+            success: false,
+            errors: [
+                {
+                    code: 'validation_error',
+                    message: "Validation error"
+                },
+                {
+                    code: err.code,
+                    message: err.message
+                }
+            ]
+        });
+    }
+
+    Log.l.error(err);
+    Sentry.captureException(err, {
+        level: "fatal"
+    });
+    return res.status(500).json({
+        success: false,
+        errors: [{
+            code: "internal_error",
+            message: "An internal error occurred"
+        }]
+    });
 }
 
 function getAndValidateOptions(req: GenerateV2Request, res: Response): GenerateOptions {
