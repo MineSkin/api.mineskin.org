@@ -103,7 +103,7 @@ export async function v2GenerateEnqueue(req: GenerateV2Request, res: Response<V2
         return res.json({
             success: true,
             job: {
-                id: job?.id || 'unknown',
+                uuid: job?.id || 'unknown',
                 status: (await job?.getState()) || 'completed'
             },
             skin: V2GenerateHandler.skinToJson(queried, skin.duplicate),
@@ -113,7 +113,7 @@ export async function v2GenerateEnqueue(req: GenerateV2Request, res: Response<V2
     return res.json({
         success: true,
         job: {
-            id: job?.id || 'unknown',
+            uuid: job?.id || 'unknown',
             status: (await job?.getState()) || 'unknown'
         },
     });
@@ -140,7 +140,7 @@ export async function v2GetJob(req: GenerateV2Request, res: Response<V2GenerateR
         return res.json({
             success: true,
             job: {
-                id: job?.id || 'unknown',
+                uuid: job?.id || 'unknown',
                 status: (await job?.getState()) || 'completed'
             },
             skin: V2GenerateHandler.skinToJson(queried, !!result.duplicate),
@@ -150,7 +150,7 @@ export async function v2GetJob(req: GenerateV2Request, res: Response<V2GenerateR
     return res.json({
         success: true,
         job: {
-            id: job?.id || 'unknown',
+            uuid: job?.id || 'unknown',
             status: (await job?.getState()) || 'unknown'
         },
     });

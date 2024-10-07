@@ -25,6 +25,9 @@
       "name": "generate"
     },
     {
+      "name": "queue"
+    },
+    {
       "name": "skins"
     }
   ],
@@ -303,6 +306,30 @@
           }
         }
       },
+      "JobInfo": {
+        "type": "object",
+        "required": [
+          "uuid",
+          "status"
+        ],
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Job UUID"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "unknown",
+              "waiting",
+              "active",
+              "failed",
+              "completed"
+            ]
+          }
+        }
+      },
       "CodeAndMessage": {
         "type": "object",
         "properties": {
@@ -475,6 +502,15 @@
         "schema": {
           "type": "string"
         }
+      },
+      "apiKey": {
+        "name": "API Key",
+        "description": "API key from [account.mineskin.org](https://account.mineskin.org/keys)",
+        "example": "da84de82e960d6c0510088279878c79365ad5118d350d619f20324a5494f156b",
+        "in": "header",
+        "schema": {
+          "type": "string"
+        }
       }
     },
     "responses": {
@@ -585,18 +621,53 @@
             }
           }
         }
+      },
+      "QueueSuccessResponse": {
+        "description": "Success Response",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "type": "object",
+                  "required": [
+                    "job"
+                  ],
+                  "properties": {
+                    "job": {
+                      "$ref": "#/components/schemas/JobInfo"
+                    },
+                    "skin": {
+                      "$ref": "#/components/schemas/SkinInfo"
+                    },
+                    "rateLimit": {
+                      "$ref": "#/components/schemas/RateLimitInfo"
+                    }
+                  }
+                },
+                {
+                  "$ref": "#/components/schemas/SuccessResponseBody"
+                }
+              ]
+            }
+          }
+        }
       }
     }
   },
   "paths": {
     "/v2/generate": {
       "post": {
+        "description": "Generate a skin",
         "tags": [
           "generate"
         ],
         "parameters": [
           {
             "$ref": "#/components/parameters/userAgent"
+          },
+          {
+            "$ref": "#/components/parameters/apiKey"
           }
         ],
         "requestBody": {
@@ -654,6 +725,116 @@
         }
       }
     },
+    "/v2/queue": {
+      "post": {
+        "description": "Queue skin generation",
+        "tags": [
+          "generate",
+          "queue"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/userAgent"
+          },
+          {
+            "$ref": "#/components/parameters/apiKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+
+            "application/json":{
+              "schema": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/UrlGenerateBody"
+                  },
+                  {
+                    "$ref": "#/components/schemas/UserGenerateBody"
+                  }
+                ]
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "description":"File Upload Generate Request",
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/UploadGenerateBody"
+                  },
+                  {
+                    "$ref": "#/components/schemas/UrlGenerateBody"
+                  },
+                  {
+                    "$ref": "#/components/schemas/UserGenerateBody"
+                  }
+                ]
+              },
+              "encoding": {
+                "file": {
+                  "contentType": "image/png"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/QueueSuccessResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/GenerateErrorResponse"
+          },
+          "429": {
+            "$ref": "#/components/responses/GenerateRateLimitResponse"
+          },
+          "500": {
+            "$ref": "#/components/responses/GenerateErrorResponse"
+          }
+        }
+      }
+    },
+    "/v2/queue/:jobId": {
+      "get": {
+        "description": "Get the status of a queued skin generation",
+        "tags": [
+          "queue"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/userAgent"
+          },
+          {
+            "$ref": "#/components/parameters/apiKey"
+          },
+          {
+            "name": "jobId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/QueueSuccessResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/GenerateErrorResponse"
+          },
+          "429": {
+            "$ref": "#/components/responses/GenerateRateLimitResponse"
+          },
+          "500": {
+            "$ref": "#/components/responses/GenerateErrorResponse"
+          }
+        }
+      }
+    },
+
     "/v2/delay": {
       "get": {
         "tags": [
@@ -662,6 +843,9 @@
         "parameters": [
           {
             "$ref": "#/components/parameters/userAgent"
+          },
+          {
+            "$ref": "#/components/parameters/apiKey"
           }
         ],
         "responses": {
@@ -712,6 +896,9 @@
           },
           {
             "$ref": "#/components/parameters/userAgent"
+          },
+          {
+            "$ref": "#/components/parameters/apiKey"
           }
         ],
         "responses": {
@@ -748,6 +935,9 @@
           },
           {
             "$ref": "#/components/parameters/userAgent"
+          },
+          {
+            "$ref": "#/components/parameters/apiKey"
           }
         ],
         "responses": {
