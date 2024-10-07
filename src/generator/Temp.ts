@@ -96,7 +96,12 @@ export class Temp {
                 maxBodyLength: 20000, // 20KB
                 maxRedirects: 0
             }, breadcrumb);
-            (response.data as Stream).pipe(fs.createWriteStream(tmpFile.path))
+            // (response.data as Stream).pipe(fs.createWriteStream(tmpFile.path))
+            await new Promise((resolve, reject) => {
+                (response.data as Stream).pipe(fs.createWriteStream(tmpFile.path))
+                    .on("finish", resolve)
+                    .on("error", reject);
+            });
         } catch (e) {
             if (isTempFile(tmpFile)) {
                 tmpFile.remove();

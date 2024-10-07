@@ -91,6 +91,7 @@ export class V2UrlHandler extends V2GenerateHandler {
             throw new GeneratorError(GenError.INVALID_IMAGE, "Failed to download image", {httpCode: 500});
         }
 
+        Log.l.debug(tempFile.path);
         const buffer = await readFile(tempFile.path);
         return {buffer};
     }
