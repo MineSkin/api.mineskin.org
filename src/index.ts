@@ -41,6 +41,7 @@ import { connectToMongo } from "@mineskin/database";
 import { MineSkinError } from "@mineskin/types";
 import { BillingService, GeneratorError, Log, TrafficService } from "@mineskin/generator";
 import { v2SkinsRouter } from "./routes/v2/skins";
+import { v2QueueRouter } from "./routes/v2/queue";
 
 
 sourceMapSupport.install();
@@ -319,6 +320,7 @@ async function init() {
         hiatusRoute.register(app);
 
         app.use("/v2/generate", v2GenerateRouter);
+        app.use("/v2/queue", v2QueueRouter);
         app.use("/v2/skins", v2SkinsRouter);
 
     }
