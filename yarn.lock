@@ -1393,7 +1393,7 @@ __metadata:
 
 "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git#credit":
   version: 0.0.0
-  resolution: "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git#commit=9d92e0d827f45412b74ff786466b573c3f838f04"
+  resolution: "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git#commit=3de2c9534a270c094c9c88758263f51926814322"
   dependencies:
     "@inventivetalent/imghash": "npm:^1.1.1"
     "@inventivetalent/loading-cache": "npm:^0.7.1"
@@ -1423,7 +1423,7 @@ __metadata:
     uuid: "npm:^10.0.0"
     winston: "npm:^3.14.2"
     winston-daily-rotate-file: "npm:^5.0.0"
-  checksum: 10c0/c51955943b79239825dfc9dc678998903fddc375e68c6ed46c058488d82eabd1e275fcde98c6e942461040d854fcec59ecf5d3ad5cf3ae1f07b72828632639c6
+  checksum: 10c0/c5eeaa112ff464624aa508e2b21cbca6a67d7c40623966f12af3a7cc7ff7db13002fd42e6e9e8517d906200d3d9652d9d8c821baf9ed13431ab64b9471a50aed
   languageName: node
   linkType: hard
 
@@ -2490,14 +2490,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sentry-internal/tracing@npm:7.119.0":
-  version: 7.119.0
-  resolution: "@sentry-internal/tracing@npm:7.119.0"
+"@sentry-internal/tracing@npm:7.119.1":
+  version: 7.119.1
+  resolution: "@sentry-internal/tracing@npm:7.119.1"
   dependencies:
-    "@sentry/core": "npm:7.119.0"
-    "@sentry/types": "npm:7.119.0"
-    "@sentry/utils": "npm:7.119.0"
-  checksum: 10c0/3cf855bdb6a6dae2b12626d74c0d6c03f9db749e7da7a9871929277a17fbaa411139ef6e892fe86b2836c706850fd165628954a6de6c1f44fdca2f82bde97ff2
+    "@sentry/core": "npm:7.119.1"
+    "@sentry/types": "npm:7.119.1"
+    "@sentry/utils": "npm:7.119.1"
+  checksum: 10c0/f578c29f9c9ac59230d76deccbccd54e6011737e37c76d2c483b1a06ad11473700e1a062c99ddd6334c97843d452036295d3faa1afe4e8d63e14b7de7427b30a
   languageName: node
   linkType: hard
 
@@ -2587,13 +2587,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sentry/core@npm:7.119.0":
-  version: 7.119.0
-  resolution: "@sentry/core@npm:7.119.0"
+"@sentry/core@npm:7.119.1":
+  version: 7.119.1
+  resolution: "@sentry/core@npm:7.119.1"
   dependencies:
-    "@sentry/types": "npm:7.119.0"
-    "@sentry/utils": "npm:7.119.0"
-  checksum: 10c0/6f2246a9a6ea5dbec8422fccd265aaf8e20582eaf03f1199ef526a41e5939b861cf5050a07975f17c0920c86b4c8cf3416e805131c713899da49d74d529d0697
+    "@sentry/types": "npm:7.119.1"
+    "@sentry/utils": "npm:7.119.1"
+  checksum: 10c0/b847298b10c1282e60ea163724b918c9e2022245474265f22c35ef3d98056a78b22a8072dda88661fefc61f1f1408b6aeb020dddb44ff11febea60a7e0f748a3
   languageName: node
   linkType: hard
 
@@ -2768,18 +2768,18 @@ __metadata:
   linkType: hard
 
 "@sentry/tracing@npm:^7.117.0":
-  version: 7.119.0
-  resolution: "@sentry/tracing@npm:7.119.0"
+  version: 7.119.1
+  resolution: "@sentry/tracing@npm:7.119.1"
   dependencies:
-    "@sentry-internal/tracing": "npm:7.119.0"
-  checksum: 10c0/ac4cdd62f6c2736eddd394fa06ffa843d2b61046f63e1f623b00a050c7c752bed58fe93a9ca0063f6a3a681aabf6170014d2d43eff83ecd20ef9005454e3b248
+    "@sentry-internal/tracing": "npm:7.119.1"
+  checksum: 10c0/9e34b7f3871575596c162c12f055723e337ae3d4a56d9057e2349aaa803de03b93fad63b15bd84817331f66f0d47bc381a0feea085a9e421f7a94a5ee1c8a2f5
   languageName: node
   linkType: hard
 
-"@sentry/types@npm:7.119.0":
-  version: 7.119.0
-  resolution: "@sentry/types@npm:7.119.0"
-  checksum: 10c0/b2ca256ef1d7fb156d455908aa3e021cb2f58100355961fca454d0c5e6c1b8d1a949c479c136dbceca2b76dabcd71cd950e089c576f7e424effbe60f0c0bbaa6
+"@sentry/types@npm:7.119.1":
+  version: 7.119.1
+  resolution: "@sentry/types@npm:7.119.1"
+  checksum: 10c0/841a19bf5b1f03e24dda90542f9ff3192b0c27448066ed631ba96c4220563597c0c0d0542929b06e22c40647485e3f0479c436cc01632bfb344ab45d6e929d69
   languageName: node
   linkType: hard
 
@@ -2797,12 +2797,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sentry/utils@npm:7.119.0":
-  version: 7.119.0
-  resolution: "@sentry/utils@npm:7.119.0"
+"@sentry/utils@npm:7.119.1":
+  version: 7.119.1
+  resolution: "@sentry/utils@npm:7.119.1"
   dependencies:
-    "@sentry/types": "npm:7.119.0"
-  checksum: 10c0/5fd5e5bb0a45548d65baa6c4a04481e750433daa53ce2caa0baa0db19a912b74168290043f8605ed5c10cef7db744efdca2130020d9f59dca3a89d818492daf5
+    "@sentry/types": "npm:7.119.1"
+  checksum: 10c0/f6516c7b40483468dc16b26c392f7aa9ee50928251b588ef21a8ab0499c558c6e3d36cc9da3d71199ac6c9e27b4adc444b49d17db53bcbcebe12efe90f25b307
   languageName: node
   linkType: hard
 
@@ -4272,8 +4272,8 @@ __metadata:
   linkType: hard
 
 "bullmq@npm:^5.13.0":
-  version: 5.15.0
-  resolution: "bullmq@npm:5.15.0"
+  version: 5.16.0
+  resolution: "bullmq@npm:5.16.0"
   dependencies:
     cron-parser: "npm:^4.6.0"
     ioredis: "npm:^5.4.1"
@@ -4282,7 +4282,7 @@ __metadata:
     semver: "npm:^7.5.4"
     tslib: "npm:^2.0.0"
     uuid: "npm:^9.0.0"
-  checksum: 10c0/55e59b55d8d0aaf05d247e10a5d90b109330344b8abc09159495f7105cbc7ff200e153334805c8dc327c57e85e4a846446d5e5162aeed6429c56545d671478e5
+  checksum: 10c0/cb2cbeaa38907f98d58b92e97cac3e132fdffa5ca18f0a1477467ad1624f1ffce029bd578279104a650f92c91c19080d6a9db8d3a7ddf61e8476db0bd7de3c34
   languageName: node
   linkType: hard
 
@@ -5216,11 +5216,11 @@ __metadata:
   linkType: hard
 
 "express-rate-limit@npm:*, express-rate-limit@npm:^7.3.1":
-  version: 7.4.0
-  resolution: "express-rate-limit@npm:7.4.0"
+  version: 7.4.1
+  resolution: "express-rate-limit@npm:7.4.1"
   peerDependencies:
     express: 4 || 5 || ^5.0.0-beta.1
-  checksum: 10c0/f6ceb7278f8f0af2ad3a7d6a7e791d29cd278366e107aa98cc16e93b95c5b4e35b749bb2a24454d9d54069b204fa6c26a49075672b63341ad948339fe3d797d3
+  checksum: 10c0/111673b43e7c2eef8bc3b6d5e7b46cabe055782d446b0aa93e55ef277e1c7995366443c16fa92101948dafdf1c4f39523c03adbfcc7c57cbbb9c9131ee374049
   languageName: node
   linkType: hard
 
@@ -10255,8 +10255,8 @@ __metadata:
   linkType: hard
 
 "winston@npm:^3.13.0, winston@npm:^3.14.2":
-  version: 3.14.2
-  resolution: "winston@npm:3.14.2"
+  version: 3.15.0
+  resolution: "winston@npm:3.15.0"
   dependencies:
     "@colors/colors": "npm:^1.6.0"
     "@dabh/diagnostics": "npm:^2.0.2"
@@ -10269,7 +10269,7 @@ __metadata:
     stack-trace: "npm:0.0.x"
     triple-beam: "npm:^1.3.0"
     winston-transport: "npm:^4.7.0"
-  checksum: 10c0/3f8fe505ea18310982e60452f335dd2b22fdbc9b25839b6ad882971b2416d5adc94a1f1a46e24cb37d967ad01dfe5499adaf5e53575626b5ebb2a25ff30f4e1d
+  checksum: 10c0/ed987e48fdfdd3f27974107f96e5a84688747d9a2be341e6838c5be4c76ebba1a11cc20320b8def4d907981b7268ebccaa6326b1ed75c50f549ee81c211e1b4d
   languageName: node
   linkType: hard
 
