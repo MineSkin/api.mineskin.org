@@ -1,15 +1,8 @@
 import { Router } from "express";
-import { apiKeyMiddleware } from "../../middleware/apikey";
-import { mineskinClientMiddleware } from "../../middleware/client";
-import { breadcrumbMiddleware } from "../../middleware/breadcrumb";
 import { v2ErrorHandler, v2GenerateAndWait } from "../../models/v2/generate";
+import { v2Router } from "./router";
 
-export const v2GenerateRouter: Router = Router();
-
-v2GenerateRouter.use("/", breadcrumbMiddleware);
-v2GenerateRouter.use("/", apiKeyMiddleware);
-v2GenerateRouter.use("/", mineskinClientMiddleware);
-
+export const v2GenerateRouter: Router = v2Router();
 
 v2GenerateRouter.post("/", v2GenerateAndWait);
 

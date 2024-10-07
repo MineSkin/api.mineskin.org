@@ -1,17 +1,12 @@
 import { Router } from "express";
-import { breadcrumbMiddleware } from "../../middleware/breadcrumb";
-import { apiKeyMiddleware } from "../../middleware/apikey";
-import { mineskinClientMiddleware } from "../../middleware/client";
 import { v2SkinList } from "../../models/v2/skins";
+import { v2Router } from "./router";
+import { v2ErrorHandler } from "../../models/v2/generate";
 
-export const v2SkinsRouter: Router = Router();
-
-
-v2SkinsRouter.use("/", breadcrumbMiddleware);
-v2SkinsRouter.use("/", apiKeyMiddleware);
-v2SkinsRouter.use("/", mineskinClientMiddleware);
-
+export const v2SkinsRouter: Router = v2Router();
 
 v2SkinsRouter.get("/", v2SkinList);
+
+v2SkinsRouter.use("/", v2ErrorHandler);
 
 
