@@ -39,11 +39,29 @@ export async function v2SkinList(req: MineSkinV2Request, res: Response<V2SkinLis
         .sort({_id: -1})
         .exec();
 
+    let lastSkin = skins[skins.length - 1];
+
     //TODO: pagination info
-    return {
+    const result = {
         success: true,
-        skins: skins.map(skinToSimpleJson)
+        skins: skins.map(skinToSimpleJson),
+        pagination: {}
+    };
+    if (lastSkin) {
+        const params = new URLSearchParams();
+        params.set('after', lastSkin.uuid);
+        params.set('size', `${ size || 16 }`);
+        if (filter) {
+            params.set('filter', filter);
+        }
+        result.pagination = {
+            next: {
+                after: lastSkin.uuid,
+                href: `/v2/skins?${ params.toString() }`
+            }
+        }
     }
+    return result;
 }
 
 export async function v2GetSkin(req: MineSkinV2Request, res: Response<V2SkinResponse>): Promise<V2SkinResponse> {
