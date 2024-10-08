@@ -2,7 +2,7 @@ import { MineSkinV2Request } from "../../routes/v2/types";
 import { SkinService } from "@mineskin/generator";
 import { Response } from "express";
 import { ListReqQuery } from "../../runtype/ListReq";
-import { ISkin2Document, isPopulatedSkin2Document, Skin2 } from "@mineskin/database";
+import { IPopulatedSkin2Document, ISkin2Document, isPopulatedSkin2Document, Skin2 } from "@mineskin/database";
 import { RootFilterQuery } from "mongoose";
 import { MineSkinError, SkinVisibility2 } from "@mineskin/types";
 import { ListedSkin, V2SkinListResponseBody } from "../../typings/v2/V2SkinListResponseBody";
@@ -34,7 +34,8 @@ export async function v2SkinList(req: MineSkinV2Request, res: Response<V2SkinLis
 
     const skins = await Skin2.find(query)
         .limit(size || 16)
-        .select('uuid meta') //TODO
+        .select('uuid meta data') //TODO
+        .populate('data', 'hash.skin.minecraft')
         .sort({_id: -1})
         .exec();
 
@@ -59,9 +60,10 @@ export async function v2GetSkin(req: MineSkinV2Request, res: Response<V2SkinResp
     };
 }
 
-function skinToSimpleJson(skin: ISkin2Document): ListedSkin {
+function skinToSimpleJson(skin: ISkin2Document | IPopulatedSkin2Document): ListedSkin {
     return {
         uuid: skin.uuid,
-        name: skin.meta.name
+        name: skin.meta.name,
+        texture: isPopulatedSkin2Document(skin) ? skin.data?.hash?.skin?.minecraft : undefined
     };
 }
