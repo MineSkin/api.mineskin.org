@@ -7,7 +7,7 @@ import { RootFilterQuery } from "mongoose";
 import { SkinVisibility2 } from "@mineskin/types";
 import { ListedSkin, V2SkinListResponseBody } from "../../typings/v2/V2SkinListResponseBody";
 
-export async function v2SkinList(req: MineSkinV2Request, res: Response<V2SkinListResponseBody>) {
+export async function v2SkinList(req: MineSkinV2Request, res: Response<V2SkinListResponseBody>): Promise<V2SkinListResponseBody> {
     const {
         after,
         size,
@@ -30,27 +30,21 @@ export async function v2SkinList(req: MineSkinV2Request, res: Response<V2SkinLis
     }
 
     const skins = await Skin2.find(query)
-        .limit(size)
+        .limit(size || 16)
         .select('uuid meta') //TODO
         .sort({_id: -1})
         .exec();
 
     //TODO: pagination info
-    return res.json({
+    return {
         success: true,
         skins: skins.map(skinToSimpleJson)
-    })
+    }
 }
 
 function skinToSimpleJson(skin: ISkin2Document): ListedSkin {
-    if (!skin.data) {
-        throw new Error("Skin data is missing");
-    }
     return {
         uuid: skin.uuid,
-        name: skin.meta.name,
-        visibility: skin.meta.visibility,
-        variant: skin.meta.variant,
-        views: skin.interaction.views
+        name: skin.meta.name
     };
 }
