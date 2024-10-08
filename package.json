@@ -42,6 +42,7 @@
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "express-async-errors": "^3.1.1",
+    "express-async-handler": "^1.2.0",
     "express-fileupload": "^1.5.0",
     "express-git-puller": "^2.1.1",
     "express-rate-limit": "^7.3.1",

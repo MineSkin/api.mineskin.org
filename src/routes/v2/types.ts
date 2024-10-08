@@ -16,6 +16,7 @@ export interface MineSkinV2Request extends Request {
 
     client?: ClientInfo;
 
+    messages: CodeAndMessage[];
     warnings: CodeAndMessage[];
 }
 

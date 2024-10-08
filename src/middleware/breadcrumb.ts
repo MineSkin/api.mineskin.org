@@ -15,6 +15,9 @@ export const breadcrumbMiddleware = (req: MineSkinV2Request, res: Response, next
     if (!req.warnings) {
         req.warnings = [];
     }
+    if (!req.messages) {
+        req.messages = [];
+    }
 
     next();
 }

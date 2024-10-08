@@ -3747,6 +3747,7 @@ __metadata:
     dotenv: "npm:^16.4.5"
     express: "npm:^4.19.2"
     express-async-errors: "npm:^3.1.1"
+    express-async-handler: "npm:^1.2.0"
     express-fileupload: "npm:^1.5.0"
     express-git-puller: "npm:^2.1.1"
     express-rate-limit: "npm:^7.3.1"
@@ -5135,6 +5136,13 @@ __metadata:
   peerDependencies:
     express: ^4.16.2
   checksum: 10c0/56c4e90c44e98c7edc5bd38e18dd23b0d9a7139cb94ff3e25943ba257415b433e0e52ea8f9bc1fb5b70a5e6c5246eaace4fb69ab171edfb8896580928bb97ec6
+  languageName: node
+  linkType: hard
+
+"express-async-handler@npm:^1.2.0":
+  version: 1.2.0
+  resolution: "express-async-handler@npm:1.2.0"
+  checksum: 10c0/0c664965b86d8f6369883080bc7709266215c3c5d7e62ce7b00859e68293720bac409157d4f4ac8859b5fe59608f75b5038ce2b2f683fae356ff9f60874a1341
   languageName: node
   linkType: hard
 

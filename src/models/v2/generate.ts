@@ -56,21 +56,27 @@ const client = new GeneratorClient({
     blockingConnection: false
 });
 
-export async function v2GenerateAndWait(req: GenerateV2Request, res: Response<V2GenerateResponseBody | V2SkinResponse>) {
-    const submitted = await v2SubmitGeneratorJob(req, res);
-    if (!submitted) {
-        return;
-    }
-    const {skin, job} = submitted;
+export async function v2GenerateAndWait(req: GenerateV2Request, res: Response<V2GenerateResponseBody | V2SkinResponse>): Promise<V2GenerateResponseBody | V2SkinResponse> {
+    const {skin, job} = await v2SubmitGeneratorJob(req, res);
     if (skin) {
-        return await V2GenerateHandler.queryAndSendSkin(req, res, skin.id, skin.duplicate);
+        const queried = await querySkinOrThrow(skin.id);
+        return {
+            success: true,
+            skin: V2GenerateHandler.skinToJson(queried, skin.duplicate),
+            rateLimit: V2GenerateHandler.makeRateLimitInfo(req)
+        };
     }
     if (!job) {
-        return;
+        throw new GeneratorError('job_not_found', "Job not found", {httpCode: 404});
     }
     try {
         const result = await job.waitUntilFinished(client.queueEvents, 10_000) as GenerateResult; //TODO: configure timeout
-        return await V2GenerateHandler.queryAndSendSkin(req, res, result.skin);
+        const queried = await querySkinOrThrow(result.skin);
+        return {
+            success: true,
+            skin: V2GenerateHandler.skinToJson(queried, !!result.duplicate),
+            rateLimit: V2GenerateHandler.makeRateLimitInfo(req)
+        };
     } catch (e) {
         console.warn(e);
         if (e.message.includes('timed out before finishing')) { // this kinda sucks
@@ -80,16 +86,12 @@ export async function v2GenerateAndWait(req: GenerateV2Request, res: Response<V2
     }
 }
 
-export async function v2GenerateEnqueue(req: GenerateV2Request, res: Response<V2GenerateResponseBody | V2JobResponse>) {
-    const submitted = await v2SubmitGeneratorJob(req, res);
-    if (!submitted) {
-        return;
-    }
-    const {skin, job} = submitted;
+export async function v2GenerateEnqueue(req: GenerateV2Request, res: Response<V2GenerateResponseBody | V2JobResponse>): Promise<V2JobResponse> {
+    const {skin, job} = await v2SubmitGeneratorJob(req, res);
     if (skin) {
         const queried = await querySkinOrThrow(skin.id);
 
-        return res.json({
+        return {
             success: true,
             job: {
                 uuid: job?.id || 'unknown',
@@ -97,18 +99,18 @@ export async function v2GenerateEnqueue(req: GenerateV2Request, res: Response<V2
             },
             skin: V2GenerateHandler.skinToJson(queried, skin.duplicate),
             rateLimit: V2GenerateHandler.makeRateLimitInfo(req)
-        });
+        };
     }
-    return res.json({
+    return {
         success: true,
         job: {
             uuid: job?.id || 'unknown',
             status: (await job?.getState()) || 'unknown'
         },
-    });
+    };
 }
 
-export async function v2GetJob(req: GenerateV2Request, res: Response<V2GenerateResponseBody | V2JobResponse>) {
+export async function v2GetJob(req: GenerateV2Request, res: Response<V2GenerateResponseBody | V2JobResponse>): Promise<V2JobResponse> {
     const jobId = req.params.jobId;
     const job = await client.getJob(jobId);
     if (!job) {
@@ -117,7 +119,7 @@ export async function v2GetJob(req: GenerateV2Request, res: Response<V2GenerateR
     if (await job.isCompleted()) {
         const result = job.returnvalue as GenerateResult;
         const queried = await querySkinOrThrow(result.skin);
-        return res.json({
+        return {
             success: true,
             job: {
                 uuid: job?.id || 'unknown',
@@ -125,30 +127,27 @@ export async function v2GetJob(req: GenerateV2Request, res: Response<V2GenerateR
             },
             skin: V2GenerateHandler.skinToJson(queried, !!result.duplicate),
             rateLimit: V2GenerateHandler.makeRateLimitInfo(req)
-        });
+        };
     }
-    return res.json({
+    return {
         success: true,
         job: {
             uuid: job?.id || 'unknown',
             status: (await job?.getState()) || 'unknown'
         },
-    });
+    };
 }
 
-async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2GenerateResponseBody | V2SkinResponse>): Promise<JobWithSkin | undefined> {
+async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2GenerateResponseBody | V2SkinResponse>): Promise<JobWithSkin> {
 
     // need to call multer stuff first so fields are parsed
     if (req.is('multipart/form-data')) {
-        const fileUploaded = await tryHandleFileUpload(req, res);
-        if (!fileUploaded) {
-            return;
-        }
+        await tryHandleFileUpload(req, res);
     } else {
         upload.none();
     }
 
-    const options = getAndValidateOptions(req, res);
+    const options = getAndValidateOptions(req);
     //const client = getClientInfo(req);
     if (!req.client) {
         throw new GeneratorError('invalid_client', "no client info", {httpCode: 500});
@@ -159,17 +158,7 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
     req.nextRequest = await trafficService.getNextRequest(req.client);
     req.minDelay = await trafficService.getMinDelaySeconds(req.client, req.apiKey) * 1000;
     if (req.nextRequest > req.client.time) {
-        res.status(429).json({
-            success: false,
-            rateLimit: V2GenerateHandler.makeRateLimitInfo(req),
-            errors: [
-                {
-                    code: 'rate_limit',
-                    message: `request too soon, next request in ${ ((Math.round(req.nextRequest - Date.now()) / 100) * 100) }ms`
-                }
-            ]
-        });
-        return;
+        throw new GeneratorError('rate_limit', `request too soon, next request in ${ ((Math.round(req.nextRequest - Date.now()) / 100) * 100) }ms`, {httpCode: 429});
     }
 
     Log.l.debug(req.client)
@@ -209,28 +198,10 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
             //TODO
             throw new Error("User generation is currently not supported");
         } else {
-            res.status(400).json({
-                success: false,
-                errors: [
-                    {
-                        code: 'invalid_request',
-                        message: `invalid request properties (expected url or user)`
-                    }
-                ]
-            });
-            return;
+            throw new GeneratorError('invalid_request', `invalid request properties (expected url or user)`, {httpCode: 400});
         }
     } else {
-        res.status(400).json({
-            success: false,
-            errors: [
-                {
-                    code: 'invalid_content_type',
-                    message: `invalid content type: ${ req.header('content-type') } (expected multipart/form-data or application/json)`
-                }
-            ]
-        });
-        return;
+        throw new GeneratorError('invalid_content_type', `invalid content type: ${ req.header('content-type') } (expected multipart/form-data or application/json)`, {httpCode: 400});
     }
 
     // preliminary rate limiting
@@ -383,7 +354,7 @@ export function v2ErrorHandler(err: Error, req: GenerateV2Request, res: Response
     });
 }
 
-function getAndValidateOptions(req: GenerateV2Request, res: Response): GenerateOptions {
+function getAndValidateOptions(req: GenerateV2Request): GenerateOptions {
     return Sentry.startSpan({
         op: "v2_generate_getAndValidateOptions",
         name: "getAndValidateOptions"
@@ -464,9 +435,9 @@ function validateName(name?: string): Maybe<string> {
 }
 
 
-async function tryHandleFileUpload(req: GenerateV2Request, res: Response): Promise<boolean> {
+async function tryHandleFileUpload(req: GenerateV2Request, res: Response): Promise<void> {
     try {
-        await new Promise<void>((resolve, reject) => {
+        return await new Promise<void>((resolve, reject) => {
             upload.single('file')(req, res, function (err) {
                 if (err) {
                     reject(err);
@@ -475,31 +446,12 @@ async function tryHandleFileUpload(req: GenerateV2Request, res: Response): Promi
                 }
             })
         });
-        return true;
     } catch (e) {
         Sentry.captureException(e);
         if (e instanceof MulterError) {
-            res.status(400).json({
-                success: false,
-                errors: [
-                    {
-                        code: e.code || 'invalid_file',
-                        message: `invalid file: ${ e.message }`
-                    }
-                ]
-            });
-            return false;
+            throw new GeneratorError('invalid_file', `invalid file: ${ e.message }`, {httpCode: 400, error: e});
         } else {
-            res.status(500).json({
-                success: false,
-                errors: [
-                    {
-                        code: 'upload_error',
-                        message: `upload error: ${ e.message }`
-                    }
-                ]
-            });
-            return false;
+            throw new GeneratorError('upload_error', `upload error: ${ e.message }`, {httpCode: 500, error: e});
         }
     }
 }
