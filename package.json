@@ -28,7 +28,7 @@
     "@logtail/node": "^0.4.21",
     "@logtail/winston": "^0.4.21",
     "@mineskin/database": "git+ssh://git@github.com/MineSkin/mineskin-database.git",
-    "@mineskin/generator": "git+ssh://git@github.com/MineSkin/mineskin-generator.git",
+    "@mineskin/generator": "git+ssh://git@github.com/MineSkin/mineskin-generator.git#credit",
     "@mineskin/hash-rust": "^1.0.3",
     "@mineskin/types": "git+ssh://git@github.com/MineSkin/mineskin-types.git#skin2",
     "@sentry/node": "8.9.2",
@@ -98,7 +98,6 @@
     "generate-license-file": "^3.5.0",
     "jest": "^29.7.0",
     "ts-jest": "^29.2.5",
-    "ts-node": "^10.9.2",
     "typescript": "^5.4.5"
   },
   "packageManager": "yarn@4.4.1"
