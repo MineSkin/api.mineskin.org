@@ -48,7 +48,7 @@ export async function v2SkinList(req: MineSkinV2Request, res: Response<V2SkinLis
 export async function v2GetSkin(req: MineSkinV2Request, res: Response<V2SkinResponse>): Promise<V2SkinResponse> {
     const uuid = UUID.check(req.params.uuid);
 
-    const skin = await Skin2.findForUuid(uuid);
+    const skin = await SkinService.findForUuid(uuid);
     if (!skin || !isPopulatedSkin2Document(skin)) {
         throw new MineSkinError('skin_not_found', 'Skin not found', {httpCode: 404});
     }
