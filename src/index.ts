@@ -42,6 +42,7 @@ import { MineSkinError } from "@mineskin/types";
 import { BillingService, GeneratorError, Log, TrafficService } from "@mineskin/generator";
 import { v2SkinsRouter } from "./routes/v2/skins";
 import { v2QueueRouter } from "./routes/v2/queue";
+import { v2TestRouter } from "./routes/v2/test";
 
 
 sourceMapSupport.install();
@@ -322,6 +323,9 @@ async function init() {
         app.use("/v2/generate", v2GenerateRouter);
         app.use("/v2/queue", v2QueueRouter);
         app.use("/v2/skins", v2SkinsRouter);
+        if (process.env.NODE_ENV !== 'production') {
+            app.use("/v2/test", v2TestRouter);
+        }
 
     }
 
