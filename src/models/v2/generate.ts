@@ -18,16 +18,8 @@ import {
     SkinService,
     TrafficService
 } from "@mineskin/generator";
-import {
-    ErrorSource,
-    GenerateType,
-    isBillableClient,
-    MineSkinError,
-    SkinVariant,
-    SkinVisibility2,
-    UUID
-} from "@mineskin/types";
-import { NextFunction, Response } from "express";
+import { ErrorSource, GenerateType, isBillableClient, SkinVariant, SkinVisibility2, UUID } from "@mineskin/types";
+import { Response } from "express";
 import { V2SkinResponse } from "../../typings/v2/V2SkinResponse";
 import { debug } from "../../util/colors";
 import { V2GenerateResponseBody } from "../../typings/v2/V2GenerateResponseBody";
@@ -38,7 +30,6 @@ import { V2UrlHandler } from "../../generator/v2/V2UrlHandler";
 import { Job } from "bullmq";
 import { V2JobResponse } from "../../typings/v2/V2JobResponse";
 import { IPopulatedSkin2Document, isPopulatedSkin2Document } from "@mineskin/database";
-import { ValidationError } from "runtypes";
 
 const upload = multer({
     limits: {
@@ -59,6 +50,7 @@ const client = new GeneratorClient({
 export async function v2GenerateAndWait(req: GenerateV2Request, res: Response<V2GenerateResponseBody | V2SkinResponse>): Promise<V2GenerateResponseBody | V2SkinResponse> {
     const {skin, job} = await v2SubmitGeneratorJob(req, res);
     if (skin) {
+        req.links.skin = `/v2/skins/${ skin.id }`;
         const queried = await querySkinOrThrow(skin.id);
         return {
             success: true,
@@ -71,6 +63,7 @@ export async function v2GenerateAndWait(req: GenerateV2Request, res: Response<V2
     }
     try {
         const result = await job.waitUntilFinished(client.queueEvents, 10_000) as GenerateResult; //TODO: configure timeout
+        req.links.skin = `/v2/skins/${ result.skin }`;
         const queried = await querySkinOrThrow(result.skin);
         return {
             success: true,
@@ -88,7 +81,11 @@ export async function v2GenerateAndWait(req: GenerateV2Request, res: Response<V2
 
 export async function v2GenerateEnqueue(req: GenerateV2Request, res: Response<V2GenerateResponseBody | V2JobResponse>): Promise<V2JobResponse> {
     const {skin, job} = await v2SubmitGeneratorJob(req, res);
+    if (job) {
+        req.links.job = `/v2/queue/${ job.id }`;
+    }
     if (skin) {
+        req.links.skin = `/v2/skins/${ skin.id }`;
         const queried = await querySkinOrThrow(skin.id);
 
         return {
@@ -106,7 +103,7 @@ export async function v2GenerateEnqueue(req: GenerateV2Request, res: Response<V2
         job: {
             uuid: job?.id || 'unknown',
             status: (await job?.getState()) || 'unknown'
-        },
+        }
     };
 }
 
@@ -116,8 +113,13 @@ export async function v2GetJob(req: GenerateV2Request, res: Response<V2GenerateR
     if (!job) {
         throw new GeneratorError('job_not_found', `Job not found: ${ jobId }`, {httpCode: 404});
     }
+
+    req.links.job = `/v2/queue/${ jobId }`;
+    req.links.self = req.links.job;
+
     if (await job.isCompleted()) {
         const result = job.returnvalue as GenerateResult;
+        req.links.skin = `/v2/skins/${ result.skin }`;
         const queried = await querySkinOrThrow(result.skin);
         return {
             success: true,
@@ -134,7 +136,7 @@ export async function v2GetJob(req: GenerateV2Request, res: Response<V2GenerateR
         job: {
             uuid: job?.id || 'unknown',
             status: (await job?.getState()) || 'unknown'
-        },
+        }
     };
 }
 
@@ -312,46 +314,6 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
     const job = await client.submitRequest(request);
     Log.l.debug(job);
     return {job};
-}
-
-export function v2ErrorHandler(err: Error, req: GenerateV2Request, res: Response<V2GenerateResponseBody>, next: NextFunction) {
-    if (err instanceof MineSkinError) {
-        return res.status(err.meta?.httpCode || 500).json({
-            success: false,
-            rateLimit: V2GenerateHandler.makeRateLimitInfo(req),
-            errors: [{
-                code: err.code,
-                message: err.msg || err.message
-            }]
-        });
-    }
-    if (err instanceof ValidationError) {
-        return res.status(400).json({
-            success: false,
-            errors: [
-                {
-                    code: 'validation_error',
-                    message: "Validation error"
-                },
-                {
-                    code: err.code,
-                    message: err.message
-                }
-            ]
-        });
-    }
-
-    Log.l.error(err);
-    Sentry.captureException(err, {
-        level: "fatal"
-    });
-    return res.status(500).json({
-        success: false,
-        errors: [{
-            code: "internal_error",
-            message: "An internal error occurred"
-        }]
-    });
 }
 
 function getAndValidateOptions(req: GenerateV2Request): GenerateOptions {

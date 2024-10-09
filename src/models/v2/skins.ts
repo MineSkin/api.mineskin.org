@@ -41,31 +41,32 @@ export async function v2SkinList(req: MineSkinV2Request, res: Response<V2SkinLis
 
     let lastSkin = skins[skins.length - 1];
 
-    //TODO: pagination info
-    const result = {
-        success: true,
-        skins: skins.map(skinToSimpleJson),
-        pagination: {}
-    };
     if (lastSkin) {
         const params = new URLSearchParams();
-        params.set('after', lastSkin.uuid);
+        if (after) {
+            params.set('after', after);
+        }
+        // params.set('after', lastSkin.uuid);
         params.set('size', `${ size || 16 }`);
         if (filter) {
             params.set('filter', filter);
         }
-        result.pagination = {
-            next: {
-                after: lastSkin.uuid,
-                href: `/v2/skins?${ params.toString() }`
-            }
-        }
+        req.links.self = `/v2/skins?${ params.toString() }`;
+
+        params.set('after', lastSkin.uuid);
+        req.links.next = `/v2/skins?${ params.toString() }`;
     }
-    return result;
+    return {
+        success: true,
+        skins: skins.map(skinToSimpleJson)
+    };
 }
 
 export async function v2GetSkin(req: MineSkinV2Request, res: Response<V2SkinResponse>): Promise<V2SkinResponse> {
     const uuid = UUID.check(req.params.uuid);
+
+    req.links.skin = `/v2/skins/${ uuid }`;
+    req.links.self = req.links.skin;
 
     const skin = await SkinService.findForUuid(uuid);
     if (!skin || !isPopulatedSkin2Document(skin)) {

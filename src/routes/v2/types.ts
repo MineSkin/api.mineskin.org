@@ -18,6 +18,9 @@ export interface MineSkinV2Request extends Request {
 
     messages: CodeAndMessage[];
     warnings: CodeAndMessage[];
+    links: {
+        [key: string]: string;
+    }
 }
 
 export interface GenerateV2Request extends MineSkinV2Request {

@@ -1,8 +1,8 @@
-import { v2ErrorHandler } from "../../models/v2/generate";
 import { v2Router } from "./router";
 import { BillingService } from "@mineskin/generator";
 import { MineSkinV2Request } from "./types";
 import { Response } from "express";
+import { v2ErrorHandler } from "../../middleware/error";
 
 export const v2TestRouter = v2Router();
 
