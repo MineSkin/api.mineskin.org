@@ -1372,9 +1372,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git#credit":
+"@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git":
   version: 0.0.0
-  resolution: "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git#commit=607f2b538a430472a1189dc66a16134b123efdfd"
+  resolution: "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git#commit=0dac9a0042b901cd41c7abe6d5f543cc1d25310e"
   dependencies:
     "@inventivetalent/imghash": "npm:^1.1.1"
     "@inventivetalent/loading-cache": "npm:^0.7.1"
@@ -1386,7 +1386,7 @@ __metadata:
     "@mineskin/database": "git+ssh://git@github.com/MineSkin/mineskin-database.git"
     "@mineskin/hash-rust": "npm:^1.0.3"
     "@mineskin/requests": "git+ssh://git@github.com/MineSkin/mineskin-requests.git"
-    "@mineskin/types": "git+ssh://git@github.com/MineSkin/mineskin-types.git#skin2"
+    "@mineskin/types": "git+ssh://git@github.com/MineSkin/mineskin-types.git"
     "@sentry/cli": "npm:^2.32.2"
     "@sentry/node": "npm:^8.18.0"
     "@sentry/profiling-node": "npm:^8.18.0"
@@ -1404,7 +1404,7 @@ __metadata:
     uuid: "npm:^10.0.0"
     winston: "npm:^3.14.2"
     winston-daily-rotate-file: "npm:^5.0.0"
-  checksum: 10c0/5272221dcfb069b0de0753e98dff712f5022a0eebe85df326c91e31ca93552fb84bac11a5541cf8271c0fc03185eb35d58387506ba9240edf5e13fe52d137965
+  checksum: 10c0/ac09f1e84f7f759ca598d412cea9fdf6e0f9de5e3a6168013e58a3b019c1fdf97559d2a5492681d0095177de9914516c0c6302c928b2ad2a9d3426b83f1f2e73
   languageName: node
   linkType: hard
 
@@ -1431,6 +1431,13 @@ __metadata:
     https-proxy-agent: "npm:^5.0.1"
     jobqu: "npm:^2.0.5"
   checksum: 10c0/9a2916a856208a7530aed067918552a82e5f4c2167c9a70ecc5e237ab83494857ff3afef52fddfb5e46b96a6f0d48f43a2b7cbdd30b2dd1cec8de5535b6e9248
+  languageName: node
+  linkType: hard
+
+"@mineskin/types@git+ssh://git@github.com/MineSkin/mineskin-types.git":
+  version: 1.0.1
+  resolution: "@mineskin/types@git+ssh://git@github.com/MineSkin/mineskin-types.git#commit=fae3d507fd08a04790f4875da3bed7f6c5e2ab9f"
+  checksum: 10c0/243d8ca69c942b36bfe2e5e0ea44942ecf1e4d7740162b27a9f408f6fd833bd8ef53af846a7f2a3d2e0bfcef5cc24ff2e786c17ac3c563ba494ffb7fd088610c
   languageName: node
   linkType: hard
 
@@ -3715,9 +3722,9 @@ __metadata:
     "@logtail/node": "npm:^0.4.21"
     "@logtail/winston": "npm:^0.4.21"
     "@mineskin/database": "git+ssh://git@github.com/MineSkin/mineskin-database.git"
-    "@mineskin/generator": "git+ssh://git@github.com/MineSkin/mineskin-generator.git#credit"
+    "@mineskin/generator": "git+ssh://git@github.com/MineSkin/mineskin-generator.git"
     "@mineskin/hash-rust": "npm:^1.0.3"
-    "@mineskin/types": "git+ssh://git@github.com/MineSkin/mineskin-types.git#skin2"
+    "@mineskin/types": "git+ssh://git@github.com/MineSkin/mineskin-types.git"
     "@sentry/node": "npm:8.9.2"
     "@sentry/profiling-node": "npm:8.9.2"
     "@sentry/tracing": "npm:^7.117.0"
