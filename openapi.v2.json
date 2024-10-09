@@ -513,9 +513,9 @@
         }
       },
       "apiKey": {
-        "name": "API Key",
+        "name": "Authorization",
         "description": "API key from [account.mineskin.org](https://account.mineskin.org/keys)",
-        "example": "da84de82e960d6c0510088279878c79365ad5118d350d619f20324a5494f156b",
+        "example": "Bearer da84de82e960d6c0510088279878c79365ad5118d350d619f20324a5494f156b",
         "in": "header",
         "schema": {
           "type": "string"
