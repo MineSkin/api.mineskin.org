@@ -1,21 +1,21 @@
 import { MineSkinV2Request } from "../../routes/v2/types";
 import { SkinService } from "@mineskin/generator";
 import { Response } from "express";
-import { ListReqQuery } from "../../runtype/ListReq";
 import { IPopulatedSkin2Document, ISkin2Document, isPopulatedSkin2Document, Skin2 } from "@mineskin/database";
 import { RootFilterQuery } from "mongoose";
 import { MineSkinError, SkinVisibility2 } from "@mineskin/types";
 import { ListedSkin, V2SkinListResponseBody } from "../../typings/v2/V2SkinListResponseBody";
 import { V2SkinResponse } from "../../typings/v2/V2SkinResponse";
-import { UUID } from "../../runtype/misc";
 import { V2GenerateHandler } from "../../generator/v2/V2GenerateHandler";
+import { ListReqQuery } from "../../validation/skins";
+import { UUID } from "../../validation/misc";
 
 export async function v2SkinList(req: MineSkinV2Request, res: Response<V2SkinListResponseBody>): Promise<V2SkinListResponseBody> {
     const {
         after,
         size,
         filter
-    } = ListReqQuery.check(req.query);
+    } = ListReqQuery.parse(req.query);
 
     const query: RootFilterQuery<ISkin2Document> = {
         'meta.visibility': SkinVisibility2.PUBLIC
@@ -63,7 +63,7 @@ export async function v2SkinList(req: MineSkinV2Request, res: Response<V2SkinLis
 }
 
 export async function v2GetSkin(req: MineSkinV2Request, res: Response<V2SkinResponse>): Promise<V2SkinResponse> {
-    const uuid = UUID.check(req.params.uuid);
+    const uuid = UUID.parse(req.params.uuid);
 
     req.links.skin = `/v2/skins/${ uuid }`;
     req.links.self = req.links.skin;

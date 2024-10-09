@@ -23,13 +23,13 @@ import { Response } from "express";
 import { V2SkinResponse } from "../../typings/v2/V2SkinResponse";
 import { debug } from "../../util/colors";
 import { V2GenerateResponseBody } from "../../typings/v2/V2GenerateResponseBody";
-import { GenerateReqOptions, GenerateReqUser } from "../../runtype/GenerateReq";
 import { V2GenerateHandler } from "../../generator/v2/V2GenerateHandler";
 import { V2UploadHandler } from "../../generator/v2/V2UploadHandler";
 import { V2UrlHandler } from "../../generator/v2/V2UrlHandler";
 import { Job } from "bullmq";
 import { V2JobResponse } from "../../typings/v2/V2JobResponse";
 import { IPopulatedSkin2Document, isPopulatedSkin2Document } from "@mineskin/database";
+import { GenerateReqOptions, GenerateReqUser } from "../../validation/generate";
 
 const upload = multer({
     limits: {
@@ -195,7 +195,7 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
         if ('url' in req.body) {
             handler = new V2UrlHandler(req, res, options);
         } else if ('user' in req.body) {
-            const {uuid} = GenerateReqUser.check(req.body);
+            const {uuid} = GenerateReqUser.parse(req.body);
             Log.l.debug(`${ req.breadcrumbC } USER:        "${ uuid }"`);
             //TODO
             throw new Error("User generation is currently not supported");
@@ -324,15 +324,15 @@ function getAndValidateOptions(req: GenerateV2Request): GenerateOptions {
         console.debug(req.header('content-type'))
 
         Log.l.debug(JSON.stringify(req.body));//TODO: remove
-        let {
+        const {
             variant,
             visibility,
             name
-        } = GenerateReqOptions.check(req.body);
-
-        variant = validateVariant(variant);
-        visibility = validateVisibility(visibility);
-        name = validateName(name);
+        } = GenerateReqOptions.parse(req.body);
+        //
+        // variant = validateVariant(variant);
+        // visibility = validateVisibility(visibility);
+        // name = validateName(name);
 
         // const variant = validateVariant(req.body["variant"] || req.query["variant"]);
         // const visibility = validateVisibility(req.body["visibility"] || req.query["visibility"]);

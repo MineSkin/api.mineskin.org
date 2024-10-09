@@ -14,10 +14,10 @@ import { readFile } from "fs/promises";
 import { GenerateV2Request } from "../../routes/v2/types";
 import { V2GenerateResponseBody } from "../../typings/v2/V2GenerateResponseBody";
 import { V2SkinResponse } from "../../typings/v2/V2SkinResponse";
-import { GenerateReqUrl } from "../../runtype/GenerateReq";
 import { PathHolder } from "../../util";
 import { Temp, URL_DIR } from "../Temp";
 import { UrlHandler } from "./UrlHandler";
+import { GenerateReqUrl } from "../../validation/generate";
 
 export class V2UrlHandler extends V2GenerateHandler {
 
@@ -27,7 +27,7 @@ export class V2UrlHandler extends V2GenerateHandler {
     }
 
     async getImageBuffer(): Promise<BufferResult> {
-        const {url: originalUrl} = GenerateReqUrl.check(this.req.body);
+        const {url: originalUrl} = GenerateReqUrl.parse(this.req.body);
         Log.l.debug(`${ this.req.breadcrumbC } URL:         "${ originalUrl }"`);
 
         // check for duplicate texture or mineskin url

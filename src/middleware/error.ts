@@ -3,9 +3,10 @@ import { NextFunction, Response } from "express";
 import { V2GenerateResponseBody } from "../typings/v2/V2GenerateResponseBody";
 import { MineSkinError } from "@mineskin/types";
 import { V2GenerateHandler } from "../generator/v2/V2GenerateHandler";
-import { ValidationError } from "runtypes";
 import { Log } from "@mineskin/generator";
 import * as Sentry from "@sentry/node";
+import { ZodError } from "zod";
+import { CodeAndMessage } from "../typings/v2/CodeAndMessage";
 
 export function v2ErrorHandler(err: Error, req: GenerateV2Request, res: Response<V2GenerateResponseBody>, next: NextFunction) {
     if (err instanceof MineSkinError) {
@@ -18,22 +19,26 @@ export function v2ErrorHandler(err: Error, req: GenerateV2Request, res: Response
             }]
         });
     }
-    if (err instanceof ValidationError) {
+    if (err instanceof ZodError) {
+        const errors: CodeAndMessage[] = [
+            {
+                code: 'validation_error',
+                message: "Validation error"
+            }
+        ];
+        for (const issue of err.issues) {
+            errors.push({
+                code: issue.code,
+                message: issue.message
+            });
+        }
         return res.status(400).json({
             success: false,
-            errors: [
-                {
-                    code: 'validation_error',
-                    message: "Validation error"
-                },
-                {
-                    code: err.code,
-                    message: err.message
-                }
-            ]
+            errors: errors
         });
     }
 
+    Log.l.error(err.name);
     Log.l.error(err);
     Sentry.captureException(err, {
         level: "fatal"

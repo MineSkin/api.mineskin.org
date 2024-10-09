@@ -3785,6 +3785,7 @@ __metadata:
     uuid: "npm:^3.4.0"
     winston: "npm:^3.13.0"
     winston-daily-rotate-file: "npm:^5.0.0"
+    zod: "npm:^3.23.8"
   languageName: unknown
   linkType: soft
 
