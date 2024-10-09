@@ -47,6 +47,7 @@ const client = new GeneratorClient({
         username: process.env.REDIS_USERNAME,
         password: process.env.REDIS_PASSWORD
     },
+    prefix: 'mineskin:queue',
     blockingConnection: false
 });
 
