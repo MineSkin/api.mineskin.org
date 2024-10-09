@@ -5,8 +5,9 @@ RUN mkdir -p /opt/app
 WORKDIR /opt/app
 
 # copy sources
+COPY openapi.yml openapi.v1.json openapi.v2.json .
 COPY src/ src/
-COPY openapi.yml .env.vault .
+COPY .env.vault .
 
 # build
 RUN yarn build
@@ -24,7 +25,7 @@ WORKDIR /opt/app
 COPY --from=BUILD_IMAGE /opt/app/dist ./dist
 #COPY --from=BUILD_IMAGE /opt/app/node_modules ./node_modules
 COPY --from=BUILD_IMAGE /opt/app/package.json .
-COPY --from=BUILD_IMAGE /opt/app/openapi.yml .
+COPY --from=BUILD_IMAGE /opt/app/openapi* .
 COPY --from=BUILD_IMAGE /opt/app/.env.vault .
 
 EXPOSE 3017

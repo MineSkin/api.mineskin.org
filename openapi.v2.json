@@ -1012,8 +1012,7 @@
               "application/json": {
                 "schema": {
                   "required": [
-                    "skins",
-                    "page"
+                    "skins"
                   ],
                   "properties": {
                     "skins": {
@@ -1022,9 +1021,13 @@
                         "$ref": "#/components/schemas/PartialSkinInfo"
                       }
                     },
-                    "page": {
+                    "links": {
                       "type": "object",
                       "properties": {
+                        "self": {
+                          "type": "string",
+                          "format": "url"
+                        },
                         "next": {
                           "description": "for pagination, link to the next page",
                           "type": "string",

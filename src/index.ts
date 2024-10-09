@@ -301,8 +301,17 @@ async function init() {
         app.get("/openapi.yml", corsMiddleware, (req, res) => {
             res.sendFile("/openapi.yml", {root: `${ __dirname }/..`});
         });
+        app.get("/v1/openapi.json", corsMiddleware, (req, res) => {
+            res.sendFile("/openapi.v1.json", {root: `${ __dirname }/..`});
+        });
+        app.get("/v2/openapi.json", corsMiddleware, (req, res) => {
+            res.sendFile("/openapi.v2.json", {root: `${ __dirname }/..`});
+        });
         app.get("/openapi", (req, res) => {
             res.redirect("https://rest.wiki/?https://api.mineskin.org/openapi.yml");
+        });
+        app.get("/v2/openapi", (req, res) => {
+            res.redirect("https://rest.wiki/?https://api.mineskin.org/v2/openapi.json");
         });
         app.get("/robots.txt", (req, res) => {
             res.send("User-Agent: *\n" +
