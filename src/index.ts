@@ -43,6 +43,7 @@ import { BillingService, GeneratorError, Log, TrafficService } from "@mineskin/g
 import { v2SkinsRouter } from "./routes/v2/skins";
 import { v2QueueRouter } from "./routes/v2/queue";
 import { v2TestRouter } from "./routes/v2/test";
+import process from "node:process";
 
 
 sourceMapSupport.install();
@@ -272,6 +273,13 @@ async function init() {
                 parsed: new UAParser(req.headers["user-agent"]).getResult(),
                 simplified: simplifyUserAgent(req.headers["user-agent"] as string)
             });
+        });
+
+        app.get("/version", (req, res) => {
+            res.json({
+                env: process.env.NODE_ENV,
+                version: process.env.SOURCE_COMMIT
+            })
         });
 
         app.get("/health", async function (req, res) {
