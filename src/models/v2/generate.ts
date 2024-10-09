@@ -88,6 +88,7 @@ export async function v2GenerateEnqueue(req: GenerateV2Request, res: Response<V2
         req.links.skin = `/v2/skins/${ skin.id }`;
         const queried = await querySkinOrThrow(skin.id);
 
+        res.status(200);
         return {
             success: true,
             job: {
@@ -98,6 +99,7 @@ export async function v2GenerateEnqueue(req: GenerateV2Request, res: Response<V2
             rateLimit: V2GenerateHandler.makeRateLimitInfo(req)
         };
     }
+    res.status(202);
     return {
         success: true,
         job: {
