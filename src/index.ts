@@ -44,6 +44,7 @@ import { v2SkinsRouter } from "./routes/v2/skins";
 import { v2QueueRouter } from "./routes/v2/queue";
 import { v2TestRouter } from "./routes/v2/test";
 import process from "node:process";
+import { v2MeRouter } from "./routes/v2/me";
 
 
 sourceMapSupport.install();
@@ -340,6 +341,7 @@ async function init() {
         app.use("/v2/generate", v2GenerateRouter);
         app.use("/v2/queue", v2QueueRouter);
         app.use("/v2/skins", v2SkinsRouter);
+        app.use("/v2/me", v2MeRouter);
         if (process.env.NODE_ENV !== 'production') {
             app.use("/v2/test", v2TestRouter);
         }
