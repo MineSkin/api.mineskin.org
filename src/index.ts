@@ -346,7 +346,7 @@ async function init() {
         if (process.env.NODE_ENV !== 'production') {
             app.use("/v2/test", v2TestRouter);
         }
-        app.use("/v2", v2NotFoundHandler);
+        app.get("/v2/*", v2NotFoundHandler);
 
     }
 
