@@ -3,7 +3,7 @@ import { NextFunction, Response } from "express";
 import { getIp, getVia, simplifyUserAgent } from "../util";
 import * as Sentry from "@sentry/node";
 import { debug } from "../util/colors";
-import { BillableClient, ClientInfo, CreditType, Maybe } from "@mineskin/types";
+import { BillableClient, ClientInfo, CreditType, Maybe, MineSkinError } from "@mineskin/types";
 import { Log } from "@mineskin/generator";
 
 export const mineskinClientMiddleware = async (req: MineSkinV2Request, res: Response, next: NextFunction) => {
@@ -26,6 +26,9 @@ export const mineskinClientMiddleware = async (req: MineSkinV2Request, res: Resp
 
     if (billable) {
         res.header("X-MineSkin-Billable", "true");
+        if (metered && useCredits) {
+            throw new MineSkinError('invalid_billing', "Cannot use metered and credit billing at the same time");
+        }
     }
 
     Sentry.setTags({
