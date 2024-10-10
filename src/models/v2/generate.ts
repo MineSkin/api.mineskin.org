@@ -169,8 +169,6 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
         throw new GeneratorError('rate_limit', `request too soon, next request in ${ ((Math.round(req.nextRequest - Date.now()) / 100) * 100) }ms`, {httpCode: 429});
     }
 
-    Log.l.debug(req.client)
-
     // check credits
     if (isBillableClient(req.client)) {
         const billingService = BillingService.getInstance();
@@ -189,8 +187,6 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
             res.header('X-MineSkin-Credits-Balance', `${ credit.balance }`);
         }
     }
-
-    Log.l.debug(req.body);
 
     let handler: V2GenerateHandler;
 
@@ -233,7 +229,6 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
 
 
     const validation = await ImageValidation.validateImageBuffer(imageBuffer);
-    Log.l.debug(validation);
 
     //TODO: ideally don't do this here and in the generator
     if (options.variant === SkinVariant.UNKNOWN) {
@@ -325,7 +320,6 @@ function getAndValidateOptions(req: GenerateV2Request): GenerateOptions {
     }, (span) => {
         console.debug(req.header('content-type'))
 
-        Log.l.debug(JSON.stringify(req.body));//TODO: remove
         const {
             variant,
             visibility,

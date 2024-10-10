@@ -14,7 +14,6 @@ export class V2UploadHandler extends V2GenerateHandler {
 
     async getImageBuffer(): Promise<BufferResult> {
         const file: Maybe<Express.Multer.File> = this.req.file;
-        Log.l.debug(file);
         if (!file) {
             throw new GeneratorError('missing_file', "No file uploaded", {
                 httpCode: 500

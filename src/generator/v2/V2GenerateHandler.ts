@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { GenerateOptions, Log, SkinService } from "@mineskin/generator";
+import { GenerateOptions, SkinService } from "@mineskin/generator";
 import { RateLimitInfo, SkinInfo2, UUID } from "@mineskin/types";
 import { IPopulatedSkin2Document, ISkinDocument, isPopulatedSkin2Document } from "@mineskin/database";
 import { GenerateV2Request } from "../../routes/v2/types";
@@ -52,7 +52,6 @@ export class V2GenerateHandler {
         if (!skin.data) {
             throw new Error("Skin data is missing");
         }
-        Log.l.debug(JSON.stringify(skin.data, null, 2));
         return {
             uuid: skin.uuid,
             name: skin.meta.name,
