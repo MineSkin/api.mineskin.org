@@ -6,7 +6,6 @@ import { Time } from "@inventivetalent/time";
 import * as jose from "jose";
 import { JWTPayload } from "jose";
 import process from "node:process";
-import { JOSEError } from "jose/dist/types/util/errors";
 import { Log } from "@mineskin/generator";
 
 const jwtCache = Caches.builder()
@@ -44,7 +43,7 @@ export const jwtMiddleware = async (req: MineSkinV2Request, res: Response, next:
 
         req.grants = {...req.grants, ...payload.grants};
     } catch (e) {
-        if (e instanceof JOSEError) {
+        if (e instanceof jose.errors.JOSEError) {
             req.warnings.push({
                 code: "invalid_jwt",
                 message: "Invalid JWT cookie"
