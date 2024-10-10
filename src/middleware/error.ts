@@ -52,7 +52,7 @@ export function v2ErrorHandler(err: Error, req: GenerateV2Request, res: Response
     });
 }
 
-export function v2NotFoundHandler(err: Error, req: GenerateV2Request, res: Response<V2GenerateResponseBody>, next: NextFunction) {
+export function v2NotFoundHandler(req: GenerateV2Request, res: Response<V2GenerateResponseBody>) {
     return res.status(404).json({
         success: false,
         errors: [{
