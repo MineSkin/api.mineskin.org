@@ -1,6 +1,6 @@
 import { Request } from "express";
-import { Breadcrumb, ClientInfo } from "@mineskin/types";
-import { IApiKeyDocument, IUserDocument } from "@mineskin/database";
+import { Breadcrumb, ClientInfo, UUID } from "@mineskin/types";
+import { IApiKeyDocument } from "@mineskin/database";
 import { Chalk } from "chalk";
 import { CodeAndMessage } from "../../typings/v2/CodeAndMessage";
 
@@ -16,7 +16,11 @@ export interface MineSkinV2Request extends Request {
 
     client?: ClientInfo;
 
-    user?: Pick<IUserDocument, 'uuid' | 'billable' | 'grants'>;
+    user?: {
+        uuid: UUID;
+        billable?: boolean;
+        grants?: Record<string, string | number | boolean>;
+    }
 
     grants?: Record<string, string | number | boolean>;
 

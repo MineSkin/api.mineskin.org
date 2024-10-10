@@ -12,7 +12,7 @@ export const mineskinClientMiddleware = async (req: MineSkinV2Request, res: Resp
     const ip = getIp(req);
     const via = getVia(req);
 
-    let user: Maybe<string>;
+    let user: Maybe<string> = req.user?.uuid || req.client?.user;
     let billable = false;
     let metered = false;
     let useCredits = false;
