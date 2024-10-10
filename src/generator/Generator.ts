@@ -1492,7 +1492,7 @@ export class Generator {
     protected static async handleGenerateError(e: any, type: GenerateType, options: GenerateOptions, client: ClientInfo, account?: IAccountDocument): Promise<void> {
         const metrics = await MineSkinMetrics.get();
         if (e instanceof GeneratorError) {
-            if (e.code == this.GenError.NO_DUPLICATE) {
+            if (e.code == GenError.NO_DUPLICATE) {
                 return;
             }
         }
