@@ -3771,6 +3771,7 @@ __metadata:
     jest: "npm:^29.7.0"
     jimp: "npm:^0.22.12"
     jobqu: "npm:^2.0.5"
+    jose: "npm:^5.9.3"
     jsonwebtoken: "npm:9.0.0"
     metrics-node: "npm:1.1.1"
     mongoose: "npm:^8.4.1"
@@ -6785,6 +6786,13 @@ __metadata:
     ts-node: "npm:^9.1.1"
     typescript: "npm:^4.1.3"
   checksum: 10c0/fa09ed974bf6823364e0e9af6bfb6d4a1546e6fa9668dd698779b2499864ed8c196795c6e7304dc39a6d0765a989e85879b4c638f1220b6be550780d1103bbb8
+  languageName: node
+  linkType: hard
+
+"jose@npm:^5.9.3":
+  version: 5.9.3
+  resolution: "jose@npm:5.9.3"
+  checksum: 10c0/8e77b7324743c0f2b8db5de6aee17384fb41b4f24407979433a908d1bb12771043eec2efe4123ae814dcb2811414ebe53c84dfc94b5f57a5d981690e0dcc2729
   languageName: node
   linkType: hard
 
