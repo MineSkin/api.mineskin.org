@@ -6,6 +6,10 @@ import { MineSkinV2Request } from "./types";
 
 export const v2MeRouter: Router = v2Router();
 
+v2MeRouter.use((req: MineSkinV2Request, res, next) => {
+    res.header("Cache-Control", "private, no-store, max-age=0");
+});
+
 v2MeRouter.get("/", expressAsyncHandler(async (req: MineSkinV2Request, res) => {
     await v2GetMe(req, res);
 }));
