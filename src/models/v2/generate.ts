@@ -175,16 +175,25 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
         if (req.client.credits) {
             const credit = await billingService.getClientCredits(req.client);
             if (!credit) {
-                throw new GeneratorError('no_credits', "no credits", {httpCode: 400});
+                req.warnings.push({
+                    code: 'no_credits',
+                    message: "no credits"
+                });
+            } else {
+                if (!credit.isValid()) {
+                    req.warnings.push({
+                        code: 'invalid_credits',
+                        message: "invalid credits"
+                    });
+                } else if (credit.balance <= 0) {
+                    req.warnings.push({
+                        code: 'insufficient_credits',
+                        message: "insufficient credits"
+                    });
+                }
+                res.header('X-MineSkin-Credits-Type', credit.type);
+                res.header('X-MineSkin-Credits-Balance', `${ credit.balance }`);
             }
-            if (!credit.isValid()) {
-                throw new GeneratorError('invalid_credits', "invalid credits", {httpCode: 400});
-            }
-            if (credit.balance <= 0) {
-                throw new GeneratorError('insufficient_credits', "insufficient credits", {httpCode: 429});
-            }
-            res.header('X-MineSkin-Credits-Type', credit.type);
-            res.header('X-MineSkin-Credits-Balance', `${ credit.balance }`);
         }
     }
 
