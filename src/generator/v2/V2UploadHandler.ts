@@ -20,7 +20,7 @@ export class V2UploadHandler extends V2GenerateHandler {
             });
         }
 
-        Log.l.debug(`${ this.req.breadcrumbC } FILE:        "${ file.filename }"`);
+        Log.l.debug(`${ this.req.breadcrumbC } FILE:        "${ file.filename || file.originalname }"`);
 
         return {buffer: file.buffer};
     }
