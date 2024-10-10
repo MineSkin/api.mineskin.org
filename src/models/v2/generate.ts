@@ -264,8 +264,6 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
     }
     Log.l.debug(req.breadcrumbC + " Image hash: ", hashes);
 
-    console.log(imageBuffer.byteLength);
-
     // duplicate check V2, same as in generator
     //  just to avoid unnecessary submissions to generator
     const duplicateV2Data = await DuplicateChecker.findDuplicateDataFromImageHash(hashes, options.variant, GenerateType.UPLOAD, req.breadcrumb || "????");
@@ -316,9 +314,7 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
         options: options,
         client: req.client
     }
-    Log.l.debug(request);
     const job = await client.submitRequest(request);
-    Log.l.debug(job);
     return {job};
 }
 
