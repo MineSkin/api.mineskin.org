@@ -14,6 +14,10 @@ export const apiKeyMiddleware = async (req: MineSkinV2Request, res: Response, ne
         keyStr = authHeader.substring("Bearer ".length);
     }
 
+    if (!req.grants) {
+        req.grants = {};
+    }
+
     if (keyStr) {
         req._apiKeyStr = keyStr;
 
@@ -26,7 +30,7 @@ export const apiKeyMiddleware = async (req: MineSkinV2Request, res: Response, ne
 
         req.apiKey = key;
         req.apiKeyId = key.id;
-        req.apiKeyRef = `${ key.id?.substring(0, 8) } ${ key.name }`
+        req.apiKeyRef = `${ key.id?.substring(0, 8) } ${ key.name }`;
 
         Sentry.setTags({
             "generate_api_key": req.apiKeyRef ?? "none"
@@ -55,12 +59,16 @@ export const apiKeyMiddleware = async (req: MineSkinV2Request, res: Response, ne
             }
         }
 
+        if (key.grants) {
+            req.grants = {...req.grants, ...key.grants};
+        }
+
     } else {
         console.log(debug(`${ req.breadcrumbC } Key:         none`));
         req.warnings.push({
             code: "no_api_key",
             message: "No API Key provided"
-        })
+        });
     }
 
     next();

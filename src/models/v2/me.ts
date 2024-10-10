@@ -3,7 +3,6 @@ import { Response } from "express";
 import { isBillableClient, MineSkinError } from "@mineskin/types";
 import { formatV2Response } from "../../middleware/response";
 import { V2MiscResponseBody } from "../../typings/v2/V2MiscResponseBody";
-import { User } from "@mineskin/database";
 
 export async function v2GetMe(req: MineSkinV2Request, res: Response<V2MiscResponseBody>) {
     req.links.self = `/v2/me`;
@@ -13,18 +12,12 @@ export async function v2GetMe(req: MineSkinV2Request, res: Response<V2MiscRespon
     if (req.client) {
         req.links.client = `/v2/me/client`;
     }
-    if (req.client?.user) {
-        const userDoc = await User.findByUUID(req.client.user);
-        if (userDoc) {
-            req.links.user = `/v2/me`;
-            res.json(formatV2Response<V2MiscResponseBody>(req, {
-                user: {
-                    uuid: userDoc?.uuid,
-                    grants: userDoc?.grants
-                }
-            }));
-            return;
-        }
+    if (req.user) {
+        req.links.user = `/v2/me`;
+        res.json(formatV2Response<V2MiscResponseBody>(req, {
+            user: req.user
+        }));
+        return;
     }
     throw new MineSkinError('user_not_found', "User not found", {httpCode: 404});
 }
