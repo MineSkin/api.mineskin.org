@@ -51,3 +51,13 @@ export function v2ErrorHandler(err: Error, req: GenerateV2Request, res: Response
         }]
     });
 }
+
+export function v2NotFoundHandler(err: Error, req: GenerateV2Request, res: Response<V2GenerateResponseBody>, next: NextFunction) {
+    return res.status(404).json({
+        success: false,
+        errors: [{
+            code: "not_found",
+            message: "Not found"
+        }]
+    });
+}

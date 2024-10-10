@@ -45,6 +45,7 @@ import { v2QueueRouter } from "./routes/v2/queue";
 import { v2TestRouter } from "./routes/v2/test";
 import process from "node:process";
 import { v2MeRouter } from "./routes/v2/me";
+import { v2NotFoundHandler } from "./middleware/error";
 
 
 sourceMapSupport.install();
@@ -345,6 +346,7 @@ async function init() {
         if (process.env.NODE_ENV !== 'production') {
             app.use("/v2/test", v2TestRouter);
         }
+        app.use("/v2", v2NotFoundHandler);
 
     }
 
