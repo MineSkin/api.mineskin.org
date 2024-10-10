@@ -885,7 +885,7 @@ export class Generator {
         const data = await this.generateFromUrl(url, options, client);
         const skin = await this.getDuplicateOrSaved(data, options, client, GenerateType.URL, start);
         const end = Date.now();
-        (await MineSkinMetrics.get()).durationMetric(end - start, GenerateType.URL, options, data.account);
+        (await MineSkinMetrics.get()).durationMetric(end - start, GenerateType.URL, skin.duplicate);
         return skin;
     }
 
@@ -1134,7 +1134,7 @@ export class Generator {
         const data = await this.generateFromUpload(file, options, client);
         const skin = await this.getDuplicateOrSaved(data, options, client, GenerateType.UPLOAD, start);
         const end = Date.now();
-        (await MineSkinMetrics.get()).durationMetric(end - start, GenerateType.UPLOAD, options, data.account);
+        (await MineSkinMetrics.get()).durationMetric(end - start, GenerateType.UPLOAD, skin.duplicate);
         return skin;
     }
 
@@ -1303,7 +1303,7 @@ export class Generator {
         const data = await this.generateFromUser(user, options, client);
         const skin = await this.getDuplicateOrSaved(data, options, client, GenerateType.USER, start);
         const end = Date.now();
-        (await MineSkinMetrics.get()).durationMetric(end - start, GenerateType.USER, options, data.account);
+        (await MineSkinMetrics.get()).durationMetric(end - start, GenerateType.USER, skin.duplicate);
         return skin;
     }
 

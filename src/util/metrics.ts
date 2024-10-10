@@ -2,11 +2,9 @@ import { IntervalFlusher, Metric, Metrics } from "metrics-node";
 import { NextFunction, Request, Response } from "express";
 import * as Sentry from "@sentry/node";
 import { getConfig, MineSkinConfig } from "../typings/Configs";
-import { GenerateOptions } from "../typings/GenerateOptions";
 import { isApiKeyRequest } from "../typings/ApiKeyRequest";
 import { Maybe } from "./index";
 import { GenerateType } from "@mineskin/types";
-import { IAccountDocument } from "@mineskin/database";
 
 let config: Maybe<MineSkinConfig>;
 
@@ -112,21 +110,16 @@ export class MineSkinMetrics {
         next();
     }
 
-    durationMetric(duration: number, type: GenerateType, options?: GenerateOptions, account?: IAccountDocument) {
+    durationMetric(duration: number, type: GenerateType, duplicate: boolean) {
         try {
-            const tags: {
-                [name: string]: string;
-            } = {
-                server: config!.server,
-                type: type
-            };
-            if (account) {
-                tags.account = account.id;
-            }
-
             this.metrics!.influx.writePoints([{
                 measurement: 'duration',
-                tags: tags,
+                tags: {
+                    server: config!.server,
+                    type: type,
+                    duplicate: duplicate ? 'true' : 'false',
+                    genEnv: process.env.MINESKIN_GEN_ENV || 'api'
+                },
                 fields: {
                     duration: duration
                 }
