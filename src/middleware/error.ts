@@ -57,7 +57,7 @@ export function v2NotFoundHandler(req: GenerateV2Request, res: Response<V2Genera
         success: false,
         errors: [{
             code: "not_found",
-            message: "Not found"
+            message: `Not found (${req.originalUrl})`
         }]
     });
 }
