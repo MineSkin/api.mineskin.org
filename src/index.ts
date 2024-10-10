@@ -520,7 +520,7 @@ init().then(() => {
             setTimeout(() => {
                 updatingApp = false;
                 console.log(info("Accepting connections."));
-            }, 1000);
+            }, 100);
         });
         const timeout = 30000;
         server.setTimeout(timeout, function () {
