@@ -46,6 +46,7 @@ import { v2TestRouter } from "./routes/v2/test";
 import process from "node:process";
 import { v2MeRouter } from "./routes/v2/me";
 import { v2NotFoundHandler } from "./middleware/error";
+import * as http from "node:http";
 
 
 sourceMapSupport.install();
@@ -94,7 +95,7 @@ Log.l.info("\n" +
 
 
 let app: Express;
-let server: any;
+let server: http.Server;
 
 
 async function init() {
