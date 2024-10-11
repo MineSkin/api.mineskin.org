@@ -1,0 +1,28 @@
+name: Docs
+
+on:
+  pull_request:
+    branches: ['*']
+  push:
+    branches: ['*']
+
+permissions:
+  contents: read
+
+jobs:
+  generate_docs:
+    runs-on: ubuntu-latest
+    name: Generate Docs
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 18.20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18.20.x"
+          cache: 'yarn'
+
+      # then use redoc-cli-github-action to generate your HTML bundle
+      - name: redoc
+        run: npx @redocly/cli build-docs openapi.v2.json --output docs/index.html
