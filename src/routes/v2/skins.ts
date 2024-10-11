@@ -27,7 +27,6 @@ v2SkinsRouter.post("/:uuid/interactions/views", expressAsyncHandler(async (req: 
 }));
 
 v2SkinsRouter.post("/:uuid/interactions/likes", expressAsyncHandler(async (req: MineSkinV2Request, res: Response<V2SkinResponse>) => {
-    throw new Error("Not implemented");
     await v2AddLike(req, res);
     res.status(204).end();
 }));
