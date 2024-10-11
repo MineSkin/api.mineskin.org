@@ -179,17 +179,20 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
                     code: 'no_credits',
                     message: "no credits"
                 });
+                req.client.credits = undefined;
             } else {
                 if (!credit.isValid()) {
                     req.warnings.push({
                         code: 'invalid_credits',
                         message: "invalid credits"
                     });
+                    req.client.credits = undefined;
                 } else if (credit.balance <= 0) {
                     req.warnings.push({
                         code: 'insufficient_credits',
                         message: "insufficient credits"
                     });
+                    req.client.credits = undefined;
                 }
                 res.header('X-MineSkin-Credits-Type', credit.type);
                 res.header('X-MineSkin-Credits-Balance', `${ credit.balance }`);
