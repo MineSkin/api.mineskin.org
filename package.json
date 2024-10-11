@@ -30,7 +30,7 @@
     "@logtail/winston": "^0.4.21",
     "@mineskin/database": "git+ssh://git@github.com/MineSkin/mineskin-database.git",
     "@mineskin/generator": "git+ssh://git@github.com/MineSkin/mineskin-generator.git",
-    "@mineskin/hash-rust": "^1.0.3",
+    "@mineskin/hash-rust": "^1.0.5",
     "@mineskin/types": "git+ssh://git@github.com/MineSkin/mineskin-types.git",
     "@sentry/node": "8.9.2",
     "@sentry/profiling-node": "8.9.2",

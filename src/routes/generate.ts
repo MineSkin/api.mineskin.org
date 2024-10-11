@@ -1,4 +1,4 @@
-import { Application, Request, Response } from "express";
+import { Application, NextFunction, Request, Response } from "express";
 import {
     checkTraffic,
     corsWithAuthMiddleware,
@@ -30,7 +30,15 @@ import { DelayInfo } from "../typings/DelayInfo";
 import { GenerateType, SkinVariant, SkinVisibility, UUID } from "@mineskin/types";
 import { SkinModel } from "@mineskin/database";
 import { Temp } from "../generator/Temp";
-import { Log } from "@mineskin/generator";
+import { Log, Migrations } from "@mineskin/generator";
+import { breadcrumbMiddleware } from "../middleware/breadcrumb";
+import { GenerateV2Request, MineSkinV2Request } from "./v2/types";
+import { apiKeyMiddleware } from "../middleware/apikey";
+import { jwtMiddleware } from "../middleware/jwt";
+import { mineskinClientMiddleware } from "../middleware/client";
+import { mineskinUserMiddleware } from "../middleware/user";
+import { v2GenerateAndWait } from "../models/v2/generate";
+import { V2SkinResponse } from "../typings/v2/V2SkinResponse";
 
 export const register = (app: Application) => {
 
@@ -62,11 +70,60 @@ export const register = (app: Application) => {
         } catch (e) {
             next(e);
         }
-    })
+    });
+
+    // v2 compatibility layers
+    app.use("/generate", async (req: MineSkinV2Request, res: Response, next: NextFunction) => {
+        if (req.query["v2"]) {
+            res.header("X-MineSkin-Api-Version", "v1-with-v2-compat");
+            res.header("X-MineSkin-Api-Deprecated", "true");
+            if (!req.warnings) {
+                req.warnings = [];
+            }
+            req.warnings.push({
+                code: "deprecated",
+                message: "this endpoint is deprecated, please use the v2 API"
+            })
+            return breadcrumbMiddleware(req, res, next);
+        }
+        next();
+    });
+    app.use("/generate", async (req: MineSkinV2Request, res: Response, next: NextFunction) => {
+        if (req.query["v2"]) {
+            return apiKeyMiddleware(req, res, next);
+        }
+        next();
+    });
+    app.use("/generate", async (req: MineSkinV2Request, res: Response, next: NextFunction) => {
+        if (req.query["v2"]) {
+            return jwtMiddleware(req, res, next);
+        }
+        next();
+    });
+    app.use("/generate", async (req: MineSkinV2Request, res: Response, next: NextFunction) => {
+        if (req.query["v2"]) {
+            return mineskinClientMiddleware(req, res, next);
+        }
+        next();
+    });
+    app.use("/generate", async (req: MineSkinV2Request, res: Response, next: NextFunction) => {
+        if (req.query["v2"]) {
+            return mineskinUserMiddleware(req, res, next);
+        }
+        next();
+    });
 
     //// URL
 
     app.post("/generate/url", upload.none(), async (req: GenerateRequest, res: Response) => {
+        if (req.query["v2"]) {
+            const result = await v2GenerateAndWait(req as any as GenerateV2Request, res);
+            if ('skin' in result) {
+                await sendV2WrappedSkin(req as any as GenerateV2Request, res, (result as V2SkinResponse));
+            }
+            return;
+        }
+
         const url = validateUrl(req.body["url"] || req.query["url"]);
         if (!url || !URL_REGEX.test(url)) {
             res.status(400).json({error: "invalid url"});
@@ -97,6 +154,14 @@ export const register = (app: Application) => {
     //// UPLOAD
 
     app.post("/generate/upload", async (req: GenerateRequest, res: Response) => {
+        if (req.query["v2"]) {
+            const result = await v2GenerateAndWait(req as any as GenerateV2Request, res);
+            if ('skin' in result) {
+                await sendV2WrappedSkin(req as any as GenerateV2Request, res, (result as V2SkinResponse));
+            }
+            return;
+        }
+
         try {
             await new Promise<void>((resolve, reject) => {
                 upload.single('file')(req, res, function (err) {
@@ -254,6 +319,24 @@ export const register = (app: Application) => {
             //TODO: limit this
             user.save();
         })
+    }
+
+    async function sendV2WrappedSkin(req: GenerateV2Request, res: Response, skin: V2SkinResponse) {
+        const json: any = Migrations.v2SkinInfoToV1Json(skin.skin);
+        const delayInfo = await Generator.getDelay(req.apiKey);
+        json.duplicate = skin.skin.duplicate;
+        if (delayInfo) {
+            json.nextRequest = Math.round(delayInfo.seconds); // deprecated
+
+            json.delayInfo = {
+                millis: delayInfo.millis,
+                seconds: delayInfo.seconds
+            }
+        }
+        if (req.warnings) {
+            json.warnings = req.warnings;
+        }
+        res.json(json);
     }
 
     function getClientInfo(req: GenerateRequest): ClientInfo {

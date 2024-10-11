@@ -26,15 +26,15 @@ __metadata:
   linkType: hard
 
 "@babel/compat-data@npm:^7.25.7":
-  version: 7.25.7
-  resolution: "@babel/compat-data@npm:7.25.7"
-  checksum: 10c0/e5cc915abdd18d021236474a96606b2d4a915c4fb620c1ad776b8a08d91111e788cb3b7e9bad43593d4e0bfa4f06894357bcb0984102de1861b9e7322b6bc9f8
+  version: 7.25.8
+  resolution: "@babel/compat-data@npm:7.25.8"
+  checksum: 10c0/8b81c17580e5fb4cbb6a3c52079f8c283fc59c0c6bd2fe14cfcf9c44b32d2eaab71b02c5633e2c679f5896f73f8ac4036ba2e67a4c806e8f428e4b11f526d7f4
   languageName: node
   linkType: hard
 
 "@babel/core@npm:^7.11.6, @babel/core@npm:^7.12.3, @babel/core@npm:^7.23.9":
-  version: 7.25.7
-  resolution: "@babel/core@npm:7.25.7"
+  version: 7.25.8
+  resolution: "@babel/core@npm:7.25.8"
   dependencies:
     "@ampproject/remapping": "npm:^2.2.0"
     "@babel/code-frame": "npm:^7.25.7"
@@ -42,16 +42,16 @@ __metadata:
     "@babel/helper-compilation-targets": "npm:^7.25.7"
     "@babel/helper-module-transforms": "npm:^7.25.7"
     "@babel/helpers": "npm:^7.25.7"
-    "@babel/parser": "npm:^7.25.7"
+    "@babel/parser": "npm:^7.25.8"
     "@babel/template": "npm:^7.25.7"
     "@babel/traverse": "npm:^7.25.7"
-    "@babel/types": "npm:^7.25.7"
+    "@babel/types": "npm:^7.25.8"
     convert-source-map: "npm:^2.0.0"
     debug: "npm:^4.1.0"
     gensync: "npm:^1.0.0-beta.2"
     json5: "npm:^2.2.3"
     semver: "npm:^6.3.1"
-  checksum: 10c0/dad20af39624086afc3a0910bd97ae712c9ad0e9dda09fc5da93876e8ea1802b63ddd81c44f4aa8a9834db46de801eaab1ce9b81ab54b4fe907ae052c24de136
+  checksum: 10c0/8411ea506e6f7c8a39ab5c1524b00589fa3b087edb47389708f7fe07170929192171734666e3ea10b95a951643a531a6d09eedfe071572c9ea28516646265086
   languageName: node
   linkType: hard
 
@@ -164,14 +164,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/parser@npm:^7.1.0, @babel/parser@npm:^7.14.7, @babel/parser@npm:^7.20.7, @babel/parser@npm:^7.23.9, @babel/parser@npm:^7.25.7":
-  version: 7.25.7
-  resolution: "@babel/parser@npm:7.25.7"
+"@babel/parser@npm:^7.1.0, @babel/parser@npm:^7.14.7, @babel/parser@npm:^7.20.7, @babel/parser@npm:^7.23.9, @babel/parser@npm:^7.25.7, @babel/parser@npm:^7.25.8":
+  version: 7.25.8
+  resolution: "@babel/parser@npm:7.25.8"
   dependencies:
-    "@babel/types": "npm:^7.25.7"
+    "@babel/types": "npm:^7.25.8"
   bin:
     parser: ./bin/babel-parser.js
-  checksum: 10c0/b771469bb6b636c18a8d642b9df3c73913c3860a979591e1a29a98659efd38b81d3e393047b5251fe382d4c82c681c12da9ce91c98d69316d2604d155a214bcf
+  checksum: 10c0/a1a13845b7e8dda4c970791814a4bbf60004969882f18f470e260ad822d2e1f8941948f851e9335895563610f240fa6c98481ce8019865e469502bbf21daafa4
   languageName: node
   linkType: hard
 
@@ -388,14 +388,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/types@npm:^7.0.0, @babel/types@npm:^7.20.7, @babel/types@npm:^7.25.7, @babel/types@npm:^7.3.3":
-  version: 7.25.7
-  resolution: "@babel/types@npm:7.25.7"
+"@babel/types@npm:^7.0.0, @babel/types@npm:^7.20.7, @babel/types@npm:^7.25.7, @babel/types@npm:^7.25.8, @babel/types@npm:^7.3.3":
+  version: 7.25.8
+  resolution: "@babel/types@npm:7.25.8"
   dependencies:
     "@babel/helper-string-parser": "npm:^7.25.7"
     "@babel/helper-validator-identifier": "npm:^7.25.7"
     to-fast-properties: "npm:^2.0.0"
-  checksum: 10c0/e03e1e2e08600fa1e8eb90632ac9c253dd748176c8d670d85f85b0dc83a0573b26ae748a1cbcb81f401903a3d95f43c3f4f8d516a5ed779929db27de56289633
+  checksum: 10c0/55ca2d6df6426c98db2769ce884ce5e9de83a512ea2dd7bcf56c811984dc14351cacf42932a723630c5afcff2455809323decd645820762182f10b7b5252b59f
   languageName: node
   linkType: hard
 
@@ -1374,7 +1374,7 @@ __metadata:
 
 "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git":
   version: 0.0.0
-  resolution: "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git#commit=a69ff6da6794017605f1b15ee36150bf5cd69a1d"
+  resolution: "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git#commit=67e8053db68573321d21d9e6baa8b2a2f3a9ae1a"
   dependencies:
     "@inventivetalent/imghash": "npm:^1.1.1"
     "@inventivetalent/loading-cache": "npm:^0.7.1"
@@ -1384,7 +1384,7 @@ __metadata:
     "@jimp/png": "npm:^0.22.12"
     "@mineskin/auth": "git+ssh://git@github.com/MineSkin/mineskin-auth.git"
     "@mineskin/database": "git+ssh://git@github.com/MineSkin/mineskin-database.git"
-    "@mineskin/hash-rust": "npm:^1.0.3"
+    "@mineskin/hash-rust": "npm:^1.0.5"
     "@mineskin/requests": "git+ssh://git@github.com/MineSkin/mineskin-requests.git"
     "@mineskin/types": "git+ssh://git@github.com/MineSkin/mineskin-types.git"
     "@sentry/cli": "npm:^2.32.2"
@@ -1404,14 +1404,14 @@ __metadata:
     uuid: "npm:^10.0.0"
     winston: "npm:^3.14.2"
     winston-daily-rotate-file: "npm:^5.0.0"
-  checksum: 10c0/2bde8290353c74379764caaaf8b6bac823389edca480fda56bb2bf39553f17cc04f42fff15b72489915771470c5d2bc3e54172be9a6dc20a9ef3c961e8f292f7
+  checksum: 10c0/92dc4543a90b07f0a61a041b3d00d3ce2373a37dca3f962775ded00ced951cb879298e70c2ef651af22e5a5b6c01543e33c8a39160296ddb7b0a1dc84ec1056b
   languageName: node
   linkType: hard
 
-"@mineskin/hash-rust@npm:^1.0.3":
-  version: 1.0.3
-  resolution: "@mineskin/hash-rust@npm:1.0.3::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40mineskin%2Fhash-rust%2F1.0.3%2F35ee23f0820fd629ce0192cc379b8ae63451e6d6"
-  checksum: 10c0/76137cff34d674269922e4e262417a46c9ca411732535009766b1ca21d52377bd3131c546c2dd84152a305d55dab57f3a843988ac86e6b44ebb7be9004b8e35d
+"@mineskin/hash-rust@npm:^1.0.5":
+  version: 1.0.5
+  resolution: "@mineskin/hash-rust@npm:1.0.5::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40mineskin%2Fhash-rust%2F1.0.5%2F80f64fdb9260004f596d1c4ff1f66e49748dae11"
+  checksum: 10c0/ab33d038d6ac0aaf00951fee52a3f7bd9bc8d2bd5ce7f63e20730d2d8173f47aa1d2dc28c638bcd58f570ccfd7c91ce942145cab7debdfec52facf4477ad5495
   languageName: node
   linkType: hard
 
@@ -1437,8 +1437,8 @@ __metadata:
 
 "@mineskin/types@git+ssh://git@github.com/MineSkin/mineskin-types.git":
   version: 1.0.1
-  resolution: "@mineskin/types@git+ssh://git@github.com/MineSkin/mineskin-types.git#commit=fae3d507fd08a04790f4875da3bed7f6c5e2ab9f"
-  checksum: 10c0/243d8ca69c942b36bfe2e5e0ea44942ecf1e4d7740162b27a9f408f6fd833bd8ef53af846a7f2a3d2e0bfcef5cc24ff2e786c17ac3c563ba494ffb7fd088610c
+  resolution: "@mineskin/types@git+ssh://git@github.com/MineSkin/mineskin-types.git#commit=1f8641b3ca34d5caacc895e71641589ba6078208"
+  checksum: 10c0/facde142f616f3b49740c16d539a4936427daaac1a1fbdbe7ea73382ea58d6138fbdcadb625a6b72612916bb6b8f19dacd2a269176da35c9eedfd84b82b081d1
   languageName: node
   linkType: hard
 
@@ -2479,14 +2479,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sentry-internal/tracing@npm:7.119.1":
-  version: 7.119.1
-  resolution: "@sentry-internal/tracing@npm:7.119.1"
+"@sentry-internal/tracing@npm:7.119.2":
+  version: 7.119.2
+  resolution: "@sentry-internal/tracing@npm:7.119.2"
   dependencies:
-    "@sentry/core": "npm:7.119.1"
-    "@sentry/types": "npm:7.119.1"
-    "@sentry/utils": "npm:7.119.1"
-  checksum: 10c0/f578c29f9c9ac59230d76deccbccd54e6011737e37c76d2c483b1a06ad11473700e1a062c99ddd6334c97843d452036295d3faa1afe4e8d63e14b7de7427b30a
+    "@sentry/core": "npm:7.119.2"
+    "@sentry/types": "npm:7.119.2"
+    "@sentry/utils": "npm:7.119.2"
+  checksum: 10c0/4ef01b115be63c4500dfa9e63ed766fc52f4ba400676208e97a91f962e51635a7b7765ca141456096574c2964ceabb56e71b4e7d4fdb2aa6138b50082e6cd46e
   languageName: node
   linkType: hard
 
@@ -2576,23 +2576,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sentry/core@npm:7.119.1":
-  version: 7.119.1
-  resolution: "@sentry/core@npm:7.119.1"
+"@sentry/core@npm:7.119.2":
+  version: 7.119.2
+  resolution: "@sentry/core@npm:7.119.2"
   dependencies:
-    "@sentry/types": "npm:7.119.1"
-    "@sentry/utils": "npm:7.119.1"
-  checksum: 10c0/b847298b10c1282e60ea163724b918c9e2022245474265f22c35ef3d98056a78b22a8072dda88661fefc61f1f1408b6aeb020dddb44ff11febea60a7e0f748a3
+    "@sentry/types": "npm:7.119.2"
+    "@sentry/utils": "npm:7.119.2"
+  checksum: 10c0/c5bd588580b251bf4dd2246015bf72ce56c73ffe6b3a777252d6e0d15af31c0bba2303e65db3ed5b8a3f5f5ea651d1a3683fee9a988b91549afe4b6468599709
   languageName: node
   linkType: hard
 
-"@sentry/core@npm:8.33.1":
-  version: 8.33.1
-  resolution: "@sentry/core@npm:8.33.1"
+"@sentry/core@npm:8.34.0":
+  version: 8.34.0
+  resolution: "@sentry/core@npm:8.34.0"
   dependencies:
-    "@sentry/types": "npm:8.33.1"
-    "@sentry/utils": "npm:8.33.1"
-  checksum: 10c0/7c03ef35ef4089be01f02bc425009b39e3b5519052da8faac44333fa022b91ae17d6ef60463f67f980e2120957e317b58684b226214ec0a511cfad9203e85f87
+    "@sentry/types": "npm:8.34.0"
+    "@sentry/utils": "npm:8.34.0"
+  checksum: 10c0/0ab7e11bd382cb47ade38f3c9615e6fb876bad43eba4b376a51e44b1c57e00efe2e74f3cc0790a8da6c0be16093086bc65d89cf5387453f93ae96e10a41a0d60
   languageName: node
   linkType: hard
 
@@ -2606,9 +2606,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sentry/node@npm:8.33.1, @sentry/node@npm:^8.18.0":
-  version: 8.33.1
-  resolution: "@sentry/node@npm:8.33.1"
+"@sentry/node@npm:8.34.0, @sentry/node@npm:^8.18.0":
+  version: 8.34.0
+  resolution: "@sentry/node@npm:8.34.0"
   dependencies:
     "@opentelemetry/api": "npm:^1.9.0"
     "@opentelemetry/context-async-hooks": "npm:^1.25.1"
@@ -2640,12 +2640,12 @@ __metadata:
     "@opentelemetry/sdk-trace-base": "npm:^1.26.0"
     "@opentelemetry/semantic-conventions": "npm:^1.27.0"
     "@prisma/instrumentation": "npm:5.19.1"
-    "@sentry/core": "npm:8.33.1"
-    "@sentry/opentelemetry": "npm:8.33.1"
-    "@sentry/types": "npm:8.33.1"
-    "@sentry/utils": "npm:8.33.1"
+    "@sentry/core": "npm:8.34.0"
+    "@sentry/opentelemetry": "npm:8.34.0"
+    "@sentry/types": "npm:8.34.0"
+    "@sentry/utils": "npm:8.34.0"
     import-in-the-middle: "npm:^1.11.0"
-  checksum: 10c0/6ff513df075375d90db51cc86c1055149ddf9a16640fa1e0b725bfdee696ed9164044be56c1d391336e5171555b361626e7d71d7627275104e19f92dd5779599
+  checksum: 10c0/c1db482ce3fd207d16bf119fe9c2004a5019572d7f9bdb90279f5a0cdcdce6694263b8ca8b72e3e253dde610e40f4e245d835acfd0b92d047c4998b46d28603e
   languageName: node
   linkType: hard
 
@@ -2688,20 +2688,20 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sentry/opentelemetry@npm:8.33.1":
-  version: 8.33.1
-  resolution: "@sentry/opentelemetry@npm:8.33.1"
+"@sentry/opentelemetry@npm:8.34.0":
+  version: 8.34.0
+  resolution: "@sentry/opentelemetry@npm:8.34.0"
   dependencies:
-    "@sentry/core": "npm:8.33.1"
-    "@sentry/types": "npm:8.33.1"
-    "@sentry/utils": "npm:8.33.1"
+    "@sentry/core": "npm:8.34.0"
+    "@sentry/types": "npm:8.34.0"
+    "@sentry/utils": "npm:8.34.0"
   peerDependencies:
     "@opentelemetry/api": ^1.9.0
     "@opentelemetry/core": ^1.25.1
     "@opentelemetry/instrumentation": ^0.53.0
     "@opentelemetry/sdk-trace-base": ^1.26.0
     "@opentelemetry/semantic-conventions": ^1.27.0
-  checksum: 10c0/12c04ca57bfd97fa925ef32b79a58f1ad4fe1f8b8ae613953634c677ae1c6562e326b3cec4552ed3c822ddb1ff68251ae6accbcacee5b546a06b536e37c2dae8
+  checksum: 10c0/9440c316b634b60ced9cff390798b1bcde78d76a53df4843c465a8365d1d0f120e41ea903e2c34dec382aa5199d18c97de2351ec1a5d4074431c4c9a1bdd1dd2
   languageName: node
   linkType: hard
 
@@ -2740,42 +2740,42 @@ __metadata:
   linkType: hard
 
 "@sentry/profiling-node@npm:^8.18.0":
-  version: 8.33.1
-  resolution: "@sentry/profiling-node@npm:8.33.1"
+  version: 8.34.0
+  resolution: "@sentry/profiling-node@npm:8.34.0"
   dependencies:
-    "@sentry/core": "npm:8.33.1"
-    "@sentry/node": "npm:8.33.1"
-    "@sentry/types": "npm:8.33.1"
-    "@sentry/utils": "npm:8.33.1"
+    "@sentry/core": "npm:8.34.0"
+    "@sentry/node": "npm:8.34.0"
+    "@sentry/types": "npm:8.34.0"
+    "@sentry/utils": "npm:8.34.0"
     detect-libc: "npm:^2.0.2"
     node-abi: "npm:^3.61.0"
     node-gyp: "npm:latest"
   bin:
     sentry-prune-profiler-binaries: scripts/prune-profiler-binaries.js
-  checksum: 10c0/6c999ccc8af334df29ceb881b2c723d3c113b5e1c3af547b51f4e4f71c3a0459444758aea289a073fab9c834ff6fd3db97a6042081e917b83e896d1feff01a3a
+  checksum: 10c0/1fb9110f1cdff92d6077b1c3096396e1a01616782484e58c596818a475a71479659433509936e8147e26a32ad7ff8f71123e6e66a21a0cb7ecbbfc6e14133234
   languageName: node
   linkType: hard
 
 "@sentry/tracing@npm:^7.117.0":
-  version: 7.119.1
-  resolution: "@sentry/tracing@npm:7.119.1"
+  version: 7.119.2
+  resolution: "@sentry/tracing@npm:7.119.2"
   dependencies:
-    "@sentry-internal/tracing": "npm:7.119.1"
-  checksum: 10c0/9e34b7f3871575596c162c12f055723e337ae3d4a56d9057e2349aaa803de03b93fad63b15bd84817331f66f0d47bc381a0feea085a9e421f7a94a5ee1c8a2f5
+    "@sentry-internal/tracing": "npm:7.119.2"
+  checksum: 10c0/75492164305b0239aea77e37c032c9a64d21df4bb656ba717f06f62021ab1ea9ef75d792832d552e7bb54ded6db9894a043fa963514b46304b572d79f538325e
   languageName: node
   linkType: hard
 
-"@sentry/types@npm:7.119.1":
-  version: 7.119.1
-  resolution: "@sentry/types@npm:7.119.1"
-  checksum: 10c0/841a19bf5b1f03e24dda90542f9ff3192b0c27448066ed631ba96c4220563597c0c0d0542929b06e22c40647485e3f0479c436cc01632bfb344ab45d6e929d69
+"@sentry/types@npm:7.119.2":
+  version: 7.119.2
+  resolution: "@sentry/types@npm:7.119.2"
+  checksum: 10c0/e9fbd3a6290543a49aa4419ec425867cb85ae020716b243fdf0bbad1a82aba17a548e097b4f152bd6e44faeaf4a0a0fab930d20dccb0704a0f5207b1712c813a
   languageName: node
   linkType: hard
 
-"@sentry/types@npm:8.33.1":
-  version: 8.33.1
-  resolution: "@sentry/types@npm:8.33.1"
-  checksum: 10c0/0c43bd8736a41e5ee6813aba8f77910b26fb726f59d134a3d28ceb55a53fcb7600ec2f65eed536e9fc47fc01785ef757588f989a5f303cf989abd17a5c81a69b
+"@sentry/types@npm:8.34.0":
+  version: 8.34.0
+  resolution: "@sentry/types@npm:8.34.0"
+  checksum: 10c0/d35bf72129f621af2f7916b0805c6948d210791757bee690fc6b68f2412bbe80c8ec704a0f8eb8ee45eb78deeadbd3c69830469b62fba4827506ea30c235f4e8
   languageName: node
   linkType: hard
 
@@ -2786,21 +2786,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sentry/utils@npm:7.119.1":
-  version: 7.119.1
-  resolution: "@sentry/utils@npm:7.119.1"
+"@sentry/utils@npm:7.119.2":
+  version: 7.119.2
+  resolution: "@sentry/utils@npm:7.119.2"
   dependencies:
-    "@sentry/types": "npm:7.119.1"
-  checksum: 10c0/f6516c7b40483468dc16b26c392f7aa9ee50928251b588ef21a8ab0499c558c6e3d36cc9da3d71199ac6c9e27b4adc444b49d17db53bcbcebe12efe90f25b307
+    "@sentry/types": "npm:7.119.2"
+  checksum: 10c0/a95834ffbaa4d38c12fbec1670db4d881e5dae9487c23866a2f0cae665349941667ad4a091127b6c52c2796a957063c4b386ecc5ace796ee4b2eea0dbdf30ac2
   languageName: node
   linkType: hard
 
-"@sentry/utils@npm:8.33.1":
-  version: 8.33.1
-  resolution: "@sentry/utils@npm:8.33.1"
+"@sentry/utils@npm:8.34.0":
+  version: 8.34.0
+  resolution: "@sentry/utils@npm:8.34.0"
   dependencies:
-    "@sentry/types": "npm:8.33.1"
-  checksum: 10c0/315d153a5ae7e1742b2f3fd08d2f2732dd738acc2000477a31c462606697a0a928eb4b6f279722dfecfc06b03d9a6106ba9757f0e6dc2aca912b386fd2c38784
+    "@sentry/types": "npm:8.34.0"
+  checksum: 10c0/60612dba8320c736f9559ba2fb4efe2927fd9d4a1f29bff36f116ad30c9ce210f6677013052a69cb7e16c5d28f1d8d7465d9278e72f7384b84e924cf3ed2790c
   languageName: node
   linkType: hard
 
@@ -3724,7 +3724,7 @@ __metadata:
     "@logtail/winston": "npm:^0.4.21"
     "@mineskin/database": "git+ssh://git@github.com/MineSkin/mineskin-database.git"
     "@mineskin/generator": "git+ssh://git@github.com/MineSkin/mineskin-generator.git"
-    "@mineskin/hash-rust": "npm:^1.0.3"
+    "@mineskin/hash-rust": "npm:^1.0.5"
     "@mineskin/types": "git+ssh://git@github.com/MineSkin/mineskin-types.git"
     "@sentry/node": "npm:8.9.2"
     "@sentry/profiling-node": "npm:8.9.2"
@@ -4226,8 +4226,8 @@ __metadata:
   linkType: hard
 
 "bullmq@npm:^5.13.0":
-  version: 5.18.0
-  resolution: "bullmq@npm:5.18.0"
+  version: 5.19.0
+  resolution: "bullmq@npm:5.19.0"
   dependencies:
     cron-parser: "npm:^4.6.0"
     ioredis: "npm:^5.4.1"
@@ -4236,7 +4236,7 @@ __metadata:
     semver: "npm:^7.5.4"
     tslib: "npm:^2.0.0"
     uuid: "npm:^9.0.0"
-  checksum: 10c0/bb49aeb89c9dabd2d3d5af9ac32685ceb50f6c37ed8d9a286cb42f5208ad6e5c8383c4da42dc0fe18b5483f1416eca14dd4fe946b9dac85a8865d2c1c474cb60
+  checksum: 10c0/d121ceb45a4f95b02b43ce35fd0d1ab9ec4f973a3db05a11bb36193a8b8df0304c7e73ae3ab8174f41337b52ce3c76f19d66382342204804959daeb141a02481
   languageName: node
   linkType: hard
 
@@ -4311,9 +4311,9 @@ __metadata:
   linkType: hard
 
 "caniuse-lite@npm:^1.0.30001663":
-  version: 1.0.30001667
-  resolution: "caniuse-lite@npm:1.0.30001667"
-  checksum: 10c0/6bc8555a47603e1e76eaef9b185d6fdeeca7d9c20a283f7c32c971eb1b52ea3a80e6ec086920f088f06abe619240f1023a2d3a08b5b1f2f11df1475695e9f71c
+  version: 1.0.30001668
+  resolution: "caniuse-lite@npm:1.0.30001668"
+  checksum: 10c0/247b3200aeec55038f3a11f3e6ab66f656c54d30df7b01d8d447efaba9af96ad3e17128da2ddd42ddc9cb6c286bac65b634a20955b3cc6619be7ca4601fddc8e
   languageName: node
   linkType: hard
 
@@ -4924,9 +4924,9 @@ __metadata:
   linkType: hard
 
 "electron-to-chromium@npm:^1.5.28":
-  version: 1.5.35
-  resolution: "electron-to-chromium@npm:1.5.35"
-  checksum: 10c0/49f7921dbdee725284898728a0ba4a786ab27a145a871057b7085f5643df51d7be3ece5374a105cc621417abb1bca780365a058a0531083d0252347b75cf0f3f
+  version: 1.5.36
+  resolution: "electron-to-chromium@npm:1.5.36"
+  checksum: 10c0/cd8d0de7801107f2b2744b5b18641c969a49b0503996cc1a586bb79d893020d0c4e916ac1935603eea65104b4fc1096bc339e0151531dca9e0f0ce0c1882e2d8
   languageName: node
   linkType: hard
 
@@ -6082,9 +6082,9 @@ __metadata:
   linkType: hard
 
 "ip-address@npm:^10.0.0":
-  version: 10.0.0
-  resolution: "ip-address@npm:10.0.0"
-  checksum: 10c0/de28efeac726bce4a088ad2b31a3eefaf8d0f586ece6808366aef68029c0ad1387c1db98de23ddb1a888caf914de80424c1baf548e580dae65e0a9b24073f542
+  version: 10.0.1
+  resolution: "ip-address@npm:10.0.1"
+  checksum: 10c0/1634d79dae18394004775cb6d699dc46b7c23df6d2083164025a2b15240c1164fccde53d0e08bd5ee4fc53913d033ab6b5e395a809ad4b956a940c446e948843
   languageName: node
   linkType: hard
 
@@ -7640,11 +7640,11 @@ __metadata:
   linkType: hard
 
 "nan@npm:^2.14.1, nan@npm:^2.15.0":
-  version: 2.20.0
-  resolution: "nan@npm:2.20.0"
+  version: 2.22.0
+  resolution: "nan@npm:2.22.0"
   dependencies:
     node-gyp: "npm:latest"
-  checksum: 10c0/75775309a21ad179a55250d62ce47322c33ca03d8ddb5ad4c555bd820dd72484b3c59253dd9f41cc68dd63453ef04017407fbd081a549bc030d977079bb798b7
+  checksum: 10c0/d5d31aefdb218deba308d44867c5f432b4d3aabeb57c70a2b236d62652e9fee7044e5d5afd380d9fef022fe7ebb2f2d6c85ca3cbcac5031aaca3592c844526bb
   languageName: node
   linkType: hard
 

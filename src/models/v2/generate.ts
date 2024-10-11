@@ -248,6 +248,7 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
 
 
     const validation = await ImageValidation.validateImageBuffer(imageBuffer);
+    Log.l.debug(validation);
 
     //TODO: ideally don't do this here and in the generator
     if (options.variant === SkinVariant.UNKNOWN) {
@@ -265,7 +266,7 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
 
     let hashes;
     try {
-        hashes = await ImageService.getImageHashes(imageBuffer);
+        hashes = await ImageService.getImageHashes(imageBuffer, validation.dimensions.width || 64, validation.dimensions.height || 64);
     } catch (e) {
         // span?.setStatus({
         //     code: 2,
