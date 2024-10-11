@@ -3,6 +3,7 @@ import { Response } from "express";
 import { MineSkinError } from "@mineskin/types";
 import { formatV2Response } from "../../middleware/response";
 import { V2MiscResponseBody } from "../../typings/v2/V2MiscResponseBody";
+import { BillingService } from "@mineskin/generator";
 
 export async function v2GetMe(req: MineSkinV2Request, res: Response<V2MiscResponseBody>) {
     req.links.self = `/v2/me`;
@@ -48,4 +49,42 @@ export async function v2GetClientInfo(req: MineSkinV2Request, res: Response<V2Mi
             credits: req.client.credits
         }
     }))
+}
+
+
+export async function v2GetCreditsInfo(req: MineSkinV2Request, res: Response<V2MiscResponseBody>) {
+    if (!req.client) {
+        throw new MineSkinError('invalid_client', "Invalid client");
+    }
+    if (!req.user) {
+        throw new MineSkinError('invalid_user', "Invalid user");
+    }
+    const credit = await BillingService.getInstance().getClientCredits(req.client);
+    if (!credit) {
+        req.warnings.push({
+            code: 'no_credits',
+            message: "no credits"
+        });
+    } else {
+        if (!credit.isValid()) {
+            req.warnings.push({
+                code: 'invalid_credits',
+                message: "invalid credits"
+            });
+        } else if (credit.balance <= 0) {
+            req.warnings.push({
+                code: 'insufficient_credits',
+                message: "insufficient credits"
+            });
+        }
+        res.header('X-MineSkin-Credits-Type', credit.type);
+        res.header('X-MineSkin-Credits-Balance', `${ credit.balance }`);
+    }
+    res.json(formatV2Response<V2MiscResponseBody>(req, {
+        credit: {
+            type: credit?.type,
+            balance: credit?.balance,
+            total: credit?.total
+        }
+    }));
 }
