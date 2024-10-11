@@ -1347,7 +1347,7 @@ __metadata:
 
 "@mineskin/auth@git+ssh://git@github.com/MineSkin/mineskin-auth.git":
   version: 1.0.0
-  resolution: "@mineskin/auth@git+ssh://git@github.com/MineSkin/mineskin-auth.git#commit=ab5dfd86d676774ace293af634aa7e0012af16fb"
+  resolution: "@mineskin/auth@git+ssh://git@github.com/MineSkin/mineskin-auth.git#commit=9cacafbf15daba2307f698e9fa73a8b5bc5dc08a"
   dependencies:
     "@xboxreplay/xboxlive-auth": "npm:^4.0.0"
     axios: "npm:^1.7.2"
@@ -1359,22 +1359,22 @@ __metadata:
 
 "@mineskin/database@git+ssh://git@github.com/MineSkin/mineskin-database.git":
   version: 1.0.0
-  resolution: "@mineskin/database@git+ssh://git@github.com/MineSkin/mineskin-database.git#commit=d137f4b1dc11be3e02c94de8aa26f88ab0584977"
+  resolution: "@mineskin/database@git+ssh://git@github.com/MineSkin/mineskin-database.git#commit=5cfd76a51e9bad2ec2860f52b52b842647870000"
   dependencies:
-    "@mineskin/types": "git+ssh://git@github.com/MineSkin/mineskin-types.git#skin2"
+    "@mineskin/types": "git+ssh://git@github.com/MineSkin/mineskin-types.git"
     "@sentry/cli": "npm:^2.32.2"
     "@sentry/node": "npm:^8.18.0"
     "@sentry/profiling-node": "npm:^8.18.0"
     dotenv: "npm:^16.4.5"
     mongoose: "npm:^8.5.3"
     uuid: "npm:^10.0.0"
-  checksum: 10c0/3bf5d8ea2f5ed78bb4bc8aa916cee430a9fffc05a9b3ff33ffbd4f2aa96e9867253be6e6cb96eb7c329c73ee023d54412f3425c418b71984931c86a40faec005
+  checksum: 10c0/6fc31ce93c71f6ea45894607dd6f903c593838cbfe612f24d4f37ba6142265f76de0b43b69c4a639af9ad723e2df4e0c31d3581879884d5beefb46d66dd70365
   languageName: node
   linkType: hard
 
 "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git":
   version: 0.0.0
-  resolution: "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git#commit=b6da1d6e9c51b070e14a971e9f1e43fb3a2633bd"
+  resolution: "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git#commit=6632987ad3f3e9feb16a56fcaabb6549f8de6980"
   dependencies:
     "@inventivetalent/imghash": "npm:^1.1.1"
     "@inventivetalent/loading-cache": "npm:^0.7.1"
@@ -1404,7 +1404,7 @@ __metadata:
     uuid: "npm:^10.0.0"
     winston: "npm:^3.14.2"
     winston-daily-rotate-file: "npm:^5.0.0"
-  checksum: 10c0/b9cee50af37afa5365d007916b0f0d40feb54373b40240eefde8f3fffa55c692b24fad713f41da8b5569321ec311a29ea633bd78c5fafd17e172fdeef3e8d0e7
+  checksum: 10c0/4b5c22e044fa9d2a851a158153797cadc46c3477c9dbe0bc3c60e92c6a8b5e92771eea0a8d4e3f768a238883189b6958564e0e665c6224c0ca1034e19a1bcf90
   languageName: node
   linkType: hard
 
@@ -1417,7 +1417,7 @@ __metadata:
 
 "@mineskin/requests@git+ssh://git@github.com/MineSkin/mineskin-requests.git":
   version: 1.0.1
-  resolution: "@mineskin/requests@git+ssh://git@github.com/MineSkin/mineskin-requests.git#commit=17a07ba1b3c9770478ebba6bcd4e53022009a72d"
+  resolution: "@mineskin/requests@git+ssh://git@github.com/MineSkin/mineskin-requests.git#commit=f2f25250d7e5d607c816f79846ed59e03eb2123c"
   dependencies:
     "@inventivetalent/axios-rate-limit": "npm:^1.3.5"
     "@inventivetalent/time": "npm:^1.0.3"
@@ -1437,15 +1437,8 @@ __metadata:
 
 "@mineskin/types@git+ssh://git@github.com/MineSkin/mineskin-types.git":
   version: 1.0.1
-  resolution: "@mineskin/types@git+ssh://git@github.com/MineSkin/mineskin-types.git#commit=f72590b3d7a16f990ab1e385497f19953aaf156e"
-  checksum: 10c0/37fac421f94cf5564b71a5264f6c463e9ecc9174cb6dcef10f0f8befa4026e99a8fb26c4cf4aad779cf923e85e337ff105e16df1dba0c544df08618aca56c765
-  languageName: node
-  linkType: hard
-
-"@mineskin/types@git+ssh://git@github.com/MineSkin/mineskin-types.git#skin2":
-  version: 1.0.1
-  resolution: "@mineskin/types@git+ssh://git@github.com/MineSkin/mineskin-types.git#commit=cb9caa84d7f7f58a9ad397d7729a0ce5ad489248"
-  checksum: 10c0/4c8ec7ddea651d437de265fdff2dbd4e0bbbdf846b02f8a37cb38c9ec1b987103b4d20c4747a05dbac91042d80a1e414e4796cade1e05ef6850988a38dbd6ecd
+  resolution: "@mineskin/types@git+ssh://git@github.com/MineSkin/mineskin-types.git#commit=9100bdca9d265c12a45137213fca2480d605b9ec"
+  checksum: 10c0/e786712e34837a1ff74b957e62e24c20628727e3f3d60995745016ddccdf49cee2592447613fadd8e313bfa99a888b2001cdd6a6f2fe4a534bf59eafa257af15
   languageName: node
   linkType: hard
 

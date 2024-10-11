@@ -1,6 +1,6 @@
 import { MineSkinV2Request } from "../../routes/v2/types";
 import { Response } from "express";
-import { isBillableClient, MineSkinError } from "@mineskin/types";
+import { MineSkinError } from "@mineskin/types";
 import { formatV2Response } from "../../middleware/response";
 import { V2MiscResponseBody } from "../../typings/v2/V2MiscResponseBody";
 
@@ -44,8 +44,8 @@ export async function v2GetClientInfo(req: MineSkinV2Request, res: Response<V2Mi
             user: req.client.user,
             ip: req.client.ip,
             billable: req.client.billable,
-            metered: isBillableClient(req.client) ? req.client.metered : false,
-            credits: isBillableClient(req.client) ? !!req.client.credits : false
+            metered: req.client.metered,
+            credits: req.client.credits
         }
     }))
 }

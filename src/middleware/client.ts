@@ -3,7 +3,7 @@ import { NextFunction, Response } from "express";
 import { getIp, getVia, simplifyUserAgent } from "../util";
 import * as Sentry from "@sentry/node";
 import { debug } from "../util/colors";
-import { BillableClient, ClientInfo, CreditType, Maybe, MineSkinError } from "@mineskin/types";
+import { ClientInfo, Maybe, MineSkinError } from "@mineskin/types";
 import { Log } from "@mineskin/generator";
 
 export const mineskinClientMiddleware = async (req: MineSkinV2Request, res: Response, next: NextFunction) => {
@@ -56,7 +56,7 @@ export const mineskinClientMiddleware = async (req: MineSkinV2Request, res: Resp
     }
     console.log(debug(`${ req.breadcrumbC } Key:         ${ req.apiKeyRef ?? "none" }`));
 
-    const client: ClientInfo | BillableClient = {
+    const client: ClientInfo = {
         time: Date.now(),
         key: req.apiKeyId,
         agent: userAgent.ua,
@@ -67,7 +67,7 @@ export const mineskinClientMiddleware = async (req: MineSkinV2Request, res: Resp
 
         billable: billable,
         metered: metered,
-        credits: useCredits ? CreditType.AUTO : undefined //TODO: maybe allow specifying type of credits
+        credits: useCredits
     };
     req.client = client;
 

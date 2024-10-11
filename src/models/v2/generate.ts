@@ -18,7 +18,7 @@ import {
     SkinService,
     TrafficService
 } from "@mineskin/generator";
-import { ErrorSource, GenerateType, isBillableClient, SkinVariant, SkinVisibility2, UUID } from "@mineskin/types";
+import { ErrorSource, GenerateType, SkinVariant, SkinVisibility2, UUID } from "@mineskin/types";
 import { Response } from "express";
 import { V2SkinResponse } from "../../typings/v2/V2SkinResponse";
 import { debug } from "../../util/colors";
@@ -170,33 +170,32 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
     }
 
     // check credits
-    if (isBillableClient(req.client)) {
+    // (always check, even when not enabled, to handle free credits)
+    if (req.client.user) {
         const billingService = BillingService.getInstance();
-        if (req.client.credits) {
-            const credit = await billingService.getClientCredits(req.client);
-            if (!credit) {
+        const credit = await billingService.getClientCredits(req.client);
+        if (!credit) {
+            req.warnings.push({
+                code: 'no_credits',
+                message: "no credits"
+            });
+            req.client.credits = false;
+        } else {
+            if (!credit.isValid()) {
                 req.warnings.push({
-                    code: 'no_credits',
-                    message: "no credits"
+                    code: 'invalid_credits',
+                    message: "invalid credits"
                 });
-                req.client.credits = undefined;
-            } else {
-                if (!credit.isValid()) {
-                    req.warnings.push({
-                        code: 'invalid_credits',
-                        message: "invalid credits"
-                    });
-                    req.client.credits = undefined;
-                } else if (credit.balance <= 0) {
-                    req.warnings.push({
-                        code: 'insufficient_credits',
-                        message: "insufficient credits"
-                    });
-                    req.client.credits = undefined;
-                }
-                res.header('X-MineSkin-Credits-Type', credit.type);
-                res.header('X-MineSkin-Credits-Balance', `${ credit.balance }`);
+                req.client.credits = false;
+            } else if (credit.balance <= 0) {
+                req.warnings.push({
+                    code: 'insufficient_credits',
+                    message: "insufficient credits"
+                });
+                req.client.credits = false;
             }
+            res.header('X-MineSkin-Credits-Type', credit.type);
+            res.header('X-MineSkin-Credits-Balance', `${ credit.balance }`);
         }
     }
 
