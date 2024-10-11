@@ -915,27 +915,11 @@
         ],
         "responses": {
           "200": {
+            "description": "Delay Info",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "delay"
-                  ],
-                  "properties": {
-                    "delay": {
-                      "$ref":"#/components/schemas/DelayInfo"
-                    },
-                    "lastRequest": {
-                      "type": "object",
-                      "required": "false",
-                      "properties": {
-                        "time": {
-                          "type": "integer"
-                        }
-                      }
-                    }
-                  }
+                  "$ref": "#/components/schemas/RateLimitInfo"
                 }
               }
             }
