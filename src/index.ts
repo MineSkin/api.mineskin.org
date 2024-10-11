@@ -47,6 +47,7 @@ import process from "node:process";
 import { v2MeRouter } from "./routes/v2/me";
 import { v2NotFoundHandler } from "./middleware/error";
 import * as http from "node:http";
+import { v2DelayRouter } from "./routes/v2/delay";
 
 
 sourceMapSupport.install();
@@ -344,6 +345,7 @@ async function init() {
         app.use("/v2/queue", v2QueueRouter);
         app.use("/v2/skins", v2SkinsRouter);
         app.use("/v2/me", v2MeRouter);
+        app.use("/v2/delay", v2DelayRouter);
         if (process.env.NODE_ENV !== 'production') {
             app.use("/v2/test", v2TestRouter);
         }
