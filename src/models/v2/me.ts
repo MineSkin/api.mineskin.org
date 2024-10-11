@@ -13,6 +13,9 @@ export async function v2GetMe(req: MineSkinV2Request, res: Response<V2MiscRespon
     if (req.client) {
         req.links.client = `/v2/me/client`;
     }
+    if (req.client && req.user) {
+        req.links.credits = `/v2/me/credits`;
+    }
     if (req.user) {
         req.links.user = `/v2/me`;
         res.json(formatV2Response<V2MiscResponseBody>(req, {
