@@ -27,21 +27,13 @@ export const jwtMiddleware = async (req: MineSkinV2Request, res: Response, next:
         return next();
     }
 
-    if (!req.grants) {
-        req.grants = {};
-    }
-
     try {
         const payload = await jwtCache.get(cookie);
         if (req.apiKey && req.apiKey.user !== payload.user) {
             Log.l.warning(`API Key user ${ req.apiKey.user } does not match JWT user ${ payload.user }`);
         }
-        req.user = {
-            uuid: payload.user,
-            grants: payload.grants
-        };
 
-        req.grants = {...req.grants, ...payload.grants};
+        req.client.setUserId(payload.user);
     } catch (e) {
         if (e instanceof jose.errors.JOSEError) {
             req.warnings.push({

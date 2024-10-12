@@ -104,8 +104,8 @@ export class V2UrlHandler extends V2GenerateHandler {
                 source: originalUrlV2Duplicate.source,
                 existing: originalUrlV2Duplicate.existing,
                 data: originalUrlV2Duplicate.existing.data
-            }, options, req.client!, req.breadcrumb || "????");
-            await DuplicateChecker.handleDuplicateResultMetrics(result, GenerateType.URL, options, req.client!);
+            }, options, req.clientInfo!, req.breadcrumb || "????");
+            await DuplicateChecker.handleDuplicateResultMetrics(result, GenerateType.URL, options, req.clientInfo!);
             if (!!result.existing) {
                 // full duplicate, return existing skin
                 // return await V2GenerateHandler.queryAndSendSkin(req, res, result.existing.uuid, true);

@@ -2,38 +2,17 @@ import { MineSkinV2Request } from "../routes/v2/types";
 import { NextFunction, Response } from "express";
 import { getIp, getVia, simplifyUserAgent } from "../util";
 import * as Sentry from "@sentry/node";
-import { debug } from "../util/colors";
-import { ClientInfo, Maybe, MineSkinError } from "@mineskin/types";
 import { Log } from "@mineskin/generator";
+import { RequestClient } from "../typings/v2/RequestClient";
 
-export const mineskinClientMiddleware = async (req: MineSkinV2Request, res: Response, next: NextFunction) => {
+export const clientMiddleware = async (req: MineSkinV2Request, res: Response, next: NextFunction) => {
     const rawUserAgent = req.header("user-agent") || "n/a";
     const origin = req.header("origin");
     const ip = getIp(req);
     const via = getVia(req);
 
-    let user: Maybe<string> = req.user?.uuid || req.client?.user;
-    let billable = false;
-    let metered = false;
-    let useCredits = false;
-    if (req.apiKey) {
-        user = req.apiKey.user;
-        billable = req.apiKey.billable || false;
-        metered = req.apiKey.metered || false;
-        useCredits = req.apiKey.useCredits || false;
-        billable = billable || metered || useCredits;
-    }
-
-    if (billable) {
-        res.header("X-MineSkin-Billable", "true");
-        if (metered && useCredits) {
-            throw new MineSkinError('invalid_billing', "Cannot use metered and credit billing at the same time");
-        }
-    }
-
     Sentry.setTags({
-        "generate_via": via,
-        "generate_billable": billable
+        "generate_via": via
     });
 
     const userAgent = simplifyUserAgent(rawUserAgent);
@@ -54,24 +33,14 @@ export const mineskinClientMiddleware = async (req: MineSkinV2Request, res: Resp
             origin: req.headers['origin']
         });
     }
-    console.log(debug(`${ req.breadcrumbC } Key:         ${ req.apiKeyRef ?? "none" }`));
-
-    const client: ClientInfo = {
-        time: Date.now(),
-        key: req.apiKeyId,
-        agent: userAgent.ua,
-        origin: origin,
-        ip: ip,
-        breadcrumb: req.breadcrumb || '00000000',
-        user: user,
-
-        billable: billable,
-        metered: metered,
-        credits: useCredits
-    };
-    req.client = client;
 
     res.header("X-MineSkin-Api-Version", "v2");
 
+    req.client = new RequestClient(Date.now(), userAgent, origin, ip, via);
+    next();
+}
+
+export const clientFinalMiddleware = async (req: MineSkinV2Request, res: Response, next: NextFunction) => {
+    req.clientInfo = req.client.asClientInfo(req);
     next();
 }

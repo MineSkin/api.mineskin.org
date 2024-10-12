@@ -35,10 +35,10 @@ import { breadcrumbMiddleware } from "../middleware/breadcrumb";
 import { GenerateV2Request, MineSkinV2Request } from "./v2/types";
 import { apiKeyMiddleware } from "../middleware/apikey";
 import { jwtMiddleware } from "../middleware/jwt";
-import { mineskinClientMiddleware } from "../middleware/client";
 import { mineskinUserMiddleware } from "../middleware/user";
 import { v2GenerateAndWait } from "../models/v2/generate";
 import { V2SkinResponse } from "../typings/v2/V2SkinResponse";
+import { clientFinalMiddleware, clientMiddleware } from "../middleware/client";
 
 export const register = (app: Application) => {
 
@@ -90,6 +90,12 @@ export const register = (app: Application) => {
     });
     app.use("/generate", async (req: MineSkinV2Request, res: Response, next: NextFunction) => {
         if (req.query["v2"]) {
+            return clientMiddleware(req, res, next);
+        }
+        next();
+    });
+    app.use("/generate", async (req: MineSkinV2Request, res: Response, next: NextFunction) => {
+        if (req.query["v2"]) {
             return apiKeyMiddleware(req, res, next);
         }
         next();
@@ -102,13 +108,13 @@ export const register = (app: Application) => {
     });
     app.use("/generate", async (req: MineSkinV2Request, res: Response, next: NextFunction) => {
         if (req.query["v2"]) {
-            return mineskinClientMiddleware(req, res, next);
+            return mineskinUserMiddleware(req, res, next);
         }
         next();
     });
     app.use("/generate", async (req: MineSkinV2Request, res: Response, next: NextFunction) => {
         if (req.query["v2"]) {
-            return mineskinUserMiddleware(req, res, next);
+            return clientFinalMiddleware(req, res, next);
         }
         next();
     });

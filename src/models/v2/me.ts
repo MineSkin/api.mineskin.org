@@ -10,17 +10,17 @@ export async function v2GetMe(req: MineSkinV2Request, res: Response<V2MiscRespon
     if (req.apiKey) {
         req.links.key = `/v2/me/apikey`;
     }
-    if (req.client) {
+    if (req.clientInfo) {
         req.links.client = `/v2/me/client`;
     }
-    if (req.client && req.user) {
+    if (req.client.canUseCredits()) {
         req.links.credits = `/v2/me/credits`;
     }
-    if (req.user) {
+    if (req.client.hasUser()) {
         req.links.user = `/v2/me`;
         res.json(formatV2Response<V2MiscResponseBody>(req, {
-            user: req.user,
-            grants: req.grants
+            user: req.client.userId,
+            grants: req.client.grants
         }));
         return;
     }
@@ -37,32 +37,32 @@ export async function v2GetKeyInfo(req: MineSkinV2Request, res: Response<V2MiscR
 }
 
 export async function v2GetClientInfo(req: MineSkinV2Request, res: Response<V2MiscResponseBody>) {
-    if (!req.client) {
+    if (!req.clientInfo) {
         throw new MineSkinError('invalid_client', "Invalid client");
     }
     res.json(formatV2Response<V2MiscResponseBody>(req, {
         client: {
-            agent: req.client.agent,
-            origin: req.client.origin,
-            key: req.client.key,
-            user: req.client.user,
-            ip: req.client.ip,
-            billable: req.client.billable,
-            metered: req.client.metered,
-            credits: req.client.credits
+            agent: req.clientInfo.agent,
+            origin: req.clientInfo.origin,
+            key: req.clientInfo.key,
+            user: req.clientInfo.user,
+            ip: req.clientInfo.ip,
+            billable: req.clientInfo.billable,
+            metered: req.clientInfo.metered,
+            credits: req.clientInfo.credits
         }
     }))
 }
 
 
 export async function v2GetCreditsInfo(req: MineSkinV2Request, res: Response<V2MiscResponseBody>) {
-    if (!req.client) {
+    if (!req.clientInfo) {
         throw new MineSkinError('invalid_client', "Invalid client");
     }
     if (!req.user) {
         throw new MineSkinError('invalid_user', "Invalid user");
     }
-    const credit = await BillingService.getInstance().getClientCredits(req.client);
+    const credit = await BillingService.getInstance().getClientCredits(req.clientInfo);
     if (!credit) {
         req.warnings.push({
             code: 'no_credits',

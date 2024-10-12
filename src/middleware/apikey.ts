@@ -15,10 +15,6 @@ export const apiKeyMiddleware = async (req: MineSkinV2Request, res: Response, ne
         keyStr = authHeader.substring("Bearer ".length);
     }
 
-    if (!req.grants) {
-        req.grants = {};
-    }
-
     if (keyStr) {
         req._apiKeyStr = keyStr;
 
@@ -29,6 +25,8 @@ export const apiKeyMiddleware = async (req: MineSkinV2Request, res: Response, ne
         }
 
         key.updateLastUsed(new Date()); // don't await, don't really care
+
+        req.client.setApiKey(key);
 
         req.apiKey = key;
         req.apiKeyId = key.id;
@@ -61,8 +59,11 @@ export const apiKeyMiddleware = async (req: MineSkinV2Request, res: Response, ne
             }
         }
 
-        if (key.grants) {
-            req.grants = {...req.grants, ...key.grants};
+        if (req.client.isBillable()) {
+            res.header("X-MineSkin-Billable", "true");
+            if (req.client.isMetered() && req.client.usePaidCredits()) {
+                throw new MineSkinError('invalid_billing', "Cannot use metered and credit billing at the same time");
+            }
         }
 
         next();

@@ -7,7 +7,7 @@ import { v2ErrorHandler } from "../../middleware/error";
 export const v2TestRouter = v2Router();
 
 v2TestRouter.get("/client",async (req: MineSkinV2Request, res: Response) => {
-    const client = req.client;
+    const client = req.clientInfo;
     res.json({client});
 });
 
@@ -18,13 +18,13 @@ v2TestRouter.get("/apikey",async (req: MineSkinV2Request, res: Response) => {
 
 v2TestRouter.get("/billing/credits",async (req: MineSkinV2Request, res: Response) => {
     const billingService = BillingService.getInstance();
-    const credit = await billingService.getClientCredits(req.client!)
+    const credit = await billingService.getClientCredits(req.clientInfo!)
     res.json({ credit });
 });
 
 v2TestRouter.post("/billing/simulate-new-skin",async (req: MineSkinV2Request, res: Response) => {
     const billingService = BillingService.getInstance();
-    await billingService.trackNewSkin(req.client!);
+    await billingService.trackNewSkin(req.clientInfo!);
     res.json({ success: true });
 });
 

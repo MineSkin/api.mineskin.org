@@ -157,42 +157,42 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
 
     const options = getAndValidateOptions(req);
     //const client = getClientInfo(req);
-    if (!req.client) {
+    if (!req.clientInfo) {
         throw new GeneratorError('invalid_client', "no client info", {httpCode: 500});
     }
 
     // check rate limit
     const trafficService = TrafficService.getInstance();
-    req.nextRequest = await trafficService.getNextRequest(req.client);
-    req.minDelay = await trafficService.getMinDelaySeconds(req.client, req.apiKey) * 1000;
-    if (req.nextRequest > req.client.time) {
+    req.nextRequest = await trafficService.getNextRequest(req.clientInfo);
+    req.minDelay = await trafficService.getMinDelaySeconds(req.clientInfo, req.apiKey) * 1000;
+    if (req.nextRequest > req.clientInfo.time) {
         throw new GeneratorError('rate_limit', `request too soon, next request in ${ ((Math.round(req.nextRequest - Date.now()) / 100) * 100) }ms`, {httpCode: 429});
     }
 
     // check credits
     // (always check, even when not enabled, to handle free credits)
-    if (req.client.user) {
+    if (req.client.canUseCredits()) {
         const billingService = BillingService.getInstance();
-        const credit = await billingService.getClientCredits(req.client);
+        const credit = await billingService.getClientCredits(req.clientInfo);
         if (!credit) {
             req.warnings.push({
                 code: 'no_credits',
                 message: "no credits"
             });
-            req.client.credits = false;
+            req.clientInfo.credits = false;
         } else {
             if (!credit.isValid()) {
                 req.warnings.push({
                     code: 'invalid_credits',
                     message: "invalid credits"
                 });
-                req.client.credits = false;
+                req.clientInfo.credits = false;
             } else if (credit.balance <= 0) {
                 req.warnings.push({
                     code: 'insufficient_credits',
                     message: "insufficient credits"
                 });
-                req.client.credits = false;
+                req.clientInfo.credits = false;
             }
             res.header('X-MineSkin-Credits-Type', credit.type);
             res.header('X-MineSkin-Credits-Balance', `${ credit.balance }`);
@@ -230,8 +230,9 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
     }
 
     // preliminary rate limiting
-    req.nextRequest = await trafficService.updateLastAndNextRequest(req.client, 200);
+    req.nextRequest = await trafficService.updateLastAndNextRequest(req.clientInfo, 200);
     Log.l.debug(`next request at ${ req.nextRequest }`);
+
 
     const imageResult = await handler.getImageBuffer();
     if (imageResult.existing) {
@@ -291,8 +292,8 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
             source: duplicateV2Data.source,
             existing: skinForDuplicateData,
             data: duplicateV2Data.existing
-        }, options, req.client, req.breadcrumb || "????");
-        await DuplicateChecker.handleDuplicateResultMetrics(result, GenerateType.UPLOAD, options, req.client);
+        }, options, req.clientInfo, req.breadcrumb || "????");
+        await DuplicateChecker.handleDuplicateResultMetrics(result, GenerateType.UPLOAD, options, req.clientInfo);
         if (!!result.existing) {
             // full duplicate, return existing skin
             //await V2GenerateHandler.queryAndSendSkin(req, res, result.existing.uuid, true);
@@ -329,7 +330,7 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
         type: GenerateType.UPLOAD,
         image: hashes.minecraft,
         options: options,
-        client: req.client
+        client: req.clientInfo
     }
     const job = await client.submitRequest(request);
     return {job};

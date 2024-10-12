@@ -5,7 +5,7 @@ import { V2MiscResponseBody } from "../../typings/v2/V2MiscResponseBody";
 import { BillingService, TrafficService } from "@mineskin/generator";
 
 export async function v2GetDelay(req: MineSkinV2Request, res: Response<V2MiscResponseBody>) {
-    if (!req.client) {
+    if (!req.clientInfo) {
         throw new MineSkinError('invalid_client', "no client info", {httpCode: 500});
     }
 
@@ -14,10 +14,10 @@ export async function v2GetDelay(req: MineSkinV2Request, res: Response<V2MiscRes
     const trafficService = TrafficService.getInstance();
     const billingService = BillingService.getInstance();
 
-    const credits = req.client.user ? await billingService.getClientCredits(req.client) : undefined;
+    const credits = req.client.canUseCredits() ? await billingService.getClientCredits(req.clientInfo) : undefined;
 
-    const nextRequest = await trafficService.getNextRequest(req.client);
-    const effectiveDelay = await trafficService.getMinDelaySeconds(req.client, req.apiKey, credits) * 1000;
+    const nextRequest = await trafficService.getNextRequest(req.clientInfo);
+    const effectiveDelay = await trafficService.getMinDelaySeconds(req.clientInfo, req.apiKey, credits) * 1000;
 
     const rateLimit: RateLimitInfo = {
         delay: {
