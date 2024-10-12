@@ -1374,7 +1374,7 @@ __metadata:
 
 "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git":
   version: 0.0.0
-  resolution: "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git#commit=068859f067c9dac4bd03c7903aecaaee96520cfe"
+  resolution: "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git#commit=734b8665135e12911cdff8f9f23d5d729fcae0cf"
   dependencies:
     "@inventivetalent/imghash": "npm:^1.1.1"
     "@inventivetalent/loading-cache": "npm:^0.7.1"
@@ -1404,7 +1404,7 @@ __metadata:
     uuid: "npm:^10.0.0"
     winston: "npm:^3.14.2"
     winston-daily-rotate-file: "npm:^5.0.0"
-  checksum: 10c0/532be633249707f54b5a46d0cd9746673d14aaf7ab184ecd83e27aeabe4ccf486cc3ba6a7f8d3bcd83bbc0ae00c75126340a8995bb3d3e20db347a10e367a237
+  checksum: 10c0/7fb03f51b4e4c95a902103010bad4741cb7658de5e9237c17efde2f6099bed42b9554acea5d85f3a0f5437b296dd209828033decedea02f3b15661226d71717b
   languageName: node
   linkType: hard
 
@@ -4219,8 +4219,8 @@ __metadata:
   linkType: hard
 
 "bullmq@npm:^5.13.0":
-  version: 5.19.0
-  resolution: "bullmq@npm:5.19.0"
+  version: 5.19.1
+  resolution: "bullmq@npm:5.19.1"
   dependencies:
     cron-parser: "npm:^4.6.0"
     ioredis: "npm:^5.4.1"
@@ -4229,7 +4229,7 @@ __metadata:
     semver: "npm:^7.5.4"
     tslib: "npm:^2.0.0"
     uuid: "npm:^9.0.0"
-  checksum: 10c0/d121ceb45a4f95b02b43ce35fd0d1ab9ec4f973a3db05a11bb36193a8b8df0304c7e73ae3ab8174f41337b52ce3c76f19d66382342204804959daeb141a02481
+  checksum: 10c0/00f84d89021f26071e2c1a77424e584e58dd19dfa3b2f44d8a9997b8dca2497f7431c0c5fb826ebcb6dacb764835c54fd094baa088aa18fd5a5f22d84c555d94
   languageName: node
   linkType: hard
 
