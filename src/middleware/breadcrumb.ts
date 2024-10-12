@@ -4,6 +4,11 @@ import { v4 as randomUuid } from "uuid";
 import { nextBreadColor } from "../typings/Bread";
 
 export const breadcrumbMiddleware = (req: MineSkinV2Request, res: Response, next: NextFunction) => {
+    applyBreadcrumb(req, res);
+    next();
+}
+
+export const applyBreadcrumb = (req: MineSkinV2Request, res: Response) => {
     const id = randomUuid().substring(0, 8);
     const color = nextBreadColor();
     req.breadcrumb = id;
@@ -21,6 +26,4 @@ export const breadcrumbMiddleware = (req: MineSkinV2Request, res: Response, next
     if (!req.links) {
         req.links = {};
     }
-
-    next();
 }

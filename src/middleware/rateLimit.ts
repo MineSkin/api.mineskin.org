@@ -3,6 +3,11 @@ import { NextFunction, Response } from "express";
 import { GeneratorError, TrafficService } from "@mineskin/generator";
 
 export const rateLimitMiddleware = async (req: GenerateV2Request, res: Response, next: NextFunction) => {
+    await verifyRateLimit(req, res);
+    next();
+}
+
+export const verifyRateLimit = async (req: GenerateV2Request, res: Response) => {
     if (!req.clientInfo) {
         throw new GeneratorError('invalid_client', "no client info", {httpCode: 500});
     }
@@ -37,6 +42,4 @@ export const rateLimitMiddleware = async (req: GenerateV2Request, res: Response,
             throw new GeneratorError('concurrency_limit', `concurrency limit exceeded, ${ req.concurrentRequests } > ${  req.maxConcurrent }`, {httpCode: 429});
         }
     }
-
-    next();
 }

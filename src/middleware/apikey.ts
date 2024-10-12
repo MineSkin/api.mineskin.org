@@ -8,6 +8,11 @@ import { MineSkinError } from "@mineskin/types";
 
 
 export const apiKeyMiddleware = async (req: MineSkinV2Request, res: Response, next: NextFunction) => {
+    await verifyApiKey(req, res);
+    next();
+}
+
+export const verifyApiKey = async (req: MineSkinV2Request, res: Response) => {
     let keyStr;
 
     const authHeader = req.header("authorization");
@@ -65,15 +70,11 @@ export const apiKeyMiddleware = async (req: MineSkinV2Request, res: Response, ne
                 throw new MineSkinError('invalid_billing', "Cannot use metered and credit billing at the same time");
             }
         }
-
-        next();
     } else {
         console.log(debug(`${ req.breadcrumbC } Key:         none`));
         req.warnings.push({
             code: "no_api_key",
             message: "No API Key provided"
         });
-
-        next();
     }
 }

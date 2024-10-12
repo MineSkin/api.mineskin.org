@@ -3,12 +3,15 @@ import { NextFunction, Response } from "express";
 import { Log } from "@mineskin/generator";
 
 export const mineskinUserMiddleware = async (req: MineSkinV2Request, res: Response, next: NextFunction) => {
+    await handleUser(req, res);
+    next();
+}
+
+export  const handleUser = async (req: MineSkinV2Request, res: Response) => {
     const user = await req.client.getUser();
     if (!user) {
-        return next();
+        return;
     }
 
     Log.l.debug(`${ req.breadcrumbC } User:       ${ user.uuid }`);
-
-    next();
 }

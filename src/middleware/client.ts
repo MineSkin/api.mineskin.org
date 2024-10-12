@@ -5,6 +5,11 @@ import * as Sentry from "@sentry/node";
 import { Log, RequestClient } from "@mineskin/generator";
 
 export const clientMiddleware = async (req: MineSkinV2Request, res: Response, next: NextFunction) => {
+    initRequestClient(req, res);
+    next();
+}
+
+export const initRequestClient = (req: MineSkinV2Request, res: Response) => {
     const rawUserAgent = req.header("user-agent") || "n/a";
     const origin = req.header("origin");
     const ip = getIp(req);
@@ -36,10 +41,14 @@ export const clientMiddleware = async (req: MineSkinV2Request, res: Response, ne
     res.header("X-MineSkin-Api-Version", "v2");
 
     req.client = new RequestClient(Date.now(), userAgent.ua, origin, ip, via);
-    next();
 }
 
 export const clientFinalMiddleware = async (req: MineSkinV2Request, res: Response, next: NextFunction) => {
-    req.clientInfo = await req.client.asClientInfo(req);
+    await finalizeRequestClient(req, res);
     next();
 }
+
+export const finalizeRequestClient = async (req: MineSkinV2Request, res: Response) => {
+    req.clientInfo = await req.client.asClientInfo(req);
+}
+

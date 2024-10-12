@@ -3,8 +3,13 @@ import { NextFunction, Response } from "express";
 import { BillingService } from "@mineskin/generator";
 
 export const creditsMiddleware = async (req: MineSkinV2Request, res: Response, next: NextFunction) => {
+    await verifyCredits(req, res);
+    next();
+}
+
+export const verifyCredits = async (req: MineSkinV2Request, res: Response) => {
     if (!req.clientInfo) {
-        return next();
+        return;
     }
     // check credits
     // (always check, even when not enabled, to handle free credits)
@@ -37,6 +42,4 @@ export const creditsMiddleware = async (req: MineSkinV2Request, res: Response, n
             res.header('X-MineSkin-Credits-Balance', `${ credit.balance }`);
         }
     }
-
-    next();
 }

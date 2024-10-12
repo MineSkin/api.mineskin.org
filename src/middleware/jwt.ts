@@ -22,9 +22,14 @@ const jwtCache = Caches.builder()
     })
 
 export const jwtMiddleware = async (req: MineSkinV2Request, res: Response, next: NextFunction) => {
+    await verifyJwtCookie(req, res);
+    next();
+}
+
+export const verifyJwtCookie = async (req: MineSkinV2Request, res: Response) => {
     const cookie = req.cookies['mskapi'];
     if (!cookie) {
-        return next();
+        return;
     }
 
     try {
@@ -49,8 +54,6 @@ export const jwtMiddleware = async (req: MineSkinV2Request, res: Response, next:
             Sentry.captureException(e);
         }
     }
-
-    next();
 }
 
 interface TokenPayload extends JWTPayload {

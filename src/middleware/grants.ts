@@ -4,6 +4,11 @@ import { flagsmith } from "@mineskin/generator/dist/flagsmith";
 import { CreditType } from "@mineskin/types";
 
 export const grantsMiddleware = async (req: MineSkinV2Request, res: Response, next: NextFunction) => {
+    await verifyGrants(req, res);
+    next();
+}
+
+export const verifyGrants = async (req: MineSkinV2Request, res: Response) => {
     const hasApiKey = req.client.hasApiKey();
     const hasUser = req.client.hasUser();
 
@@ -12,8 +17,6 @@ export const grantsMiddleware = async (req: MineSkinV2Request, res: Response, ne
 
     const grants = await getDefaultGrants(hasApiKey, hasUser, creditType);
     req.client.grants = {...grants, ...req.client.grants};
-
-    next();
 }
 
 async function getDefaultGrants(hasApiKey: boolean, hasUser: boolean, creditType: CreditType | undefined) {

@@ -31,14 +31,10 @@ import { GenerateType, SkinVariant, SkinVisibility, UUID } from "@mineskin/types
 import { SkinModel } from "@mineskin/database";
 import { Temp } from "../generator/Temp";
 import { Log, Migrations } from "@mineskin/generator";
-import { breadcrumbMiddleware } from "../middleware/breadcrumb";
 import { GenerateV2Request, MineSkinV2Request } from "./v2/types";
-import { apiKeyMiddleware } from "../middleware/apikey";
-import { jwtMiddleware } from "../middleware/jwt";
-import { mineskinUserMiddleware } from "../middleware/user";
 import { v2GenerateAndWait } from "../models/v2/generate";
 import { V2SkinResponse } from "../typings/v2/V2SkinResponse";
-import { clientFinalMiddleware, clientMiddleware } from "../middleware/client";
+import { mineSkinV2InitialMiddleware } from "../middleware/combined";
 
 export const register = (app: Application) => {
 
@@ -84,37 +80,7 @@ export const register = (app: Application) => {
                 code: "deprecated",
                 message: "this endpoint is deprecated, please use the v2 API"
             })
-            return breadcrumbMiddleware(req, res, next);
-        }
-        next();
-    });
-    app.use("/generate", async (req: MineSkinV2Request, res: Response, next: NextFunction) => {
-        if (req.query["v2"]) {
-            return clientMiddleware(req, res, next);
-        }
-        next();
-    });
-    app.use("/generate", async (req: MineSkinV2Request, res: Response, next: NextFunction) => {
-        if (req.query["v2"]) {
-            return apiKeyMiddleware(req, res, next);
-        }
-        next();
-    });
-    app.use("/generate", async (req: MineSkinV2Request, res: Response, next: NextFunction) => {
-        if (req.query["v2"]) {
-            return jwtMiddleware(req, res, next);
-        }
-        next();
-    });
-    app.use("/generate", async (req: MineSkinV2Request, res: Response, next: NextFunction) => {
-        if (req.query["v2"]) {
-            return mineskinUserMiddleware(req, res, next);
-        }
-        next();
-    });
-    app.use("/generate", async (req: MineSkinV2Request, res: Response, next: NextFunction) => {
-        if (req.query["v2"]) {
-            return clientFinalMiddleware(req, res, next);
+            return await mineSkinV2InitialMiddleware(req, res, next);
         }
         next();
     });
