@@ -71,7 +71,8 @@ export async function v2GenerateAndWait(req: GenerateV2Request, res: Response<V2
         return {
             success: true,
             skin: V2GenerateHandler.skinToJson(queried, !!result.duplicate),
-            rateLimit: V2GenerateHandler.makeRateLimitInfo(req)
+            rateLimit: V2GenerateHandler.makeRateLimitInfo(req),
+            usage: result.usage
         };
     } catch (e) {
         console.warn(e);
@@ -133,7 +134,8 @@ export async function v2GetJob(req: GenerateV2Request, res: Response<V2GenerateR
                 status: (await job?.getState()) || 'completed'
             },
             skin: V2GenerateHandler.skinToJson(queried, !!result.duplicate),
-            rateLimit: V2GenerateHandler.makeRateLimitInfo(req)
+            rateLimit: V2GenerateHandler.makeRateLimitInfo(req),
+            usage: result.usage
         };
     }
     return {
