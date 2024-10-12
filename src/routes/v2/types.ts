@@ -1,5 +1,5 @@
 import { Request } from "express";
-import { Breadcrumb, ClientInfo, UUID } from "@mineskin/types";
+import { Breadcrumb, ClientInfo } from "@mineskin/types";
 import { IApiKeyDocument } from "@mineskin/database";
 import { Chalk } from "chalk";
 import { CodeAndMessage } from "../../typings/v2/CodeAndMessage";
@@ -17,16 +17,6 @@ export interface MineSkinV2Request extends Request {
 
     clientInfo?: ClientInfo;
     client: RequestClient;
-
-    /**@deprecated**/
-    user?: {
-        uuid: UUID;
-        billable?: boolean;
-        grants?: Record<string, string | number | boolean>;
-    }
-
-    /**@deprecated**/
-    grants?: Record<string, string | number | boolean>;
 
     messages: CodeAndMessage[];
     warnings: CodeAndMessage[];

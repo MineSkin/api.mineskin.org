@@ -200,10 +200,10 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
     }
 
     if (options.visibility === SkinVisibility2.PRIVATE) {
-        if (!req.apiKey && !req.user) {
+        if (!req.apiKey && !req.client.hasUser()) {
             throw new GeneratorError('unauthorized', "private skins require an API key or User", {httpCode: 401});
         }
-        if (!req.grants?.private_skins) {
+        if (!req.client.grants?.private_skins) {
             throw new GeneratorError('insufficient_grants', "you are not allowed to generate private skins", {httpCode: 403});
         }
         Log.l.debug(`${ req.breadcrumbC } generating private`);

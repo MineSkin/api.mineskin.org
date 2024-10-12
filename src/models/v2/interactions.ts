@@ -13,10 +13,10 @@ export async function v2AddView(req: MineSkinV2Request, res: Response<V2Response
 
 export async function v2AddLike(req: MineSkinV2Request, res: Response<V2ResponseBody>) {
     const uuid = UUID.parse(req.params.uuid);
-    if (!req.user?.uuid) {
+    if (!req.client.hasUser()) {
         throw new MineSkinError('unauthorized', "Unauthorized", {httpCode: 401});
     }
-    const key = `${ req.user.uuid }:${ uuid }`;
+    const key = `${ req.client.userId }:${ uuid }`;
     if (!redisClient) {
         return;
     }

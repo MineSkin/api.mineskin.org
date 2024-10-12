@@ -59,7 +59,7 @@ export async function v2GetCreditsInfo(req: MineSkinV2Request, res: Response<V2M
     if (!req.clientInfo) {
         throw new MineSkinError('invalid_client', "Invalid client");
     }
-    if (!req.user) {
+    if (!req.client.hasUser()) {
         throw new MineSkinError('invalid_user', "Invalid user");
     }
     const credit = await BillingService.getInstance().getClientCredits(req.clientInfo);
