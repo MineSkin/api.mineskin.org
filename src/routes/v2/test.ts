@@ -35,4 +35,22 @@ v2TestRouter.post("/generate/rate-limit", rateLimitMiddleware, async (req: MineS
     res.json({count});
 });
 
+v2TestRouter.post("/generate/concurrency", rateLimitMiddleware, async (req: MineSkinV2Request, res: Response) => {
+    const trafficService = TrafficService.getInstance();
+    const count = await trafficService.getConcurrent(req.clientInfo!);
+    res.json({count});
+});
+
+v2TestRouter.post("/generate/concurrency/inc", rateLimitMiddleware, async (req: MineSkinV2Request, res: Response) => {
+    const trafficService = TrafficService.getInstance();
+    const count = await trafficService.incrementConcurrent(req.clientInfo!);
+    res.json({count});
+});
+
+v2TestRouter.post("/generate/concurrency/dec", rateLimitMiddleware, async (req: MineSkinV2Request, res: Response) => {
+    const trafficService = TrafficService.getInstance();
+    const count = await trafficService.decrementConcurrent(req.clientInfo!);
+    res.json({count});
+});
+
 v2TestRouter.use("/", v2ErrorHandler);
