@@ -339,7 +339,7 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
 
     const request: GenerateRequest = {
         breadcrumb: req.breadcrumb || "????",
-        type: GenerateType.UPLOAD,
+        type: handler.type,
         image: hashes.minecraft,
         options: options,
         clientInfo: req.clientInfo

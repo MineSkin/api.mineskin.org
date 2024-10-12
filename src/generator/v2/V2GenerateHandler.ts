@@ -1,6 +1,6 @@
 import { Response } from "express";
 import { GenerateOptions, SkinService } from "@mineskin/generator";
-import { RateLimitInfo, SkinInfo2, UUID } from "@mineskin/types";
+import { GenerateType, RateLimitInfo, SkinInfo2, UUID } from "@mineskin/types";
 import { IPopulatedSkin2Document, ISkinDocument, isPopulatedSkin2Document } from "@mineskin/database";
 import { GenerateV2Request } from "../../routes/v2/types";
 import { V2GenerateResponseBody } from "../../typings/v2/V2GenerateResponseBody";
@@ -13,7 +13,8 @@ export class V2GenerateHandler {
     constructor(
         readonly req: GenerateV2Request,
         readonly res: Response<V2GenerateResponseBody | V2SkinResponse>,
-        readonly options: GenerateOptions
+        readonly options: GenerateOptions,
+        readonly type: GenerateType
     ) {
     }
 

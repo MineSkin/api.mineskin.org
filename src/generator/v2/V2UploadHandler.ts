@@ -4,12 +4,12 @@ import { GenerateOptions, GeneratorError, Log } from "@mineskin/generator";
 import { V2GenerateResponseBody } from "../../typings/v2/V2GenerateResponseBody";
 import { V2SkinResponse } from "../../typings/v2/V2SkinResponse";
 import { GenerateV2Request } from "../../routes/v2/types";
-import { Maybe } from "@mineskin/types";
+import { GenerateType, Maybe } from "@mineskin/types";
 
 export class V2UploadHandler extends V2GenerateHandler {
 
     constructor(req: GenerateV2Request, res: Response<V2GenerateResponseBody | V2SkinResponse>, options: GenerateOptions) {
-        super(req, res, options);
+        super(req, res, options, GenerateType.UPLOAD);
     }
 
     async getImageBuffer(): Promise<BufferResult> {

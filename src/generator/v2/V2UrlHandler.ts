@@ -21,9 +21,8 @@ import { GenerateReqUrl } from "../../validation/generate";
 
 export class V2UrlHandler extends V2GenerateHandler {
 
-
     constructor(req: GenerateV2Request, res: Response<V2GenerateResponseBody | V2SkinResponse>, options: GenerateOptions) {
-        super(req, res, options);
+        super(req, res, options, GenerateType.URL);
     }
 
     async getImageBuffer(): Promise<BufferResult> {
