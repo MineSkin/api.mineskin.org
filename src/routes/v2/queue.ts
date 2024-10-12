@@ -7,10 +7,11 @@ import { GenerateV2Request } from "./types";
 import { V2JobResponse } from "../../typings/v2/V2JobResponse";
 import { formatV2Response } from "../../middleware/response";
 import { v2ErrorHandler } from "../../middleware/error";
+import { rateLimitMiddleware } from "../../middleware/rateLimit";
 
 export const v2QueueRouter: Router = v2Router();
 
-v2QueueRouter.post("/", expressAsyncHandler(async (req: GenerateV2Request, res: Response<V2JobResponse>) => {
+v2QueueRouter.post("/", rateLimitMiddleware, expressAsyncHandler(async (req: GenerateV2Request, res: Response<V2JobResponse>) => {
     const result = await v2GenerateEnqueue(req, res);
     res.json(formatV2Response(req, result));
 }));

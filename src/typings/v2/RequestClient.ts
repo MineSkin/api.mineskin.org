@@ -92,6 +92,10 @@ export class RequestClient {
         return this.apiKey;
     }
 
+    hasApiKey(): boolean {
+        return !!this.apiKey;
+    }
+
     isMetered(): boolean {
         return this.apiKey?.metered || false;
     }
@@ -106,6 +110,22 @@ export class RequestClient {
 
     isBillable(): boolean {
         return this.isMetered() || this.usePaidCredits();
+    }
+
+    useDelayRateLimit(): boolean {
+        return this.hasApiKey() && 'delay' in this.grants && (this.grants.delay as number) > 0;
+    }
+
+    getDelayRateLimit(): number {
+        return this.useDelayRateLimit() ? this.grants.delay as number : 0;
+    }
+
+    usePerMinuteRateLimit(): boolean {
+        return this.hasApiKey() && 'per_minute' in this.grants && (this.grants.per_minute as number) > 0;
+    }
+
+    getPerMinuteRateLimit(): number {
+        return this.usePerMinuteRateLimit() ? this.grants.per_minute as number : 0;
     }
 
     asClientInfo(req: MineSkinV2Request): ClientInfo {
