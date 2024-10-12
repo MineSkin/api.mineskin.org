@@ -19,6 +19,8 @@ export async function v2GetDelay(req: MineSkinV2Request, res: Response<V2MiscRes
     const nextRequest = await trafficService.getNextRequest(req.clientInfo);
     const effectiveDelay = await trafficService.getMinDelaySeconds(req.clientInfo, req.apiKey, credits) * 1000;
 
+    const requestCounter = await trafficService.getRequestCounter(req.clientInfo);
+
     const rateLimit: RateLimitInfo = {
         delay: {
             millis: effectiveDelay,
@@ -27,6 +29,10 @@ export async function v2GetDelay(req: MineSkinV2Request, res: Response<V2MiscRes
         next: {
             absolute: nextRequest || now,
             relative: Math.max(0, (nextRequest || now) - now)
+        },
+        limit: {
+            limit: req.client.getPerMinuteRateLimit(),
+            remaining: Math.max(0, req.client.getPerMinuteRateLimit() - requestCounter)
         }
     }
 

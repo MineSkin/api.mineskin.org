@@ -2,8 +2,7 @@ import { MineSkinV2Request } from "../routes/v2/types";
 import { NextFunction, Response } from "express";
 import { getIp, getVia, simplifyUserAgent } from "../util";
 import * as Sentry from "@sentry/node";
-import { Log } from "@mineskin/generator";
-import { RequestClient } from "../typings/v2/RequestClient";
+import { Log, RequestClient } from "@mineskin/generator";
 
 export const clientMiddleware = async (req: MineSkinV2Request, res: Response, next: NextFunction) => {
     const rawUserAgent = req.header("user-agent") || "n/a";
@@ -36,11 +35,11 @@ export const clientMiddleware = async (req: MineSkinV2Request, res: Response, ne
 
     res.header("X-MineSkin-Api-Version", "v2");
 
-    req.client = new RequestClient(Date.now(), userAgent, origin, ip, via);
+    req.client = new RequestClient(Date.now(), userAgent.ua, origin, ip, via);
     next();
 }
 
 export const clientFinalMiddleware = async (req: MineSkinV2Request, res: Response, next: NextFunction) => {
-    req.clientInfo = req.client.asClientInfo(req);
+    req.clientInfo = await req.client.asClientInfo(req);
     next();
 }

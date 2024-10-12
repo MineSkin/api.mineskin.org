@@ -59,9 +59,9 @@ export const apiKeyMiddleware = async (req: MineSkinV2Request, res: Response, ne
             }
         }
 
-        if (req.client.isBillable()) {
+        if (await req.client.isBillable()) {
             res.header("X-MineSkin-Billable", "true");
-            if (req.client.isMetered() && req.client.usePaidCredits()) {
+            if (await req.client.isMetered() && await req.client.usePaidCredits()) {
                 throw new MineSkinError('invalid_billing', "Cannot use metered and credit billing at the same time");
             }
         }

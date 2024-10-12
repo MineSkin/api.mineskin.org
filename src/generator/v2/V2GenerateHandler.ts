@@ -84,7 +84,7 @@ export class V2GenerateHandler {
         };
     }
 
-     static makeRateLimitInfo(req: GenerateV2Request): RateLimitInfo {
+    static makeRateLimitInfo(req: GenerateV2Request): RateLimitInfo {
         const now = Date.now();
         return {
             next: {
@@ -94,6 +94,10 @@ export class V2GenerateHandler {
             delay: {
                 millis: req.minDelay || 0,
                 seconds: req.minDelay ? req.minDelay / 1000 : 0
+            },
+            limit: {
+                limit: req.maxPerMinute || 0,
+                remaining: Math.max(0, (req.maxPerMinute || 0) - (req.requestsThisMinute || 0))
             }
         };
     }

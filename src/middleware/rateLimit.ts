@@ -19,13 +19,22 @@ export const rateLimitMiddleware = async (req: GenerateV2Request, res: Response,
             throw new GeneratorError('rate_limit', `request too soon, next request in ${ ((Math.round(req.nextRequest - Date.now()) / 100) * 100) }ms`, {httpCode: 429});
         }
     }
+
     if (req.client.usePerMinuteRateLimit()) {
-        const counter = await trafficService.getCounter(req.clientInfo);
-        const limit = req.client.getPerMinuteRateLimit();
-        res.header('X-RateLimit-Limit', `${ limit }`);
-        res.header('X-RateLimit-Remaining', `${ limit - counter }`);
-        if (counter > limit) {
-            throw new GeneratorError('rate_limit', `rate limit exceeded, ${ counter } > ${ limit }`, {httpCode: 429});
+        req.requestsThisMinute = await trafficService.getRequestCounter(req.clientInfo);
+        req.maxPerMinute = req.client.getPerMinuteRateLimit();
+        res.header('X-RateLimit-Limit', `${ req.maxPerMinute }`);
+        res.header('X-RateLimit-Remaining', `${ req.maxPerMinute - req.requestsThisMinute }`);
+        if (req.requestsThisMinute > req.maxPerMinute) {
+            throw new GeneratorError('rate_limit', `rate limit exceeded, ${ req.requestsThisMinute } > ${ req.maxPerMinute }`, {httpCode: 429});
+        }
+    }
+
+    if (req.client.useConcurrencyLimit()) {
+        req.concurrentRequests = await trafficService.getConcurrent(req.clientInfo);
+        req.maxConcurrent = req.client.getConcurrencyLimit();
+        if (req.concurrentRequests >=  req.maxConcurrent) {
+            throw new GeneratorError('concurrency_limit', `concurrency limit exceeded, ${ req.concurrentRequests } > ${  req.maxConcurrent }`, {httpCode: 429});
         }
     }
 

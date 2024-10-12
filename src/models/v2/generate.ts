@@ -161,13 +161,13 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
         throw new GeneratorError('invalid_client', "no client info", {httpCode: 500});
     }
 
-    // check rate limit
+    // // check rate limit
     const trafficService = TrafficService.getInstance();
-    req.nextRequest = await trafficService.getNextRequest(req.clientInfo);
-    req.minDelay = await trafficService.getMinDelaySeconds(req.clientInfo, req.apiKey) * 1000;
-    if (req.nextRequest > req.clientInfo.time) {
-        throw new GeneratorError('rate_limit', `request too soon, next request in ${ ((Math.round(req.nextRequest - Date.now()) / 100) * 100) }ms`, {httpCode: 429});
-    }
+    // req.nextRequest = await trafficService.getNextRequest(req.clientInfo);
+    // req.minDelay = await trafficService.getMinDelaySeconds(req.clientInfo, req.apiKey) * 1000;
+    // if (req.nextRequest > req.clientInfo.time) {
+    //     throw new GeneratorError('rate_limit', `request too soon, next request in ${ ((Math.round(req.nextRequest - Date.now()) / 100) * 100) }ms`, {httpCode: 429});
+    // }
 
     // check credits
     // (always check, even when not enabled, to handle free credits)
@@ -230,8 +230,13 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
     }
 
     // preliminary rate limiting
-    req.nextRequest = await trafficService.updateLastAndNextRequest(req.clientInfo, 200);
-    Log.l.debug(`next request at ${ req.nextRequest }`);
+    if (req.client.useDelayRateLimit()) {
+        req.nextRequest = await trafficService.updateLastAndNextRequest(req.clientInfo, 200);
+        Log.l.debug(`next request at ${ req.nextRequest }`);
+    }
+    if (req.client.usePerMinuteRateLimit()) {
+        await trafficService.incRequest(req.clientInfo);
+    }
 
 
     const imageResult = await handler.getImageBuffer();
@@ -325,12 +330,17 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
 
     const imageUploaded = await client.insertUploadedImage(hashes.minecraft, imageBuffer);
 
+    if (req.client.useConcurrencyLimit()) {
+        await trafficService.incrementConcurrent(req.clientInfo);
+        req.concurrentRequests = (req.concurrentRequests || 0) + 1;
+    }
+
     const request: GenerateRequest = {
         breadcrumb: req.breadcrumb || "????",
         type: GenerateType.UPLOAD,
         image: hashes.minecraft,
         options: options,
-        client: req.clientInfo
+        clientInfo: req.clientInfo
     }
     const job = await client.submitRequest(request);
     return {job};
