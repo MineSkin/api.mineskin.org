@@ -3,7 +3,6 @@ import * as Sentry from "@sentry/node";
 import multer, { MulterError } from "multer";
 import { Maybe } from "../../util";
 import {
-    BillingService,
     DuplicateChecker,
     GenerateOptions,
     GenerateRequest,
@@ -169,35 +168,35 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
     //     throw new GeneratorError('rate_limit', `request too soon, next request in ${ ((Math.round(req.nextRequest - Date.now()) / 100) * 100) }ms`, {httpCode: 429});
     // }
 
-    // check credits
-    // (always check, even when not enabled, to handle free credits)
-    if (req.client.canUseCredits()) {
-        const billingService = BillingService.getInstance();
-        const credit = await billingService.getClientCredits(req.clientInfo);
-        if (!credit) {
-            req.warnings.push({
-                code: 'no_credits',
-                message: "no credits"
-            });
-            req.clientInfo.credits = false;
-        } else {
-            if (!credit.isValid()) {
-                req.warnings.push({
-                    code: 'invalid_credits',
-                    message: "invalid credits"
-                });
-                req.clientInfo.credits = false;
-            } else if (credit.balance <= 0) {
-                req.warnings.push({
-                    code: 'insufficient_credits',
-                    message: "insufficient credits"
-                });
-                req.clientInfo.credits = false;
-            }
-            res.header('X-MineSkin-Credits-Type', credit.type);
-            res.header('X-MineSkin-Credits-Balance', `${ credit.balance }`);
-        }
-    }
+    // // check credits
+    // // (always check, even when not enabled, to handle free credits)
+    // if (req.client.canUseCredits()) {
+    //     const billingService = BillingService.getInstance();
+    //     const credit = await billingService.getClientCredits(req.clientInfo);
+    //     if (!credit) {
+    //         req.warnings.push({
+    //             code: 'no_credits',
+    //             message: "no credits"
+    //         });
+    //         req.clientInfo.credits = false;
+    //     } else {
+    //         if (!credit.isValid()) {
+    //             req.warnings.push({
+    //                 code: 'invalid_credits',
+    //                 message: "invalid credits"
+    //             });
+    //             req.clientInfo.credits = false;
+    //         } else if (credit.balance <= 0) {
+    //             req.warnings.push({
+    //                 code: 'insufficient_credits',
+    //                 message: "insufficient credits"
+    //             });
+    //             req.clientInfo.credits = false;
+    //         }
+    //         res.header('X-MineSkin-Credits-Type', credit.type);
+    //         res.header('X-MineSkin-Credits-Balance', `${ credit.balance }`);
+    //     }
+    // }
 
     if (options.visibility === SkinVisibility2.PRIVATE) {
         if (!req.apiKey && !req.client.hasUser()) {
