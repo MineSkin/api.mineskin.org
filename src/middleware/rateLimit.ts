@@ -14,8 +14,8 @@ export const rateLimitMiddleware = async (req: GenerateV2Request, res: Response,
         req.minDelay = await trafficService.getMinDelaySeconds(req.clientInfo, req.apiKey) * 1000;
         res.header('X-RateLimit-Delay', `${ req.minDelay }`);
         res.header('X-RateLimit-NextRequest', `${ req.nextRequest }`);
-        res.header('Retry-After', `${ Math.round((req.nextRequest - Date.now()) / 1000) }`);
         if (req.nextRequest > req.clientInfo.time) {
+            res.header('Retry-After', `${ Math.round((req.nextRequest - Date.now()) / 1000) }`);
             throw new GeneratorError('rate_limit', `request too soon, next request in ${ ((Math.round(req.nextRequest - Date.now()) / 100) * 100) }ms`, {httpCode: 429});
         }
     }
