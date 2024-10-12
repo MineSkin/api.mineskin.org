@@ -21,7 +21,7 @@ import { GenerateOptions } from "../typings/GenerateOptions";
 import { debug } from "../util/colors";
 import * as Sentry from "@sentry/node";
 import { nextBreadColor } from "../typings/Bread";
-import { GenerateRequest, MineSkinRequest } from "../typings";
+import { GenerateRequest, MineSkinRequest, V2CompatRequest } from "../typings";
 import { Caching } from "../generator/Caching";
 import { isApiKeyRequest } from "../typings/ApiKeyRequest";
 import { getUserFromRequest } from "./account";
@@ -70,8 +70,20 @@ export const register = (app: Application) => {
     });
 
     // v2 compatibility layers
-    app.use("/generate", async (req: MineSkinV2Request, res: Response, next: NextFunction) => {
+    app.use("/generate", async (req: V2CompatRequest & MineSkinV2Request, res: Response, next: NextFunction) => {
+        req.v2Compat = false;
         if (req.query["v2"]) {
+            req.v2Compat = true;
+        } else {
+            const apiKey = (req as V2CompatRequest).apiKey;
+            if (apiKey) {
+                if (apiKey.grants && (apiKey.grants as any).v2_compat) {
+                    req.v2Compat = true
+                }
+            }
+        }
+
+        if (req.v2Compat) {
             res.header("X-MineSkin-Api-Version", "v1-with-v2-compat");
             res.header("X-MineSkin-Api-Deprecated", "true");
             if (!req.warnings) {
@@ -83,9 +95,10 @@ export const register = (app: Application) => {
             })
             return await mineSkinV2InitialMiddleware(req, res, next);
         }
+
         next();
     });
-    app.use("/generate", async (req: MineSkinV2Request, res: Response, next: NextFunction) => {
+    app.use("/generate", async (req: MineSkinV2Request & V2CompatRequest, res: Response, next: NextFunction) => {
         if (req.query["v2"]) {
             return await rateLimitMiddleware(req, res, next);
         }
