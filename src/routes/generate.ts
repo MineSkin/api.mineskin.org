@@ -35,6 +35,7 @@ import { GenerateV2Request, MineSkinV2Request } from "./v2/types";
 import { v2GenerateAndWait } from "../models/v2/generate";
 import { V2SkinResponse } from "../typings/v2/V2SkinResponse";
 import { mineSkinV2InitialMiddleware } from "../middleware/combined";
+import { rateLimitMiddleware } from "../middleware/rateLimit";
 
 export const register = (app: Application) => {
 
@@ -81,6 +82,12 @@ export const register = (app: Application) => {
                 message: "this endpoint is deprecated, please use the v2 API"
             })
             return await mineSkinV2InitialMiddleware(req, res, next);
+        }
+        next();
+    });
+    app.use("/generate", async (req: MineSkinV2Request, res: Response, next: NextFunction) => {
+        if (req.query["v2"]) {
+            return await rateLimitMiddleware(req, res, next);
         }
         next();
     });
