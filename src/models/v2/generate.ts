@@ -212,6 +212,7 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
 
     let handler: V2GenerateHandler;
 
+    //TODO: support base64
     if (req.is('multipart/form-data')) {
         handler = new V2UploadHandler(req, res, options);
     } else if (req.is('application/json')) {
