@@ -38,7 +38,9 @@ export const initRequestClient = (req: MineSkinV2Request, res: Response) => {
         });
     }
 
-    res.header("X-MineSkin-Api-Version", "v2");
+    if (!res.hasHeader("X-MineSkin-Api-Version")) {
+        res.header("X-MineSkin-Api-Version", "v2");
+    }
 
     req.client = new RequestClient(Date.now(), userAgent.ua, origin, ip, via);
 }
