@@ -99,7 +99,7 @@ export const register = (app: Application) => {
         next();
     });
     app.use("/generate", async (req: MineSkinV2Request & V2CompatRequest, res: Response, next: NextFunction) => {
-        if (req.query["v2"]) {
+        if (req.v2Compat) {
             return await rateLimitMiddleware(req, res, next);
         }
         next();
@@ -107,8 +107,8 @@ export const register = (app: Application) => {
 
     //// URL
 
-    app.post("/generate/url", upload.none(), async (req: GenerateRequest, res: Response) => {
-        if (req.query["v2"]) {
+    app.post("/generate/url", upload.none(), async (req: GenerateRequest & V2CompatRequest, res: Response) => {
+        if (req.v2Compat) {
             const result = await v2GenerateAndWait(req as any as GenerateV2Request, res);
             if ('skin' in result) {
                 await sendV2WrappedSkin(req as any as GenerateV2Request, res, (result as V2SkinResponse));
@@ -145,8 +145,8 @@ export const register = (app: Application) => {
 
     //// UPLOAD
 
-    app.post("/generate/upload", async (req: GenerateRequest, res: Response) => {
-        if (req.query["v2"]) {
+    app.post("/generate/upload", async (req: GenerateRequest & V2CompatRequest, res: Response) => {
+        if (req.v2Compat) {
             const result = await v2GenerateAndWait(req as any as GenerateV2Request, res);
             if ('skin' in result) {
                 await sendV2WrappedSkin(req as any as GenerateV2Request, res, (result as V2SkinResponse));
