@@ -40,14 +40,19 @@ export class RequestClient {
             return;
         }
         this.userId = userId;
-        this._user = User.findByUUID(this.userId);
-        this._user.then(u => {
-            if (u) {
-                setUser(u);
-            }
-        }).catch(e => {
-            Sentry.captureException(e);
-        })
+        this._user = new Promise((resolve, reject) => {
+            User.findByUUID(userId).then(u => {
+                if (u) {
+                    setUser(u);
+                    resolve(u);
+                } else {
+                    resolve(undefined);
+                }
+            }).catch(e => {
+                reject(e);
+                Sentry.captureException(e);
+            });
+        });
     }
 
     setUser(user: IUserDocument) {
