@@ -41,6 +41,15 @@ export async function v2SkinList(req: MineSkinV2Request, res: Response<V2SkinLis
 
     let lastSkin = skins[skins.length - 1];
 
+    let pagination = {
+        current: {
+            after: after
+        },
+        next: {
+            after: lastSkin?.uuid
+        }
+    };
+
     if (lastSkin) {
         const params = new URLSearchParams();
         if (after) {
@@ -58,7 +67,8 @@ export async function v2SkinList(req: MineSkinV2Request, res: Response<V2SkinLis
     }
     return {
         success: true,
-        skins: skins.map(skinToSimpleJson)
+        skins: skins.map(skinToSimpleJson),
+        pagination: pagination
     };
 }
 
