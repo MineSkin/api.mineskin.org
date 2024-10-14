@@ -21,6 +21,7 @@ import {
     GenerateRequest,
     GenerateResult,
     GenerateType,
+    MineSkinError,
     SkinVariant,
     SkinVisibility2,
     UUID
@@ -35,7 +36,6 @@ import { V2UrlHandler } from "../../generator/v2/V2UrlHandler";
 import { V2JobResponse } from "../../typings/v2/V2JobResponse";
 import { IPopulatedSkin2Document, IQueueDocument, isPopulatedSkin2Document } from "@mineskin/database";
 import { GenerateReqOptions, GenerateReqUser } from "../../validation/generate";
-import { deserializeError } from "serialize-error";
 import { redisSub } from "../../database/redis";
 
 const upload = multer({
@@ -71,6 +71,7 @@ export async function v2GenerateAndWait(req: GenerateV2Request, res: Response<V2
     }
     try {
         const result = await getClient().waitForJob(job.id, 10_000) as GenerateResult; //TODO: configure timeout
+        Log.l.debug(JSON.stringify(result, null, 2));
         req.links.skin = `/v2/skins/${ result.skin }`;
         const queried = await querySkinOrThrow(result.skin);
         return {
@@ -80,10 +81,15 @@ export async function v2GenerateAndWait(req: GenerateV2Request, res: Response<V2
             usage: result.usage
         };
     } catch (e) {
-        console.warn(e);
+        if (e instanceof MineSkinError) {
+            throw e;
+        }
         if (e.message.includes('timed out before finishing') || e.message.includes('Timeout')) { // this kinda sucks
+            Log.l.warn(e);
             throw new GeneratorError('generator_timeout', "generator request timed out", {httpCode: 500, error: e});
         }
+        Log.l.error(e);
+        Sentry.captureException(e);
         throw new GeneratorError('unexpected_error', "unexpected error", {httpCode: 500, error: e});
     }
 }
@@ -145,7 +151,7 @@ export async function v2GetJob(req: GenerateV2Request, res: Response<V2GenerateR
     }
     if (job.status === 'failed') {
         if (job.error) {
-            throw deserializeError(job.error);
+            throw MongoGeneratorClient.deserializeCustomError(job.error);
         }
         throw new GeneratorError('job_failed', "Job failed", {httpCode: 500});
     }
