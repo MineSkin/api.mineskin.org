@@ -37,6 +37,7 @@ import { V2JobResponse } from "../../typings/v2/V2JobResponse";
 import { IPopulatedSkin2Document, IQueueDocument, isPopulatedSkin2Document } from "@mineskin/database";
 import { GenerateReqOptions, GenerateReqUser } from "../../validation/generate";
 import { redisSub } from "../../database/redis";
+import { V2MiscResponseBody } from "../../typings/v2/V2MiscResponseBody";
 
 const upload = multer({
     limits: {
@@ -161,6 +162,28 @@ export async function v2GetJob(req: GenerateV2Request, res: Response<V2GenerateR
             uuid: job?.id || 'unknown',
             status: job?.status || 'unknown'
         }
+    };
+}
+
+export async function v2ListJobs(req: GenerateV2Request, res: Response<V2MiscResponseBody>): Promise<V2MiscResponseBody> {
+    let jobs;
+    if (req.client.hasApiKey()) {
+        jobs = await getClient().getByApiKey(req.client.apiKeyId!);
+    } else if (req.client.hasUser()) {
+        jobs = await getClient().getByUser(req.client.userId!);
+    } else {
+        throw new GeneratorError('unauthorized', "no client info", {httpCode: 401});
+    }
+
+
+    return {
+        success: true,
+        jobs: jobs.map(job => {
+            return {
+                uuid: job.id, //TODO: rename key to id
+                status: job.status
+            }
+        })
     };
 }
 
