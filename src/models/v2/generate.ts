@@ -4,20 +4,27 @@ import multer, { MulterError } from "multer";
 import { Maybe } from "../../util";
 import {
     DuplicateChecker,
-    GenerateOptions,
-    GenerateRequest,
-    GenerateResult,
-    GeneratorClient,
     GeneratorError,
     GenError,
+    IGeneratorClient,
     ImageService,
     ImageValidation,
     Log,
     MAX_IMAGE_SIZE,
+    MongoGeneratorClient,
     SkinService,
     TrafficService
 } from "@mineskin/generator";
-import { ErrorSource, GenerateType, SkinVariant, SkinVisibility2, UUID } from "@mineskin/types";
+import {
+    ErrorSource,
+    GenerateOptions,
+    GenerateRequest,
+    GenerateResult,
+    GenerateType,
+    SkinVariant,
+    SkinVisibility2,
+    UUID
+} from "@mineskin/types";
 import { Response } from "express";
 import { V2SkinResponse } from "../../typings/v2/V2SkinResponse";
 import { debug } from "../../util/colors";
@@ -25,10 +32,11 @@ import { V2GenerateResponseBody } from "../../typings/v2/V2GenerateResponseBody"
 import { V2GenerateHandler } from "../../generator/v2/V2GenerateHandler";
 import { V2UploadHandler } from "../../generator/v2/V2UploadHandler";
 import { V2UrlHandler } from "../../generator/v2/V2UrlHandler";
-import { Job } from "bullmq";
 import { V2JobResponse } from "../../typings/v2/V2JobResponse";
-import { IPopulatedSkin2Document, isPopulatedSkin2Document } from "@mineskin/database";
+import { IPopulatedSkin2Document, IQueueDocument, isPopulatedSkin2Document } from "@mineskin/database";
 import { GenerateReqOptions, GenerateReqUser } from "../../validation/generate";
+import { deserializeError } from "serialize-error";
+import { redisSub } from "../../database/redis";
 
 const upload = multer({
     limits: {
@@ -38,17 +46,7 @@ const upload = multer({
     }
 });
 
-const client = new GeneratorClient({
-    connection: {
-        host: process.env.REDIS_HOST,
-        port: parseInt(process.env.REDIS_PORT!),
-        db: parseInt(process.env.REDIS_DB!) || 0,
-        username: process.env.REDIS_USERNAME,
-        password: process.env.REDIS_PASSWORD
-    },
-    prefix: 'mineskin:queue',
-    blockingConnection: false
-});
+const client: IGeneratorClient<IQueueDocument> = new MongoGeneratorClient(redisSub!);
 
 export async function v2GenerateAndWait(req: GenerateV2Request, res: Response<V2GenerateResponseBody | V2SkinResponse>): Promise<V2GenerateResponseBody | V2SkinResponse> {
     const {skin, job} = await v2SubmitGeneratorJob(req, res);
@@ -65,7 +63,7 @@ export async function v2GenerateAndWait(req: GenerateV2Request, res: Response<V2
         throw new GeneratorError('job_not_found', "Job not found", {httpCode: 404});
     }
     try {
-        const result = await job.waitUntilFinished(client.queueEvents, 10_000) as GenerateResult; //TODO: configure timeout
+        const result = await client.waitForJob(job.id, 10_000) as GenerateResult; //TODO: configure timeout
         req.links.skin = `/v2/skins/${ result.skin }`;
         const queried = await querySkinOrThrow(result.skin);
         return {
@@ -76,7 +74,7 @@ export async function v2GenerateAndWait(req: GenerateV2Request, res: Response<V2
         };
     } catch (e) {
         console.warn(e);
-        if (e.message.includes('timed out before finishing')) { // this kinda sucks
+        if (e.message.includes('timed out before finishing') || e.message.includes('Timeout')) { // this kinda sucks
             throw new GeneratorError('generator_timeout', "generator request timed out", {httpCode: 500, error: e});
         }
         throw new GeneratorError('unexpected_error', "unexpected error", {httpCode: 500, error: e});
@@ -97,7 +95,7 @@ export async function v2GenerateEnqueue(req: GenerateV2Request, res: Response<V2
             success: true,
             job: {
                 uuid: job?.id || 'unknown',
-                status: (await job?.getState()) || 'completed'
+                status: job?.status || 'completed'
             },
             skin: V2GenerateHandler.skinToJson(queried, skin.duplicate),
             rateLimit: V2GenerateHandler.makeRateLimitInfo(req)
@@ -108,7 +106,7 @@ export async function v2GenerateEnqueue(req: GenerateV2Request, res: Response<V2
         success: true,
         job: {
             uuid: job?.id || 'unknown',
-            status: (await job?.getState()) || 'unknown'
+            status: job?.status || 'unknown'
         }
     };
 }
@@ -123,26 +121,32 @@ export async function v2GetJob(req: GenerateV2Request, res: Response<V2GenerateR
     req.links.job = `/v2/queue/${ jobId }`;
     req.links.self = req.links.job;
 
-    if (await job.isCompleted()) {
-        const result = job.returnvalue as GenerateResult;
+    if (job.status === 'completed') {
+        const result = job.result!;
         req.links.skin = `/v2/skins/${ result.skin }`;
         const queried = await querySkinOrThrow(result.skin);
         return {
             success: true,
             job: {
                 uuid: job?.id || 'unknown',
-                status: (await job?.getState()) || 'completed'
+                status: job?.status || 'completed'
             },
             skin: V2GenerateHandler.skinToJson(queried, !!result.duplicate),
             rateLimit: V2GenerateHandler.makeRateLimitInfo(req),
             usage: result.usage
         };
     }
+    if (job.status === 'failed') {
+        if (job.error) {
+            throw deserializeError(job.error);
+        }
+        throw new GeneratorError('job_failed', "Job failed", {httpCode: 500});
+    }
     return {
         success: true,
         job: {
             uuid: job?.id || 'unknown',
-            status: (await job?.getState()) || 'unknown'
+            status: job?.status || 'unknown'
         }
     };
 }
@@ -458,7 +462,7 @@ async function querySkinOrThrow(uuid: UUID): Promise<IPopulatedSkin2Document> {
 }
 
 interface JobWithSkin {
-    job?: Job<GenerateRequest, GenerateResult>;
+    job?: IQueueDocument;
     skin?: {
         id: UUID;
         duplicate?: boolean;

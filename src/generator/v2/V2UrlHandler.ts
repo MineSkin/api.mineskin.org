@@ -3,13 +3,12 @@ import { Response } from "express";
 import {
     ALLOWED_IMAGE_TYPES,
     DuplicateChecker,
-    GenerateOptions,
     GeneratorError,
     GenError,
     Log,
     MAX_IMAGE_SIZE
 } from "@mineskin/generator";
-import { GenerateType, UUID } from "@mineskin/types";
+import { GenerateOptions, GenerateType, UUID } from "@mineskin/types";
 import { readFile } from "fs/promises";
 import { GenerateV2Request } from "../../routes/v2/types";
 import { V2GenerateResponseBody } from "../../typings/v2/V2GenerateResponseBody";

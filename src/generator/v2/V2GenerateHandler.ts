@@ -1,6 +1,6 @@
 import { Response } from "express";
-import { GenerateOptions, SkinService } from "@mineskin/generator";
-import { GenerateType, RateLimitInfo, SkinInfo2, UUID } from "@mineskin/types";
+import { SkinService } from "@mineskin/generator";
+import { GenerateOptions, GenerateType, RateLimitInfo, SkinInfo2, UUID } from "@mineskin/types";
 import { IPopulatedSkin2Document, ISkinDocument, isPopulatedSkin2Document } from "@mineskin/database";
 import { GenerateV2Request } from "../../routes/v2/types";
 import { V2GenerateResponseBody } from "../../typings/v2/V2GenerateResponseBody";
