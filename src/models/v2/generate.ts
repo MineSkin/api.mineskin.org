@@ -38,6 +38,7 @@ import { IPopulatedSkin2Document, IQueueDocument, isPopulatedSkin2Document } fro
 import { GenerateReqOptions, GenerateReqUser } from "../../validation/generate";
 import { redisSub } from "../../database/redis";
 import { V2MiscResponseBody } from "../../typings/v2/V2MiscResponseBody";
+import { V2JobListResponse } from "../../typings/v2/V2JobListResponse";
 
 const upload = multer({
     limits: {
@@ -108,7 +109,7 @@ export async function v2GenerateEnqueue(req: GenerateV2Request, res: Response<V2
         return {
             success: true,
             job: {
-                uuid: job?.id || 'unknown',
+                id: job?.id || 'unknown',
                 status: job?.status || 'completed'
             },
             skin: V2GenerateHandler.skinToJson(queried, skin.duplicate),
@@ -119,7 +120,7 @@ export async function v2GenerateEnqueue(req: GenerateV2Request, res: Response<V2
     return {
         success: true,
         job: {
-            uuid: job?.id || 'unknown',
+            id: job?.id || 'unknown',
             status: job?.status || 'unknown'
         }
     };
@@ -142,7 +143,7 @@ export async function v2GetJob(req: GenerateV2Request, res: Response<V2GenerateR
         return {
             success: true,
             job: {
-                uuid: job?.id || 'unknown',
+                id: job?.id || 'unknown',
                 status: job?.status || 'completed'
             },
             skin: V2GenerateHandler.skinToJson(queried, !!result.duplicate),
@@ -159,13 +160,13 @@ export async function v2GetJob(req: GenerateV2Request, res: Response<V2GenerateR
     return {
         success: true,
         job: {
-            uuid: job?.id || 'unknown',
+            id: job?.id || 'unknown',
             status: job?.status || 'unknown'
         }
     };
 }
 
-export async function v2ListJobs(req: GenerateV2Request, res: Response<V2MiscResponseBody>): Promise<V2MiscResponseBody> {
+export async function v2ListJobs(req: GenerateV2Request, res: Response<V2MiscResponseBody>): Promise<V2JobListResponse> {
     let jobs;
     if (req.client.hasApiKey()) {
         jobs = await getClient().getByApiKey(req.client.apiKeyId!);
@@ -180,7 +181,7 @@ export async function v2ListJobs(req: GenerateV2Request, res: Response<V2MiscRes
         success: true,
         jobs: jobs.map(job => {
             return {
-                uuid: job.id, //TODO: rename key to id
+                id: job.id,
                 status: job.status
             }
         })
