@@ -1,6 +1,7 @@
 import { GenerateV2Request } from "../routes/v2/types";
 import { NextFunction, Response } from "express";
 import { GeneratorError, TrafficService } from "@mineskin/generator";
+import { flagsmith } from "@mineskin/generator/dist/flagsmith";
 
 export const rateLimitMiddleware = async (req: GenerateV2Request, res: Response, next: NextFunction) => {
     await verifyRateLimit(req, res);
@@ -36,9 +37,11 @@ export const verifyRateLimit = async (req: GenerateV2Request, res: Response) => 
     }
 
     if (req.client.useConcurrencyLimit()) {
+        const flags = await flagsmith.getEnvironmentFlags();
+        const block = flags.isFeatureEnabled('generator.concurrency.block');
         req.concurrentRequests = await trafficService.getConcurrent(req.clientInfo);
         req.maxConcurrent = req.client.getConcurrencyLimit();
-        if (req.concurrentRequests >=  req.maxConcurrent) {
+        if (block && req.concurrentRequests >=  req.maxConcurrent) {
             throw new GeneratorError('concurrency_limit', `concurrency limit exceeded, ${ req.concurrentRequests } > ${  req.maxConcurrent }`, {httpCode: 429});
         }
     }
