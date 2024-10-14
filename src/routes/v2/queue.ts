@@ -18,10 +18,12 @@ v2QueueRouter.post("/", rateLimitMiddleware, expressAsyncHandler(async (req: Gen
 }));
 v2QueueRouter.get("/", expressAsyncHandler(async (req: GenerateV2Request, res: Response<V2MiscResponseBody>) => {
     const result = await v2ListJobs(req, res);
+    res.header("Cache-Control", "private, no-store, max-age=1");
     res.json(formatV2Response(req, result));
 }));
 v2QueueRouter.get("/:jobId", expressAsyncHandler(async (req: GenerateV2Request, res: Response<V2JobResponse>) => {
     const result = await v2GetJob(req, res);
+    res.header("Cache-Control", "max-age=1");
     res.json(formatV2Response(req, result));
 }));
 

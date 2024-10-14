@@ -1359,7 +1359,7 @@ __metadata:
 
 "@mineskin/database@git+ssh://git@github.com/MineSkin/mineskin-database.git":
   version: 1.0.0
-  resolution: "@mineskin/database@git+ssh://git@github.com/MineSkin/mineskin-database.git#commit=af25d71e6c6094c4bcf85518908b4431c8ac569f"
+  resolution: "@mineskin/database@git+ssh://git@github.com/MineSkin/mineskin-database.git#commit=6dda0fbfcedbbaca953eb190569c727b1bae5e7f"
   dependencies:
     "@mineskin/types": "git+ssh://git@github.com/MineSkin/mineskin-types.git"
     "@sentry/cli": "npm:^2.32.2"
@@ -1368,7 +1368,7 @@ __metadata:
     dotenv: "npm:^16.4.5"
     mongoose: "npm:^8.5.3"
     uuid: "npm:^10.0.0"
-  checksum: 10c0/3701998eb689d94f86d98e1d3e5f0a0308db1325927c6ada3b4a0e06c949f74d12d198536d9b181379feea526fe9e57ee1b4f6bc713a8f7e3d98fff88f938660
+  checksum: 10c0/5e16ea057c2408e113cb97da5572d6216c95d0dd04e69691606c9d4dcb390246920f08211554fd0e8ee9b2c1ef300fb74945e1a00707a445798dd693d21ee1d9
   languageName: node
   linkType: hard
 
