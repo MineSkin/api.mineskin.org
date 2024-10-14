@@ -13,9 +13,9 @@ Sentry.init({
         nodeProfilingIntegration()
     ],
     serverName: hostname,
-    tracesSampleRate: 0.1,
+    tracesSampleRate: process.env.NODE_ENV === 'development' ? 1 : 0.1,
     profilesSampleRate: 0.1,
-    sampleRate: 0.8,
+    sampleRate: process.env.NODE_ENV === 'development' ? 1 : 0.8,
     ignoreErrors: [
         "No duplicate found",
         "Invalid image file size",
