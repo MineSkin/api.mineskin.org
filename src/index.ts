@@ -17,8 +17,7 @@ import {
     hiatusRoute,
     renderRoute,
     testerRoute,
-    utilRoute,
-    v2GenerateRouter
+    utilRoute
 } from "./routes";
 import { Temp } from "./generator/Temp";
 import { getConfig, getLocalConfig, MineSkinConfig } from "./typings/Configs";
@@ -41,6 +40,7 @@ import { connectToMongo } from "@mineskin/database";
 import { MineSkinError } from "@mineskin/types";
 import { BillingService, GeneratorError, Log, TrafficService } from "@mineskin/generator";
 import { v2SkinsRouter } from "./routes/v2/skins";
+import { v2GenerateRouter } from "./routes/v2/generate";
 import { v2QueueRouter } from "./routes/v2/queue";
 import { v2TestRouter } from "./routes/v2/test";
 import process from "node:process";

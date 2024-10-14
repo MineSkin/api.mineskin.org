@@ -46,7 +46,14 @@ const upload = multer({
     }
 });
 
-const client: IGeneratorClient<IQueueDocument> = new MongoGeneratorClient(redisSub!);
+let _client: IGeneratorClient<IQueueDocument>;
+
+function getClient() {
+    if (!_client) {
+        _client = new MongoGeneratorClient(redisSub!);
+    }
+    return _client;
+}
 
 export async function v2GenerateAndWait(req: GenerateV2Request, res: Response<V2GenerateResponseBody | V2SkinResponse>): Promise<V2GenerateResponseBody | V2SkinResponse> {
     const {skin, job} = await v2SubmitGeneratorJob(req, res);
@@ -63,7 +70,7 @@ export async function v2GenerateAndWait(req: GenerateV2Request, res: Response<V2
         throw new GeneratorError('job_not_found', "Job not found", {httpCode: 404});
     }
     try {
-        const result = await client.waitForJob(job.id, 10_000) as GenerateResult; //TODO: configure timeout
+        const result = await getClient().waitForJob(job.id, 10_000) as GenerateResult; //TODO: configure timeout
         req.links.skin = `/v2/skins/${ result.skin }`;
         const queried = await querySkinOrThrow(result.skin);
         return {
@@ -113,7 +120,7 @@ export async function v2GenerateEnqueue(req: GenerateV2Request, res: Response<V2
 
 export async function v2GetJob(req: GenerateV2Request, res: Response<V2GenerateResponseBody | V2JobResponse>): Promise<V2JobResponse> {
     const jobId = req.params.jobId;
-    const job = await client.getJob(jobId);
+    const job = await getClient().getJob(jobId);
     if (!job) {
         throw new GeneratorError('job_not_found', `Job not found: ${ jobId }`, {httpCode: 404});
     }
@@ -334,7 +341,7 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
     }
      */
 
-    const imageUploaded = await client.insertUploadedImage(hashes.minecraft, imageBuffer);
+    const imageUploaded = await getClient().insertUploadedImage(hashes.minecraft, imageBuffer);
 
     if (req.client.useConcurrencyLimit()) {
         await trafficService.incrementConcurrent(req.clientInfo);
@@ -348,7 +355,7 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
         options: options,
         clientInfo: req.clientInfo
     }
-    const job = await client.submitRequest(request);
+    const job = await getClient().submitRequest(request);
     return {job};
 }
 

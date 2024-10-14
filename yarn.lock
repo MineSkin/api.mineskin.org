@@ -3778,7 +3778,7 @@ __metadata:
     redis: "npm:^4.6.15"
     rotating-file-stream: "npm:^1.4.4"
     runtypes: "npm:^6.7.0"
-    serialize-error: "npm:^11.0.3"
+    serialize-error: "npm:8.1.0"
     source-map-support: "npm:^0.5.19"
     tmp: "npm:0.2.1"
     ts-jest: "npm:^29.2.5"
@@ -9033,21 +9033,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"serialize-error@npm:8.1.0, serialize-error@npm:^8.1.0":
+  version: 8.1.0
+  resolution: "serialize-error@npm:8.1.0"
+  dependencies:
+    type-fest: "npm:^0.20.2"
+  checksum: 10c0/8cfd89f43ca93e283c5f1d16178a536bdfac9bc6029f4a9df988610cc399bc4f2478d1f10ce40b9dff66b863a5158a19b438fbec929045c96d92174f6bca1e88
+  languageName: node
+  linkType: hard
+
 "serialize-error@npm:^11.0.3":
   version: 11.0.3
   resolution: "serialize-error@npm:11.0.3"
   dependencies:
     type-fest: "npm:^2.12.2"
   checksum: 10c0/7263603883b8936650819f0fd5150d41427b317432678b21722c54b85367ae15b8552865eb7f3f39ba71a32a003730a2e2e971e6909431eb54db70a3ef8eca17
-  languageName: node
-  linkType: hard
-
-"serialize-error@npm:^8.1.0":
-  version: 8.1.0
-  resolution: "serialize-error@npm:8.1.0"
-  dependencies:
-    type-fest: "npm:^0.20.2"
-  checksum: 10c0/8cfd89f43ca93e283c5f1d16178a536bdfac9bc6029f4a9df988610cc399bc4f2478d1f10ce40b9dff66b863a5158a19b438fbec929045c96d92174f6bca1e88
   languageName: node
   linkType: hard
 

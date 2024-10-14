@@ -1,1 +1,1 @@
-export { v2GenerateRouter } from "./generate"
+export {};
