@@ -1,6 +1,7 @@
 import { MineSkinV2Request } from "../routes/v2/types";
 import { NextFunction, Response } from "express";
 import { BillingService } from "@mineskin/generator";
+import { flagsmith } from "@mineskin/generator/dist/flagsmith";
 
 export const creditsMiddleware = async (req: MineSkinV2Request, res: Response, next: NextFunction) => {
     await verifyCredits(req, res);
@@ -11,6 +12,13 @@ export const verifyCredits = async (req: MineSkinV2Request, res: Response) => {
     if (!req.clientInfo) {
         return;
     }
+
+    const flags = await flagsmith.getEnvironmentFlags();
+    if (!flags.isFeatureEnabled('generator.credits.enabled')) {
+        req.clientInfo.credits = false;
+        return;
+    }
+
     // check credits
     // (always check, even when not enabled, to handle free credits)
     if (req.client.canUseCredits()) {
