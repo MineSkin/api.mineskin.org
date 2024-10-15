@@ -28,7 +28,7 @@ export const webOnlyCors = cors({
             callback(null, requestOrigin);
             return;
         }
-        callback(new Error("Not allowed by CORS (web)"));
+        callback(null, false);
     },
     methods: ["GET", "POST"],
     allowedHeaders: ALLOWED_HEADERS,
@@ -41,7 +41,7 @@ export const webOnlyCorsWithCredentials = cors({
             callback(null, requestOrigin);
             return;
         }
-        callback(new Error("Not allowed by CORS (web)"));
+        callback(null, false);
     },
     credentials: true,
     methods: ["GET", "POST"],
@@ -55,7 +55,7 @@ export const mineskinOnlyCors = cors({
             callback(null, requestOrigin);
             return;
         }
-        callback(new Error("Not allowed by CORS (mineskin)"));
+        callback(null, false);
     },
     methods: ["GET", "POST"],
     allowedHeaders: ALLOWED_HEADERS,
@@ -68,7 +68,7 @@ export const mineskinOnlyCorsWithCredentials = cors({
             callback(null, requestOrigin);
             return;
         }
-        callback(new Error("Not allowed by CORS (mineskin)"));
+        callback(null, false);
     },
     credentials: true,
     methods: ["GET", "POST"],
