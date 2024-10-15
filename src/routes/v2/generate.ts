@@ -10,7 +10,7 @@ import { rateLimitMiddleware } from "../../middleware/rateLimit";
 import { wildcardCorsWithCredentials } from "../../middleware/cors";
 
 export const v2GenerateRouter: Router = v2Router();
-v2GenerateRouter.use("/", wildcardCorsWithCredentials);
+v2GenerateRouter.use(wildcardCorsWithCredentials);
 
 v2GenerateRouter.post("/", rateLimitMiddleware, expressAsyncHandler(async (req: GenerateV2Request, res: Response<V2GenerateResponseBody>) => {
     const result = await v2GenerateAndWait(req, res);
