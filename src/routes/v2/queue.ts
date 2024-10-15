@@ -9,8 +9,10 @@ import { formatV2Response } from "../../middleware/response";
 import { v2ErrorHandler } from "../../middleware/error";
 import { rateLimitMiddleware } from "../../middleware/rateLimit";
 import { V2MiscResponseBody } from "../../typings/v2/V2MiscResponseBody";
+import { wildcardCorsWithCredentials } from "../../middleware/cors";
 
 export const v2QueueRouter: Router = v2Router();
+v2QueueRouter.use(wildcardCorsWithCredentials);
 
 v2QueueRouter.post("/", rateLimitMiddleware, expressAsyncHandler(async (req: GenerateV2Request, res: Response<V2JobResponse>) => {
     const result = await v2GenerateEnqueue(req, res);

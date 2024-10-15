@@ -4,8 +4,10 @@ import { MineSkinV2Request } from "./types";
 import { Response } from "express";
 import { v2ErrorHandler } from "../../middleware/error";
 import { rateLimitMiddleware } from "../../middleware/rateLimit";
+import { mineskinOnlyCorsWithCredentials } from "../../middleware/cors";
 
 export const v2TestRouter = v2Router();
+v2TestRouter.use(mineskinOnlyCorsWithCredentials);
 
 v2TestRouter.get("/client", async (req: MineSkinV2Request, res: Response) => {
     const client = req.clientInfo;

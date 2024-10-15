@@ -8,8 +8,10 @@ import { V2SkinResponse } from "../../typings/v2/V2SkinResponse";
 import { formatV2Response } from "../../middleware/response";
 import { v2ErrorHandler } from "../../middleware/error";
 import { v2AddLike, v2AddView } from "../../models/v2/interactions";
+import { wildcardCorsWithCredentials } from "../../middleware/cors";
 
 export const v2SkinsRouter: Router = v2Router();
+v2SkinsRouter.use(wildcardCorsWithCredentials);
 
 v2SkinsRouter.get("/", expressAsyncHandler(async (req: MineSkinV2Request, res: Response<V2SkinListResponseBody>) => {
     const result = await v2SkinList(req, res);

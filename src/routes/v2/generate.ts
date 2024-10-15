@@ -7,9 +7,10 @@ import expressAsyncHandler from "express-async-handler";
 import { formatV2Response } from "../../middleware/response";
 import { v2ErrorHandler } from "../../middleware/error";
 import { rateLimitMiddleware } from "../../middleware/rateLimit";
+import { wildcardCorsWithCredentials } from "../../middleware/cors";
 
 export const v2GenerateRouter: Router = v2Router();
-
+v2GenerateRouter.use("/", wildcardCorsWithCredentials);
 
 v2GenerateRouter.post("/", rateLimitMiddleware, expressAsyncHandler(async (req: GenerateV2Request, res: Response<V2GenerateResponseBody>) => {
     const result = await v2GenerateAndWait(req, res);
