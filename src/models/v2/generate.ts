@@ -59,6 +59,12 @@ function getClient() {
 
 export async function v2GenerateAndWait(req: GenerateV2Request, res: Response<V2GenerateResponseBody | V2SkinResponse>): Promise<V2GenerateResponseBody | V2SkinResponse> {
     const {skin, job} = await v2SubmitGeneratorJob(req, res);
+    if (job) {
+        req.links.job = `/v2/queue/${ job.id }`;
+        if (job.request.image) {
+            req.links.image = `/v2/images/${ job.request.image }`;
+        }
+    }
     if (skin) {
         req.links.skin = `/v2/skins/${ skin.id }`;
         const queried = await querySkinOrThrow(skin.id);
@@ -100,6 +106,9 @@ export async function v2GenerateEnqueue(req: GenerateV2Request, res: Response<V2
     const {skin, job} = await v2SubmitGeneratorJob(req, res);
     if (job) {
         req.links.job = `/v2/queue/${ job.id }`;
+        if (job.request.image) {
+            req.links.image = `/v2/images/${ job.request.image }`;
+        }
     }
     if (skin) {
         req.links.skin = `/v2/skins/${ skin.id }`;
@@ -138,6 +147,7 @@ export async function v2GetJob(req: GenerateV2Request, res: Response<V2GenerateR
 
     req.links.job = `/v2/queue/${ jobId }`;
     req.links.self = req.links.job;
+    req.links.image = `/v2/images/${ job.request.image }`;
 
     if (job.status === 'completed') {
         const result = job.result!;
