@@ -48,6 +48,7 @@ import { v2MeRouter } from "./routes/v2/me";
 import { v2NotFoundHandler } from "./middleware/error";
 import * as http from "node:http";
 import { v2DelayRouter } from "./routes/v2/delay";
+import { v2ImagesRouter } from "./routes/v2/images";
 
 
 sourceMapSupport.install();
@@ -346,6 +347,7 @@ async function init() {
         app.use("/v2/skins", v2SkinsRouter);
         app.use("/v2/me", v2MeRouter);
         app.use("/v2/delay", v2DelayRouter);
+        app.use("/v2/images", v2ImagesRouter);
         if (process.env.NODE_ENV !== 'production') {
             app.use("/v2/test", v2TestRouter);
         }
