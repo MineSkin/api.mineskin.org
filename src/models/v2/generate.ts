@@ -110,7 +110,8 @@ export async function v2GenerateEnqueue(req: GenerateV2Request, res: Response<V2
             success: true,
             job: {
                 id: job?.id || 'unknown',
-                status: job?.status || 'completed'
+                status: job?.status || 'completed',
+                timestamp: job?.createdAt?.getTime() || 0
             },
             skin: V2GenerateHandler.skinToJson(queried, skin.duplicate),
             rateLimit: V2GenerateHandler.makeRateLimitInfo(req)
@@ -121,7 +122,8 @@ export async function v2GenerateEnqueue(req: GenerateV2Request, res: Response<V2
         success: true,
         job: {
             id: job?.id || 'unknown',
-            status: job?.status || 'unknown'
+            status: job?.status || 'unknown',
+            timestamp: job?.createdAt?.getTime() || 0
         }
     };
 }
@@ -144,7 +146,8 @@ export async function v2GetJob(req: GenerateV2Request, res: Response<V2GenerateR
             success: true,
             job: {
                 id: job?.id || 'unknown',
-                status: job?.status || 'completed'
+                status: job?.status || 'completed',
+                timestamp: job?.createdAt?.getTime() || 0
             },
             skin: V2GenerateHandler.skinToJson(queried, !!result.duplicate),
             rateLimit: V2GenerateHandler.makeRateLimitInfo(req),
@@ -161,7 +164,8 @@ export async function v2GetJob(req: GenerateV2Request, res: Response<V2GenerateR
         success: true,
         job: {
             id: job?.id || 'unknown',
-            status: job?.status || 'unknown'
+            status: job?.status || 'unknown',
+            timestamp: job?.createdAt?.getTime() || 0
         }
     };
 }
@@ -182,7 +186,8 @@ export async function v2ListJobs(req: GenerateV2Request, res: Response<V2MiscRes
         jobs: jobs.map(job => {
             return {
                 id: job.id,
-                status: job.status
+                status: job.status,
+                timestamp: job?.createdAt?.getTime() || 0
             }
         })
     };
