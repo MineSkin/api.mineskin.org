@@ -6,10 +6,10 @@ import helmet from "helmet";
 export function v2Router() {
     const router: Router = Router();
 
-    router.use("/", mineskinOnlyCors);
-    router.use("/", helmet())
+    router.use(mineskinOnlyCors);
+    router.use(helmet())
 
-    router.use("/", mineSkinV2InitialMiddleware);
+    router.use(mineSkinV2InitialMiddleware);
 
     return router;
 }
