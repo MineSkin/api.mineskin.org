@@ -111,7 +111,8 @@ export async function v2GenerateEnqueue(req: GenerateV2Request, res: Response<V2
             job: {
                 id: job?.id || 'unknown',
                 status: job?.status || 'completed',
-                timestamp: job?.createdAt?.getTime() || 0
+                timestamp: job?.createdAt?.getTime() || 0,
+                result: skin.id
             },
             skin: V2GenerateHandler.skinToJson(queried, skin.duplicate),
             rateLimit: V2GenerateHandler.makeRateLimitInfo(req)
@@ -147,7 +148,8 @@ export async function v2GetJob(req: GenerateV2Request, res: Response<V2GenerateR
             job: {
                 id: job?.id || 'unknown',
                 status: job?.status || 'completed',
-                timestamp: job?.createdAt?.getTime() || 0
+                timestamp: job?.createdAt?.getTime() || 0,
+                result: result.skin
             },
             skin: V2GenerateHandler.skinToJson(queried, !!result.duplicate),
             rateLimit: V2GenerateHandler.makeRateLimitInfo(req),
@@ -187,7 +189,8 @@ export async function v2ListJobs(req: GenerateV2Request, res: Response<V2MiscRes
             return {
                 id: job.id,
                 status: job.status,
-                timestamp: job?.createdAt?.getTime() || 0
+                timestamp: job?.createdAt?.getTime() || 0,
+                result: job.result?.skin
             }
         })
     };
