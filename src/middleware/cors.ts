@@ -11,8 +11,8 @@ export const wildcardCors = cors({
 });
 
 export const wildcardCorsWithCredentials = cors({
-    origin: requestOrigin => {
-        return requestOrigin ? requestOrigin : "*";
+    origin: (requestOrigin, callback) => {
+        callback(null, requestOrigin);
     },
     credentials: true,
     methods: ["GET", "POST", "DELETE"],
@@ -36,8 +36,12 @@ export const webOnlyCorsWithCredentials = cors({
 });
 
 export const mineskinOnlyCors = cors({
-    origin: requestOrigin => {
-        return requestOrigin?.endsWith("mineskin.org") ? requestOrigin : "";
+    origin: (requestOrigin, callback) => {
+        if (requestOrigin?.endsWith("mineskin.org")) {
+            callback(null, requestOrigin);
+            return;
+        }
+        callback(null, "");
     },
     methods: ["GET", "POST"],
     allowedHeaders: ALLOWED_HEADERS,
@@ -45,8 +49,12 @@ export const mineskinOnlyCors = cors({
 });
 
 export const mineskinOnlyCorsWithCredentials = cors({
-    origin: requestOrigin => {
-        return requestOrigin?.endsWith("mineskin.org") ? requestOrigin : "";
+    origin: (requestOrigin, callback) => {
+        if (requestOrigin?.endsWith("mineskin.org")) {
+            callback(null, requestOrigin);
+            return;
+        }
+        callback(null, "");
     },
     credentials: true,
     methods: ["GET", "POST"],
