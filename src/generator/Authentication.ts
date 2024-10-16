@@ -190,6 +190,10 @@ export class Microsoft {
 
         if (!account.accessToken) { // Needs login
             //return await Microsoft.login(account, bread);
+            if (account.microsoftAuth?.auth?.refreshToken) {
+                // try to refresh token
+                return await Microsoft.refreshAccessTokenOrLogin(account, bread);
+            }
             throw new AuthenticationError(AuthError.MISSING_CREDENTIALS, "Account has no access token", {account});
         }
 
