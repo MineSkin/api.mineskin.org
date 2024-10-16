@@ -28,7 +28,7 @@ export async function v2SkinList(req: MineSkinV2Request, res: Response<V2SkinLis
     }
 
     if (after) {
-        const anchor = await SkinService.findForUuid(after);
+        const anchor = await SkinService.getInstance().findForUuid(after);
         if (anchor) {
             query._id = {$lt: anchor._id};
         }
@@ -80,7 +80,7 @@ export async function v2GetSkin(req: MineSkinV2Request, res: Response<V2SkinResp
     req.links.skin = `/v2/skins/${ uuid }`;
     req.links.self = req.links.skin;
 
-    let skin = await SkinService.findForUuid(uuid);
+    let skin = await SkinService.getInstance().findForUuid(uuid);
 
     const flags = await flagsmith.getEnvironmentFlags();
     if (!skin && flags.isFeatureEnabled('migrations.api.get')) {

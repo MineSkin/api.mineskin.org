@@ -509,7 +509,7 @@ async function tryHandleFileUpload(req: GenerateV2Request, res: Response): Promi
 }
 
 async function querySkinOrThrow(uuid: UUID): Promise<IPopulatedSkin2Document> {
-    const skin = await SkinService.findForUuid(uuid);
+    const skin = await SkinService.getInstance().findForUuid(uuid);
     if (!skin || !isPopulatedSkin2Document(skin) || !skin.data) {
         throw new GeneratorError('skin_not_found', `Skin not found: ${ uuid }`, {httpCode: 404});
     }
