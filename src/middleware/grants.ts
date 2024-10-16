@@ -1,7 +1,7 @@
 import { MineSkinV2Request } from "../routes/v2/types";
 import { NextFunction, Response } from "express";
-import { flagsmith } from "@mineskin/generator/dist/flagsmith";
 import { CreditType } from "@mineskin/types";
+import { FlagProvider } from "@mineskin/generator";
 
 export const grantsMiddleware = async (req: MineSkinV2Request, res: Response, next: NextFunction) => {
     await verifyGrants(req, res);
@@ -20,21 +20,21 @@ export const verifyGrants = async (req: MineSkinV2Request, res: Response) => {
 }
 
 async function getDefaultGrants(hasApiKey: boolean, hasUser: boolean, creditType: CreditType | undefined) {
-    const flags = await flagsmith.getEnvironmentFlags();
+    const flags = FlagProvider.get();
     if (!hasApiKey) {
         // no api key, can't check credits -> use default
-        return JSON.parse(flags.getFeatureValue('generator.default_grants.base'));
+        return JSON.parse(await flags.getValue('generator.default_grants.base'));
     }
     if (!creditType) {
         // has api key, but no credits -> use default api key delay
-        return JSON.parse(flags.getFeatureValue('generator.default_grants.apikey'));
+        return JSON.parse(await flags.getValue('generator.default_grants.apikey'));
     }
 
     if (creditType === CreditType.PAID) {
         // has paid credits -> use default paid credits
-        return JSON.parse(flags.getFeatureValue('generator.default_grants.credits.paid'));
+        return JSON.parse(await flags.getValue('generator.default_grants.credits.paid'));
     }
 
     // fallback to default free credits
-    return JSON.parse(flags.getFeatureValue('generator.default_grants.credits.free'));
+    return JSON.parse(await flags.getValue('generator.default_grants.credits.free'));
 }

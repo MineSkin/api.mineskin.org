@@ -1,5 +1,5 @@
 import { MineSkinV2Request } from "../../routes/v2/types";
-import { Migrations, SkinService } from "@mineskin/generator";
+import { FlagProvider, Migrations, SkinService } from "@mineskin/generator";
 import { Response } from "express";
 import { IPopulatedSkin2Document, ISkin2Document, isPopulatedSkin2Document, Skin2 } from "@mineskin/database";
 import { RootFilterQuery } from "mongoose";
@@ -9,7 +9,6 @@ import { V2SkinResponse } from "../../typings/v2/V2SkinResponse";
 import { V2GenerateHandler } from "../../generator/v2/V2GenerateHandler";
 import { ListReqQuery } from "../../validation/skins";
 import { UUID } from "../../validation/misc";
-import { flagsmith } from "@mineskin/generator/dist/flagsmith";
 import { Caching } from "../../generator/Caching";
 
 export async function v2SkinList(req: MineSkinV2Request, res: Response<V2SkinListResponseBody>): Promise<V2SkinListResponseBody> {
@@ -82,8 +81,8 @@ export async function v2GetSkin(req: MineSkinV2Request, res: Response<V2SkinResp
 
     let skin = await SkinService.getInstance().findForUuid(uuid);
 
-    const flags = await flagsmith.getEnvironmentFlags();
-    if (!skin && flags.isFeatureEnabled('migrations.api.get')) {
+    const flags = FlagProvider.get();
+    if (!skin && await flags.isEnabled('migrations.api.get')) {
         const v1Doc = await Caching.getSkinByUuid(uuid);
         if (v1Doc) {
             await Migrations.migrateV1ToV2(v1Doc);

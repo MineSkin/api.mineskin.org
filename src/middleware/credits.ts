@@ -1,7 +1,6 @@
 import { MineSkinV2Request } from "../routes/v2/types";
 import { NextFunction, Response } from "express";
-import { BillingService } from "@mineskin/generator";
-import { flagsmith } from "@mineskin/generator/dist/flagsmith";
+import { BillingService, FlagProvider } from "@mineskin/generator";
 
 export const creditsMiddleware = async (req: MineSkinV2Request, res: Response, next: NextFunction) => {
     await verifyCredits(req, res);
@@ -13,8 +12,8 @@ export const verifyCredits = async (req: MineSkinV2Request, res: Response) => {
         return;
     }
 
-    const flags = await flagsmith.getEnvironmentFlags();
-    if (!flags.isFeatureEnabled('generator.credits.enabled')) {
+    const flags = FlagProvider.get();
+    if (!(await flags.isEnabled('generator.credits.enabled'))) {
         req.clientInfo.credits = false;
         return;
     }
