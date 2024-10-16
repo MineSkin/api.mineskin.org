@@ -192,6 +192,7 @@ export class Microsoft {
             //return await Microsoft.login(account, bread);
             if (account.microsoftAuth?.auth?.refreshToken) {
                 // try to refresh token
+                console.log(debug(bread?.breadcrumb + " [Auth] (" + account.uuid + ") Trying to get a new access token"));
                 return await Microsoft.refreshAccessTokenOrLogin(account, bread);
             }
             throw new AuthenticationError(AuthError.MISSING_CREDENTIALS, "Account has no access token", {account});
@@ -199,7 +200,7 @@ export class Microsoft {
 
         // Check token expiration
         if (account.accessTokenExpiration && account.accessTokenExpiration - Math.round(Date.now() / 1000) < ACCESS_TOKEN_EXPIRATION_THRESHOLD) {
-            console.log(debug(bread?.breadcrumb + " [Auth] (#" + account.id + ") Force-refreshing accessToken, since it will expire in less than 20 minutes"));
+            console.log(debug(bread?.breadcrumb + " [Auth] (" + account.uuid + ") Force-refreshing accessToken, since it will expire in less than 20 minutes"));
             return await Microsoft.refreshAccessTokenOrLogin(account, bread);
         }
 
