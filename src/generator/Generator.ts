@@ -1590,6 +1590,10 @@ export class Generator {
                     console.warn(warn(options.breadcrumb + " [Generator] Account #" + account.id + " forced timeout (auth error)"));
                     Accounts.updateAccountRequestServer(account, null);
                 }
+                if (e.message?.includes('429')) {
+                    account.forcedTimeoutAt = Math.floor(Date.now() / 1000);
+                    console.warn(warn(options.breadcrumb + " [Generator] Account #" + account.id + " forced timeout (429)"));
+                }
 
                 if (account.errorCounter > 0 && account.errorCounter % 10 === 0) {
                     Notifications.notifyHighErrorCount(account, type, e);
