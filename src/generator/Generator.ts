@@ -1065,6 +1065,9 @@ export class Generator {
                     account.totalErrorCounter++;
                     console.warn(warn(breadcrumb + " [Generator] Account #" + account.id + " forced timeout (skin change 429)"));
                     console.debug(JSON.stringify(err.response));
+                    Sentry.captureException(new Error("skin change 429"),{
+                        level: 'fatal',
+                    });
                 }
                 let msg = (err.response as AxiosResponse).data?.errorMessage ?? "Failed to change skin";
                 throw new GeneratorError(GenError.SKIN_CHANGE_FAILED, msg, {
@@ -1234,6 +1237,9 @@ export class Generator {
                     account.totalErrorCounter++;
                     console.warn(warn(breadcrumb + " [Generator] Account #" + account.id + " forced timeout (skin change 429)"));
                     console.debug(JSON.stringify(err.response));
+                    Sentry.captureException(new Error("skin change 429"),{
+                        level: 'fatal',
+                    });
                 }
                 let msg = (err.response as AxiosResponse).data?.errorMessage ?? "Failed to change skin";
                 throw new GeneratorError(GenError.SKIN_CHANGE_FAILED, msg, {
