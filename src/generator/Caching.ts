@@ -34,6 +34,7 @@ export class Caching {
                 url: "/session/minecraft/profile/" + uuid + "?unsigned=false&t=" + Date.now(),
             }).then(response => {
                 if (response.status === 429) {
+                    //TODO: make this less shit
                     const err = new Error("skin data 429");
                     Sentry.captureException(err, {
                         level: 'fatal',
