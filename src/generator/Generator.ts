@@ -1067,6 +1067,9 @@ export class Generator {
                     console.debug(JSON.stringify(err.response));
                     Sentry.captureException(new Error("skin change 429"),{
                         level: 'fatal',
+                        extra: {
+                            error_account: account.id
+                        }
                     });
                 }
                 let msg = (err.response as AxiosResponse).data?.errorMessage ?? "Failed to change skin";
@@ -1239,6 +1242,9 @@ export class Generator {
                     console.debug(JSON.stringify(err.response));
                     Sentry.captureException(new Error("skin change 429"),{
                         level: 'fatal',
+                        extra: {
+                            error_account: account.id
+                        }
                     });
                 }
                 let msg = (err.response as AxiosResponse).data?.errorMessage ?? "Failed to change skin";
