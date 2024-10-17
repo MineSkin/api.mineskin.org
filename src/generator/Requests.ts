@@ -148,7 +148,7 @@ export class Requests {
             baseURL: "https://api.minecraftservices.com",
             headers: {}
         }, c => rateLimit(axios.create(c), Requests.defaultRateLimit));
-        this.setupMultiRequestQueue(MINECRAFT_SERVICES, config, Time.millis(500), 1);
+        this.setupMultiRequestQueue(MINECRAFT_SERVICES, config, Time.millis(200), 1);
 
         this.setupMultiProxiedAxiosInstance(MINECRAFT_SERVICES_PROFILE, config, {
             baseURL: "https://api.minecraftservices.com",
@@ -157,7 +157,7 @@ export class Requests {
             maxRequests: 8,
             perMilliseconds: 30 * 1000
         }));
-        this.setupMultiRequestQueue(MINECRAFT_SERVICES_PROFILE, config, Time.millis(500), 1);
+        this.setupMultiRequestQueue(MINECRAFT_SERVICES_PROFILE, config, Time.millis(200), 1);
 
         this.setupMultiProxiedAxiosInstance(LIVE_LOGIN, config, {
             baseURL: "https://login.live.com",
