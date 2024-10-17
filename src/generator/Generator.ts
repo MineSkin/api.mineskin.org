@@ -1059,6 +1059,13 @@ export class Generator {
             data: body
         }, account, breadcrumb).catch(err => {
             if (err.response) {
+                if (err.response?.status === 429) {
+                    account.forcedTimeoutAt = Math.floor(Date.now() / 1000);
+                    account.errorCounter++;
+                    account.totalErrorCounter++;
+                    console.warn(warn(breadcrumb + " [Generator] Account #" + account.id + " forced timeout (skin change 429)"));
+                    console.debug(JSON.stringify(err.response));
+                }
                 let msg = (err.response as AxiosResponse).data?.errorMessage ?? "Failed to change skin";
                 throw new GeneratorError(GenError.SKIN_CHANGE_FAILED, msg, {
                     httpCode: (err.response as AxiosResponse).status,
@@ -1221,6 +1228,13 @@ export class Generator {
             data: body
         }, account, breadcrumb).catch(err => {
             if (err.response) {
+                if (err.response?.status === 429) {
+                    account.forcedTimeoutAt = Math.floor(Date.now() / 1000);
+                    account.errorCounter++;
+                    account.totalErrorCounter++;
+                    console.warn(warn(breadcrumb + " [Generator] Account #" + account.id + " forced timeout (skin change 429)"));
+                    console.debug(JSON.stringify(err.response));
+                }
                 let msg = (err.response as AxiosResponse).data?.errorMessage ?? "Failed to change skin";
                 throw new GeneratorError(GenError.SKIN_CHANGE_FAILED, msg, {
                     httpCode: (err.response as AxiosResponse).status,
