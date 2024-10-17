@@ -12,6 +12,17 @@ import { UUID } from "../../validation/misc";
 import { Caching } from "../../generator/Caching";
 
 export async function v2SkinList(req: MineSkinV2Request, res: Response<V2SkinListResponseBody>): Promise<V2SkinListResponseBody> {
+    return await v2ListSkins(req, res);
+}
+
+export async function v2UserSkinList(req: MineSkinV2Request, res: Response<V2SkinListResponseBody>): Promise<V2SkinListResponseBody> {
+    if (!req.client.hasUser()) {
+        throw new MineSkinError('unauthorized', 'Unauthorized', {httpCode: 401});
+    }
+    return await v2ListSkins(req, res, req.client.userId);
+}
+
+export async function v2ListSkins(req: MineSkinV2Request, res: Response<V2SkinListResponseBody>, user?: string): Promise<V2SkinListResponseBody> {
     const {
         after,
         size,
@@ -24,6 +35,10 @@ export async function v2SkinList(req: MineSkinV2Request, res: Response<V2SkinLis
 
     if (filter) {
         query['$text'] = {$search: filter};
+    }
+
+    if (user) {
+        query['clients.user'] = user;
     }
 
     if (after) {

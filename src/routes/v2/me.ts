@@ -1,10 +1,13 @@
-import { Router } from "express";
+import { Response, Router } from "express";
 import { v2Router } from "./router";
 import expressAsyncHandler from "express-async-handler";
 import { v2GetClientInfo, v2GetCreditsInfo, v2GetKeyInfo, v2GetMe } from "../../models/v2/me";
 import { MineSkinV2Request } from "./types";
 import { v2ErrorHandler } from "../../middleware/error";
 import { webOnlyCorsWithCredentials } from "../../middleware/cors";
+import { V2SkinListResponseBody } from "../../typings/v2/V2SkinListResponseBody";
+import { v2UserSkinList } from "../../models/v2/skins";
+import { formatV2Response } from "../../middleware/response";
 
 export const v2MeRouter: Router = v2Router();
 v2MeRouter.use(webOnlyCorsWithCredentials);
@@ -28,6 +31,12 @@ v2MeRouter.get("/client", expressAsyncHandler(async (req: MineSkinV2Request, res
 
 v2MeRouter.get("/credits", expressAsyncHandler(async (req: MineSkinV2Request, res) => {
     await v2GetCreditsInfo(req, res);
+}));
+
+
+v2MeRouter.get("/skins", expressAsyncHandler(async (req: MineSkinV2Request, res: Response<V2SkinListResponseBody>) => {
+    const result = await v2UserSkinList(req, res);
+    res.json(formatV2Response(req, result));
 }));
 
 
