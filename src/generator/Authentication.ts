@@ -15,6 +15,7 @@ import { MicrosoftAuthInfo } from "../typings/MicrosoftAuthInfo";
 import { Generator } from "./Generator";
 import { AccessTokenSource, AccountType, ErrorSource, MineSkinError } from "@mineskin/types";
 import { Accounts } from "./Accounts";
+import { Discord } from "../util/Discord";
 
 const ACCESS_TOKEN_EXPIRATION_MOJANG = 86360;
 const ACCESS_TOKEN_EXPIRATION_MICROSOFT = 86360;
@@ -199,6 +200,7 @@ export class Microsoft {
                         account_uuid: account?.uuid
                     }
                 });
+                Discord.postDiscordMessage("🔑 Account " + account.id + "/" + account.uuid + " needs a new access token (missing)");
                 return await Microsoft.refreshAccessTokenOrLogin(account, bread);
             }
             throw new AuthenticationError(AuthError.MISSING_CREDENTIALS, "Account has no access token", {account});
@@ -213,6 +215,7 @@ export class Microsoft {
                     account_uuid: account?.uuid
                 }
             });
+            Discord.postDiscordMessage("🔑 Account " + account.id + "/" + account.uuid + " needs a new access token (expiration)");
             return await Microsoft.refreshAccessTokenOrLogin(account, bread);
         }
 
