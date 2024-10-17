@@ -1593,6 +1593,7 @@ export class Generator {
                 if (e.message?.includes('429')) { //TODO: make this less shit
                     account.forcedTimeoutAt = Math.floor(Date.now() / 1000);
                     console.warn(warn(options.breadcrumb + " [Generator] Account #" + account.id + " forced timeout (429)"));
+                    Accounts.updateAccountRequestServer(account, null);
                 }
 
                 if (account.errorCounter > 0 && account.errorCounter % 10 === 0) {
