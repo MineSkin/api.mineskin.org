@@ -1060,17 +1060,17 @@ export class Generator {
         }, account, breadcrumb).catch(err => {
             if (err.response) {
                 if (err.response?.status === 429) {
-                    account.forcedTimeoutAt = Math.floor(Date.now() / 1000);
-                    account.errorCounter++;
-                    account.totalErrorCounter++;
-                    console.warn(warn(breadcrumb + " [Generator] Account #" + account.id + " forced timeout (skin change 429)"));
-                    console.debug(JSON.stringify(err.response));
                     Sentry.captureException(new Error("skin change 429"),{
                         level: 'fatal',
                         extra: {
                             error_account: account.id
                         }
                     });
+                    account.forcedTimeoutAt = Math.floor(Date.now() / 1000);
+                    account.errorCounter++;
+                    account.totalErrorCounter++;
+                    console.warn(warn(breadcrumb + " [Generator] Account #" + account.id + " forced timeout (skin change 429)"));
+                    console.debug(JSON.stringify(err.response?.data));
                 }
                 let msg = (err.response as AxiosResponse).data?.errorMessage ?? "Failed to change skin";
                 throw new GeneratorError(GenError.SKIN_CHANGE_FAILED, msg, {
@@ -1234,18 +1234,18 @@ export class Generator {
             data: body
         }, account, breadcrumb).catch(err => {
             if (err.response) {
+                Sentry.captureException(new Error("skin change 429"),{
+                    level: 'fatal',
+                    extra: {
+                        error_account: account.id
+                    }
+                });
                 if (err.response?.status === 429) {
                     account.forcedTimeoutAt = Math.floor(Date.now() / 1000);
                     account.errorCounter++;
                     account.totalErrorCounter++;
                     console.warn(warn(breadcrumb + " [Generator] Account #" + account.id + " forced timeout (skin change 429)"));
-                    console.debug(JSON.stringify(err.response));
-                    Sentry.captureException(new Error("skin change 429"),{
-                        level: 'fatal',
-                        extra: {
-                            error_account: account.id
-                        }
-                    });
+                    console.debug(JSON.stringify(err.response?.data));
                 }
                 let msg = (err.response as AxiosResponse).data?.errorMessage ?? "Failed to change skin";
                 throw new GeneratorError(GenError.SKIN_CHANGE_FAILED, msg, {
