@@ -160,8 +160,19 @@ export class Caching {
                     "Authorization": `Bearer ${ accessToken }`
                 }
             }).then(response => {
+                if (response.status === 429) {
+                    //TODO: make this less shit
+                    const err = new Error("profile 429");
+                    Sentry.captureException(err, {
+                        level: 'fatal'
+                    });
+                    throw err;
+                }
                 return response.data as BasicMojangProfile
             }).catch(err => {
+                if (err?.message?.includes("429")) {
+                    throw err;
+                }
                 Sentry.captureException(err, {
                     level: 'warning',
                     tags: {
