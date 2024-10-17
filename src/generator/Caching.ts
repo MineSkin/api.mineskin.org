@@ -33,12 +33,25 @@ export class Caching {
             return Requests.dynamicRequestWithRandomProxy(MOJANG_SESSION, {
                 url: "/session/minecraft/profile/" + uuid + "?unsigned=false&t=" + Date.now(),
             }).then(response => {
+                if (response.status === 429) {
+                    const err = new Error("skin data 429");
+                    Sentry.captureException(err, {
+                        level: 'fatal',
+                        extra: {
+                            uuid: uuid
+                        }
+                    });
+                    throw err;
+                }
                 if (!Requests.isOk(response) || !response.data.hasOwnProperty("properties")) {
                     return undefined;
                 }
                 const body = response.data as ProfileResponse;
                 return body.properties[0] as ProfileSkinData;
             }).catch(err => {
+                if (err?.message?.includes("429")) {
+                    throw err;
+                }
                 Sentry.captureException(err, {
                     level: 'warning',
                     tags: {
