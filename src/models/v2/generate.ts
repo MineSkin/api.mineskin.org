@@ -192,17 +192,21 @@ export async function v2ListJobs(req: GenerateV2Request, res: Response<V2MiscRes
         throw new GeneratorError('unauthorized', "no client info", {httpCode: 401});
     }
 
+    const threeHoursAgo = new Date();
+    threeHoursAgo.setHours(threeHoursAgo.getHours() - 3);
 
     return {
         success: true,
-        jobs: jobs.map(job => {
-            return {
-                id: job.id,
-                status: job.status,
-                timestamp: job?.createdAt?.getTime() || 0,
-                result: job.result?.skin
-            }
-        })
+        jobs: jobs
+            .filter(j => j.createdAt > threeHoursAgo)
+            .map(job => {
+                return {
+                    id: job.id,
+                    status: job.status,
+                    timestamp: job?.createdAt?.getTime() || 0,
+                    result: job.result?.skin
+                }
+            })
     };
 }
 

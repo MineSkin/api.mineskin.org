@@ -38,6 +38,8 @@ export async function v2ListSkins(req: MineSkinV2Request, res: Response<V2SkinLi
     }
 
     if (user) {
+        //TODO: show unlisted/private skins
+        // also limit size based on grants
         query['clients.user'] = user;
     }
 
