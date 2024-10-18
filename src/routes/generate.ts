@@ -230,6 +230,7 @@ export const register = (app: Application) => {
             res.status(400).json({error: "invalid uuid"});
             return;
         }
+        //TODO: cache users in redis
         const userValidation = await Caching.getUserByUuid(uuids.short);
         if (!userValidation || !userValidation.valid) {
             res.status(400).json({error: "invalid user"});
