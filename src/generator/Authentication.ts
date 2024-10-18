@@ -448,15 +448,16 @@ export class Microsoft {
     static async checkGameOwnership(accessToken: string): Promise<boolean> {
         const entitlementsResponse = await Requests.minecraftServicesRequest({
             method: "GET",
-            url: "/entitlements/mcstore",
+            url: "/entitlements",
             headers: {
                 Authorization: `Bearer ${ accessToken }`
             }
         });
-        const entitlementsBody = entitlementsResponse.data;
-        // console.log("entitlements");
-        // console.log(entitlementsBody)
-        return entitlementsBody.hasOwnProperty("items") && entitlementsBody["items"].length > 0;
+        // const entitlementsBody = entitlementsResponse.data;
+        // // console.log("entitlements");
+        // // console.log(entitlementsBody)
+        // return entitlementsBody.hasOwnProperty("items") && entitlementsBody["items"].length > 0;
+        return entitlementsResponse.status === 200;
     }
 
 
