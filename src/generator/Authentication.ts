@@ -259,17 +259,17 @@ export class Microsoft {
     }
 
     static async refreshAccessTokenOrLogin(account: IAccountDocument, bread?: Bread): Promise<IAccountDocument> {
-        try {
-            return await Microsoft.refreshAccessToken(account, bread);
-        } catch (e) {
-            if (e instanceof AuthenticationError) {
-                if (e.code === AuthError.MICROSOFT_REFRESH_FAILED) {
-                    // Couldn't refresh, attempt to login
-                    return await Microsoft.login(account, bread);
-                }
-            }
-            throw e;
-        }
+        // try {
+        return await Microsoft.refreshAccessToken(account, bread);
+        // } catch (e) {
+        //     if (e instanceof AuthenticationError) {
+        //         if (e.code === AuthError.MICROSOFT_REFRESH_FAILED) {
+        //             // Couldn't refresh, attempt to login
+        //             return await Microsoft.login(account, bread);
+        //         }
+        //     }
+        //     throw e;
+        // }
     }
 
     static async refreshAccessToken(account: IAccountDocument, bread?: Bread): Promise<IAccountDocument> {
