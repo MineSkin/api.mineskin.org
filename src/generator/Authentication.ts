@@ -21,6 +21,7 @@ const ACCESS_TOKEN_EXPIRATION_MOJANG = 86360;
 const ACCESS_TOKEN_EXPIRATION_MICROSOFT = 86360;
 
 const ACCESS_TOKEN_EXPIRATION_THRESHOLD = 20 * 60;
+const ACCESS_TOKEN_EXPIRATION_FALLBACK = 60 * 60 * 24;
 
 const MC_XSTSRelyingParty = 'rp://api.minecraftservices.com/'
 const XBOX_XSTSRelyingParty = 'http://xboxlive.com'
@@ -207,8 +208,8 @@ export class Microsoft {
         }
 
         // Check token expiration
-        const expiresIn = (account.accessTokenExpiration||0) - Math.round(Date.now() / 1000);
-        console.log(debug(bread?.breadcrumb + " [Auth] (" + account.uuid + ") Token expires in " + expiresIn + " seconds"));
+        const expiresIn = (account.accessTokenExpiration || 0) - Math.round(Date.now() / 1000);
+        console.log(debug(bread?.breadcrumb + " [Auth] (" + account.uuid + ") Token expires in " + (expiresIn / 60) + " minutes"));
         if (account.accessTokenExpiration && expiresIn < ACCESS_TOKEN_EXPIRATION_THRESHOLD) {
             console.log(debug(bread?.breadcrumb + " [Auth] (" + account.uuid + ") Force-refreshing accessToken, since it will expire in less than 20 minutes"));
             Sentry.captureEvent({
@@ -235,6 +236,10 @@ export class Microsoft {
         } catch (e) {
             Sentry.captureException(e);
             if (e.message?.includes("429")) {
+                if (expiresIn < ACCESS_TOKEN_EXPIRATION_FALLBACK) {
+                    // assume it's still valid and try anyway
+                    return account;
+                }
                 throw new AuthenticationError(AuthError.MICROSOFT_REFRESH_FAILED, "entitlements 429", {account});
             }
         }
@@ -510,7 +515,7 @@ export class Microsoft {
         const xboxAccessToken = refreshBody["access_token"];
         const xboxRefreshToken = refreshBody["refresh_token"];
 
-        console.log(debug(`[Auth] token expires in ${refreshBody["expires_in"]}`));
+        console.log(debug(`[Auth] token expires in ${ refreshBody["expires_in"] }`));
 
         const identityResponses = await Microsoft.exchangeRpsTicketForIdentities(xboxAccessToken);
         //console.log("identities");
