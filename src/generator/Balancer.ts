@@ -5,12 +5,20 @@ import { sleep } from "../util";
 import { Discord } from "../util/Discord";
 import { AccountType } from "@mineskin/types";
 import { Account } from "@mineskin/database";
+import { FlagProvider } from "@mineskin/generator";
 
 export class Balancer {
 
 
     static async balance(): Promise<void> {
         console.log(info("Balancing servers..."));
+
+        const flags = FlagProvider.get();
+        if(await flags.isEnabled('balancer.disabled')) {
+            console.log(warn("Balancer is disabled"));
+            return;
+        }
+
         const config: MineSkinConfig = await getConfig();
         await this.balanceAccounts(config);
         await sleep(1000);
