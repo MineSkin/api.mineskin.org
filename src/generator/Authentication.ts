@@ -294,10 +294,12 @@ export class Microsoft {
                 });
             }
             throw err;
-        })
+        });
+
         console.log(debug(bread?.breadcrumb + " [Auth] Refreshed access token for " + account.toSimplifiedString()));
         account.accessToken = newMinecraftAccessToken;
-        account.accessTokenExpiration = Math.round(Date.now() / 1000) + ACCESS_TOKEN_EXPIRATION_MICROSOFT;
+        // account.accessTokenExpiration = Math.round(Date.now() / 1000) + ACCESS_TOKEN_EXPIRATION_MICROSOFT;
+        account.accessTokenExpiration = account.microsoftAuth.auth.expires;
         account.accessTokenSource = AccessTokenSource.REFRESH_MICROSOFT;
         if (!account.requestServer || !(await Generator.getRequestServers()).includes(account.requestServer)) {
             Accounts.updateAccountRequestServer(account, config.server);
