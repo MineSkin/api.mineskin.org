@@ -91,10 +91,18 @@ export const register = (app: Application) => {
             ]);
             if (!enabled) {
                 req.v2Compat = false;
+                req.warnings.push({
+                    code: "compat_disabled",
+                    message: "v2 compatibility is currently disabled"
+                });
             } else if (chance) {
                 const random = Math.random();
                 if (random > Number(chance)) {
                     req.v2Compat = false;
+                    req.warnings.push({
+                        code: "compat_disabled",
+                        message: "v2 compatibility is currently disabled"
+                    });
                 }
             }
         }
