@@ -108,6 +108,7 @@ export const register = (app: Application) => {
         }
 
         if (req.v2Compat) {
+            Log.l.info(`${ req.breadcrumbC } Redirecting to v2 compatibility layer`);
             res.header("X-MineSkin-Api-Version", "v1-with-v2-compat");
             res.header("X-MineSkin-Api-Deprecated", "true");
             if (!req.warnings) {
