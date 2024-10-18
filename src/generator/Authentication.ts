@@ -232,6 +232,9 @@ export class Microsoft {
             // }
         } catch (e) {
             Sentry.captureException(e);
+            if (e.message?.includes("429")) {
+                throw new AuthenticationError(AuthError.MICROSOFT_REFRESH_FAILED, "entitlements 429", {account});
+            }
         }
 
         // Fallback to refresh / login
@@ -457,6 +460,9 @@ export class Microsoft {
         // // console.log("entitlements");
         // // console.log(entitlementsBody)
         // return entitlementsBody.hasOwnProperty("items") && entitlementsBody["items"].length > 0;
+        if (entitlementsResponse.status === 429) {
+            throw new Error("entitlements 429");
+        }
         return entitlementsResponse.status === 200;
     }
 
