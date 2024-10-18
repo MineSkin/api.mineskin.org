@@ -510,8 +510,10 @@ export class Microsoft {
         const xboxAccessToken = refreshBody["access_token"];
         const xboxRefreshToken = refreshBody["refresh_token"];
 
+        console.log(debug(`[Auth] token expires in ${refreshBody["expires_in"]}`));
+
         const identityResponses = await Microsoft.exchangeRpsTicketForIdentities(xboxAccessToken);
-        console.log("identities");
+        //console.log("identities");
         // console.log(identityResponses)
         const mcIdentity = identityResponses.mc;
         const xboxIdentity = identityResponses.xbox;
