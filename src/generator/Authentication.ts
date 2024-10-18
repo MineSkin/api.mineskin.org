@@ -207,7 +207,9 @@ export class Microsoft {
         }
 
         // Check token expiration
-        if (account.accessTokenExpiration && account.accessTokenExpiration - Math.round(Date.now() / 1000) < ACCESS_TOKEN_EXPIRATION_THRESHOLD) {
+        const expiresIn = (account.accessTokenExpiration||0) - Math.round(Date.now() / 1000);
+        console.log(debug(bread?.breadcrumb + " [Auth] (" + account.uuid + ") Token expires in " + expiresIn + " seconds"));
+        if (account.accessTokenExpiration && expiresIn < ACCESS_TOKEN_EXPIRATION_THRESHOLD) {
             console.log(debug(bread?.breadcrumb + " [Auth] (" + account.uuid + ") Force-refreshing accessToken, since it will expire in less than 20 minutes"));
             Sentry.captureEvent({
                 message: "Force-refreshing accessToken, since it will expire",
