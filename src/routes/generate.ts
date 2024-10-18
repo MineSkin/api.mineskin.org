@@ -30,7 +30,7 @@ import { DelayInfo } from "../typings/DelayInfo";
 import { GenerateType, SkinVariant, SkinVisibility, UUID } from "@mineskin/types";
 import { SkinModel } from "@mineskin/database";
 import { Temp } from "../generator/Temp";
-import { Log, Migrations } from "@mineskin/generator";
+import { FlagProvider, Log, Migrations } from "@mineskin/generator";
 import { GenerateV2Request, MineSkinV2Request } from "./v2/types";
 import { v2GenerateAndWait } from "../models/v2/generate";
 import { V2SkinResponse } from "../typings/v2/V2SkinResponse";
@@ -84,6 +84,22 @@ export const register = (app: Application) => {
         }
 
         if (req.v2Compat) {
+            const flags = FlagProvider.get();
+            const [enabled, chance] = await Promise.all([
+                flags.isEnabled('api.v2_compat.chance'),
+                flags.getValue('api.v2_compat.chance')
+            ]);
+            if (!enabled) {
+                req.v2Compat = false;
+            } else if (chance) {
+                const random = Math.random();
+                if (random > Number(chance)) {
+                    req.v2Compat = false;
+                }
+            }
+        }
+
+        if (req.v2Compat) {
             res.header("X-MineSkin-Api-Version", "v1-with-v2-compat");
             res.header("X-MineSkin-Api-Deprecated", "true");
             if (!req.warnings) {
@@ -92,7 +108,7 @@ export const register = (app: Application) => {
             req.warnings.push({
                 code: "deprecated",
                 message: "this endpoint is deprecated, please use the v2 API"
-            })
+            });
             return await mineSkinV2InitialMiddleware(req, res, next);
         }
 
