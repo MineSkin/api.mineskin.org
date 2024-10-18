@@ -43,3 +43,13 @@ export const generateLimiter = rateLimit({
         response.status(options.statusCode).json(options.message)
     }
 });
+
+export const validateLimiter = rateLimit({
+    windowMs: 10000,
+    limit: 5,
+    message: {
+        error: "Too many requests",
+        limiter: "express"
+    },
+    keyGenerator: keyGenerator
+});

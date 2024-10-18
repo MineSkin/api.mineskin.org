@@ -3,10 +3,12 @@ import { Caching } from "../generator/Caching";
 import * as Sentry from "@sentry/node";
 import { corsMiddleware } from "../util";
 import { randomPNG } from "random-png";
+import { validateLimiter } from "../util/rateLimiters";
 
 export const register = (app: Application) => {
 
     app.use("/validate", corsMiddleware);
+    app.use("/validate", validateLimiter);
 
     app.get("/validate/name/:name", (req: Request, res: Response) => {
         if (req.params["name"].length < 1 || req.params["name"].length > 16) {
