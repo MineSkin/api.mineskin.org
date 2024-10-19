@@ -3,6 +3,7 @@ import * as Sentry from "@sentry/node";
 import multer, { MulterError } from "multer";
 import { Maybe } from "../../util";
 import {
+    BillingService,
     DuplicateChecker,
     GeneratorError,
     GenError,
@@ -401,6 +402,8 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
         req.concurrentRequests = (req.concurrentRequests || 0) + 1;
     }
 
+    const billingService = BillingService.getInstance();
+    await billingService.trackGenerateRequest(req.clientInfo);
 
     const request: GenerateRequest = {
         breadcrumb: req.breadcrumb || "????",
