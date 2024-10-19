@@ -12,6 +12,7 @@ import {
     Log,
     MAX_IMAGE_SIZE,
     MongoGeneratorClient,
+    QueueOptions,
     SkinService,
     TrafficService
 } from "@mineskin/generator";
@@ -407,7 +408,10 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
         options: options,
         clientInfo: req.clientInfo
     }
-    const job = await getClient().submitRequest(request);
+    const queueOptions: QueueOptions = {
+        priority: 1 //TODO
+    };
+    const job = await getClient().submitRequest(request, queueOptions);
     return {job};
 }
 
