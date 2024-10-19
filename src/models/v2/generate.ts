@@ -401,6 +401,7 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
         req.concurrentRequests = (req.concurrentRequests || 0) + 1;
     }
 
+
     const request: GenerateRequest = {
         breadcrumb: req.breadcrumb || "????",
         type: handler.type,
@@ -409,7 +410,7 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
         clientInfo: req.clientInfo
     }
     const queueOptions: QueueOptions = {
-        priority: 1 //TODO
+        priority: req.client.getPriority()
     };
     const job = await getClient().submitRequest(request, queueOptions);
     return {job};
