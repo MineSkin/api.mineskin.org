@@ -42,6 +42,7 @@ import { GenerateReqOptions, GenerateReqUser } from "../../validation/generate";
 import { redisSub } from "../../database/redis";
 import { V2MiscResponseBody } from "../../typings/v2/V2MiscResponseBody";
 import { V2JobListResponse } from "../../typings/v2/V2JobListResponse";
+import { ObjectId } from "../../validation/misc";
 
 const upload = multer({
     limits: {
@@ -142,7 +143,7 @@ export async function v2GenerateEnqueue(req: GenerateV2Request, res: Response<V2
 }
 
 export async function v2GetJob(req: GenerateV2Request, res: Response<V2GenerateResponseBody | V2JobResponse>): Promise<V2JobResponse> {
-    const jobId = req.params.jobId;
+    const jobId = ObjectId.parse(req.params.jobId);
     const job = await getClient().getJob(jobId);
     if (!job) {
         throw new GeneratorError('job_not_found', `Job not found: ${ jobId }`, {httpCode: 404});

@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const UUID = z.string().regex(/^[a-f0-9]+$/).length(32).or(z.string().regex(/^[a-f0-9\-]+$/).length(36));
+export const ObjectId = z.string().regex(/^[a-f0-9]+$/).length(24);
 
 const Sha256Full = z.string().regex(/^[a-f0-9]+$/).length(64);
 const Sha256Trimmed = z.string().regex(/^[a-f0-9]+$/).length(63).optional();
