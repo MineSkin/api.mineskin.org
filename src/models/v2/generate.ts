@@ -321,6 +321,7 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
         if ('url' in req.body) {
             handler = new V2UrlHandler(req, res, options);
         } else if ('user' in req.body) {
+            //TODO: validate user
             handler = new V2UserHandler(req, res, options);
         } else {
             throw new GeneratorError('invalid_request', `invalid request properties (expected url or user)`, {httpCode: 400});
