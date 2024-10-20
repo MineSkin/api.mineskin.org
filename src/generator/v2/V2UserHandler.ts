@@ -4,7 +4,8 @@ import { Response } from "express";
 import { V2GenerateResponseBody } from "../../typings/v2/V2GenerateResponseBody";
 import { V2SkinResponse } from "../../typings/v2/V2SkinResponse";
 import { GenerateOptions, GenerateType } from "@mineskin/types";
-import { ImageHashes } from "@mineskin/generator";
+import { ImageHashes, Log } from "@mineskin/generator";
+import { GenerateReqUser } from "../../validation/generate";
 
 export class V2UserHandler extends V2GenerateHandler{
 
@@ -17,7 +18,9 @@ export class V2UserHandler extends V2GenerateHandler{
     }
 
     getImageReference(hashes?: ImageHashes): string {
-        return this.req.body.user!;
+        const {user} = GenerateReqUser.parse(this.req.body);
+        Log.l.debug(`${ this.req.breadcrumbC } USER:        "${ user }"`);
+        return user;
     }
 
 }

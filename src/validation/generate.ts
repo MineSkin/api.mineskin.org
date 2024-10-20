@@ -13,7 +13,7 @@ export const GenerateReqUrl = GenerateReqOptions.extend({
 });
 
 export const GenerateReqUser = GenerateReqOptions.extend({
-    uuid: UUID
+    user: UUID
 });
 
 export const GenerateReq = GenerateReqOptions.or(GenerateReqUrl).or(GenerateReqUser);

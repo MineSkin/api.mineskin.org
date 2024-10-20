@@ -38,11 +38,12 @@ import { V2UploadHandler } from "../../generator/v2/V2UploadHandler";
 import { V2UrlHandler } from "../../generator/v2/V2UrlHandler";
 import { V2JobResponse } from "../../typings/v2/V2JobResponse";
 import { IPopulatedSkin2Document, IQueueDocument, isPopulatedSkin2Document } from "@mineskin/database";
-import { GenerateReqOptions, GenerateReqUser } from "../../validation/generate";
+import { GenerateReqOptions } from "../../validation/generate";
 import { redisSub } from "../../database/redis";
 import { V2MiscResponseBody } from "../../typings/v2/V2MiscResponseBody";
 import { V2JobListResponse } from "../../typings/v2/V2JobListResponse";
 import { ObjectId } from "../../validation/misc";
+import { V2UserHandler } from "../../generator/v2/V2UserHandler";
 
 const upload = multer({
     limits: {
@@ -309,10 +310,7 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
         if ('url' in req.body) {
             handler = new V2UrlHandler(req, res, options);
         } else if ('user' in req.body) {
-            const {uuid} = GenerateReqUser.parse(req.body);
-            Log.l.debug(`${ req.breadcrumbC } USER:        "${ uuid }"`);
-            //TODO
-            throw new Error("User generation is currently not supported");
+            handler = new V2UserHandler(req, res, options);
         } else {
             throw new GeneratorError('invalid_request', `invalid request properties (expected url or user)`, {httpCode: 400});
         }
