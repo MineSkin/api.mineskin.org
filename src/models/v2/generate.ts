@@ -266,6 +266,23 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
     //     }
     // }
 
+    /*
+    if (!req.apiKey && !req.client.hasUser()) {
+        throw new GeneratorError('unauthorized', "API key or user required", {httpCode: 401});
+    }*/
+
+    if (req.client.hasUser()) {
+        const pendingByUser = await getClient().getPendingCountByUser(req.client.userId!)
+        if (pendingByUser > 5) { // TODO: configurable / client grant
+            throw new GeneratorError('job_limit', "You have too many jobs in the queue", {httpCode: 429});
+        }
+    } else {
+        const pendingByIp = await getClient().getPendingCountByIp(req.client.ip!)
+        if (pendingByIp > 5) { // TODO: configurable / client grant
+            throw new GeneratorError('job_limit', "You have too many jobs in the queue", {httpCode: 429});
+        }
+    }
+
     if (options.visibility === SkinVisibility2.PRIVATE) {
         if (!req.apiKey && !req.client.hasUser()) {
             throw new GeneratorError('unauthorized', "private skins require an API key or User", {httpCode: 401});
@@ -307,7 +324,7 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
     }
 
     let hashes: Maybe<ImageHashes> = undefined;
-    if(handler.handlesImage()) {
+    if (handler.handlesImage()) {
         const imageResult = await handler.getImageBuffer();
         if (imageResult.existing) {
             // await V2GenerateHandler.queryAndSendSkin(req, res, imageResult.existing, true);
@@ -397,7 +414,7 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
          */
 
         const imageUploaded = await getClient().insertUploadedImage(hashes.minecraft, imageBuffer);
-    }else if (handler.type === GenerateType.USER) {
+    } else if (handler.type === GenerateType.USER) {
         //TODO: check for recent requests on the same user and return duplicate
     }
 
