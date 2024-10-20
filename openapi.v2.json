@@ -44,464 +44,16 @@
         "scheme": "bearer"
       }
     },
-    "schemas": {
-      "ValueAndSignature": {
-        "type": "object",
-        "required": [
-          "value",
-          "signature"
-        ],
-        "properties": {
-          "value": {
-            "type": "string",
-            "description": "Skin Value"
-          },
-          "signature": {
-            "type": "string",
-            "description": "Skin Signature"
-          }
-        }
-      },
-      "SkinVariant": {
-        "type": "string",
-        "enum": [
-          "classic",
-          "slim"
-        ]
-      },
-      "SkinVisibility": {
-        "type": "string",
-        "enum": [
-          "public",
-          "unlisted",
-          "private"
-        ],
-        "default": "public"
-      },
-      "SkinHashes": {
-        "type": "object",
-        "required": [
-          "skin"
-        ],
-        "properties": {
-          "skin": {
-            "type": "string",
-            "description": "Skin Hash"
-          },
-          "cape": {
-            "type": "string",
-            "description": "(optional) Cape Hash"
-          }
-        }
-      },
-      "SkinUrls": {
-        "type": "object",
-        "required": [
-          "skin"
-        ],
-        "properties": {
-          "skin": {
-            "type": "string",
-            "description": "Skin Texture Url"
-          },
-          "cape": {
-            "type": "string",
-            "description": "(optional) Cape Texture Url"
-          }
-        }
-      },
-      "GeneratorInfo": {
-        "type": "object",
-        "required": [
-          "version",
-          "timestamp",
-          "duration",
-          "account",
-          "server"
-        ],
-        "properties": {
-          "version": {
-            "type": "string"
-          },
-          "timestamp": {
-            "type": "number"
-          },
-          "duration": {
-            "type": "number"
-          },
-          "account": {
-            "type": "string"
-          },
-          "server": {
-            "type": "string"
-          }
-        }
-      },
-      "SkinTexture": {
-        "type": "object",
-        "required": [
-          "data",
-          "hash",
-          "url"
-        ],
-        "properties": {
-          "data": {
-            "$ref": "#/components/schemas/ValueAndSignature"
-          },
-          "hash": {
-            "$ref": "#/components/schemas/SkinHashes"
-          },
-          "url": {
-            "$ref": "#/components/schemas/SkinUrls"
-          }
-        }
-      },
-      "SkinInfo": {
-        "type": "object",
-        "required": [
-          "uuid",
-          "variant",
-          "visibility",
-          "texture",
-          "generator",
-          "views",
-          "duplicate"
-        ],
-        "properties": {
-          "uuid": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "visibility": {
-            "$ref": "#/components/schemas/SkinVisibility"
-          },
-          "variant": {
-            "$ref": "#/components/schemas/SkinVariant"
-          },
-          "texture": {
-            "$ref": "#/components/schemas/SkinTexture"
-          },
-          "views": {
-            "type": "number"
-          },
-          "duplicate": {
-            "type": "boolean"
-          }
-        },
-        "example": {
-          "uuid": "c891dfac4cd247a2a55743e7e82ce76f",
-          "name": "Test Skin",
-          "visibility": "public",
-          "variant": "classic",
-          "views": 1,
-          "duplicate": false
-        }
-      },
-      "PartialSkinInfo": {
-        "type": "object",
-        "required": [
-          "uuid",
-          "variant",
-          "visibility",
-          "views"
-        ],
-        "properties": {
-          "uuid": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "visibility": {
-            "$ref": "#/components/schemas/SkinVisibility"
-          },
-          "variant": {
-            "$ref": "#/components/schemas/SkinVariant"
-          },
-          "views": {
-            "type": "number"
-          }
-        },
-        "example": {
-          "uuid": "c891dfac4cd247a2a55743e7e82ce76f",
-          "name": "Test Skin",
-          "visibility": "public",
-          "variant": "classic",
-          "views": 1,
-          "duplicate": false
-        }
-      },
-      "GenerateOptions": {
-        "type": "object",
-        "properties": {
-          "variant": {
-            "$ref": "#/components/schemas/SkinVariant"
-          },
-          "name": {
-            "type": "string",
-            "maxLength": 20
-          },
-          "visibility": {
-            "$ref": "#/components/schemas/SkinVisibility"
-          }
-        },
-        "example": {
-          "variant": "classic",
-          "name": "My Example Skin",
-          "visibility": "public"
-        }
-      },
-      "NextRequest": {
-        "type": "object",
-        "required": [
-          "absolute",
-          "relative"
-        ],
-        "properties": {
-          "absolute": {
-            "type": "number",
-            "format":"timestamp",
-            "description": "Absolute timestamp (in milliseconds) after which the next request can be made",
-            "example": 1726829503123
-          },
-          "relative": {
-            "type": "number",
-            "description": "Relative delay (in milliseconds) after which the next request can be made",
-            "example": 800
-          }
-        }
-      },
-      "DelayInfo": {
-        "type": "object",
-        "required": [
-          "millis"
-        ],
-        "properties": {
-          "millis": {
-            "type": "number",
-            "description": "Delay between requests (in milliseconds) - depends on the API key used for this request",
-            "example": 1200
-          },
-          "seconds": {
-            "type": "number",
-            "description": "Delay between requests (in seconds) - depends on the API key used for this request",
-            "example": 1.2
-          }
-        }
-      },
-      "RateLimitInfo": {
-        "type": "object",
-        "required": [
-          "next",
-          "delay"
-        ],
-        "properties": {
-          "next": {
-            "$ref": "#/components/schemas/NextRequest"
-          },
-          "delay": {
-            "$ref": "#/components/schemas/DelayInfo"
-          }
-        }
-      },
-      "JobInfo": {
-        "type": "object",
-        "required": [
-          "uuid",
-          "status"
-        ],
-        "properties": {
-          "uuid": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Job UUID"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "unknown",
-              "waiting",
-              "active",
-              "failed",
-              "completed"
-            ]
-          }
-        }
-      },
-      "CodeAndMessage": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "string"
-          },
-          "message": {
-            "type": "string"
-          }
-        }
-      },
-
-      "GenericResponseBody": {
-        "type": "object",
-        "required": [
-          "success"
-        ],
-        "properties": {
-          "success": {
-            "type": "boolean"
-          },
-          "errors": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CodeAndMessage"
-            }
-          },
-          "warnings": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CodeAndMessage"
-            }
-          },
-          "messages": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CodeAndMessage"
-            }
-          },
-          "links": {
-            "type": "object",
-            "description": "Links to related resources",
-            "properties": {
-              "self": {
-                "type": "string"
-              }
-            }
-          }
-        }
-      },
-      "SuccessResponseBody": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/GenericResponseBody"
-          },
-          {
-            "type": "object",
-            "properties": {
-              "success": {
-                "example": true
-              },
-              "errors": {
-                "example": [
-                ]
-              },
-              "messages": {
-                "example": [
-                  {
-                    "code": "ok",
-                    "message": "All good!"
-                  }
-                ]
-              }
-            }
-          }
-        ]
-      },
-      "ErrorResponseBody": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/GenericResponseBody"
-          },
-          {
-            "type": "object",
-            "properties": {
-              "success": {
-                "example": false
-              },
-              "errors": {
-                "example": [
-                  {
-                    "code": "generic_error",
-                    "message": "Something went wrong"
-                  }
-                ]
-              }
-            }
-          }
-        ]
-      },
-
-      "UploadGenerateBody": {
-        "type": "object",
-        "description":"File Upload Generate Request Body",
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/GenerateOptions"
-          },
-          {
-            "required": [
-              "file"
-            ],
-            "properties": {
-              "file": {
-                "description": "PNG image file to upload. You should use a client library like [MineSkin Java Client](https://github.com/InventivetalentDev/MineskinClient) to properly handle file uploads. See [github/examples](https://github.com/MineSkin/examples)",
-                "type": "string",
-                "format": "binary",
-                "externalDocs": {
-                  "description": "Example implementations",
-                  "url": "https://github.com/MineSkin/examples"
-                }
-              }
-            }
-          }
-        ]
-      },
-
-      "UrlGenerateBody": {
-        "type": "object",
-        "description":"URL Generate Request Body",
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/GenerateOptions"
-          },
-          {
-            "required": [
-              "url"
-            ],
-            "properties": {
-              "url": {
-                "type": "string"
-              }
-            },
-            "example": {
-              "url": "https://i.imgur.com/kQPrtYw.png"
-            }
-          }
-        ]
-      },
-      "UserGenerateBody": {
-        "type": "object",
-        "description":"User Generate Request Body",
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/GenerateOptions"
-          },
-          {
-            "required": [
-              "uuid"
-            ],
-            "properties": {
-              "uuid": {
-                "type": "string",
-                "minLength": 32,
-                "maxLength": 36
-              }
-            }
-          }
-        ]
-      }
-    },
     "parameters": {
+      "apiKey": {
+        "name": "Authorization",
+        "description": "API key from [account.mineskin.org](https://account.mineskin.org/keys)",
+        "example": "Bearer da84de82e960d6c0510088279878c79365ad5118d350d619f20324a5494f156b",
+        "in": "header",
+        "schema": {
+          "type": "string"
+        }
+      },
       "userAgent": {
         "name": "User-Agent",
         "description": "Custom User-Agent for your application, see [user-agent.dev](https://user-agent.dev/) for implementation examples",
@@ -511,24 +63,47 @@
         "schema": {
           "type": "string"
         }
-      },
-      "apiKey": {
-        "name": "Authorization",
-        "description": "API key from [account.mineskin.org](https://account.mineskin.org/keys)",
-        "example": "Bearer da84de82e960d6c0510088279878c79365ad5118d350d619f20324a5494f156b",
-        "in": "header",
-        "schema": {
-          "type": "string"
-        }
       }
     },
     "responses": {
-      "GenericResponse": {
-        "description": "Generic Response",
+      "GenerateErrorResponse": {
+        "description": "Generator Error",
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/GenericResponseBody"
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/ErrorResponseBody"
+                },
+                {
+                  "properties": {
+                    "rateLimit": {
+                      "$ref": "#/components/schemas/RateLimitInfo"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "GenerateRateLimitResponse": {
+        "description": "Rate Limited",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/ErrorResponseBody"
+                },
+                {
+                  "properties": {
+                    "rateLimit": {
+                      "$ref": "#/components/schemas/RateLimitInfo"
+                    }
+                  }
+                }
+              ]
             }
           }
         }
@@ -582,27 +157,6 @@
           }
         }
       },
-      "GenerateErrorResponse": {
-        "description": "Generator Error",
-        "content": {
-          "application/json": {
-            "schema": {
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/ErrorResponseBody"
-                },
-                {
-                  "properties": {
-                    "rateLimit": {
-                      "$ref": "#/components/schemas/RateLimitInfo"
-                    }
-                  }
-                }
-              ]
-            }
-          }
-        }
-      },
       "GenericErrorResponse": {
         "description": "Generic Error",
         "content": {
@@ -617,6 +171,44 @@
           }
         }
       },
+      "GenericResponse": {
+        "description": "Generic Response",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/GenericResponseBody"
+            }
+          }
+        }
+      },
+      "GenericSuccessResponse": {
+        "description": "Generator Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "type": "object",
+                  "required": [
+                    "skin"
+                  ],
+                  "properties": {
+                    "skin": {
+                      "$ref": "#/components/schemas/SkinInfo"
+                    },
+                    "rateLimit": {
+                      "$ref": "#/components/schemas/RateLimitInfo"
+                    }
+                  }
+                },
+                {
+                  "$ref": "#/components/schemas/SuccessResponseBody"
+                }
+              ]
+            }
+          }
+        }
+      },
       "NotFoundErrorResponse": {
         "description": "Not Found",
         "content": {
@@ -625,27 +217,6 @@
               "allOf": [
                 {
                   "$ref": "#/components/schemas/ErrorResponseBody"
-                }
-              ]
-            }
-          }
-        }
-      },
-      "GenerateRateLimitResponse": {
-        "description": "Rate Limited",
-        "content": {
-          "application/json": {
-            "schema": {
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/ErrorResponseBody"
-                },
-                {
-                  "properties": {
-                    "rateLimit": {
-                      "$ref": "#/components/schemas/RateLimitInfo"
-                    }
-                  }
                 }
               ]
             }
@@ -712,12 +283,472 @@
           }
         }
       }
+    },
+    "schemas": {
+      "CodeAndMessage": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "DelayInfo": {
+        "type": "object",
+        "required": [
+          "millis"
+        ],
+        "properties": {
+          "millis": {
+            "type": "number",
+            "description": "Delay between requests (in milliseconds) - depends on the API key used for this request",
+            "example": 1200
+          },
+          "seconds": {
+            "type": "number",
+            "description": "Delay between requests (in seconds) - depends on the API key used for this request",
+            "example": 1.2
+          }
+        }
+      },
+      "ErrorResponseBody": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/GenericResponseBody"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "success": {
+                "example": false
+              },
+              "errors": {
+                "example": [
+                  {
+                    "code": "generic_error",
+                    "message": "Something went wrong"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "GenerateOptions": {
+        "type": "object",
+        "properties": {
+          "variant": {
+            "$ref": "#/components/schemas/SkinVariant"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "visibility": {
+            "$ref": "#/components/schemas/SkinVisibility"
+          }
+        },
+        "example": {
+          "variant": "classic",
+          "name": "My Example Skin",
+          "visibility": "public"
+        }
+      },
+      "GeneratorInfo": {
+        "type": "object",
+        "required": [
+          "version",
+          "timestamp",
+          "duration",
+          "account",
+          "server"
+        ],
+        "properties": {
+          "version": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "number"
+          },
+          "duration": {
+            "type": "number"
+          },
+          "account": {
+            "type": "string"
+          },
+          "server": {
+            "type": "string"
+          }
+        }
+      },
+      "GenericResponseBody": {
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CodeAndMessage"
+            }
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CodeAndMessage"
+            }
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CodeAndMessage"
+            }
+          },
+          "links": {
+            "type": "object",
+            "description": "Links to related resources",
+            "properties": {
+              "self": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "JobInfo": {
+        "type": "object",
+        "required": [
+          "uuid",
+          "status"
+        ],
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Job UUID"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "unknown",
+              "waiting",
+              "active",
+              "failed",
+              "completed"
+            ]
+          }
+        }
+      },
+      "NextRequest": {
+        "type": "object",
+        "required": [
+          "absolute",
+          "relative"
+        ],
+        "properties": {
+          "absolute": {
+            "type": "number",
+            "format": "timestamp",
+            "description": "Absolute timestamp (in milliseconds) after which the next request can be made",
+            "example": 1726829503123
+          },
+          "relative": {
+            "type": "number",
+            "description": "Relative delay (in milliseconds) after which the next request can be made",
+            "example": 800
+          }
+        }
+      },
+      "PartialSkinInfo": {
+        "type": "object",
+        "required": [
+          "uuid",
+          "variant",
+          "visibility",
+          "views"
+        ],
+        "properties": {
+          "uuid": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "visibility": {
+            "$ref": "#/components/schemas/SkinVisibility"
+          },
+          "variant": {
+            "$ref": "#/components/schemas/SkinVariant"
+          },
+          "views": {
+            "type": "number"
+          }
+        },
+        "example": {
+          "uuid": "c891dfac4cd247a2a55743e7e82ce76f",
+          "name": "Test Skin",
+          "visibility": "public",
+          "variant": "classic",
+          "views": 1,
+          "duplicate": false
+        }
+      },
+      "RateLimitInfo": {
+        "type": "object",
+        "required": [
+          "next",
+          "delay"
+        ],
+        "properties": {
+          "next": {
+            "$ref": "#/components/schemas/NextRequest"
+          },
+          "delay": {
+            "$ref": "#/components/schemas/DelayInfo"
+          }
+        }
+      },
+      "SkinHashes": {
+        "type": "object",
+        "required": [
+          "skin"
+        ],
+        "properties": {
+          "skin": {
+            "type": "string",
+            "description": "Skin Hash"
+          },
+          "cape": {
+            "type": "string",
+            "description": "(optional) Cape Hash"
+          }
+        }
+      },
+      "SkinInfo": {
+        "type": "object",
+        "required": [
+          "uuid",
+          "variant",
+          "visibility",
+          "texture",
+          "generator",
+          "views",
+          "duplicate"
+        ],
+        "properties": {
+          "uuid": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "visibility": {
+            "$ref": "#/components/schemas/SkinVisibility"
+          },
+          "variant": {
+            "$ref": "#/components/schemas/SkinVariant"
+          },
+          "texture": {
+            "$ref": "#/components/schemas/SkinTexture"
+          },
+          "generator": {
+            "$ref": "#/components/schemas/GeneratorInfo"
+          },
+          "views": {
+            "type": "number"
+          },
+          "duplicate": {
+            "type": "boolean"
+          }
+        },
+        "example": {
+          "uuid": "c891dfac4cd247a2a55743e7e82ce76f",
+          "name": "Test Skin",
+          "visibility": "public",
+          "variant": "classic",
+          "views": 1,
+          "duplicate": false
+        }
+      },
+      "SkinTexture": {
+        "type": "object",
+        "required": [
+          "data",
+          "hash",
+          "url"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ValueAndSignature"
+          },
+          "hash": {
+            "$ref": "#/components/schemas/SkinHashes"
+          },
+          "url": {
+            "$ref": "#/components/schemas/SkinUrls"
+          }
+        }
+      },
+      "SkinUrls": {
+        "type": "object",
+        "required": [
+          "skin"
+        ],
+        "properties": {
+          "skin": {
+            "type": "string",
+            "description": "Skin Texture Url"
+          },
+          "cape": {
+            "type": "string",
+            "description": "(optional) Cape Texture Url"
+          }
+        }
+      },
+      "SkinVariant": {
+        "type": "string",
+        "enum": [
+          "classic",
+          "slim",
+          "unknown"
+        ],
+        "default": "unknown"
+      },
+      "SkinVisibility": {
+        "type": "string",
+        "enum": [
+          "public",
+          "unlisted",
+          "private"
+        ],
+        "default": "public"
+      },
+      "SuccessResponseBody": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/GenericResponseBody"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "success": {
+                "example": true
+              },
+              "errors": {
+                "example": []
+              },
+              "messages": {
+                "example": [
+                  {
+                    "code": "ok",
+                    "message": "All good!"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "UploadGenerateBody": {
+        "type": "object",
+        "description": "File Upload Generate Request Body",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/GenerateOptions"
+          },
+          {
+            "required": [
+              "file"
+            ],
+            "properties": {
+              "file": {
+                "description": "PNG image file to upload. You should use a client library like [MineSkin Java Client](https://github.com/InventivetalentDev/MineskinClient) to properly handle file uploads. See [github/examples](https://github.com/MineSkin/examples)",
+                "type": "string",
+                "format": "binary",
+                "externalDocs": {
+                  "description": "Example implementations",
+                  "url": "https://github.com/MineSkin/examples"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "UrlGenerateBody": {
+        "type": "object",
+        "description": "URL Generate Request Body",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/GenerateOptions"
+          },
+          {
+            "required": [
+              "url"
+            ],
+            "properties": {
+              "url": {
+                "type": "string"
+              }
+            },
+            "example": {
+              "url": "https://i.imgur.com/kQPrtYw.png"
+            }
+          }
+        ]
+      },
+      "UserGenerateBody": {
+        "type": "object",
+        "description": "User Generate Request Body",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/GenerateOptions"
+          },
+          {
+            "required": [
+              "user"
+            ],
+            "properties": {
+              "user": {
+                "description": "Player UUID",
+                "type": "string",
+                "minLength": 32,
+                "maxLength": 36
+              }
+            }
+          }
+        ]
+      },
+      "ValueAndSignature": {
+        "type": "object",
+        "required": [
+          "value",
+          "signature"
+        ],
+        "properties": {
+          "value": {
+            "type": "string",
+            "description": "Skin Value"
+          },
+          "signature": {
+            "type": "string",
+            "description": "Skin Signature"
+          }
+        }
+      }
     }
   },
   "paths": {
     "/v2/generate": {
       "post": {
-        "description": "Generate a skin",
+        "summary": "Generate a skin",
+        "description": "Note: this endpoint is not recommended. You should use the queue endpoints instead to submit jobs and check on their status periodically.\n\nQueue skin generation and wait for the result.",
         "tags": [
           "generate"
         ],
@@ -732,22 +763,21 @@
         "requestBody": {
           "required": true,
           "content": {
-
-            "application/json":{
+            "application/json": {
               "schema": {
                 "oneOf": [
-                    {
-                        "$ref": "#/components/schemas/UrlGenerateBody"
-                    },
-                    {
-                        "$ref": "#/components/schemas/UserGenerateBody"
-                    }
-                  ]
+                  {
+                    "$ref": "#/components/schemas/UrlGenerateBody"
+                  },
+                  {
+                    "$ref": "#/components/schemas/UserGenerateBody"
+                  }
+                ]
               }
             },
             "multipart/form-data": {
               "schema": {
-                "description":"File Upload Generate Request",
+                "description": "File Upload Generate Request",
                 "oneOf": [
                   {
                     "$ref": "#/components/schemas/UploadGenerateBody"
@@ -786,7 +816,8 @@
     },
     "/v2/queue": {
       "post": {
-        "description": "Queue skin generation",
+        "summary": "Queue skin generation",
+        "description": "Add a generation request to the queue.\n\nGenerating a single skin usually takes around 2 seconds, but can take longer depending API load and the number of generator jobs ahead of you in the queue.\n\nUse multipart/form-data to upload image files or application/json for url and user requests.",
         "tags": [
           "generate",
           "queue"
@@ -802,8 +833,7 @@
         "requestBody": {
           "required": true,
           "content": {
-
-            "application/json":{
+            "application/json": {
               "schema": {
                 "oneOf": [
                   {
@@ -817,7 +847,7 @@
             },
             "multipart/form-data": {
               "schema": {
-                "description":"File Upload Generate Request",
+                "description": "File Upload Generate Request",
                 "oneOf": [
                   {
                     "$ref": "#/components/schemas/UploadGenerateBody"
@@ -839,11 +869,11 @@
           }
         },
         "responses": {
-          "202": {
-            "$ref": "#/components/responses/QueueProcessingResponse"
-          },
           "200": {
             "$ref": "#/components/responses/QueueSuccessResponse"
+          },
+          "202": {
+            "$ref": "#/components/responses/QueueProcessingResponse"
           },
           "400": {
             "$ref": "#/components/responses/GenerateUserErrorResponse"
@@ -857,9 +887,10 @@
         }
       }
     },
-    "/v2/queue/:jobId": {
+    "/v2/queue/{jobId}": {
       "get": {
-        "description": "Get the status of a generator job",
+        "summary": "Get Job Status",
+        "description": "Get the status of a generator job.\n\nThis endpoint is rate limited per job. it's recommended you check on the status of a generator job once every second, at most.",
         "tags": [
           "queue"
         ],
@@ -881,11 +912,11 @@
           }
         ],
         "responses": {
-          "202": {
-            "$ref": "#/components/responses/QueueProcessingResponse"
-          },
           "200": {
             "$ref": "#/components/responses/QueueSuccessResponse"
+          },
+          "202": {
+            "$ref": "#/components/responses/QueueProcessingResponse"
           },
           "400": {
             "$ref": "#/components/responses/GenerateUserErrorResponse"
@@ -899,9 +930,9 @@
         }
       }
     },
-
     "/v2/delay": {
       "get": {
+        "summary": "Get the current delay",
         "tags": [
           "delay"
         ],
@@ -929,6 +960,7 @@
     },
     "/v2/skins/{uuid}": {
       "get": {
+        "summary": "Get a skin by UUID",
         "description": "Get a skin by UUID",
         "tags": [
           "skins"
@@ -969,6 +1001,7 @@
     },
     "/v2/skins": {
       "get": {
+        "summary": "Get a list of skins",
         "description": "Get a list of skins",
         "tags": [
           "skins"
