@@ -4,6 +4,7 @@ import { MineSkinError } from "@mineskin/types";
 import { formatV2Response } from "../../middleware/response";
 import { V2MiscResponseBody } from "../../typings/v2/V2MiscResponseBody";
 import { BillingService } from "@mineskin/generator";
+import { ApiKey } from "@mineskin/database";
 
 export async function v2GetMe(req: MineSkinV2Request, res: Response<V2MiscResponseBody>) {
     req.links.self = `/v2/me`;
@@ -25,6 +26,25 @@ export async function v2GetMe(req: MineSkinV2Request, res: Response<V2MiscRespon
         return;
     }
     throw new MineSkinError('user_not_found', "User not found", {httpCode: 404});
+}
+
+export async function v2ListKeys(req: MineSkinV2Request, res: Response<V2MiscResponseBody>) {
+    if (!req.client.hasUser()) {
+        throw new MineSkinError('unauthorized', 'Unauthorized', {httpCode: 401});
+    }
+    const keys = await ApiKey.findByUser(req.client.userId!)
+    res.json(formatV2Response<V2MiscResponseBody>(req, {
+        keys: keys.map(k => {
+            return {
+                id: k.id,
+                name: k.name,
+                billable: k.billable,
+                useCredits: k.useCredits,
+                metered: k.metered,
+                grants: k.grants
+            }
+        })
+    }))
 }
 
 export async function v2GetKeyInfo(req: MineSkinV2Request, res: Response<V2MiscResponseBody>) {

@@ -1,7 +1,7 @@
 import { Response, Router } from "express";
 import { v2Router } from "./router";
 import expressAsyncHandler from "express-async-handler";
-import { v2GetClientInfo, v2GetCreditsInfo, v2GetKeyInfo, v2GetMe } from "../../models/v2/me";
+import { v2GetClientInfo, v2GetCreditsInfo, v2GetKeyInfo, v2GetMe, v2ListKeys } from "../../models/v2/me";
 import { MineSkinV2Request } from "./types";
 import { v2ErrorHandler } from "../../middleware/error";
 import { webOnlyCorsWithCredentials } from "../../middleware/cors";
@@ -19,6 +19,10 @@ v2MeRouter.use((req: MineSkinV2Request, res, next) => {
 
 v2MeRouter.get("/", expressAsyncHandler(async (req: MineSkinV2Request, res) => {
     await v2GetMe(req, res);
+}));
+
+v2MeRouter.get("/apikeys", expressAsyncHandler(async (req: MineSkinV2Request, res) => {
+    await v2ListKeys(req, res);
 }));
 
 v2MeRouter.get("/apikey", expressAsyncHandler(async (req: MineSkinV2Request, res) => {
