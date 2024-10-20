@@ -15,6 +15,7 @@ export const register = (app: Application) => {
             res.status(400).json({error: "invalid name"});
             return;
         }
+        res.header("Cache-Control", "public, max-age=3600");
         Caching.getUserByName(req.params["name"]).then(user => {
             if (!user || !user.valid) {
                 res.status(404);
@@ -48,6 +49,7 @@ export const register = (app: Application) => {
             res.status(400).json({error: "invalid uuid"});
             return;
         }
+        res.header("Cache-Control", "public, max-age=3600");
         Caching.getUserByUuid(req.params["uuid"]).then(user => {
             if (!user || !user.valid) {
                 res.status(404);
