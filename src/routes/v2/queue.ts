@@ -1,6 +1,5 @@
 import { Response, Router } from "express";
 import { v2GenerateEnqueue, v2GetJob, v2ListJobs } from "../../models/v2/generate";
-import { v2GenerateRouter } from "./generate";
 import { v2Router } from "./router";
 import expressAsyncHandler from "express-async-handler";
 import { GenerateV2Request } from "./types";
@@ -29,4 +28,4 @@ v2QueueRouter.get("/:jobId", expressAsyncHandler(async (req: GenerateV2Request, 
     res.json(formatV2Response(req, result));
 }));
 
-v2GenerateRouter.use("/", v2ErrorHandler);
+v2QueueRouter.use("/", v2ErrorHandler);
