@@ -17,7 +17,13 @@ import {
     hiatusRoute,
     renderRoute,
     testerRoute,
-    utilRoute
+    utilRoute,
+    v2DelayRouter,
+    v2GenerateRouter,
+    v2ImagesRouter,
+    v2MeRouter,
+    v2QueueRouter,
+    v2SkinsRouter
 } from "./routes";
 import { Temp } from "./generator/Temp";
 import { getConfig, getLocalConfig, MineSkinConfig } from "./typings/Configs";
@@ -39,16 +45,10 @@ import mongoose from "mongoose";
 import { connectToMongo } from "@mineskin/database";
 import { MineSkinError } from "@mineskin/types";
 import { BillingService, GeneratorError, Log, TrafficService } from "@mineskin/generator";
-import { v2SkinsRouter } from "./routes/v2/skins";
-import { v2GenerateRouter } from "./routes/v2/generate";
-import { v2QueueRouter } from "./routes/v2/queue";
-import { v2TestRouter } from "./routes/v2/test";
 import process from "node:process";
-import { v2MeRouter } from "./routes/v2/me";
-import { v2NotFoundHandler } from "./middleware/error";
 import * as http from "node:http";
-import { v2DelayRouter } from "./routes/v2/delay";
-import { v2ImagesRouter } from "./routes/v2/images";
+import { v2TestRouter } from "./routes/v2/test";
+import { v2ErrorHandler, v2NotFoundHandler } from "./middleware/error";
 
 
 sourceMapSupport.install();
@@ -351,6 +351,7 @@ async function init() {
         if (process.env.NODE_ENV !== 'production') {
             app.use("/v2/test", v2TestRouter);
         }
+        app.use("/v2", v2ErrorHandler);
         app.get("/v2/*", v2NotFoundHandler);
 
     }
