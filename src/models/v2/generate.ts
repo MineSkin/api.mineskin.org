@@ -213,6 +213,8 @@ export async function v2ListJobs(req: GenerateV2Request, res: Response<V2MiscRes
     };
 }
 
+//TODO: track stats
+
 async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2GenerateResponseBody | V2SkinResponse>): Promise<JobWithSkin> {
 
     // need to call multer stuff first so fields are parsed
@@ -320,6 +322,7 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
         Log.l.debug(`next request at ${ req.nextRequest }`);
     }
     if (req.client.usePerMinuteRateLimit()) {
+        req.requestsThisMinute = (req.requestsThisMinute || 0) + 1;
         await trafficService.incRequest(req.clientInfo);
     }
 
