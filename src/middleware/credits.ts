@@ -14,7 +14,7 @@ export const verifyCredits = async (req: MineSkinV2Request, res: Response) => {
 
     const flags = FlagProvider.get();
     if (!(await flags.isEnabled('generator.credits.enabled'))) {
-        req.clientInfo.credits = false;
+        req.clientInfo.usePaidCredits = false;
         return;
     }
 
@@ -28,20 +28,20 @@ export const verifyCredits = async (req: MineSkinV2Request, res: Response) => {
                 code: 'no_credits',
                 message: "no credits"
             });
-            req.clientInfo.credits = false;
+            req.clientInfo.usePaidCredits = false;
         } else {
             if (!credit.isValid()) {
                 req.warnings.push({
                     code: 'invalid_credits',
                     message: "invalid credits"
                 });
-                req.clientInfo.credits = false;
+                req.clientInfo.usePaidCredits = false;
             } else if (credit.balance <= 0) {
                 req.warnings.push({
                     code: 'insufficient_credits',
                     message: "insufficient credits"
                 });
-                req.clientInfo.credits = false;
+                req.clientInfo.usePaidCredits = false;
             } else {
                 req.client.setCredits(credit);
             }
