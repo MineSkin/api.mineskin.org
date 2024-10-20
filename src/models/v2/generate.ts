@@ -8,6 +8,7 @@ import {
     GeneratorError,
     GenError,
     IGeneratorClient,
+    ImageHashes,
     ImageService,
     ImageValidation,
     Log,
@@ -305,97 +306,100 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
         await trafficService.incRequest(req.clientInfo);
     }
 
-
-    const imageResult = await handler.getImageBuffer();
-    if (imageResult.existing) {
-        // await V2GenerateHandler.queryAndSendSkin(req, res, imageResult.existing, true);
-        return {
-            skin: {
-                id: imageResult.existing,
-                duplicate: true
-            }
-        };
-    }
-    const imageBuffer = imageResult.buffer;
-    if (!imageBuffer) {
-        throw new GeneratorError(GenError.INVALID_IMAGE, "Failed to get image buffer", {httpCode: 500});
-    }
-
-
-    const validation = await ImageValidation.validateImageBuffer(imageBuffer);
-    Log.l.debug(validation);
-
-    //TODO: ideally don't do this here and in the generator
-    if (options.variant === SkinVariant.UNKNOWN) {
-        if (validation.variant === SkinVariant.UNKNOWN) {
-            throw new GeneratorError(GenError.UNKNOWN_VARIANT, "Unknown variant", {
-                source: ErrorSource.CLIENT,
-                httpCode: 400
-            });
-        }
-        Log.l.info(req.breadcrumb + " Switching unknown skin variant to " + validation.variant + " from detection");
-        Sentry.setExtra("generate_detected_variant", validation.variant);
-        options.variant = validation.variant;
-    }
-
-
-    let hashes;
-    try {
-        hashes = await ImageService.getImageHashes(imageBuffer, validation.dimensions.width || 64, validation.dimensions.height || 64);
-    } catch (e) {
-        // span?.setStatus({
-        //     code: 2,
-        //     message: "invalid_argument"
-        // });
-        throw new GeneratorError(GenError.INVALID_IMAGE, `Failed to get image hash: ${ e.message }`, {
-            httpCode: 400,
-            error: e
-        });
-    }
-    Log.l.debug(req.breadcrumbC + " Image hash: ", hashes);
-
-    // duplicate check V2, same as in generator
-    //  just to avoid unnecessary submissions to generator
-    const duplicateV2Data = await DuplicateChecker.findDuplicateDataFromImageHash(hashes, options.variant, GenerateType.UPLOAD, req.breadcrumb || "????");
-    if (duplicateV2Data.existing) {
-        // found existing data
-        const skinForDuplicateData = await DuplicateChecker.findV2ForData(duplicateV2Data.existing);
-        const result = await DuplicateChecker.handleV2DuplicateResult({
-            source: duplicateV2Data.source,
-            existing: skinForDuplicateData,
-            data: duplicateV2Data.existing
-        }, options, req.clientInfo, req.breadcrumb || "????");
-        await DuplicateChecker.handleDuplicateResultMetrics(result, GenerateType.UPLOAD, options, req.clientInfo);
-        if (!!result.existing) {
-            // full duplicate, return existing skin
-            //await V2GenerateHandler.queryAndSendSkin(req, res, result.existing.uuid, true);
+    let hashes: Maybe<ImageHashes> = undefined;
+    if(handler.handlesImage()) {
+        const imageResult = await handler.getImageBuffer();
+        if (imageResult.existing) {
+            // await V2GenerateHandler.queryAndSendSkin(req, res, imageResult.existing, true);
             return {
                 skin: {
-                    id: result.existing.uuid,
+                    id: imageResult.existing,
                     duplicate: true
                 }
             };
         }
-        // otherwise, continue with generator
-    }
+        const imageBuffer = imageResult.buffer;
+        if (!imageBuffer) {
+            throw new GeneratorError(GenError.INVALID_IMAGE, "Failed to get image buffer", {httpCode: 500});
+        }
 
-    /*
-    const duplicateResult = await DuplicateChecker.findDuplicateDataFromImageHash(hashes, options.variant, GenerateType.UPLOAD, req.breadcrumb || "????");
-    Log.l.debug(JSON.stringify(duplicateResult, null, 2));
-    if (duplicateResult.existing && isV1SkinDocument(duplicateResult.existing)) {
-        return res.json({
-            success: true,
-            skin: v1SkinToV2Json(duplicateResult.existing, true)
-        });
-    } else if (duplicateResult.existing && isPopulatedSkin2Document(duplicateResult.existing)) {
-        return res.json({
-            success: true,
-            skin: skinToJson(duplicateResult.existing, true)
-        });
-    }
-     */
 
-    const imageUploaded = await getClient().insertUploadedImage(hashes.minecraft, imageBuffer);
+        const validation = await ImageValidation.validateImageBuffer(imageBuffer);
+        Log.l.debug(validation);
+
+        //TODO: ideally don't do this here and in the generator
+        if (options.variant === SkinVariant.UNKNOWN) {
+            if (validation.variant === SkinVariant.UNKNOWN) {
+                throw new GeneratorError(GenError.UNKNOWN_VARIANT, "Unknown variant", {
+                    source: ErrorSource.CLIENT,
+                    httpCode: 400
+                });
+            }
+            Log.l.info(req.breadcrumb + " Switching unknown skin variant to " + validation.variant + " from detection");
+            Sentry.setExtra("generate_detected_variant", validation.variant);
+            options.variant = validation.variant;
+        }
+
+
+        try {
+            hashes = await ImageService.getImageHashes(imageBuffer, validation.dimensions.width || 64, validation.dimensions.height || 64);
+        } catch (e) {
+            // span?.setStatus({
+            //     code: 2,
+            //     message: "invalid_argument"
+            // });
+            throw new GeneratorError(GenError.INVALID_IMAGE, `Failed to get image hash: ${ e.message }`, {
+                httpCode: 400,
+                error: e
+            });
+        }
+        Log.l.debug(req.breadcrumbC + " Image hash: ", hashes);
+
+        // duplicate check V2, same as in generator
+        //  just to avoid unnecessary submissions to generator
+        const duplicateV2Data = await DuplicateChecker.findDuplicateDataFromImageHash(hashes, options.variant, GenerateType.UPLOAD, req.breadcrumb || "????");
+        if (duplicateV2Data.existing) {
+            // found existing data
+            const skinForDuplicateData = await DuplicateChecker.findV2ForData(duplicateV2Data.existing);
+            const result = await DuplicateChecker.handleV2DuplicateResult({
+                source: duplicateV2Data.source,
+                existing: skinForDuplicateData,
+                data: duplicateV2Data.existing
+            }, options, req.clientInfo, req.breadcrumb || "????");
+            await DuplicateChecker.handleDuplicateResultMetrics(result, GenerateType.UPLOAD, options, req.clientInfo);
+            if (!!result.existing) {
+                // full duplicate, return existing skin
+                //await V2GenerateHandler.queryAndSendSkin(req, res, result.existing.uuid, true);
+                return {
+                    skin: {
+                        id: result.existing.uuid,
+                        duplicate: true
+                    }
+                };
+            }
+            // otherwise, continue with generator
+        }
+
+        /*
+        const duplicateResult = await DuplicateChecker.findDuplicateDataFromImageHash(hashes, options.variant, GenerateType.UPLOAD, req.breadcrumb || "????");
+        Log.l.debug(JSON.stringify(duplicateResult, null, 2));
+        if (duplicateResult.existing && isV1SkinDocument(duplicateResult.existing)) {
+            return res.json({
+                success: true,
+                skin: v1SkinToV2Json(duplicateResult.existing, true)
+            });
+        } else if (duplicateResult.existing && isPopulatedSkin2Document(duplicateResult.existing)) {
+            return res.json({
+                success: true,
+                skin: skinToJson(duplicateResult.existing, true)
+            });
+        }
+         */
+
+        const imageUploaded = await getClient().insertUploadedImage(hashes.minecraft, imageBuffer);
+    }else if (handler.type === GenerateType.USER) {
+        //TODO: check for recent requests on the same user and return duplicate
+    }
 
     if (req.client.useConcurrencyLimit()) {
         await trafficService.incrementConcurrent(req.clientInfo);
@@ -408,7 +412,7 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
     const request: GenerateRequest = {
         breadcrumb: req.breadcrumb || "????",
         type: handler.type,
-        image: hashes.minecraft,
+        image: handler.getImageReference(hashes),
         options: options,
         clientInfo: req.clientInfo
     }

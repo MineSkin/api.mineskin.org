@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { SkinService } from "@mineskin/generator";
+import { ImageHashes, SkinService } from "@mineskin/generator";
 import { GenerateOptions, GenerateType, RateLimitInfo, SkinInfo2, UUID } from "@mineskin/types";
 import { IPopulatedSkin2Document, ISkinDocument, isPopulatedSkin2Document } from "@mineskin/database";
 import { GenerateV2Request } from "../../routes/v2/types";
@@ -18,8 +18,16 @@ export class V2GenerateHandler {
     ) {
     }
 
+    handlesImage(): boolean {
+        return true;
+    }
+
     async getImageBuffer(): Promise<BufferResult> {
         throw new Error("not implemented");
+    }
+
+    getImageReference(hashes?: ImageHashes): string {
+        return hashes!.minecraft;
     }
 
     static async queryAndSendSkin(req: GenerateV2Request, res: Response, uuid: UUID, duplicate: boolean = false) {
