@@ -110,6 +110,16 @@ export async function v2GetSkin(req: MineSkinV2Request, res: Response<V2SkinResp
         throw new MineSkinError('skin_not_found', 'Skin not found', {httpCode: 404});
     }
 
+    if (skin.meta.visibility === SkinVisibility2.PRIVATE) {
+        let usersMatch = false;
+        if (req.client.hasUser()) {
+            usersMatch = skin.clients.some(c => c.user === req.client.userId);
+        }
+        if (!usersMatch) {
+            throw new MineSkinError('skin_not_found', 'Skin not found', {httpCode: 404});
+        }
+    }
+
     return {
         success: true,
         skin: V2GenerateHandler.skinToJson(skin)
