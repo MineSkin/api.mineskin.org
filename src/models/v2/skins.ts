@@ -41,6 +41,13 @@ export async function v2ListSkins(req: MineSkinV2Request, res: Response<V2SkinLi
         //TODO: show unlisted/private skins
         // also limit size based on grants
         query['clients.user'] = user;
+        query['meta.visibility'] = {
+            $in: [
+                SkinVisibility2.PUBLIC,
+                SkinVisibility2.UNLISTED,
+                SkinVisibility2.PRIVATE
+            ]
+        }
     }
 
     if (after) {
