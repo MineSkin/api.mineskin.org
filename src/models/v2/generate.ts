@@ -154,6 +154,7 @@ export async function v2GetJob(req: GenerateV2Request, res: Response<V2GenerateR
     req.links.image = `/v2/images/${ job.request.image }`;
 
     if (job.status === 'completed') {
+        res.status(200);
         const result = job.result!;
         req.links.skin = `/v2/skins/${ result.skin }`;
         const queried = await querySkinOrThrow(result.skin);
@@ -171,11 +172,13 @@ export async function v2GetJob(req: GenerateV2Request, res: Response<V2GenerateR
         };
     }
     if (job.status === 'failed') {
+        res.status(200);
         if (job.error) {
             throw MongoGeneratorClient.deserializeCustomError(job.error);
         }
         throw new GeneratorError('job_failed', "Job failed", {httpCode: 500});
     }
+    res.status(202);
     return {
         success: true,
         job: {
