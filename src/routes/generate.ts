@@ -35,7 +35,7 @@ import { GenerateV2Request, MineSkinV2Request } from "./v2/types";
 import { v2GenerateAndWait } from "../models/v2/generate";
 import { V2SkinResponse } from "../typings/v2/V2SkinResponse";
 import { mineSkinV2InitialMiddleware } from "../middleware/combined";
-import { rateLimitMiddleware } from "../middleware/rateLimit";
+import { rateLimitMiddlewareWithDelay } from "../middleware/rateLimit";
 
 export const register = (app: Application) => {
 
@@ -125,7 +125,7 @@ export const register = (app: Application) => {
     });
     app.use("/generate", async (req: MineSkinV2Request & V2CompatRequest, res: Response, next: NextFunction) => {
         if (req.v2Compat) {
-            return await rateLimitMiddleware(req, res, next);
+            return await rateLimitMiddlewareWithDelay(req, res, next);
         }
         next();
     });

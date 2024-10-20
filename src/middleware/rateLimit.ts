@@ -2,19 +2,24 @@ import { GenerateV2Request } from "../routes/v2/types";
 import { NextFunction, Response } from "express";
 import { FlagProvider, GeneratorError, TrafficService } from "@mineskin/generator";
 
-export const rateLimitMiddleware = async (req: GenerateV2Request, res: Response, next: NextFunction) => {
-    await verifyRateLimit(req, res);
+export const rateLimitMiddlewareWithDelay = async (req: GenerateV2Request, res: Response, next: NextFunction) => {
+    await verifyRateLimit(req, res, true);
     next();
 }
 
-export const verifyRateLimit = async (req: GenerateV2Request, res: Response) => {
+export const rateLimitMiddleware = async (req: GenerateV2Request, res: Response, next: NextFunction) => {
+    await verifyRateLimit(req, res, false);
+    next();
+}
+
+export const verifyRateLimit = async (req: GenerateV2Request, res: Response, withDelay: boolean) => {
     if (!req.clientInfo) {
         throw new GeneratorError('invalid_client', "no client info", {httpCode: 500});
     }
 
     // check rate limit
     const trafficService = TrafficService.getInstance();
-    if (req.client.useDelayRateLimit()) {
+    if (withDelay && req.client.useDelayRateLimit()) {
         req.nextRequest = await trafficService.getNextRequest(req.clientInfo);
         req.minDelay = await trafficService.getMinDelaySeconds(req.clientInfo, req.apiKey) * 1000;
         res.header('X-RateLimit-Delay', `${ req.minDelay }`);
