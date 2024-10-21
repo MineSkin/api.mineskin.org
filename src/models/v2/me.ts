@@ -103,11 +103,25 @@ export async function v2GetCreditsInfo(req: MineSkinV2Request, res: Response<V2M
         res.header('X-MineSkin-Credits-Type', credit.type);
         res.header('X-MineSkin-Credits-Balance', `${ credit.balance }`);
     }
+    let balance = credit?.balance || 0;
+    let total = credit?.total || 0;
+    if (credit && credit.isValid() && !credit.isExpired() && credit.balance > 0) {
+        const allAvailable = await BillingService.getInstance().getAllAvailableCredits(req.clientInfo.user!);
+        if (allAvailable) {
+            for (const available of allAvailable) {
+                if (available.type !== credit.type) continue;
+                if (available.isValid() && !available.isExpired() && available.balance > 0) {
+                    balance += available.balance;
+                    total += available.total;
+                }
+            }
+        }
+    }
     res.json(formatV2Response<V2MiscResponseBody>(req, {
         credit: {
             type: credit?.type,
-            balance: credit?.balance,
-            total: credit?.total
+            balance: balance,
+            total: total
         }
     }));
 }
