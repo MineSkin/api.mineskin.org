@@ -446,7 +446,7 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
     const request: GenerateRequest = {
         breadcrumb: req.breadcrumb || "????",
         type: handler.type,
-        image: handler.getImageReference(hashes),
+        image: await handler.getImageReference(hashes),
         options: options,
         clientInfo: req.clientInfo
     }
