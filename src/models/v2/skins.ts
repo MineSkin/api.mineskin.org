@@ -38,16 +38,21 @@ export async function v2ListSkins(req: MineSkinV2Request, res: Response<V2SkinLi
     }
 
     if (user) {
-        //TODO: show unlisted/private skins
-        // also limit size based on grants
+        // filter by user
         query['clients.user'] = user;
+        // allow all visibilities
         query['meta.visibility'] = {
             $in: [
                 SkinVisibility2.PUBLIC,
                 SkinVisibility2.UNLISTED,
                 SkinVisibility2.PRIVATE
             ]
-        }
+        };
+
+        // limit results
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        query['createdAt'] = {$gte: oneWeekAgo};
     }
 
     if (after) {
