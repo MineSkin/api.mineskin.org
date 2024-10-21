@@ -82,7 +82,7 @@ export class V2GenerateHandler {
             },
             generator: {
                 timestamp: skin.data.createdAt.getTime(),
-                account: skin.data.generatedBy.account,
+                account: skin.data.generatedBy.account?.substring(0, 16),
                 server: skin.data.generatedBy.server,
                 worker: skin.data.generatedBy.worker,
                 version: 'unknown', //TODO
