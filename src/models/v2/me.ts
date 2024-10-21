@@ -110,6 +110,7 @@ export async function v2GetCreditsInfo(req: MineSkinV2Request, res: Response<V2M
         if (allAvailable) {
             for (const available of allAvailable) {
                 if (available.type !== credit.type) continue;
+                if (available.id === credit.id) continue;
                 if (available.isValid() && !available.isExpired() && available.balance > 0) {
                     balance += available.balance;
                     total += available.total;
