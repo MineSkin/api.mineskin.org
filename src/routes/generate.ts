@@ -72,19 +72,19 @@ export const register = (app: Application) => {
     // v2 compatibility layers
     app.use("/generate", async (req: V2CompatRequest & MineSkinV2Request, res: Response, next: NextFunction) => {
         req.v2Compat = false;
+        const flags = FlagProvider.get();
         if (req.query["v2"]) {
             req.v2Compat = true;
         } else {
             const apiKey = (req as V2CompatRequest).apiKey;
-            if (apiKey) {
-                if (apiKey.grants && (apiKey.grants as any).v2_compat) {
-                    req.v2Compat = true
-                }
+            if (apiKey && apiKey.grants && (apiKey.grants as any).v2_compat) {
+                req.v2Compat = true
+            } else if (await flags.isEnabled('api.v2_compat.all_requests')) {
+                req.v2Compat = true;
             }
         }
 
         if (req.v2Compat) {
-            const flags = FlagProvider.get();
             const [enabled, chance] = await Promise.all([
                 flags.isEnabled('api.v2_compat.chance'),
                 flags.getValue('api.v2_compat.chance')
@@ -111,6 +111,7 @@ export const register = (app: Application) => {
             Log.l.info(`${ req.breadcrumbC } Redirecting to v2 compatibility layer`);
             res.header("X-MineSkin-Api-Version", "v1-with-v2-compat");
             res.header("X-MineSkin-Api-Deprecated", "true");
+            Sentry.setExtra('v2_compat', true);
             if (!req.warnings) {
                 req.warnings = [];
             }
