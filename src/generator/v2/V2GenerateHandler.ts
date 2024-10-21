@@ -26,7 +26,7 @@ export class V2GenerateHandler {
         throw new Error("not implemented");
     }
 
-    getImageReference(hashes?: ImageHashes): string {
+    async getImageReference(hashes?: ImageHashes): Promise<string> {
         return hashes!.minecraft;
     }
 
