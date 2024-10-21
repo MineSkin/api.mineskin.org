@@ -18,6 +18,8 @@ export const GenerateReqUser = GenerateReqOptions.extend({
 
 export const GenerateReq = GenerateReqOptions.or(GenerateReqUrl).or(GenerateReqUser);
 
+export const GenerateTimeout = z.coerce.number().int().positive().max(30).default(10);
+
 export type GenerateReqOptions = z.infer<typeof GenerateReqOptions>;
 export type GenerateReqUrl = z.infer<typeof GenerateReqUrl>;
 export type GenerateReqUser = z.infer<typeof GenerateReqUser>;

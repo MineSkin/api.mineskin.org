@@ -38,7 +38,7 @@ import { V2UploadHandler } from "../../generator/v2/V2UploadHandler";
 import { V2UrlHandler } from "../../generator/v2/V2UrlHandler";
 import { V2JobResponse } from "../../typings/v2/V2JobResponse";
 import { IPopulatedSkin2Document, IQueueDocument, isPopulatedSkin2Document } from "@mineskin/database";
-import { GenerateReqOptions } from "../../validation/generate";
+import { GenerateReqOptions, GenerateTimeout } from "../../validation/generate";
 import { redisSub } from "../../database/redis";
 import { V2MiscResponseBody } from "../../typings/v2/V2MiscResponseBody";
 import { V2JobListResponse } from "../../typings/v2/V2JobListResponse";
@@ -83,7 +83,8 @@ export async function v2GenerateAndWait(req: GenerateV2Request, res: Response<V2
         throw new GeneratorError('job_not_found', "Job not found", {httpCode: 404});
     }
     try {
-        const result = await getClient().waitForJob(job.id, 10_000) as GenerateResult; //TODO: configure timeout
+        const timeoutSeconds = GenerateTimeout.parse(req.query.timeout);
+        const result = await getClient().waitForJob(job.id, timeoutSeconds * 1000) as GenerateResult; //TODO: configure timeout
         Log.l.debug(JSON.stringify(result, null, 2));
         req.links.skin = `/v2/skins/${ result.skin }`;
         const queried = await querySkinOrThrow(result.skin);
