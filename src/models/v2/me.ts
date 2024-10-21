@@ -109,7 +109,6 @@ export async function v2GetCreditsInfo(req: MineSkinV2Request, res: Response<V2M
         const allAvailable = await BillingService.getInstance().getAllAvailableCredits(req.clientInfo.user!);
         if (allAvailable) {
             for (const available of allAvailable) {
-                if (available.type !== credit.type) continue;
                 if (available.id === credit.id) continue;
                 if (available.isValid() && !available.isExpired() && available.balance > 0) {
                     balance += available.balance;
@@ -120,9 +119,15 @@ export async function v2GetCreditsInfo(req: MineSkinV2Request, res: Response<V2M
     }
     res.json(formatV2Response<V2MiscResponseBody>(req, {
         credit: {
-            type: credit?.type,
-            balance: balance,
-            total: total
+            current: {
+                type: credit?.type,
+                balance: credit?.balance,
+                total: credit?.total
+            },
+            all: {
+                balance: balance,
+                total: total
+            }
         }
     }));
 }
