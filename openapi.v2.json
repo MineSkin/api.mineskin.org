@@ -942,9 +942,6 @@
           "200": {
             "$ref": "#/components/responses/QueueSuccessResponse"
           },
-          "202": {
-            "$ref": "#/components/responses/QueueProcessingResponse"
-          },
           "400": {
             "$ref": "#/components/responses/GenerateUserErrorResponse"
           },
