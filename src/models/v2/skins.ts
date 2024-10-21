@@ -114,7 +114,7 @@ export async function v2GetSkin(req: MineSkinV2Request, res: Response<V2SkinResp
     if (!skin && await flags.isEnabled('migrations.api.get')) {
         const v1Doc = await Caching.getSkinByUuid(uuid);
         if (v1Doc) {
-            await Migrations.migrateV1ToV2(v1Doc);
+            await Migrations.migrateV1ToV2(v1Doc, "skin-get");
         }
     }
 
