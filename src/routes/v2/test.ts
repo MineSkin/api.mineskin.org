@@ -22,7 +22,7 @@ router.get("/apikey", async (req: MineSkinV2Request, res: Response) => {
 
 router.get("/billing/credits", async (req: MineSkinV2Request, res: Response) => {
     const billingService = container.resolve(BillingService);
-    const credit = await billingService.getClientCredits(req.clientInfo!)
+    const credit = await billingService.creditService.getClientCredits(req.clientInfo!)
     res.json({credit});
 });
 

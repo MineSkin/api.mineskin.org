@@ -16,7 +16,7 @@ export async function v2GetDelay(req: MineSkinV2Request, res: Response<V2MiscRes
     const trafficService = container.resolve(TrafficService);
     const billingService = container.resolve(BillingService);
 
-    const credits = req.client.canUseCredits() ? await billingService.getClientCredits(req.clientInfo) : undefined;
+    const credits = req.client.canUseCredits() ? await billingService.creditService.getClientCredits(req.clientInfo) : undefined;
 
     const nextRequest = await trafficService.getNextRequest(req.clientInfo);
     const effectiveDelay = await trafficService.getMinDelaySeconds(req.clientInfo, req.apiKey, credits) * 1000;

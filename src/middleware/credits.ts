@@ -24,7 +24,7 @@ export const verifyCredits = async (req: MineSkinV2Request, res: Response) => {
     // (always check, even when not enabled, to handle free credits)
     if (req.client.canUseCredits()) {
         const billingService = container.resolve(BillingService);
-        const credit = await billingService.getClientCredits(req.clientInfo);
+        const credit = await billingService.creditService.getClientCredits(req.clientInfo);
         if (!credit) {
             req.warnings.push({
                 code: 'no_credits',
