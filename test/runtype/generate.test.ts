@@ -91,7 +91,7 @@ describe('generate runtype', () => {
                 name: 'test name',
                 visibility: 'public',
                 variant: 'slim',
-                uuid: 'bcd2033c63ec4bf88aca680b22461340'
+                user: 'bcd2033c63ec4bf88aca680b22461340'
             });
         });
         test('should disallow invalid uuid', () => {
@@ -100,7 +100,7 @@ describe('generate runtype', () => {
                     name: 'test name',
                     visibility: 'public',
                     variant: 'slim',
-                    uuid: 'notauuid'
+                    user: 'notauuid'
                 });
             }
             expect(t).toThrow(ZodError);
@@ -111,7 +111,7 @@ describe('generate runtype', () => {
                     name: 'test name',
                     visibility: 'public',
                     variant: 'slim',
-                    uuid: '&$_.'
+                    user: '&$_.'
                 });
             }
             expect(t).toThrow(ZodError);
