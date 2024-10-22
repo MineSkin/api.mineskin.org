@@ -1,5 +1,5 @@
 import { MineSkinV2Request } from "../../routes/v2/types";
-import { FlagProvider, Migrations, SkinService } from "@mineskin/generator";
+import { IFlagProvider, Migrations, SkinService } from "@mineskin/generator";
 import { Response } from "express";
 import { IPopulatedSkin2Document, ISkin2Document, isPopulatedSkin2Document, Skin2 } from "@mineskin/database";
 import { RootFilterQuery } from "mongoose";
@@ -10,6 +10,7 @@ import { V2GenerateHandler } from "../../generator/v2/V2GenerateHandler";
 import { ListReqQuery } from "../../validation/skins";
 import { UUID } from "../../validation/misc";
 import { Caching } from "../../generator/Caching";
+import { container } from "tsyringe";
 
 export async function v2SkinList(req: MineSkinV2Request, res: Response<V2SkinListResponseBody>): Promise<V2SkinListResponseBody> {
     return await v2ListSkins(req, res);
@@ -56,7 +57,7 @@ export async function v2ListSkins(req: MineSkinV2Request, res: Response<V2SkinLi
     }
 
     if (after) {
-        const anchor = await SkinService.getInstance().findForUuid(after);
+        const anchor = await container.resolve(SkinService).findForUuid(after);
         if (anchor) {
             query._id = {$lt: anchor._id};
         }
@@ -108,9 +109,9 @@ export async function v2GetSkin(req: MineSkinV2Request, res: Response<V2SkinResp
     req.links.skin = `/v2/skins/${ uuid }`;
     req.links.self = req.links.skin;
 
-    let skin = await SkinService.getInstance().findForUuid(uuid);
+    let skin = await container.resolve(SkinService).findForUuid(uuid);
 
-    const flags = FlagProvider.get();
+    const flags = container.resolve<IFlagProvider>("FlagProvider");
     if (!skin && await flags.isEnabled('migrations.api.get')) {
         const v1Doc = await Caching.getSkinByUuid(uuid);
         if (v1Doc) {

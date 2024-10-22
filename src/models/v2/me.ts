@@ -5,6 +5,7 @@ import { formatV2Response } from "../../middleware/response";
 import { V2MiscResponseBody } from "../../typings/v2/V2MiscResponseBody";
 import { BillingService } from "@mineskin/generator";
 import { ApiKey } from "@mineskin/database";
+import { container } from "tsyringe";
 
 export async function v2GetMe(req: MineSkinV2Request, res: Response<V2MiscResponseBody>) {
     req.links.self = `/v2/me`;
@@ -82,7 +83,7 @@ export async function v2GetCreditsInfo(req: MineSkinV2Request, res: Response<V2M
     if (!req.client.hasUser()) {
         throw new MineSkinError('invalid_user', "Invalid user");
     }
-    const credit = await BillingService.getInstance().getClientCredits(req.clientInfo);
+    const credit = await container.resolve(BillingService).getClientCredits(req.clientInfo);
     if (!credit) {
         req.warnings.push({
             code: 'no_credits',
@@ -106,7 +107,7 @@ export async function v2GetCreditsInfo(req: MineSkinV2Request, res: Response<V2M
     let balance = credit?.balance || 0;
     let total = credit?.total || 0;
     if (credit && credit.isValid() && !credit.isExpired() && credit.balance > 0) {
-        const allAvailable = await BillingService.getInstance().getAllAvailableCredits(req.clientInfo.user!);
+        const allAvailable = await container.resolve(BillingService).getAllAvailableCredits(req.clientInfo.user!);
         if (allAvailable) {
             for (const available of allAvailable) {
                 if (available.id === credit.id) continue;

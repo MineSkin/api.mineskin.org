@@ -15,6 +15,7 @@ import {
     MAX_IMAGE_SIZE,
     MongoGeneratorClient,
     QueueOptions,
+    RedisProvider,
     SkinService,
     TrafficService
 } from "@mineskin/generator";
@@ -39,11 +40,11 @@ import { V2UrlHandler } from "../../generator/v2/V2UrlHandler";
 import { V2JobResponse } from "../../typings/v2/V2JobResponse";
 import { IPopulatedSkin2Document, IQueueDocument, isPopulatedSkin2Document } from "@mineskin/database";
 import { GenerateReqOptions, GenerateTimeout } from "../../validation/generate";
-import { redisSub } from "../../database/redis";
 import { V2MiscResponseBody } from "../../typings/v2/V2MiscResponseBody";
 import { V2JobListResponse } from "../../typings/v2/V2JobListResponse";
 import { ObjectId } from "../../validation/misc";
 import { V2UserHandler } from "../../generator/v2/V2UserHandler";
+import { container } from "tsyringe";
 
 const upload = multer({
     limits: {
@@ -57,7 +58,7 @@ let _client: IGeneratorClient<IQueueDocument>;
 
 function getClient() {
     if (!_client) {
-        _client = new MongoGeneratorClient(redisSub!);
+        _client = container.resolve(MongoGeneratorClient);
     }
     return _client;
 }
@@ -248,7 +249,7 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
     }
 
     // // check rate limit
-    const trafficService = TrafficService.getInstance();
+    const trafficService = container.resolve(TrafficService);
     // req.nextRequest = await trafficService.getNextRequest(req.clientInfo);
     // req.minDelay = await trafficService.getMinDelaySeconds(req.clientInfo, req.apiKey) * 1000;
     // if (req.nextRequest > req.clientInfo.time) {
@@ -443,7 +444,7 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
         req.concurrentRequests = (req.concurrentRequests || 0) + 1;
     }
 
-    const billingService = BillingService.getInstance();
+    const billingService = container.resolve(BillingService);
     await billingService.trackGenerateRequest(req.clientInfo);
 
     const request: GenerateRequest = {
@@ -562,7 +563,7 @@ async function tryHandleFileUpload(req: GenerateV2Request, res: Response): Promi
 }
 
 async function querySkinOrThrow(uuid: UUID): Promise<IPopulatedSkin2Document> {
-    const skin = await SkinService.getInstance().findForUuid(uuid);
+    const skin = await container.resolve(SkinService).findForUuid(uuid);
     if (!skin || !isPopulatedSkin2Document(skin) || !skin.data) {
         throw new GeneratorError('skin_not_found', `Skin not found: ${ uuid }`, {httpCode: 404});
     }

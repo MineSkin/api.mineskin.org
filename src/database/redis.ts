@@ -1,8 +1,10 @@
-import { createClient, RedisClientType } from 'redis';
+import { RedisClientType } from 'redis';
 import * as Sentry from "@sentry/node";
 import { Maybe, ONE_MONTH_SECONDS, ONE_YEAR_SECONDS } from "../util";
 import { ClientInfo } from "../typings/ClientInfo";
 import { Caching } from "../generator/Caching";
+import { container } from "tsyringe";
+import { RedisProvider } from "@mineskin/generator";
 
 export let redisClient: Maybe<RedisClientType>;
 export let redisPub: Maybe<RedisClientType>;
@@ -19,39 +21,39 @@ end`,
     sha: "null"
 }
 
-export async function initRedis() {
-    if (!process.env.REDIS_URI) return;
-    redisClient = createClient({
-        url: process.env.REDIS_URI
-    })
-    redisClient.on('error', (err: any) => {
-        console.error(`Redis error`, err);
-        Sentry.captureException(err);
-    });
-    redisClient = await redisClient.connect();
-
-    redisClient.scriptLoad(setIfGreater.script).then(sha => {
-        setIfGreater.sha = sha;
-    })
-
-    redisPub = createClient({
-        url: process.env.REDIS_URI
-    })
-    redisPub.on('error', (err: any) => {
-        console.error(`Redis error`, err);
-        Sentry.captureException(err);
-    });
-    redisPub = await redisPub.connect();
-
-    redisSub = createClient({
-        url: process.env.REDIS_URI
-    })
-    redisSub.on('error', (err: any) => {
-        console.error(`Redis error`, err);
-        Sentry.captureException(err);
-    });
-    redisSub = await redisSub.connect();
-}
+// export async function initRedis() {
+//     if (!process.env.REDIS_URI) return;
+//     redisClient = createClient({
+//         url: process.env.REDIS_URI
+//     })
+//     redisClient.on('error', (err: any) => {
+//         console.error(`Redis error`, err);
+//         Sentry.captureException(err);
+//     });
+//     redisClient = await redisClient.connect();
+//
+//     redisClient.scriptLoad(setIfGreater.script).then(sha => {
+//         setIfGreater.sha = sha;
+//     })
+//
+//     redisPub = createClient({
+//         url: process.env.REDIS_URI
+//     })
+//     redisPub.on('error', (err: any) => {
+//         console.error(`Redis error`, err);
+//         Sentry.captureException(err);
+//     });
+//     redisPub = await redisPub.connect();
+//
+//     redisSub = createClient({
+//         url: process.env.REDIS_URI
+//     })
+//     redisSub.on('error', (err: any) => {
+//         console.error(`Redis error`, err);
+//         Sentry.captureException(err);
+//     });
+//     redisSub = await redisSub.connect();
+// }
 
 export async function trackRedisGenerated(isNew: boolean, apiKey: Maybe<string>, userAgent: Maybe<string>) {
     return Sentry.startSpan({
@@ -60,11 +62,13 @@ export async function trackRedisGenerated(isNew: boolean, apiKey: Maybe<string>,
     }, async span => {
         const newOrDup = isNew ? "new" : "duplicate";
 
-        if (!redisClient) {
+        const redis = container.resolve(RedisProvider);
+
+        if (!redis.client) {
             return;
         }
 
-        let trans = redisClient.multi();
+        let trans = redis.client.multi();
 
         trans = trans.incr(`mineskin:generated:total:${ newOrDup }`);
 

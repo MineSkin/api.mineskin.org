@@ -1,6 +1,7 @@
 import { MineSkinV2Request } from "../routes/v2/types";
 import { NextFunction, Response } from "express";
-import { BillingService, FlagProvider } from "@mineskin/generator";
+import { BillingService, IFlagProvider } from "@mineskin/generator";
+import { container } from "tsyringe";
 
 export const creditsMiddleware = async (req: MineSkinV2Request, res: Response, next: NextFunction) => {
     await verifyCredits(req, res);
@@ -12,7 +13,7 @@ export const verifyCredits = async (req: MineSkinV2Request, res: Response) => {
         return;
     }
 
-    const flags = FlagProvider.get();
+    const flags =  container.resolve<IFlagProvider>("FlagProvider");
     if (!(await flags.isEnabled('generator.credits.enabled'))) {
         req.clientInfo.usePaidCredits = false;
         return;
@@ -21,7 +22,7 @@ export const verifyCredits = async (req: MineSkinV2Request, res: Response) => {
     // check credits
     // (always check, even when not enabled, to handle free credits)
     if (req.client.canUseCredits()) {
-        const billingService = BillingService.getInstance();
+        const billingService = container.resolve(BillingService);
         const credit = await billingService.getClientCredits(req.clientInfo);
         if (!credit) {
             req.warnings.push({

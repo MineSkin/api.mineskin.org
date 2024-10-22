@@ -5,6 +5,7 @@ import { IPopulatedSkin2Document, ISkinDocument, isPopulatedSkin2Document } from
 import { GenerateV2Request } from "../../routes/v2/types";
 import { V2GenerateResponseBody } from "../../typings/v2/V2GenerateResponseBody";
 import { V2SkinResponse } from "../../typings/v2/V2SkinResponse";
+import { container } from "tsyringe";
 
 export const MC_TEXTURE_PREFIX = "https://textures.minecraft.net/texture/";
 
@@ -34,7 +35,7 @@ export class V2GenerateHandler {
     }
 
     static async queryAndSendSkin(req: GenerateV2Request, res: Response, uuid: UUID, duplicate: boolean = false) {
-        const skin = await SkinService.getInstance().findForUuid(uuid);
+        const skin = await container.resolve(SkinService).findForUuid(uuid);
         if (!skin || !isPopulatedSkin2Document(skin) || !skin.data) {
             return res.status(500).json({
                 success: false,

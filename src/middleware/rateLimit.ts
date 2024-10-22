@@ -1,6 +1,7 @@
 import { GenerateV2Request } from "../routes/v2/types";
 import { NextFunction, Response } from "express";
-import { FlagProvider, GeneratorError, TrafficService } from "@mineskin/generator";
+import { GeneratorError, IFlagProvider, TrafficService } from "@mineskin/generator";
+import { container } from "tsyringe";
 
 export const rateLimitMiddlewareWithDelay = async (req: GenerateV2Request, res: Response, next: NextFunction) => {
     await verifyRateLimit(req, res, true);
@@ -18,7 +19,7 @@ export const verifyRateLimit = async (req: GenerateV2Request, res: Response, wit
     }
 
     // check rate limit
-    const trafficService = TrafficService.getInstance();
+    const trafficService = container.resolve(TrafficService);
     if (withDelay && req.client.useDelayRateLimit()) {
         req.nextRequest = await trafficService.getNextRequest(req.clientInfo);
         req.minDelay = await trafficService.getMinDelaySeconds(req.clientInfo, req.apiKey) * 1000;
@@ -41,7 +42,7 @@ export const verifyRateLimit = async (req: GenerateV2Request, res: Response, wit
     }
 
     if (req.client.useConcurrencyLimit()) {
-        const flags = FlagProvider.get();
+        const flags =  container.resolve<IFlagProvider>("FlagProvider");
         const block = await flags.isEnabled('generator.concurrency.block');
         req.concurrentRequests = await trafficService.getConcurrent(req.clientInfo);
         req.maxConcurrent = req.client.getConcurrencyLimit();

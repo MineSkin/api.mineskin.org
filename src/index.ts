@@ -41,16 +41,16 @@ import { Requests } from "./generator/Requests";
 import { debug, info, warn } from "./util/colors";
 import { Discord } from "./util/Discord";
 import { Balancer } from "./generator/Balancer";
-import { initRedis, redisClient, redisPub, redisSub } from "./database/redis";
 import UAParser from "ua-parser-js";
 import mongoose from "mongoose";
 import { connectToMongo } from "@mineskin/database";
 import { MineSkinError } from "@mineskin/types";
-import { BillingService, GeneratorError, Log, TrafficService } from "@mineskin/generator";
+import { FlagsmithProvider, GeneratorError, Log, RedisProvider } from "@mineskin/generator";
 import process from "node:process";
 import * as http from "node:http";
 import { v2TestRouter } from "./routes/v2/test";
 import { v2ErrorHandler, v2NotFoundHandler } from "./middleware/error";
+import { container } from "tsyringe";
 
 
 sourceMapSupport.install();
@@ -104,6 +104,9 @@ let server: http.Server;
 
 async function init() {
     console.log("Node Version " + process.version);
+
+    container.register("FlagProvider", {useClass: FlagsmithProvider})
+    container.register(RedisProvider, {useValue: new RedisProvider()});
 
     {// Config
         console.log("Setting up config");
@@ -255,11 +258,10 @@ async function init() {
     }
 
     {
-        console.info("Connecting to Redis...")
-        await initRedis();
-
-        TrafficService.init(redisClient!, redisPub!, redisSub!, Log.l.child({label: "Traffic"}));
-        BillingService.init(redisClient!, redisPub!, redisSub!, Log.l.child({label: "Billing"}));
+        // console.info("Connecting to Redis...")
+        // await initRedis();
+        // TrafficService.init(redisClient!, redisPub!, redisSub!, Log.l.child({label: "Traffic"}));
+        // BillingService.init(redisClient!, redisPub!, redisSub!, Log.l.child({label: "Billing"}));
     }
 
     {
@@ -267,11 +269,6 @@ async function init() {
 
         app.get("/", corsMiddleware, function (req, res) {
             res.json({msg: "Hi!"});
-        });
-
-        app.get("/test/redistest", function (req, res) {
-            redisClient?.incr("mineskin:test"); //TODO: remove
-            res.json({msg: "ok"});
         });
 
         app.get("/test/useragent", async (req, res) => {
@@ -294,7 +291,7 @@ async function init() {
             const influx_ = await metrics.metrics?.influx.ping(5000);
             const influx = influx_ && influx_.length > 0 ? influx_[0] : undefined;
             const mongo = mongoose.connection.readyState;
-            const redis = await redisClient?.ping();
+            const redis = await container.resolve(RedisProvider).client.ping();
 
             return res.json({
                 server: config.server,
@@ -559,7 +556,10 @@ export function shutdown(signal: string, value: number) {
             console.error(e);
         }
         try {
-            await redisClient?.quit();
+            const redis = container.resolve(RedisProvider);
+            await redis?.client?.quit();
+            await redis?.sub?.quit();
+            await redis?.pub?.quit();
         } catch (e) {
             console.error(e);
         }
