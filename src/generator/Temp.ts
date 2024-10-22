@@ -5,6 +5,7 @@ import { DirOptions, FileOptions } from "tmp";
 import { Stream } from "stream";
 import { Requests } from "./Requests";
 import { isTempFile, PathHolder } from "../util";
+import ExifTransformer from "exif-be-gone/index";
 
 export const URL_DIR = "url";
 export const UPL_DIR = "upl";
@@ -98,7 +99,9 @@ export class Temp {
             }, breadcrumb);
             // (response.data as Stream).pipe(fs.createWriteStream(tmpFile.path))
             await new Promise((resolve, reject) => {
-                (response.data as Stream).pipe(fs.createWriteStream(tmpFile.path))
+                (response.data as Stream)
+                    .pipe(new ExifTransformer()) // strip metadata
+                    .pipe(fs.createWriteStream(tmpFile.path))
                     .on("finish", resolve)
                     .on("error", reject);
             });

@@ -3759,6 +3759,7 @@ __metadata:
     cookie-parser: "npm:^1.4.6"
     cors: "npm:^2.8.5"
     dotenv: "npm:^16.4.5"
+    exif-be-gone: "npm:^1.5.1"
     express: "npm:^4.19.2"
     express-async-errors: "npm:^3.1.1"
     express-async-handler: "npm:^1.2.0"
@@ -5121,6 +5122,15 @@ __metadata:
     signal-exit: "npm:^3.0.3"
     strip-final-newline: "npm:^2.0.0"
   checksum: 10c0/c8e615235e8de4c5addf2fa4c3da3e3aa59ce975a3e83533b4f6a71750fb816a2e79610dc5f1799b6e28976c9ae86747a36a606655bf8cb414a74d8d507b304f
+  languageName: node
+  linkType: hard
+
+"exif-be-gone@npm:^1.5.1":
+  version: 1.5.1
+  resolution: "exif-be-gone@npm:1.5.1"
+  bin:
+    exif-be-gone: cli.js
+  checksum: 10c0/8e998897a13f57414382aace7f6c4c98c29c3e05816e30a1ce30be9208dacb54d975c1f605353139e846e93e592a8e064460465d6b4d873b094646694f11472b
   languageName: node
   linkType: hard
 

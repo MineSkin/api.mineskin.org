@@ -5,6 +5,11 @@ import { V2GenerateResponseBody } from "../../typings/v2/V2GenerateResponseBody"
 import { V2SkinResponse } from "../../typings/v2/V2SkinResponse";
 import { GenerateV2Request } from "../../routes/v2/types";
 import { GenerateOptions, GenerateType, Maybe } from "@mineskin/types";
+import ExifTransformer from "exif-be-gone/index";
+import { PathHolder } from "../../util";
+import { Temp, UPL_DIR } from "../Temp";
+import * as fs from "node:fs";
+import { readFile } from "fs/promises";
 
 export class V2UploadHandler extends V2GenerateHandler {
 
@@ -22,7 +27,16 @@ export class V2UploadHandler extends V2GenerateHandler {
 
         Log.l.debug(`${ this.req.breadcrumbC } FILE:        "${ file.filename || file.originalname }"`);
 
-        return {buffer: file.buffer};
+        let tempFile: PathHolder = await Temp.file({
+            dir: UPL_DIR
+        });
+
+        file.stream
+            .pipe(new ExifTransformer()) // strip metadata
+            .pipe(fs.createWriteStream(tempFile.path));
+
+        const buffer = await readFile(tempFile.path);
+        return {buffer};
     }
 
 }
