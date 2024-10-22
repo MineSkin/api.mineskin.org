@@ -13,12 +13,14 @@ import { readFile } from "fs/promises";
 import { GenerateV2Request } from "../../routes/v2/types";
 import { V2GenerateResponseBody } from "../../typings/v2/V2GenerateResponseBody";
 import { V2SkinResponse } from "../../typings/v2/V2SkinResponse";
-import { PathHolder } from "../../util";
+import { isTempFile, PathHolder } from "../../util";
 import { Temp, URL_DIR } from "../Temp";
 import { UrlHandler } from "./UrlHandler";
 import { GenerateReqUrl } from "../../validation/generate";
 
 export class V2UrlHandler extends V2GenerateHandler {
+
+    tempFile: PathHolder|undefined;
 
     constructor(req: GenerateV2Request, res: Response<V2GenerateResponseBody | V2SkinResponse>, options: GenerateOptions) {
         super(req, res, options, GenerateType.URL);
@@ -80,18 +82,24 @@ export class V2UrlHandler extends V2GenerateHandler {
 
 
         // Download the image temporarily
-        let tempFile: PathHolder = await Temp.file({
+        this.tempFile = await Temp.file({
             dir: URL_DIR
         });
         try {
-            tempFile = await Temp.downloadImage(followedUrl, tempFile)
+            this.tempFile = await Temp.downloadImage(followedUrl, this.tempFile)
         } catch (e) {
             throw new GeneratorError(GenError.INVALID_IMAGE, "Failed to download image", {httpCode: 500});
         }
 
         // Log.l.debug(tempFile.path);
-        const buffer = await readFile(tempFile.path);
+        const buffer = await readFile(this.tempFile.path);
         return {buffer};
+    }
+
+    cleanupImage() {
+        if (isTempFile(this.tempFile)) {
+            this.tempFile.remove();
+        }
     }
 
     async checkDuplicateUrl(req: GenerateV2Request, url: string, options: GenerateOptions): Promise<UUID | false> {

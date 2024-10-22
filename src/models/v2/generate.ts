@@ -436,6 +436,8 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
         //TODO: check for recent requests on the same user and return duplicate
     }
 
+    handler.cleanupImage();
+
     if (req.client.useConcurrencyLimit()) {
         await trafficService.incrementConcurrent(req.clientInfo);
         req.concurrentRequests = (req.concurrentRequests || 0) + 1;

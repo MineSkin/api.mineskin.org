@@ -30,6 +30,9 @@ export class V2GenerateHandler {
         return hashes!.minecraft;
     }
 
+    cleanupImage() {
+    }
+
     static async queryAndSendSkin(req: GenerateV2Request, res: Response, uuid: UUID, duplicate: boolean = false) {
         const skin = await SkinService.getInstance().findForUuid(uuid);
         if (!skin || !isPopulatedSkin2Document(skin) || !skin.data) {

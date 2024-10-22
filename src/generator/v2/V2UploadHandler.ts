@@ -6,12 +6,14 @@ import { V2SkinResponse } from "../../typings/v2/V2SkinResponse";
 import { GenerateV2Request } from "../../routes/v2/types";
 import { GenerateOptions, GenerateType, Maybe } from "@mineskin/types";
 import ExifTransformer from "exif-be-gone/index";
-import { PathHolder } from "../../util";
+import { isTempFile, PathHolder } from "../../util";
 import { Temp, UPL_DIR } from "../Temp";
 import * as fs from "node:fs";
 import { readFile } from "fs/promises";
 
 export class V2UploadHandler extends V2GenerateHandler {
+
+    tempFile: PathHolder|undefined;
 
     constructor(req: GenerateV2Request, res: Response<V2GenerateResponseBody | V2SkinResponse>, options: GenerateOptions) {
         super(req, res, options, GenerateType.UPLOAD);
@@ -27,16 +29,22 @@ export class V2UploadHandler extends V2GenerateHandler {
 
         Log.l.debug(`${ this.req.breadcrumbC } FILE:        "${ file.filename || file.originalname }"`);
 
-        let tempFile: PathHolder = await Temp.file({
+        this.tempFile = await Temp.file({
             dir: UPL_DIR
         });
 
         file.stream
             .pipe(new ExifTransformer()) // strip metadata
-            .pipe(fs.createWriteStream(tempFile.path));
+            .pipe(fs.createWriteStream(this.tempFile.path));
 
-        const buffer = await readFile(tempFile.path);
+        const buffer = await readFile(this.tempFile.path);
         return {buffer};
+    }
+
+    cleanupImage() {
+        if (isTempFile(this.tempFile)) {
+            this.tempFile.remove();
+        }
     }
 
 }
