@@ -33,7 +33,7 @@ export class V2UploadHandler extends V2GenerateHandler {
             dir: UPL_DIR
         });
 
-        file.stream
+        fs.createReadStream(file.path)
             .pipe(new ExifTransformer()) // strip metadata
             .pipe(fs.createWriteStream(this.tempFile.path));
 
