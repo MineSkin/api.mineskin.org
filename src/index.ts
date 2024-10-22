@@ -1,5 +1,7 @@
 import "dotenv/config"
 import "./instrument"
+import "reflect-metadata";
+
 import { httpLogger, initApiLogger } from "./util/log";
 import * as sourceMapSupport from "source-map-support";
 import * as Sentry from "@sentry/node";
