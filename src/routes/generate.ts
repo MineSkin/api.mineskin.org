@@ -73,14 +73,16 @@ export const register = (app: Application) => {
     app.use("/generate", async (req: V2CompatRequest & MineSkinV2Request, res: Response, next: NextFunction) => {
         req.v2Compat = false;
         const flags = FlagProvider.get();
-        if (req.query["v2"]) {
-            req.v2Compat = true;
-        } else {
-            const apiKey = (req as V2CompatRequest).apiKey;
-            if (apiKey && apiKey.grants && (apiKey.grants as any).v2_compat) {
-                req.v2Compat = true
-            } else if (await flags.isEnabled('api.v2_compat.all_requests')) {
+        const apiKey = (req as V2CompatRequest).apiKey;
+        if (apiKey) {
+            if (req.query["v2"]) {
                 req.v2Compat = true;
+            } else {
+                if (apiKey.grants && (apiKey.grants as any).v2_compat) {
+                    req.v2Compat = true
+                } else if (apiKey && await flags.isEnabled('api.v2_compat.all_requests')) {
+                    req.v2Compat = true;
+                }
             }
         }
 
