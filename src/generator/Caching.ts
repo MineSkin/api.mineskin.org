@@ -1,3 +1,5 @@
+import "reflect-metadata";
+
 import { MOJANG_API, MOJANG_SESSION, Requests } from "./Requests";
 import {
     AsyncLoadingCache,
@@ -19,8 +21,9 @@ import { Bread } from "../typings/Bread";
 import { IPendingDiscordLink } from "../typings/DiscordAccountLink";
 import { Time } from "@inventivetalent/time";
 import { MojangAccountLink } from "../typings/MojangAccountLink";
-import { redisSub } from "../database/redis";
 import { ApiKey, IApiKeyDocument, ISkinDocument, Skin, Traffic } from "@mineskin/database";
+import { container } from "tsyringe";
+import { RedisProvider } from "@mineskin/generator";
 
 export class Caching {
 
@@ -307,7 +310,8 @@ export class Caching {
     }, 20000);
 
     public static subscribeToRedis() {
-        redisSub?.subscribe('mineskin:invalidations:apikey', (message, channel) => {
+        const redis = container.resolve(RedisProvider);
+        redis.sub.subscribe('mineskin:invalidations:apikey', (message, channel) => {
             console.log('Received apikey invalidation message', message, channel);
             this.apiKeyCache.invalidate(message);
         })

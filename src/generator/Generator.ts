@@ -71,8 +71,9 @@ import {
 } from "@mineskin/database";
 import { GenerateType, MineSkinError, SkinInfo, SkinVariant, SkinVisibility } from "@mineskin/types";
 import { Accounts } from "./Accounts";
-import { redisClient, redisPub, trackRedisGenerated } from "../database/redis";
-import { GeneratorError, GenError } from "@mineskin/generator";
+import { GeneratorError, GenError, RedisProvider } from "@mineskin/generator";
+import { container } from "tsyringe";
+import { trackRedisGenerated } from "../database/redis";
 
 
 // minimum delay for accounts to be used
@@ -598,15 +599,17 @@ export class Generator {
                 try {
                     const date = new Date();
 
+                    const redis = container.resolve(RedisProvider);
+
                     if (!!client.metered) {
                         const usageKey = `mineskin:usage:apikey:${ client.apiKeyId }:meter`;
-                        const incr = await redisClient?.incr(usageKey);
+                        const incr = await redis.client.incr(usageKey);
 
                         if (incr && (incr % 20 === 0)) {
-                            await redisPub?.publish(`mineskin:invalidations:billable`, `${ client.apiKeyId }`);
+                            await redis.pub.publish(`mineskin:invalidations:billable`, `${ client.apiKeyId }`);
                         }
 
-                        redisClient?.expire(usageKey, ONE_MONTH_SECONDS * 3);
+                        redis.client.expire(usageKey, ONE_MONTH_SECONDS * 3);
                     }
 
                     //TODO: actually check if client has enough credits
@@ -635,7 +638,7 @@ export class Generator {
                     const billableKeyMonth = `mineskin:generated:apikey:${ client.apiKeyId }:${ date.getFullYear() }:${ date.getMonth() + 1 }:billable`;
                     const billableKeyDate = `mineskin:generated:apikey:${ client.apiKeyId }:${ date.getFullYear() }:${ date.getMonth() + 1 }:${ date.getDate() }:billable`
 
-                    await redisClient?.multi()
+                    await redis.client.multi()
                         ?.incr(billableKeyMonth)
                         ?.incr(billableKeyDate)
                         ?.expire(billableKeyMonth, ONE_YEAR_SECONDS * 2)
@@ -719,7 +722,8 @@ export class Generator {
                         Sentry.captureException(e);
                     }
                     try {
-                        redisClient?.incr("mineskin:generated:total:duplicate");
+                        const redis = container.resolve(RedisProvider);
+                        redis.client.incr("mineskin:generated:total:duplicate");
                     } catch (e) {
                         Sentry.captureException(e);
                     }
@@ -1502,7 +1506,8 @@ export class Generator {
             .tag("genEnv", "api")
             .inc();
         await Stat.inc(GENERATE_SUCCESS);
-        await redisClient?.incr("mineskin:generated:total:success");
+        const redis = container.resolve(RedisProvider);
+        await redis.client.incr("mineskin:generated:total:success");
         if (!account) return;
         try {
             account.errorCounter = 0;
@@ -1532,7 +1537,8 @@ export class Generator {
         }
 
         await Stat.inc(GENERATE_FAIL);
-        await redisClient?.incr("mineskin:generated:total:fail");
+        const redis = container.resolve(RedisProvider);
+        await redis.client.incr("mineskin:generated:total:fail");
 
         metrics.genFail
             .tag("server", metrics.config.server)

@@ -4,9 +4,10 @@ import * as Sentry from "@sentry/node";
 import { MineSkinMetrics } from "../util/metrics";
 import { debug } from "../util/colors";
 import { simplifyUserAgent } from "../util";
-import { redisClient } from "../database/redis";
 import { Account, ApiKey, Skin, Stat, User } from "@mineskin/database";
 import { Accounts } from "./Accounts";
+import { container } from "tsyringe";
+import { RedisProvider } from "@mineskin/generator";
 
 export const ACCOUNTS_TOTAL = "accounts.total";
 export const ACCOUNTS_HEALTHY = "accounts.healthy";
@@ -463,9 +464,10 @@ export class Stats {
                     const count = entry.count;
                     // check if last month exists
                     const key = `mineskin:generated:agent:${ ua }:${ currentYear }:${ month + 1 }:new`
-                    if (!await redisClient?.exists(key)) {
+                    const redis = container.resolve(RedisProvider);
+                    if (!await redis.client?.exists(key)) {
                         console.log(`[redis] Migrating ${ ua } with ${ count }`)
-                        await redisClient?.multi()
+                        await redis.client.multi()
                             .set(key, count)
                             .incrBy(`mineskin:generated:agent:${ ua }:alltime:new`, count)
                             .incrBy(`mineskin:generated:agent:${ ua }:${ currentYear }:new`, count)
@@ -498,9 +500,10 @@ export class Stats {
                     const keyId = keyDoc._id;
                     // check if last month exists
                     const key = `mineskin:generated:apikey:${ keyId }:${ currentYear }:${ month + 1 }:new`
-                    if (!await redisClient?.exists(key)) {
+                    const redis = container.resolve(RedisProvider);
+                    if (!await redis.client.exists(key)) {
                         console.log(`[redis] Migrating ${ keyId }/${ rawKey } with ${ count }`)
-                        await redisClient?.multi()
+                        await redis.client.multi()
                             .set(key, count)
                             .incrBy(`mineskin:generated:apikey:${ keyId }:alltime:new`, count)
                             .incrBy(`mineskin:generated:apikey:${ keyId }:${ currentYear }:new`, count)

@@ -11,8 +11,9 @@ import { Discord } from "../util/Discord";
 import { PendingDiscordAccountLink } from "../typings/DiscordAccountLink";
 import { Requests } from "../generator/Requests";
 import qs from "querystring";
-import { redisClient } from "../database/redis";
 import { Account, ApiKey, IUserDocument, User } from "@mineskin/database";
+import { container } from "tsyringe";
+import { RedisProvider } from "@mineskin/generator";
 
 export const register = (app: Application, config: MineSkinConfig) => {
 
@@ -214,8 +215,10 @@ export const register = (app: Application, config: MineSkinConfig) => {
             const keyId = doc._id;
             const date = new Date();
 
-            const yearNew = parseInt(await redisClient?.get(`mineskin:generated:apikey:${ keyId }:${ date.getFullYear() }:new`) || '0');
-            const monthNew = parseInt(await redisClient?.get(`mineskin:generated:apikey:${ keyId }:${ date.getFullYear() }:${ date.getMonth() + 1 }:new`) || '0');
+            const redis = container.resolve(RedisProvider);
+
+            const yearNew = parseInt(await redis.client.get(`mineskin:generated:apikey:${ keyId }:${ date.getFullYear() }:new`) || '0');
+            const monthNew = parseInt(await redis.client.get(`mineskin:generated:apikey:${ keyId }:${ date.getFullYear() }:${ date.getMonth() + 1 }:new`) || '0');
 
             keys.push({
                 id: ("" + doc._id),
@@ -261,8 +264,10 @@ export const register = (app: Application, config: MineSkinConfig) => {
 
         const date = new Date();
 
-        const yearNew = parseInt(await redisClient?.get(`mineskin:generated:agent:${ agent }:${ date.getFullYear() }:new`) || '0');
-        const monthNew = parseInt(await redisClient?.get(`mineskin:generated:agent:${ agent }:${ date.getFullYear() }:${ date.getMonth() + 1 }:new`) || '0');
+        const redis = container.resolve(RedisProvider);
+
+        const yearNew = parseInt(await redis.client.get(`mineskin:generated:agent:${ agent }:${ date.getFullYear() }:new`) || '0');
+        const monthNew = parseInt(await redis.client.get(`mineskin:generated:agent:${ agent }:${ date.getFullYear() }:${ date.getMonth() + 1 }:new`) || '0');
 
         res.json({
             agent: agent,

@@ -1,4 +1,3 @@
-import { RedisClientType } from 'redis';
 import * as Sentry from "@sentry/node";
 import { Maybe, ONE_MONTH_SECONDS, ONE_YEAR_SECONDS } from "../util";
 import { ClientInfo } from "../typings/ClientInfo";
@@ -6,9 +5,9 @@ import { Caching } from "../generator/Caching";
 import { container } from "tsyringe";
 import { RedisProvider } from "@mineskin/generator";
 
-export let redisClient: Maybe<RedisClientType>;
-export let redisPub: Maybe<RedisClientType>;
-export let redisSub: Maybe<RedisClientType>;
+// export let redisClient: Maybe<RedisClientType>;
+// export let redisPub: Maybe<RedisClientType>;
+// export let redisSub: Maybe<RedisClientType>;
 
 const setIfGreater = {
     script: `local current = redis.call('GET', KEYS[1])
@@ -106,7 +105,8 @@ export async function getRedisNextRequest(client: Pick<ClientInfo, 'ip' | 'apiKe
         op: "redis_getNextRequest",
         name: "Get Next Request",
     }, async span => {
-        if (!redisClient) {
+        const redis = container.resolve(RedisProvider);
+        if (!redis.client) {
             return 0;
         }
 
@@ -124,7 +124,7 @@ export async function getRedisNextRequest(client: Pick<ClientInfo, 'ip' | 'apiKe
             }
         }
 
-        let trans = redisClient.multi()
+        let trans = redis.client.multi()
             .get(`mineskin:ratelimit:ip:${ cleanIp }:next`);
         if (client.apiKeyId) {
             trans = trans.get(`mineskin:ratelimit:apikey:${ client.apiKeyId }:next`);
@@ -146,7 +146,8 @@ export async function getRedisLastRequest(client: Pick<ClientInfo, 'ip' | 'apiKe
         op: "redis_getLastRequest",
         name: "Get Last Request",
     }, async span => {
-        if (!redisClient) {
+        const redis = container.resolve(RedisProvider);
+        if (!redis.client) {
             return 0;
         }
 
@@ -158,7 +159,7 @@ export async function getRedisLastRequest(client: Pick<ClientInfo, 'ip' | 'apiKe
             return cachedByIp;
         }
 
-        let trans = redisClient.multi()
+        let trans = redis.client.multi()
             .get(`mineskin:ratelimit:ip:${ cleanIp }:last`);
         if (client.apiKeyId) {
             trans = trans.get(`mineskin:ratelimit:apikey:${ client.apiKeyId }:last`);
@@ -180,7 +181,8 @@ export async function updateRedisNextRequest(client: ClientInfo, effectiveDelayM
         op: "redis_updateNextRequest",
         name: "Update Next Request",
     }, async span => {
-        if (!redisClient) {
+        const redis = container.resolve(RedisProvider);
+        if (!redis.client) {
             return;
         }
 
@@ -192,7 +194,7 @@ export async function updateRedisNextRequest(client: ClientInfo, effectiveDelayM
         // clean up ipv6 etc.
         const cleanIp = client.ip.replace(/[^a-zA-Z0-9]/g, '_');
 
-        let trans = redisClient.multi();
+        let trans = redis.client.multi();
         if (client.apiKeyId) {
             Caching.nextRequestByKeyCache.put(client.apiKeyId, nextRequest);
             trans = trans.set(`${ prefix }:apikey:${ client.apiKeyId }:last`, client.time, {
