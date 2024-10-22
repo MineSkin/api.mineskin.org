@@ -8,12 +8,13 @@ import { GenerateOptions, GenerateType, Maybe } from "@mineskin/types";
 import ExifTransformer from "exif-be-gone/index";
 import { isTempFile, PathHolder } from "../../util";
 import { Temp, UPL_DIR } from "../Temp";
+import * as Sentry from "@sentry/node";
 import * as fs from "node:fs";
-import { readFile } from "fs/promises";
+import { readFile, unlink } from "fs/promises";
 
 export class V2UploadHandler extends V2GenerateHandler {
 
-    tempFile: PathHolder|undefined;
+    tempFile: PathHolder | undefined;
 
     constructor(req: GenerateV2Request, res: Response<V2GenerateResponseBody | V2SkinResponse>, options: GenerateOptions) {
         super(req, res, options, GenerateType.UPLOAD);
@@ -36,6 +37,12 @@ export class V2UploadHandler extends V2GenerateHandler {
         fs.createReadStream(file.path)
             .pipe(new ExifTransformer()) // strip metadata
             .pipe(fs.createWriteStream(this.tempFile.path));
+
+        try {
+            await unlink(file.path);
+        } catch (e) {
+            Sentry.captureException(e);
+        }
 
         const buffer = await readFile(this.tempFile.path);
         return {buffer};
