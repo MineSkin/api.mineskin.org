@@ -3,7 +3,6 @@ import * as Sentry from "@sentry/node";
 import multer, { MulterError } from "multer";
 import { Maybe } from "../../util";
 import {
-    BillingService,
     DuplicateChecker,
     GeneratorError,
     GenError,
@@ -15,10 +14,10 @@ import {
     MAX_IMAGE_SIZE,
     MongoGeneratorClient,
     QueueOptions,
-    RedisProvider,
     SkinService,
     TrafficService
 } from "@mineskin/generator";
+import { BillingService } from "@mineskin/billing";
 import {
     ErrorSource,
     GenerateOptions,

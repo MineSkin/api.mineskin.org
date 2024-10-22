@@ -2,7 +2,8 @@ import { MineSkinV2Request } from "../../routes/v2/types";
 import { Response } from "express";
 import { MineSkinError, RateLimitInfo } from "@mineskin/types";
 import { V2MiscResponseBody } from "../../typings/v2/V2MiscResponseBody";
-import { BillingService, TrafficService } from "@mineskin/generator";
+import { TrafficService } from "@mineskin/generator";
+import { BillingService } from "@mineskin/billing";
 import { container } from "tsyringe";
 
 export async function v2GetDelay(req: MineSkinV2Request, res: Response<V2MiscResponseBody>) {

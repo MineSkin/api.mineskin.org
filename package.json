@@ -28,6 +28,7 @@
     "@inventivetalent/typescript-memoize": "^1.0.0-alpha.5",
     "@logtail/node": "^0.4.21",
     "@logtail/winston": "^0.4.21",
+    "@mineskin/billing": "git+ssh://git@github.com/MineSkin/mineskin-billing.git#syringe",
     "@mineskin/database": "git+ssh://git@github.com/MineSkin/mineskin-database.git",
     "@mineskin/generator": "git+ssh://git@github.com/MineSkin/mineskin-generator.git#syringe",
     "@mineskin/hash-rust": "^1.0.5",

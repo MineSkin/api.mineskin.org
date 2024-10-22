@@ -2,7 +2,7 @@ import "dotenv/config"
 import "./instrument"
 import "reflect-metadata";
 
-import { httpLogger, initApiLogger } from "./util/log";
+import { httpLogger } from "./util/log";
 import * as sourceMapSupport from "source-map-support";
 import * as Sentry from "@sentry/node";
 import express, { ErrorRequestHandler, Express, NextFunction, Request, Response } from "express";
@@ -50,12 +50,15 @@ import process from "node:process";
 import * as http from "node:http";
 import { v2TestRouter } from "./routes/v2/test";
 import { v2ErrorHandler, v2NotFoundHandler } from "./middleware/error";
-import { container } from "tsyringe";
+import { container, instanceCachingFactory } from "tsyringe";
+import { ApiLogProvider } from "./ApiLogProvider";
+import { ApiAuditLogger } from "./ApiAuditLogger";
 
 
 sourceMapSupport.install();
 
-initApiLogger();
+container.register("Log", {useClass: ApiLogProvider});
+container.register("AuditLogger", {useClass: ApiAuditLogger});
 
 let config: MineSkinConfig;
 let port: number;
@@ -106,7 +109,7 @@ async function init() {
     console.log("Node Version " + process.version);
 
     container.register("FlagProvider", {useClass: FlagsmithProvider})
-    container.register(RedisProvider, {useValue: new RedisProvider()});
+    container.register("RedisProvider", {useFactory: instanceCachingFactory<RedisProvider>(c => c.resolve(RedisProvider))});
 
     {// Config
         console.log("Setting up config");

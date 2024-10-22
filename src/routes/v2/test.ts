@@ -1,5 +1,6 @@
 import { v2Router } from "./router";
-import { BillingService, TrafficService } from "@mineskin/generator";
+import { TrafficService } from "@mineskin/generator";
+import { BillingService } from "@mineskin/billing";
 import { MineSkinV2Request } from "./types";
 import { Response } from "express";
 import { rateLimitMiddleware } from "../../middleware/rateLimit";

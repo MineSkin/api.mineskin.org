@@ -1,6 +1,7 @@
 import { MineSkinV2Request } from "../routes/v2/types";
 import { NextFunction, Response } from "express";
-import { BillingService, IFlagProvider } from "@mineskin/generator";
+import { IFlagProvider } from "@mineskin/generator";
+import { BillingService } from "@mineskin/billing";
 import { container } from "tsyringe";
 
 export const creditsMiddleware = async (req: MineSkinV2Request, res: Response, next: NextFunction) => {

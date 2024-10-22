@@ -3,7 +3,7 @@ import { Response } from "express";
 import { MineSkinError } from "@mineskin/types";
 import { formatV2Response } from "../../middleware/response";
 import { V2MiscResponseBody } from "../../typings/v2/V2MiscResponseBody";
-import { BillingService } from "@mineskin/generator";
+import { BillingService } from "@mineskin/billing";
 import { ApiKey } from "@mineskin/database";
 import { container } from "tsyringe";
 
