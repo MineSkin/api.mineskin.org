@@ -12,7 +12,6 @@ import { PendingDiscordAccountLink } from "../typings/DiscordAccountLink";
 import { Requests } from "../generator/Requests";
 import qs from "querystring";
 import { Account, ApiKey, IUserDocument, User } from "@mineskin/database";
-import { RedisProvider } from "@mineskin/generator";
 import { container } from "../inversify.config";
 import { IRedisProvider, TYPES as CoreTypes } from "@mineskin/core";
 
@@ -265,7 +264,7 @@ export const register = (app: Application, config: MineSkinConfig) => {
 
         const date = new Date();
 
-        const redis = container.resolve(RedisProvider);
+        const redis = container.get<IRedisProvider>(CoreTypes.RedisProvider);
 
         const yearNew = parseInt(await redis.client.get(`mineskin:generated:agent:${ agent }:${ date.getFullYear() }:new`) || '0');
         const monthNew = parseInt(await redis.client.get(`mineskin:generated:agent:${ agent }:${ date.getFullYear() }:${ date.getMonth() + 1 }:new`) || '0');

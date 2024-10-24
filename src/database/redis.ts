@@ -2,7 +2,6 @@ import * as Sentry from "@sentry/node";
 import { Maybe, ONE_MONTH_SECONDS, ONE_YEAR_SECONDS } from "../util";
 import { ClientInfo } from "../typings/ClientInfo";
 import { Caching } from "../generator/Caching";
-import { RedisProvider } from "@mineskin/generator";
 import { IRedisProvider, TYPES as CoreTypes } from "@mineskin/core";
 import { container } from "../inversify.config";
 import { Log } from "../Log";
@@ -105,7 +104,7 @@ export async function getRedisNextRequest(client: Pick<ClientInfo, 'ip' | 'apiKe
         op: "redis_getNextRequest",
         name: "Get Next Request",
     }, async span => {
-        const redis = container.resolve(RedisProvider);
+        const redis = container.get<IRedisProvider>(CoreTypes.RedisProvider);
         if (!redis.client) {
             return 0;
         }
@@ -155,7 +154,7 @@ export async function getRedisLastRequest(client: Pick<ClientInfo, 'ip' | 'apiKe
         op: "redis_getLastRequest",
         name: "Get Last Request",
     }, async span => {
-        const redis = container.resolve(RedisProvider);
+        const redis = container.get<IRedisProvider>(CoreTypes.RedisProvider);
         if (!redis.client) {
             return 0;
         }

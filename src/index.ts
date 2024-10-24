@@ -52,6 +52,7 @@ import { v2TestRouter } from "./routes/v2/test";
 import { v2ErrorHandler, v2NotFoundHandler } from "./middleware/error";
 import { Log } from "./Log";
 import { container } from "./inversify.config";
+import { IRedisProvider, TYPES as CoreTypes } from "@mineskin/core";
 
 
 sourceMapSupport.install();
@@ -255,7 +256,7 @@ async function init() {
 
     {
         console.info("Connecting to Redis...")
-        await container.resolve(RedisProvider).connect();
+        await container.get<RedisProvider>(CoreTypes.RedisProvider).connect();
         // await initRedis();
         // TrafficService.init(redisClient!, redisPub!, redisSub!, Log.l.child({label: "Traffic"}));
         // BillingService.init(redisClient!, redisPub!, redisSub!, Log.l.child({label: "Billing"}));
@@ -288,7 +289,7 @@ async function init() {
             const influx_ = await metrics.metrics?.influx.ping(5000);
             const influx = influx_ && influx_.length > 0 ? influx_[0] : undefined;
             const mongo = mongoose.connection.readyState;
-            const redis = await container.resolve(RedisProvider).client.ping();
+            const redis = await container.get<IRedisProvider>(CoreTypes.RedisProvider).client.ping();
 
             return res.json({
                 server: config.server,
@@ -553,7 +554,7 @@ export function shutdown(signal: string, value: number) {
             console.error(e);
         }
         try {
-            const redis = container.resolve(RedisProvider);
+            const redis = container.get<IRedisProvider>(CoreTypes.RedisProvider);
             await redis?.client?.quit();
             await redis?.sub?.quit();
             await redis?.pub?.quit();

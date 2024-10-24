@@ -17,7 +17,7 @@ import {
     TrafficService,
     TYPES as GeneratorTypes
 } from "@mineskin/generator";
-import { BillingService } from "@mineskin/billing";
+import { BillingService, TYPES as BillingTypes } from "@mineskin/billing";
 import {
     ErrorSource,
     GenerateOptions,
@@ -249,7 +249,7 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
     }
 
     // // check rate limit
-    const trafficService = container.resolve(TrafficService);
+    const trafficService = container.get<TrafficService>(GeneratorTypes.TrafficService);
     // req.nextRequest = await trafficService.getNextRequest(req.clientInfo);
     // req.minDelay = await trafficService.getMinDelaySeconds(req.clientInfo, req.apiKey) * 1000;
     // if (req.nextRequest > req.clientInfo.time) {
@@ -445,7 +445,7 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
         req.concurrentRequests = (req.concurrentRequests || 0) + 1;
     }
 
-    const billingService = container.resolve(BillingService);
+    const billingService = container.get<BillingService>(BillingTypes.BillingService);
     await billingService.trackGenerateRequest(req.clientInfo);
 
     const request: GenerateRequest = {
@@ -564,7 +564,7 @@ async function tryHandleFileUpload(req: GenerateV2Request, res: Response): Promi
 }
 
 async function querySkinOrThrow(uuid: UUID): Promise<IPopulatedSkin2Document> {
-    const skin = await container.resolve(SkinService).findForUuid(uuid);
+    const skin = await container.get<SkinService>(GeneratorTypes.SkinService).findForUuid(uuid);
     if (!skin || !isPopulatedSkin2Document(skin) || !skin.data) {
         throw new GeneratorError('skin_not_found', `Skin not found: ${ uuid }`, {httpCode: 404});
     }

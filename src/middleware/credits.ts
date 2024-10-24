@@ -1,6 +1,6 @@
 import { MineSkinV2Request } from "../routes/v2/types";
 import { NextFunction, Response } from "express";
-import { BillingService, UserCreditHolder } from "@mineskin/billing";
+import { BillingService, TYPES as BillingTypes, UserCreditHolder } from "@mineskin/billing";
 import { IFlagProvider, TYPES as CoreTypes } from "@mineskin/core";
 import { container } from "../inversify.config";
 
@@ -23,7 +23,7 @@ export const verifyCredits = async (req: MineSkinV2Request, res: Response) => {
     // check credits
     // (always check, even when not enabled, to handle free credits)
     if (req.client.canUseCredits() && req.client.userId) {
-        const billingService = container.resolve(BillingService);
+        const billingService = container.get<BillingService>(BillingTypes.BillingService);
         const holder = await billingService.creditService.getHolder(req.client.userId) as UserCreditHolder;
         const credit = await holder.findFirstApplicableMongoCredit(await req.client.usePaidCredits());
         if (!credit) {

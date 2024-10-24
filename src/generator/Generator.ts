@@ -71,7 +71,7 @@ import {
 } from "@mineskin/database";
 import { GenerateType, MineSkinError, SkinInfo, SkinVariant, SkinVisibility } from "@mineskin/types";
 import { Accounts } from "./Accounts";
-import { GeneratorError, GenError, RedisProvider } from "@mineskin/generator";
+import { GeneratorError, GenError } from "@mineskin/generator";
 import { trackRedisGenerated } from "../database/redis";
 import { Log } from "../Log";
 import { container } from "../inversify.config";
@@ -734,7 +734,7 @@ export class Generator {
                         Sentry.captureException(e);
                     }
                     try {
-                        const redis = container.resolve(RedisProvider);
+                        const redis = container.get<IRedisProvider>(CoreTypes.RedisProvider);
                         redis.client.incr("mineskin:generated:total:duplicate");
                     } catch (e) {
                         Sentry.captureException(e);
@@ -1518,7 +1518,7 @@ export class Generator {
             .tag("genEnv", "api")
             .inc();
         await Stat.inc(GENERATE_SUCCESS);
-        const redis = container.resolve(RedisProvider);
+        const redis = container.get<IRedisProvider>(CoreTypes.RedisProvider);
         await redis.client.incr("mineskin:generated:total:success");
         if (!account) return;
         try {
@@ -1549,7 +1549,7 @@ export class Generator {
         }
 
         await Stat.inc(GENERATE_FAIL);
-        const redis = container.resolve(RedisProvider);
+        const redis = container.get<IRedisProvider>(CoreTypes.RedisProvider);
         await redis.client.incr("mineskin:generated:total:fail");
 
         metrics.genFail

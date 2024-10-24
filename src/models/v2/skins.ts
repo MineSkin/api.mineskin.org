@@ -112,7 +112,7 @@ export async function v2GetSkin(req: MineSkinV2Request, res: Response<V2SkinResp
     req.links.skin = `/v2/skins/${ uuid }`;
     req.links.self = req.links.skin;
 
-    let skin = await container.resolve(SkinService).findForUuid(uuid);
+    let skin = await container.get<SkinService>(GeneratorTypes.SkinService).findForUuid(uuid);
 
     const flags = container.get<IFlagProvider>(CoreTypes.FlagProvider);
     try {
