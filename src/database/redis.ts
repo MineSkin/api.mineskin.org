@@ -216,7 +216,7 @@ export async function updateRedisNextRequest(client: ClientInfo, effectiveDelayM
             trans = trans.set(`${ prefix }:apikey:${ client.apiKeyId }:last`, client.time, {
                 EX: 3600
             })
-                .evalSha(redis.scripts.setIfGreater.sha!, {
+                .evalSha(redis.scripts.setIfGreaterEX.sha!, {
                     keys: [`${ prefix }:apikey:${ client.apiKeyId }:next`],
                     arguments: [`${ nextRequest }`]
                 });
@@ -225,7 +225,7 @@ export async function updateRedisNextRequest(client: ClientInfo, effectiveDelayM
         trans = trans.set(`${ prefix }:ip:${ cleanIp }:last`, client.time, {
             EX: 3600
         })
-            .evalSha(redis.scripts.setIfGreater.sha!, {
+            .evalSha(redis.scripts.setIfGreaterEX.sha!, {
                 keys: [`${ prefix }:ip:${ cleanIp }:next`],
                 arguments: [`${ nextRequest }`]
             });
