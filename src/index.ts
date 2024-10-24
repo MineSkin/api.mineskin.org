@@ -103,8 +103,6 @@ let server: http.Server;
 async function init() {
     console.log("Node Version " + process.version);
 
-    container
-
     {// Config
         console.log("Setting up config");
 
