@@ -7,7 +7,7 @@ import { simplifyUserAgent } from "../util";
 import { Account, ApiKey, Skin, Stat, User } from "@mineskin/database";
 import { Accounts } from "./Accounts";
 import { container } from "tsyringe";
-import { RedisProvider } from "@mineskin/generator";
+import { Log, RedisProvider } from "@mineskin/generator";
 
 export const ACCOUNTS_TOTAL = "accounts.total";
 export const ACCOUNTS_HEALTHY = "accounts.healthy";
@@ -473,6 +473,8 @@ export class Stats {
                             .incrBy(`mineskin:generated:agent:${ ua }:${ currentYear }:new`, count)
                             .exec()
                             .catch(e => {
+                                Log.l.debug(e.replies);
+                                Log.l.debug(e.errorIndexes);
                                 Sentry.captureException(e, {
                                     extra: {
                                         op: "redis_migrateAgentGenerateStatsToRedis0_ua",
@@ -517,6 +519,8 @@ export class Stats {
                             .incrBy(`mineskin:generated:apikey:${ keyId }:${ currentYear }:new`, count)
                             .exec()
                             .catch(e => {
+                                Log.l.debug(e.replies);
+                                Log.l.debug(e.errorIndexes);
                                 Sentry.captureException(e, {
                                     extra: {
                                         op: "redis_migrationKeyGenerateStatsToRedis0_key",

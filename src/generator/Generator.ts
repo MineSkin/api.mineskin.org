@@ -71,7 +71,7 @@ import {
 } from "@mineskin/database";
 import { GenerateType, MineSkinError, SkinInfo, SkinVariant, SkinVisibility } from "@mineskin/types";
 import { Accounts } from "./Accounts";
-import { GeneratorError, GenError, RedisProvider } from "@mineskin/generator";
+import { GeneratorError, GenError, Log, RedisProvider } from "@mineskin/generator";
 import { container } from "tsyringe";
 import { trackRedisGenerated } from "../database/redis";
 
@@ -645,6 +645,8 @@ export class Generator {
                         ?.expire(billableKeyDate, ONE_MONTH_SECONDS * 3)
                         .exec()
                         .catch(e => {
+                            Log.l.debug(e.replies);
+                            Log.l.debug(e.errorIndexes);
                             Sentry.captureException(e, {
                                 extra: {
                                     op: "redis_getDuplicateOrSaved_billable",

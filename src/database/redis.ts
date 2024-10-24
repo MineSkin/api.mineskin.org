@@ -3,7 +3,7 @@ import { Maybe, ONE_MONTH_SECONDS, ONE_YEAR_SECONDS } from "../util";
 import { ClientInfo } from "../typings/ClientInfo";
 import { Caching } from "../generator/Caching";
 import { container } from "tsyringe";
-import { RedisProvider } from "@mineskin/generator";
+import { Log, RedisProvider } from "@mineskin/generator";
 
 // export let redisClient: Maybe<RedisClientType>;
 // export let redisPub: Maybe<RedisClientType>;
@@ -79,6 +79,8 @@ export async function trackRedisGenerated(isNew: boolean, apiKey: Maybe<string>,
         }
 
         await trans?.exec().catch(e => {
+            Log.l.debug(e.replies);
+            Log.l.debug(e.errorIndexes);
             Sentry.captureException(e, {
                 extra: {
                     op: "redis_trackRedisGenerated",
@@ -138,6 +140,8 @@ export async function getRedisNextRequest(client: Pick<ClientInfo, 'ip' | 'apiKe
         }
 
         const results = await trans.exec().catch(e => {
+            Log.l.debug(e.replies);
+            Log.l.debug(e.errorIndexes);
             Sentry.captureException(e, {
                 extra: {
                     op: "redis_getRedisNextRequest",
@@ -180,6 +184,8 @@ export async function getRedisLastRequest(client: Pick<ClientInfo, 'ip' | 'apiKe
         }
 
         const results = await trans.exec().catch(e => {
+            Log.l.debug(e.replies);
+            Log.l.debug(e.errorIndexes);
             Sentry.captureException(e, {
                 extra: {
                     op: "redis_getRedisLastRequest",
@@ -236,6 +242,9 @@ export async function updateRedisNextRequest(client: ClientInfo, effectiveDelayM
             });
 
         await trans.exec().catch(e => {
+            Log.l.error("Failed to update next request", e);
+            Log.l.debug(e.replies);
+            Log.l.debug(e.errorIndexes);
             Sentry.captureException(e, {
                 extra: {
                     op: "redis_updateRedisNextRequest",
