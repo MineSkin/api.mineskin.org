@@ -4,10 +4,11 @@ import { Response } from "express";
 import { V2GenerateResponseBody } from "../../typings/v2/V2GenerateResponseBody";
 import { V2SkinResponse } from "../../typings/v2/V2SkinResponse";
 import { ErrorSource, GenerateOptions, GenerateType } from "@mineskin/types";
-import { GeneratorError, ImageHashes, Log } from "@mineskin/generator";
+import { GeneratorError, ImageHashes } from "@mineskin/generator";
 import { GenerateReqUser } from "../../validation/generate";
 import { stripUuid } from "../../util";
 import { Caching } from "../Caching";
+import { Log } from "../../Log";
 
 export class V2UserHandler extends V2GenerateHandler{
 

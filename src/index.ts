@@ -45,20 +45,16 @@ import UAParser from "ua-parser-js";
 import mongoose from "mongoose";
 import { connectToMongo } from "@mineskin/database";
 import { MineSkinError } from "@mineskin/types";
-import { FlagsmithProvider, GeneratorError, IFlagProvider, Log, RedisProvider } from "@mineskin/generator";
+import { GeneratorError, RedisProvider } from "@mineskin/generator";
 import process from "node:process";
 import * as http from "node:http";
 import { v2TestRouter } from "./routes/v2/test";
 import { v2ErrorHandler, v2NotFoundHandler } from "./middleware/error";
-import { container, instanceCachingFactory } from "tsyringe";
-import { ApiLogProvider } from "./ApiLogProvider";
-import { ApiAuditLogger } from "./ApiAuditLogger";
+import { Log } from "./Log";
+import { container } from "./inversify.config";
 
 
 sourceMapSupport.install();
-
-container.register("Log", {useClass: ApiLogProvider});
-container.register("AuditLogger", {useClass: ApiAuditLogger});
 
 let config: MineSkinConfig;
 let port: number;
@@ -66,8 +62,6 @@ let port: number;
 let updatingApp = true;
 
 const hostname = resolveHostname();
-
-
 
 Log.l.info("\n" +
     "  ==== STARTING UP ==== \n" +
@@ -108,8 +102,7 @@ let server: http.Server;
 async function init() {
     console.log("Node Version " + process.version);
 
-    container.register("FlagProvider", {useFactory: instanceCachingFactory<IFlagProvider>(c => c.resolve(FlagsmithProvider))});
-    container.register("RedisProvider", {useFactory: instanceCachingFactory<RedisProvider>(c => c.resolve(RedisProvider))});
+    container
 
     {// Config
         console.log("Setting up config");

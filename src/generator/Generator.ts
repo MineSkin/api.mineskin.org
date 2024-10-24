@@ -71,9 +71,11 @@ import {
 } from "@mineskin/database";
 import { GenerateType, MineSkinError, SkinInfo, SkinVariant, SkinVisibility } from "@mineskin/types";
 import { Accounts } from "./Accounts";
-import { GeneratorError, GenError, Log, RedisProvider } from "@mineskin/generator";
-import { container } from "tsyringe";
+import { GeneratorError, GenError, RedisProvider } from "@mineskin/generator";
 import { trackRedisGenerated } from "../database/redis";
+import { Log } from "../Log";
+import { container } from "../inversify.config";
+import { IRedisProvider, TYPES as CoreTypes } from "@mineskin/core";
 
 
 // minimum delay for accounts to be used
@@ -599,7 +601,7 @@ export class Generator {
                 try {
                     const date = new Date();
 
-                    const redis = container.resolve(RedisProvider);
+                    const redis = container.get<IRedisProvider>(CoreTypes.RedisProvider);
 
                     if (!!client.metered) {
                         const usageKey = `mineskin:usage:apikey:${ client.apiKeyId }:meter`;

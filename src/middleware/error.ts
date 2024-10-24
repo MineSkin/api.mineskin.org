@@ -3,10 +3,10 @@ import { NextFunction, Response } from "express";
 import { V2GenerateResponseBody } from "../typings/v2/V2GenerateResponseBody";
 import { MineSkinError } from "@mineskin/types";
 import { V2GenerateHandler } from "../generator/v2/V2GenerateHandler";
-import { Log } from "@mineskin/generator";
 import * as Sentry from "@sentry/node";
 import { ZodError } from "zod";
 import { CodeAndMessage } from "../typings/v2/CodeAndMessage";
+import { Log } from "../Log";
 
 export function v2ErrorHandler(err: Error, req: GenerateV2Request, res: Response<V2GenerateResponseBody>, next: NextFunction) {
     if (err instanceof MineSkinError) {

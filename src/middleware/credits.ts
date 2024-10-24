@@ -1,8 +1,8 @@
 import { MineSkinV2Request } from "../routes/v2/types";
 import { NextFunction, Response } from "express";
-import { IFlagProvider } from "@mineskin/generator";
 import { BillingService, UserCreditHolder } from "@mineskin/billing";
-import { container } from "tsyringe";
+import { IFlagProvider, TYPES as CoreTypes } from "@mineskin/core";
+import { container } from "../inversify.config";
 
 export const creditsMiddleware = async (req: MineSkinV2Request, res: Response, next: NextFunction) => {
     await verifyCredits(req, res);
@@ -14,7 +14,7 @@ export const verifyCredits = async (req: MineSkinV2Request, res: Response) => {
         return;
     }
 
-    const flags =  container.resolve<IFlagProvider>("FlagProvider");
+    const flags =  container.get<IFlagProvider>(CoreTypes.FlagProvider);
     if (!(await flags.isEnabled('generator.credits.enabled'))) {
         req.clientInfo.usePaidCredits = false;
         return;

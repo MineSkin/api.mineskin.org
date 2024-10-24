@@ -1,7 +1,8 @@
 import { GenerateV2Request } from "../routes/v2/types";
 import { NextFunction, Response } from "express";
-import { GeneratorError, IFlagProvider, TrafficService } from "@mineskin/generator";
-import { container } from "tsyringe";
+import { GeneratorError, TrafficService, TYPES as GeneratorTypes } from "@mineskin/generator";
+import { container } from "../inversify.config";
+import { IFlagProvider, TYPES as CoreTypes } from "@mineskin/core";
 
 export const rateLimitMiddlewareWithDelay = async (req: GenerateV2Request, res: Response, next: NextFunction) => {
     await verifyRateLimit(req, res, true);
@@ -19,7 +20,7 @@ export const verifyRateLimit = async (req: GenerateV2Request, res: Response, wit
     }
 
     // check rate limit
-    const trafficService = container.resolve(TrafficService);
+    const trafficService = container.get<TrafficService>(GeneratorTypes.TrafficService);
     if (withDelay && req.client.useDelayRateLimit()) {
         req.nextRequest = await trafficService.getNextRequest(req.clientInfo);
         req.minDelay = await trafficService.getMinDelaySeconds(req.clientInfo, req.apiKey) * 1000;
@@ -42,7 +43,7 @@ export const verifyRateLimit = async (req: GenerateV2Request, res: Response, wit
     }
 
     if (req.client.useConcurrencyLimit()) {
-        const flags =  container.resolve<IFlagProvider>("FlagProvider");
+        const flags =  container.get<IFlagProvider>(CoreTypes.FlagProvider);
         const block = await flags.isEnabled('generator.concurrency.block');
         req.concurrentRequests = await trafficService.getConcurrent(req.clientInfo);
         req.maxConcurrent = req.client.getConcurrencyLimit();

@@ -2,7 +2,8 @@ import { MineSkinV2Request } from "../routes/v2/types";
 import { NextFunction, Response } from "express";
 import { getIp, getVia, simplifyUserAgent } from "../util";
 import * as Sentry from "@sentry/node";
-import { Log, RequestClient } from "@mineskin/generator";
+import { RequestClient } from "@mineskin/generator";
+import { Log } from "../Log";
 
 export const clientMiddleware = async (req: MineSkinV2Request, res: Response, next: NextFunction) => {
     initRequestClient(req, res);

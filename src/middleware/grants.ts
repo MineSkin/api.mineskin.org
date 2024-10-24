@@ -1,8 +1,8 @@
 import { MineSkinV2Request } from "../routes/v2/types";
 import { NextFunction, Response } from "express";
 import { CreditType } from "@mineskin/types";
-import { IFlagProvider } from "@mineskin/generator";
-import { container } from "tsyringe";
+import { IFlagProvider, TYPES as CoreTypes } from "@mineskin/core";
+import { container } from "../inversify.config";
 
 export const grantsMiddleware = async (req: MineSkinV2Request, res: Response, next: NextFunction) => {
     await verifyGrants(req, res);
@@ -21,7 +21,7 @@ export const verifyGrants = async (req: MineSkinV2Request, res: Response) => {
 }
 
 async function getDefaultGrants(hasApiKey: boolean, hasUser: boolean, creditType: CreditType | undefined) {
-    const flags =  container.resolve<IFlagProvider>("FlagProvider");
+    const flags =  container.get<IFlagProvider>(CoreTypes.FlagProvider);
     if (!hasApiKey) {
         // no api key, can't check credits -> use default
         return JSON.parse(await flags.getValue('generator.default_grants.base'));

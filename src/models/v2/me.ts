@@ -3,9 +3,9 @@ import { Response } from "express";
 import { MineSkinError } from "@mineskin/types";
 import { formatV2Response } from "../../middleware/response";
 import { V2MiscResponseBody } from "../../typings/v2/V2MiscResponseBody";
-import { BillingService, UserCreditHolder } from "@mineskin/billing";
+import { BillingService, TYPES as BillingTypes, UserCreditHolder } from "@mineskin/billing";
 import { ApiKey } from "@mineskin/database";
-import { container } from "tsyringe";
+import { container } from "../../inversify.config";
 
 export async function v2GetMe(req: MineSkinV2Request, res: Response<V2MiscResponseBody>) {
     req.links.self = `/v2/me`;
@@ -83,7 +83,7 @@ export async function v2GetCreditsInfo(req: MineSkinV2Request, res: Response<V2M
     if (!req.client.hasUser() || !req.client.userId) {
         throw new MineSkinError('invalid_user', "Invalid user");
     }
-    const billingService = container.resolve(BillingService);
+    const billingService = container.get<BillingService>(BillingTypes.BillingService);
     const holder = await billingService.creditService.getHolder(req.client.userId) as UserCreditHolder;
     const credit = await holder.findFirstApplicableMongoCredit(await req.client.usePaidCredits());
     if (!credit) {

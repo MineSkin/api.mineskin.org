@@ -1,11 +1,11 @@
-import { ILogProvider, Log } from "@mineskin/generator";
 import DailyRotateFile from "winston-daily-rotate-file";
 import * as Sentry from "@sentry/node";
 import winston, { format } from "winston";
 import nodeUtil from "node:util";
-import { singleton } from "tsyringe";
+import { injectable } from "inversify";
+import { ILogProvider } from "@mineskin/core";
 
-@singleton()
+@injectable()
 export class ApiLogProvider implements ILogProvider {
 
     _logger: winston.Logger;
@@ -72,19 +72,19 @@ export class ApiLogProvider implements ILogProvider {
 
         (() => {
             console.log = (...args: any[]) => {
-                Log.l.info(args.join(' '));
+                this.l.info(args.join(' '));
             }
             console.error = (...args: any[]) => {
-                Log.l.error(args.join(' '));
+                this.l.error(args.join(' '));
             }
             console.debug = (...args: any[]) => {
-                Log.l.debug(args.join(' '));
+                this.l.debug(args.join(' '));
             }
             console.info = (...args: any[]) => {
-                Log.l.info(args.join(' '));
+                this.l.info(args.join(' '));
             }
             console.warn = (...args: any[]) => {
-                Log.l.warn(args.join(' '));
+                this.l.warn(args.join(' '));
             }
 
         })();

@@ -30,13 +30,15 @@ import { DelayInfo } from "../typings/DelayInfo";
 import { GenerateType, SkinVariant, SkinVisibility, UUID } from "@mineskin/types";
 import { SkinModel } from "@mineskin/database";
 import { Temp } from "../generator/Temp";
-import { IFlagProvider, Log, Migrations } from "@mineskin/generator";
+import { Migrations } from "@mineskin/generator";
 import { GenerateV2Request, MineSkinV2Request } from "./v2/types";
 import { v2GenerateAndWait } from "../models/v2/generate";
 import { V2SkinResponse } from "../typings/v2/V2SkinResponse";
 import { mineSkinV2InitialMiddleware } from "../middleware/combined";
 import { rateLimitMiddlewareWithDelay } from "../middleware/rateLimit";
-import { container } from "tsyringe";
+import { IFlagProvider, TYPES as CoreTypes } from "@mineskin/core";
+import { container } from "../inversify.config";
+import { Log } from "../Log";
 
 export const register = (app: Application) => {
 
@@ -73,7 +75,7 @@ export const register = (app: Application) => {
     // v2 compatibility layers
     app.use("/generate", async (req: V2CompatRequest & MineSkinV2Request, res: Response, next: NextFunction) => {
         req.v2Compat = false;
-        const flags = container.resolve<IFlagProvider>("FlagProvider");
+        const flags = container.get<IFlagProvider>(CoreTypes.FlagProvider);
         try {
             const apiKey = (req as V2CompatRequest).apiKey;
             if (apiKey) {

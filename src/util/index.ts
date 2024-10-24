@@ -18,7 +18,7 @@ import { getRedisNextRequest, updateRedisNextRequest } from "../database/redis";
 import { IApiKeyDocument, ISkinDocument, SkinModel } from "@mineskin/database";
 import { MineSkinError, SkinVariant } from "@mineskin/types";
 import { TempFile } from "../generator/Temp";
-import { Log } from "@mineskin/generator";
+import { Log } from "../Log";
 
 export function resolveHostname() {
     if (process.env.NODE_HOSTNAME && !process.env.NODE_HOSTNAME.startsWith("{{")) {

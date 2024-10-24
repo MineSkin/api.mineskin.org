@@ -22,8 +22,8 @@ import { IPendingDiscordLink } from "../typings/DiscordAccountLink";
 import { Time } from "@inventivetalent/time";
 import { MojangAccountLink } from "../typings/MojangAccountLink";
 import { ApiKey, IApiKeyDocument, ISkinDocument, Skin, Traffic } from "@mineskin/database";
-import { container } from "tsyringe";
-import { RedisProvider } from "@mineskin/generator";
+import { IRedisProvider, TYPES as CoreTypes } from "@mineskin/core";
+import { container } from "../inversify.config";
 
 export class Caching {
 
@@ -310,7 +310,7 @@ export class Caching {
     }, 20000);
 
     public static subscribeToRedis() {
-        const redis = container.resolve(RedisProvider);
+        const redis = container.get<IRedisProvider>(CoreTypes.RedisProvider);
         redis.sub.subscribe('mineskin:invalidations:apikey', (message, channel) => {
             console.log('Received apikey invalidation message', message, channel);
             this.apiKeyCache.invalidate(message);

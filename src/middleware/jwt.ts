@@ -6,7 +6,7 @@ import { Time } from "@inventivetalent/time";
 import * as jose from "jose";
 import { JWTPayload } from "jose";
 import process from "node:process";
-import { Log } from "@mineskin/generator";
+import { Log } from "../Log";
 
 const jwtCache = Caches.builder()
     .expireAfterWrite(Time.seconds(5))

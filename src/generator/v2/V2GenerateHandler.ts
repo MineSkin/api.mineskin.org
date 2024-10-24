@@ -1,11 +1,11 @@
 import { Response } from "express";
-import { ImageHashes, SkinService } from "@mineskin/generator";
+import { ImageHashes, SkinService, TYPES as GeneratorTypes } from "@mineskin/generator";
 import { GenerateOptions, GenerateType, RateLimitInfo, SkinInfo2, UUID } from "@mineskin/types";
 import { IPopulatedSkin2Document, ISkinDocument, isPopulatedSkin2Document } from "@mineskin/database";
 import { GenerateV2Request } from "../../routes/v2/types";
 import { V2GenerateResponseBody } from "../../typings/v2/V2GenerateResponseBody";
 import { V2SkinResponse } from "../../typings/v2/V2SkinResponse";
-import { container } from "tsyringe";
+import { container } from "../../inversify.config";
 
 export const MC_TEXTURE_PREFIX = "https://textures.minecraft.net/texture/";
 
@@ -35,7 +35,7 @@ export class V2GenerateHandler {
     }
 
     static async queryAndSendSkin(req: GenerateV2Request, res: Response, uuid: UUID, duplicate: boolean = false) {
-        const skin = await container.resolve(SkinService).findForUuid(uuid);
+        const skin = await container.get<SkinService>(GeneratorTypes.SkinService).findForUuid(uuid);
         if (!skin || !isPopulatedSkin2Document(skin) || !skin.data) {
             return res.status(500).json({
                 success: false,

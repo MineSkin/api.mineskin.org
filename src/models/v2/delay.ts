@@ -2,9 +2,9 @@ import { MineSkinV2Request } from "../../routes/v2/types";
 import { Response } from "express";
 import { CreditType, MineSkinError, RateLimitInfo } from "@mineskin/types";
 import { V2MiscResponseBody } from "../../typings/v2/V2MiscResponseBody";
-import { TrafficService } from "@mineskin/generator";
-import { BillingService, UserCreditHolder } from "@mineskin/billing";
-import { container } from "tsyringe";
+import { TrafficService, TYPES as GeneratorTypes } from "@mineskin/generator";
+import { BillingService, TYPES as BillingTypes, UserCreditHolder } from "@mineskin/billing";
+import { container } from "../../inversify.config";
 
 export async function v2GetDelay(req: MineSkinV2Request, res: Response<V2MiscResponseBody>) {
     if (!req.clientInfo) {
@@ -13,8 +13,8 @@ export async function v2GetDelay(req: MineSkinV2Request, res: Response<V2MiscRes
 
     const now = Date.now();
 
-    const trafficService = container.resolve(TrafficService);
-    const billingService = container.resolve(BillingService);
+    const trafficService = container.get<TrafficService>(GeneratorTypes.TrafficService);
+    const billingService = container.get<BillingService>(BillingTypes.BillingService);
 
     let creditType: CreditType | undefined;
     if (req.client.canUseCredits() && req.client.userId) {

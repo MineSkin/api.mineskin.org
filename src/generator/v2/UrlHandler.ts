@@ -3,7 +3,7 @@ import * as Sentry from "@sentry/node";
 import { AxiosError, AxiosResponse } from "axios";
 import { Breadcrumb, Maybe } from "@mineskin/types";
 import { Requests } from "../Requests";
-import { Log } from "@mineskin/generator";
+import { Log } from "../../Log";
 
 export const URL_REGEX = /https?:\/\/.+/i;
 const BLOCKED_URL_HOSTS: RegExp[] = [

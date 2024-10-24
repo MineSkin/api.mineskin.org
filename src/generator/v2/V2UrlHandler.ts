@@ -1,13 +1,6 @@
 import { BufferResult, V2GenerateHandler } from "./V2GenerateHandler";
 import { Response } from "express";
-import {
-    ALLOWED_IMAGE_TYPES,
-    DuplicateChecker,
-    GeneratorError,
-    GenError,
-    Log,
-    MAX_IMAGE_SIZE
-} from "@mineskin/generator";
+import { ALLOWED_IMAGE_TYPES, DuplicateChecker, GeneratorError, GenError, MAX_IMAGE_SIZE } from "@mineskin/generator";
 import { GenerateOptions, GenerateType, UUID } from "@mineskin/types";
 import { readFile } from "fs/promises";
 import { GenerateV2Request } from "../../routes/v2/types";
@@ -17,6 +10,7 @@ import { isTempFile, PathHolder } from "../../util";
 import { Temp, URL_DIR } from "../Temp";
 import { UrlHandler } from "./UrlHandler";
 import { GenerateReqUrl } from "../../validation/generate";
+import { Log } from "../../Log";
 
 export class V2UrlHandler extends V2GenerateHandler {
 

@@ -10,12 +10,12 @@ import {
     ImageHashes,
     ImageService,
     ImageValidation,
-    Log,
     MAX_IMAGE_SIZE,
     MongoGeneratorClient,
     QueueOptions,
     SkinService,
-    TrafficService
+    TrafficService,
+    TYPES as GeneratorTypes
 } from "@mineskin/generator";
 import { BillingService } from "@mineskin/billing";
 import {
@@ -43,7 +43,8 @@ import { V2MiscResponseBody } from "../../typings/v2/V2MiscResponseBody";
 import { V2JobListResponse } from "../../typings/v2/V2JobListResponse";
 import { ObjectId } from "../../validation/misc";
 import { V2UserHandler } from "../../generator/v2/V2UserHandler";
-import { container } from "tsyringe";
+import { container } from "../../inversify.config";
+import { Log } from "../../Log";
 
 const upload = multer({
     limits: {
@@ -57,7 +58,7 @@ let _client: IGeneratorClient<IQueueDocument>;
 
 function getClient() {
     if (!_client) {
-        _client = container.resolve(MongoGeneratorClient);
+        _client = container.get<IGeneratorClient<any>>(GeneratorTypes.GeneratorClient);
     }
     return _client;
 }
@@ -377,7 +378,8 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
 
 
         try {
-            hashes = await ImageService.getImageHashes(imageBuffer, validation.dimensions.width || 64, validation.dimensions.height || 64);
+            const imageService = container.get<ImageService>(GeneratorTypes.ImageService);
+            hashes = await imageService.getImageHashes(imageBuffer, validation.dimensions.width || 64, validation.dimensions.height || 64);
         } catch (e) {
             // span?.setStatus({
             //     code: 2,

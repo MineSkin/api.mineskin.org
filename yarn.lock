@@ -1376,13 +1376,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@mineskin/billing@git+ssh://git@github.com/MineSkin/mineskin-billing.git#syringe":
+"@mineskin/billing@git+ssh://git@github.com/MineSkin/mineskin-billing.git#inverse":
   version: 0.0.0
-  resolution: "@mineskin/billing@git+ssh://git@github.com/MineSkin/mineskin-billing.git#commit=99d968e1a63c1034a55ffc4f2bf919c610e38987"
+  resolution: "@mineskin/billing@git+ssh://git@github.com/MineSkin/mineskin-billing.git#commit=dc5cb07453fc40e6ff3cd232746848f1e822dcb1"
   dependencies:
     "@inventivetalent/imghash": "npm:^1.1.1"
     "@inventivetalent/loading-cache": "npm:^0.7.1"
     "@inventivetalent/time": "npm:^1.0.3"
+    "@mineskin/core": "git+ssh://git@github.com/MineSkin/mineskin-core.git#inverse"
     "@mineskin/database": "git+ssh://git@github.com/MineSkin/mineskin-database.git"
     "@mineskin/requests": "git+ssh://git@github.com/MineSkin/mineskin-requests.git"
     "@mineskin/types": "git+ssh://git@github.com/MineSkin/mineskin-types.git"
@@ -1393,17 +1394,35 @@ __metadata:
     dotenv: "npm:^16.4.5"
     flagsmith-nodejs: "npm:^3.3.3"
     form-data: "npm:^4.0.0"
+    inversify: "npm:^6.0.3"
     metrics-node: "npm:^1.1.1"
     mongoose: "npm:^8.5.3"
     redis: "npm:^4.7.0"
     reflect-metadata: "npm:^0.2.2"
     serialize-error: "npm:^8.1.0"
     tmp: "npm:^0.2.3"
-    tsyringe: "npm:^4.8.0"
     uuid: "npm:^10.0.0"
     winston: "npm:^3.14.2"
     winston-daily-rotate-file: "npm:^5.0.0"
-  checksum: 10c0/1d0e183236b6b01b5e419ef28d23fe60411b39d3e0208371a5fd9746f448850cb547d1df99781c8d45ad0321471bac28740fc912a6cfc213cb36a777df45e72a
+  checksum: 10c0/2ad04e56a74399eefe450e9238f9153caa86c790994bced1618281e68dfc8bb5b75147d604517b67731bd7b0e72707be4323bfa90a9213de2f9a7eaaadb32bce
+  languageName: node
+  linkType: hard
+
+"@mineskin/core@git+ssh://git@github.com/MineSkin/mineskin-core.git#inverse":
+  version: 0.0.0
+  resolution: "@mineskin/core@git+ssh://git@github.com/MineSkin/mineskin-core.git#commit=8f26b646d93f95c11d0af39c51fbc67e91edea5f"
+  dependencies:
+    "@sentry/cli": "npm:^2.32.2"
+    "@sentry/node": "npm:^8.18.0"
+    "@sentry/profiling-node": "npm:^8.18.0"
+    dotenv: "npm:^16.4.5"
+    flagsmith-nodejs: "npm:^3.3.3"
+    inversify: "npm:^6.0.3"
+    redis: "npm:^4.7.0"
+    reflect-metadata: "npm:^0.2.2"
+    winston: "npm:^3.14.2"
+    winston-daily-rotate-file: "npm:^5.0.0"
+  checksum: 10c0/a2cd1d6fe13ec100faaf6ee4633173c54d7aa58a02cf833acb701645143e06a21a6459fd3ad1ee31547b711522c4e8a09becb1454bb446f717037097218cf0c0
   languageName: node
   linkType: hard
 
@@ -1422,9 +1441,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git#syringe":
+"@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git#inverse":
   version: 0.0.0
-  resolution: "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git#commit=b8bfe85ebba390e72c9d4cbf318fd7753f9bbf7d"
+  resolution: "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git#commit=689ba3ba8c7313b3974644b6a605995c032b4c79"
   dependencies:
     "@inventivetalent/imghash": "npm:^1.1.1"
     "@inventivetalent/loading-cache": "npm:^0.7.1"
@@ -1433,7 +1452,8 @@ __metadata:
     "@jimp/js-png": "npm:^1.6.0"
     "@jimp/png": "npm:^0.22.12"
     "@mineskin/auth": "git+ssh://git@github.com/MineSkin/mineskin-auth.git"
-    "@mineskin/billing": "git+ssh://git@github.com/MineSkin/mineskin-billing.git#syringe"
+    "@mineskin/billing": "git+ssh://git@github.com/MineSkin/mineskin-billing.git#inverse"
+    "@mineskin/core": "git+ssh://git@github.com/MineSkin/mineskin-core.git#inverse"
     "@mineskin/database": "git+ssh://git@github.com/MineSkin/mineskin-database.git"
     "@mineskin/hash-rust": "npm:^1.0.5"
     "@mineskin/requests": "git+ssh://git@github.com/MineSkin/mineskin-requests.git"
@@ -1449,17 +1469,17 @@ __metadata:
     form-data: "npm:^4.0.0"
     https-proxy-agent: "npm:^5.0.1"
     image-size: "npm:^1.1.1"
+    inversify: "npm:^6.0.3"
     metrics-node: "npm:^1.1.1"
     mongoose: "npm:^8.5.3"
     redis: "npm:^4.7.0"
     reflect-metadata: "npm:^0.2.2"
     serialize-error: "npm:^8.1.0"
     tmp: "npm:^0.2.3"
-    tsyringe: "npm:^4.8.0"
     uuid: "npm:^10.0.0"
     winston: "npm:^3.14.2"
     winston-daily-rotate-file: "npm:^5.0.0"
-  checksum: 10c0/70f94a61b6db3f24519e0dfc79b3b65191d3f8563be3a467098ecf469d0bd31870141e7a993ca0b038c194f7fcc22cb62ab38509376f76a6a659c117ed00f438
+  checksum: 10c0/2f64a6eee2ac6ffbf0d0e2ffc9d669421d549a09086a272ffa325648fb3673dfa0d5bc433c0de5713cb222d3d36785802f7babda6d556abadd2eb86c630715ad
   languageName: node
   linkType: hard
 
@@ -3995,9 +4015,10 @@ __metadata:
     "@inventivetalent/typescript-memoize": "npm:^1.0.0-alpha.5"
     "@logtail/node": "npm:^0.4.21"
     "@logtail/winston": "npm:^0.4.21"
-    "@mineskin/billing": "git+ssh://git@github.com/MineSkin/mineskin-billing.git#syringe"
+    "@mineskin/billing": "git+ssh://git@github.com/MineSkin/mineskin-billing.git#inverse"
+    "@mineskin/core": "git+ssh://git@github.com/MineSkin/mineskin-core.git#inverse"
     "@mineskin/database": "git+ssh://git@github.com/MineSkin/mineskin-database.git"
-    "@mineskin/generator": "git+ssh://git@github.com/MineSkin/mineskin-generator.git#syringe"
+    "@mineskin/generator": "git+ssh://git@github.com/MineSkin/mineskin-generator.git#inverse"
     "@mineskin/hash-rust": "npm:^1.0.5"
     "@mineskin/types": "git+ssh://git@github.com/MineSkin/mineskin-types.git"
     "@sentry/node": "npm:8.9.2"
@@ -4047,6 +4068,7 @@ __metadata:
     https-proxy-agent: "npm:^5.0.0"
     image-size: "npm:^0.9.3"
     influx: "npm:^5.7.0"
+    inversify: "npm:^6.0.3"
     jest: "npm:^29.7.0"
     jimp: "npm:^0.22.12"
     jobqu: "npm:^2.0.5"
@@ -4068,7 +4090,6 @@ __metadata:
     source-map-support: "npm:^0.5.19"
     tmp: "npm:0.2.1"
     ts-jest: "npm:^29.2.5"
-    tsyringe: "npm:^4.8.0"
     tunnel-ssh: "npm:^4.1.4"
     typescript: "npm:^5.4.5"
     ua-parser-js: "npm:^1.0.38"
@@ -6543,6 +6564,13 @@ __metadata:
   version: 4.1.3
   resolution: "ini@npm:4.1.3"
   checksum: 10c0/0d27eff094d5f3899dd7c00d0c04ea733ca03a8eb6f9406ce15daac1a81de022cb417d6eaff7e4342451ffa663389c565ffc68d6825eaf686bf003280b945764
+  languageName: node
+  linkType: hard
+
+"inversify@npm:^6.0.3":
+  version: 6.0.3
+  resolution: "inversify@npm:6.0.3"
+  checksum: 10c0/2e3dcb0324bec9dbddf2c2548f3e54e513c3c1f848e2d1b10732f9a03af04ba5f090ca2bae1a1453cf3a08ebe1c827619a22cac516cb67cfe2366bd084ce7fa5
   languageName: node
   linkType: hard
 
@@ -10452,13 +10480,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tslib@npm:^1.9.3":
-  version: 1.14.1
-  resolution: "tslib@npm:1.14.1"
-  checksum: 10c0/69ae09c49eea644bc5ebe1bca4fa4cc2c82b7b3e02f43b84bd891504edf66dbc6b2ec0eef31a957042de2269139e4acff911e6d186a258fb14069cd7f6febce2
-  languageName: node
-  linkType: hard
-
 "tslib@npm:^2, tslib@npm:^2.4.1, tslib@npm:^2.5.0":
   version: 2.8.0
   resolution: "tslib@npm:2.8.0"
@@ -10470,15 +10491,6 @@ __metadata:
   version: 2.7.0
   resolution: "tslib@npm:2.7.0"
   checksum: 10c0/469e1d5bf1af585742128827000711efa61010b699cb040ab1800bcd3ccdd37f63ec30642c9e07c4439c1db6e46345582614275daca3e0f4abae29b0083f04a6
-  languageName: node
-  linkType: hard
-
-"tsyringe@npm:^4.8.0":
-  version: 4.8.0
-  resolution: "tsyringe@npm:4.8.0"
-  dependencies:
-    tslib: "npm:^1.9.3"
-  checksum: 10c0/e13810e8ff39c4093acd0649bc5db3c164825827631e1522cd9d5ca8694a018447fa1c24f059ea54e93b1020767b1131b9dc9ce598dabfc9aa41c11544bbfe19
   languageName: node
   linkType: hard
 

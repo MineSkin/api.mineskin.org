@@ -1,5 +1,5 @@
 import { MineSkinV2Request } from "../../routes/v2/types";
-import { IFlagProvider, Log, Migrations, SkinService } from "@mineskin/generator";
+import { Migrations, SkinService, TYPES as GeneratorTypes } from "@mineskin/generator";
 import { Response } from "express";
 import { IPopulatedSkin2Document, ISkin2Document, isPopulatedSkin2Document, Skin2 } from "@mineskin/database";
 import { RootFilterQuery } from "mongoose";
@@ -10,8 +10,10 @@ import { V2GenerateHandler } from "../../generator/v2/V2GenerateHandler";
 import { ListReqQuery } from "../../validation/skins";
 import { UUID } from "../../validation/misc";
 import { Caching } from "../../generator/Caching";
-import { container } from "tsyringe";
 import * as Sentry from "@sentry/node";
+import { IFlagProvider, TYPES as CoreTypes } from "@mineskin/core";
+import { container } from "../../inversify.config";
+import { Log } from "../../Log";
 
 export async function v2SkinList(req: MineSkinV2Request, res: Response<V2SkinListResponseBody>): Promise<V2SkinListResponseBody> {
     return await v2ListSkins(req, res);
@@ -58,7 +60,7 @@ export async function v2ListSkins(req: MineSkinV2Request, res: Response<V2SkinLi
     }
 
     if (after) {
-        const anchor = await container.resolve(SkinService).findForUuid(after);
+        const anchor = await container.get<SkinService>(GeneratorTypes.SkinService).findForUuid(after);
         if (anchor) {
             query._id = {$lt: anchor._id};
         }
@@ -112,7 +114,7 @@ export async function v2GetSkin(req: MineSkinV2Request, res: Response<V2SkinResp
 
     let skin = await container.resolve(SkinService).findForUuid(uuid);
 
-    const flags = container.resolve<IFlagProvider>("FlagProvider");
+    const flags = container.get<IFlagProvider>(CoreTypes.FlagProvider);
     try {
         if (!skin && await flags.isEnabled('migrations.api.get')) {
             const v1Doc = await Caching.getSkinByUuid(uuid);

@@ -2,8 +2,10 @@ import * as Sentry from "@sentry/node";
 import { Maybe, ONE_MONTH_SECONDS, ONE_YEAR_SECONDS } from "../util";
 import { ClientInfo } from "../typings/ClientInfo";
 import { Caching } from "../generator/Caching";
-import { container } from "tsyringe";
-import { Log, RedisProvider } from "@mineskin/generator";
+import { RedisProvider } from "@mineskin/generator";
+import { IRedisProvider, TYPES as CoreTypes } from "@mineskin/core";
+import { container } from "../inversify.config";
+import { Log } from "../Log";
 
 // export let redisClient: Maybe<RedisClientType>;
 // export let redisPub: Maybe<RedisClientType>;
@@ -50,7 +52,7 @@ export async function trackRedisGenerated(isNew: boolean, apiKey: Maybe<string>,
     }, async span => {
         const newOrDup = isNew ? "new" : "duplicate";
 
-        const redis = container.resolve(RedisProvider);
+        const redis = container.get<IRedisProvider>(CoreTypes.RedisProvider);
 
         if (!redis.client) {
             return;
@@ -197,7 +199,7 @@ export async function updateRedisNextRequest(client: ClientInfo, effectiveDelayM
         op: "redis_updateNextRequest",
         name: "Update Next Request",
     }, async span => {
-        const redis = container.resolve(RedisProvider);
+        const redis = container.get<IRedisProvider>(CoreTypes.RedisProvider);
         if (!redis.client) {
             return;
         }

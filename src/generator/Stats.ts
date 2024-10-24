@@ -6,8 +6,9 @@ import { debug } from "../util/colors";
 import { simplifyUserAgent } from "../util";
 import { Account, ApiKey, Skin, Stat, User } from "@mineskin/database";
 import { Accounts } from "./Accounts";
-import { container } from "tsyringe";
-import { Log, RedisProvider } from "@mineskin/generator";
+import { IRedisProvider, TYPES as CoreTypes } from "@mineskin/core";
+import { container } from "../inversify.config";
+import { Log } from "../Log";
 
 export const ACCOUNTS_TOTAL = "accounts.total";
 export const ACCOUNTS_HEALTHY = "accounts.healthy";
@@ -464,7 +465,7 @@ export class Stats {
                     const count = entry.count;
                     // check if last month exists
                     const key = `mineskin:generated:agent:${ ua }:${ currentYear }:${ month + 1 }:new`
-                    const redis = container.resolve(RedisProvider);
+                    const redis = container.get<IRedisProvider>(CoreTypes.RedisProvider);
                     if (!await redis.client?.exists(key)) {
                         console.log(`[redis] Migrating ${ ua } with ${ count }`)
                         await redis.client.multi()
@@ -510,7 +511,7 @@ export class Stats {
                     const keyId = keyDoc._id;
                     // check if last month exists
                     const key = `mineskin:generated:apikey:${ keyId }:${ currentYear }:${ month + 1 }:new`
-                    const redis = container.resolve(RedisProvider);
+                    const redis = container.get<IRedisProvider>(CoreTypes.RedisProvider);
                     if (!await redis.client.exists(key)) {
                         console.log(`[redis] Migrating ${ keyId }/${ rawKey } with ${ count }`)
                         await redis.client.multi()

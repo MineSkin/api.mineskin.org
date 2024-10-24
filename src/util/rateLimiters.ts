@@ -3,7 +3,7 @@ import rateLimit, { Options } from "express-rate-limit";
 import { getAndValidateRequestApiKey, getIp, simplifyUserAgent } from "./index";
 import { Generator } from "../generator/Generator";
 import { MineSkinMetrics } from "./metrics";
-import { Log } from "@mineskin/generator";
+import { Log } from "../Log";
 
 function keyGenerator(req: Request): string {
     return getIp(req);

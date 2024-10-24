@@ -1,6 +1,6 @@
 import { BufferResult, V2GenerateHandler } from "./V2GenerateHandler";
 import { Response } from "express";
-import { GeneratorError, Log } from "@mineskin/generator";
+import { GeneratorError } from "@mineskin/generator";
 import { V2GenerateResponseBody } from "../../typings/v2/V2GenerateResponseBody";
 import { V2SkinResponse } from "../../typings/v2/V2SkinResponse";
 import { GenerateV2Request } from "../../routes/v2/types";
@@ -11,6 +11,7 @@ import { Temp, UPL_DIR } from "../Temp";
 import * as fs from "node:fs";
 import { Readable } from "stream";
 import { readFile } from "fs/promises";
+import { Log } from "../../Log";
 
 export class V2UploadHandler extends V2GenerateHandler {
 

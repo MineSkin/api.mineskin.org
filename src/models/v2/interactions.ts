@@ -4,8 +4,9 @@ import { V2ResponseBody } from "../../typings/v2/V2ResponseBody";
 import { UUID } from "../../validation/misc";
 import { Skin2 } from "@mineskin/database";
 import { MineSkinError } from "@mineskin/types";
-import { container } from "tsyringe";
 import { RedisProvider } from "@mineskin/generator";
+import { TYPES as CoreTypes } from "@mineskin/core";
+import { container } from "../../inversify.config";
 
 export async function v2AddView(req: MineSkinV2Request, res: Response<V2ResponseBody>) {
     const uuid = UUID.parse(req.params.uuid);
@@ -18,7 +19,7 @@ export async function v2AddLike(req: MineSkinV2Request, res: Response<V2Response
         throw new MineSkinError('unauthorized', "Unauthorized", {httpCode: 401});
     }
     const key = `${ req.client.userId }:${ uuid }`;
-    const redis = container.resolve(RedisProvider);
+    const redis = container.get<RedisProvider>(CoreTypes.RedisProvider);
     if (!redis.client) {
         return;
     }
