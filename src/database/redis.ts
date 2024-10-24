@@ -9,17 +9,6 @@ import { Log, RedisProvider } from "@mineskin/generator";
 // export let redisPub: Maybe<RedisClientType>;
 // export let redisSub: Maybe<RedisClientType>;
 
-const setIfGreater = {
-    script: `local current = redis.call('GET', KEYS[1])
-if not current or tonumber(ARGV[1]) > tonumber(current) then
-    redis.call('SET', KEYS[1], ARGV[1], 'EX', 3600)
-    return 1
-else
-    return 0
-end`,
-    sha: "null"
-}
-
 // export async function initRedis() {
 //     if (!process.env.REDIS_URI) return;
 //     redisClient = createClient({
@@ -227,7 +216,7 @@ export async function updateRedisNextRequest(client: ClientInfo, effectiveDelayM
             trans = trans.set(`${ prefix }:apikey:${ client.apiKeyId }:last`, client.time, {
                 EX: 3600
             })
-                .evalSha(setIfGreater.sha!, {
+                .evalSha(redis.scripts.setIfGreater.sha!, {
                     keys: [`${ prefix }:apikey:${ client.apiKeyId }:next`],
                     arguments: [`${ nextRequest }`]
                 });
@@ -236,7 +225,7 @@ export async function updateRedisNextRequest(client: ClientInfo, effectiveDelayM
         trans = trans.set(`${ prefix }:ip:${ cleanIp }:last`, client.time, {
             EX: 3600
         })
-            .evalSha(setIfGreater.sha!, {
+            .evalSha(redis.scripts.setIfGreater.sha!, {
                 keys: [`${ prefix }:ip:${ cleanIp }:next`],
                 arguments: [`${ nextRequest }`]
             });
