@@ -24,7 +24,7 @@ router.get("/billing/credits", async (req: MineSkinV2Request, res: Response) => 
     const billingService = container.get<BillingService>(BillingTypes.BillingService);
     const holder = await billingService.creditService.getHolder(req.client.userId!) as UserCreditHolder;
     const credit = await holder.findFirstApplicableMongoCredit(await req.client.usePaidCredits());
-    res.json({credit});
+    res.json({holder,credit});
 });
 
 router.post("/billing/simulate-new-skin", async (req: MineSkinV2Request, res: Response) => {
