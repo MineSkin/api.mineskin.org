@@ -78,7 +78,14 @@ export async function trackRedisGenerated(isNew: boolean, apiKey: Maybe<string>,
             trackRedisGenerated0(trans, newOrDup, `mineskin:generated:agent:${ userAgent.toLowerCase() }`);
         }
 
-        await trans?.exec();
+        await trans?.exec().catch(e => {
+            Sentry.captureException(e, {
+                extra: {
+                    op: "redis_trackRedisGenerated",
+                }
+            });
+            throw e;
+        });
     });
 }
 
@@ -130,7 +137,14 @@ export async function getRedisNextRequest(client: Pick<ClientInfo, 'ip' | 'apiKe
             trans = trans.get(`mineskin:ratelimit:apikey:${ client.apiKeyId }:next`);
         }
 
-        const results = await trans.exec();
+        const results = await trans.exec().catch(e => {
+            Sentry.captureException(e, {
+                extra: {
+                    op: "redis_getRedisNextRequest",
+                }
+            });
+            throw e;
+        });
         const nextIpRequestStr = results[0] as string;
         const nextKeyRequestStr = client.apiKeyId ? results[1] as string : null;
 
@@ -165,7 +179,14 @@ export async function getRedisLastRequest(client: Pick<ClientInfo, 'ip' | 'apiKe
             trans = trans.get(`mineskin:ratelimit:apikey:${ client.apiKeyId }:last`);
         }
 
-        const results = await trans.exec();
+        const results = await trans.exec().catch(e => {
+            Sentry.captureException(e, {
+                extra: {
+                    op: "redis_getRedisLastRequest",
+                }
+            });
+            throw e;
+        });
         const lastIpRequestStr = results[0] as string;
         const lastKeyRequestStr = client.apiKeyId ? results[1] as string : null;
 
@@ -214,6 +235,13 @@ export async function updateRedisNextRequest(client: ClientInfo, effectiveDelayM
                 arguments: [`${ nextRequest }`]
             });
 
-        await trans.exec();
+        await trans.exec().catch(e => {
+            Sentry.captureException(e, {
+                extra: {
+                    op: "redis_updateRedisNextRequest",
+                }
+            });
+            throw e;
+        });
     });
 }

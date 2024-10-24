@@ -471,7 +471,15 @@ export class Stats {
                             .set(key, count)
                             .incrBy(`mineskin:generated:agent:${ ua }:alltime:new`, count)
                             .incrBy(`mineskin:generated:agent:${ ua }:${ currentYear }:new`, count)
-                            .exec();
+                            .exec()
+                            .catch(e => {
+                                Sentry.captureException(e, {
+                                    extra: {
+                                        op: "redis_migrateAgentGenerateStatsToRedis0_ua",
+                                    }
+                                });
+                                throw e;
+                            });
                     }
                 }
             } catch (e) {
@@ -507,7 +515,15 @@ export class Stats {
                             .set(key, count)
                             .incrBy(`mineskin:generated:apikey:${ keyId }:alltime:new`, count)
                             .incrBy(`mineskin:generated:apikey:${ keyId }:${ currentYear }:new`, count)
-                            .exec();
+                            .exec()
+                            .catch(e => {
+                                Sentry.captureException(e, {
+                                    extra: {
+                                        op: "redis_migrationKeyGenerateStatsToRedis0_key",
+                                    }
+                                });
+                                throw e;
+                            });
                     }
                 }
             } catch (e) {

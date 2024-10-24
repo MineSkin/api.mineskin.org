@@ -643,7 +643,15 @@ export class Generator {
                         ?.incr(billableKeyDate)
                         ?.expire(billableKeyMonth, ONE_YEAR_SECONDS * 2)
                         ?.expire(billableKeyDate, ONE_MONTH_SECONDS * 3)
-                        .exec();
+                        .exec()
+                        .catch(e => {
+                            Sentry.captureException(e, {
+                                extra: {
+                                    op: "redis_getDuplicateOrSaved_billable",
+                                }
+                            });
+                            throw e;
+                        });
 
                 } catch (e) {
                     Sentry.captureException(e);
