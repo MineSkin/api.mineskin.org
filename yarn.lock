@@ -1424,7 +1424,7 @@ __metadata:
 
 "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git#syringe":
   version: 0.0.0
-  resolution: "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git#commit=558eea89047ed578eccc501dbae1545648bbef59"
+  resolution: "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git#commit=b8bfe85ebba390e72c9d4cbf318fd7753f9bbf7d"
   dependencies:
     "@inventivetalent/imghash": "npm:^1.1.1"
     "@inventivetalent/loading-cache": "npm:^0.7.1"
@@ -1459,7 +1459,7 @@ __metadata:
     uuid: "npm:^10.0.0"
     winston: "npm:^3.14.2"
     winston-daily-rotate-file: "npm:^5.0.0"
-  checksum: 10c0/4fd5be25285745aabe70a9c702e5898ec2a13f4bf9e6fe8474d7b886eea0c066e6750779a3b0eec0d1f1a9cec1d05bbb29dec7802996a1182dfc6fe55eafb09e
+  checksum: 10c0/70f94a61b6db3f24519e0dfc79b3b65191d3f8563be3a467098ecf469d0bd31870141e7a993ca0b038c194f7fcc22cb62ab38509376f76a6a659c117ed00f438
   languageName: node
   linkType: hard
 
