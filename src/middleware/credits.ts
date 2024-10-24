@@ -1,7 +1,7 @@
 import { MineSkinV2Request } from "../routes/v2/types";
 import { NextFunction, Response } from "express";
 import { IFlagProvider } from "@mineskin/generator";
-import { BillingService } from "@mineskin/billing";
+import { BillingService, UserCreditHolder } from "@mineskin/billing";
 import { container } from "tsyringe";
 
 export const creditsMiddleware = async (req: MineSkinV2Request, res: Response, next: NextFunction) => {
@@ -22,9 +22,10 @@ export const verifyCredits = async (req: MineSkinV2Request, res: Response) => {
 
     // check credits
     // (always check, even when not enabled, to handle free credits)
-    if (req.client.canUseCredits()) {
+    if (req.client.canUseCredits() && req.client.userId) {
         const billingService = container.resolve(BillingService);
-        const credit = await billingService.creditService.getClientCredits(req.clientInfo);
+        const holder = await billingService.creditService.getHolder(req.client.userId) as UserCreditHolder;
+        const credit = await holder.findFirstApplicableMongoCredit(await req.client.usePaidCredits());
         if (!credit) {
             req.warnings.push({
                 code: 'no_credits',

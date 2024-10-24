@@ -3,7 +3,7 @@ import { Response } from "express";
 import { MineSkinError } from "@mineskin/types";
 import { formatV2Response } from "../../middleware/response";
 import { V2MiscResponseBody } from "../../typings/v2/V2MiscResponseBody";
-import { BillingService } from "@mineskin/billing";
+import { BillingService, UserCreditHolder } from "@mineskin/billing";
 import { ApiKey } from "@mineskin/database";
 import { container } from "tsyringe";
 
@@ -80,10 +80,12 @@ export async function v2GetCreditsInfo(req: MineSkinV2Request, res: Response<V2M
     if (!req.clientInfo) {
         throw new MineSkinError('invalid_client', "Invalid client");
     }
-    if (!req.client.hasUser()) {
+    if (!req.client.hasUser() || !req.client.userId) {
         throw new MineSkinError('invalid_user', "Invalid user");
     }
-    const credit = await container.resolve(BillingService).creditService.getClientCredits(req.clientInfo);
+    const billingService = container.resolve(BillingService);
+    const holder = await billingService.creditService.getHolder(req.client.userId) as UserCreditHolder;
+    const credit = await holder.findFirstApplicableMongoCredit(await req.client.usePaidCredits());
     if (!credit) {
         req.warnings.push({
             code: 'no_credits',
@@ -104,20 +106,22 @@ export async function v2GetCreditsInfo(req: MineSkinV2Request, res: Response<V2M
         res.header('X-MineSkin-Credits-Type', credit.type);
         res.header('X-MineSkin-Credits-Balance', `${ credit.balance }`);
     }
-    let balance = credit?.balance || 0;
-    let total = credit?.total || 0;
-    if (credit && credit.isValid() && !credit.isExpired() && credit.balance > 0) {
-        const allAvailable = await container.resolve(BillingService).creditService.getAllValidCredits(req.clientInfo.user!);
-        if (allAvailable) {
-            for (const available of allAvailable) {
-                if (available.id === credit.id) continue;
-                if (available.isValid() && !available.isExpired() && available.balance > 0) {
-                    balance += available.balance;
-                    total += available.total;
-                }
-            }
-        }
-    }
+    // let balance = credit?.balance || 0;
+    // let total = credit?.total || 0;
+    // if (credit && credit.isValid() && !credit.isExpired() && credit.balance > 0) {
+    //     const allAvailable = await container.resolve(BillingService).creditService.getAllValidCredits(req.clientInfo.user!);
+    //     if (allAvailable) {
+    //         for (const available of allAvailable) {
+    //             if (available.id === credit.id) continue;
+    //             if (available.isValid() && !available.isExpired() && available.balance > 0) {
+    //                 balance += available.balance;
+    //                 total += available.total;
+    //             }
+    //         }
+    //     }
+    // }
+    const totalBalance = holder.getFreeCreditsNow()+holder.getGeneralCreditsNow();
+    const total = 1; //FIXME
     res.json(formatV2Response<V2MiscResponseBody>(req, {
         credit: {
             current: {
@@ -126,7 +130,7 @@ export async function v2GetCreditsInfo(req: MineSkinV2Request, res: Response<V2M
                 total: credit?.total
             },
             all: {
-                balance: balance,
+                balance: totalBalance,
                 total: total
             }
         }

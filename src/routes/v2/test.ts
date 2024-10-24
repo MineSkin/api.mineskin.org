@@ -1,6 +1,6 @@
 import { v2Router } from "./router";
 import { TrafficService } from "@mineskin/generator";
-import { BillingService } from "@mineskin/billing";
+import { BillingService, UserCreditHolder } from "@mineskin/billing";
 import { MineSkinV2Request } from "./types";
 import { Response } from "express";
 import { rateLimitMiddleware } from "../../middleware/rateLimit";
@@ -22,7 +22,8 @@ router.get("/apikey", async (req: MineSkinV2Request, res: Response) => {
 
 router.get("/billing/credits", async (req: MineSkinV2Request, res: Response) => {
     const billingService = container.resolve(BillingService);
-    const credit = await billingService.creditService.getClientCredits(req.clientInfo!)
+    const holder = await billingService.creditService.getHolder(req.client.userId!) as UserCreditHolder;
+    const credit = await holder.findFirstApplicableMongoCredit(await req.client.usePaidCredits());
     res.json({credit});
 });
 
