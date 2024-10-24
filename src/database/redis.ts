@@ -248,6 +248,8 @@ export async function updateRedisNextRequest(client: ClientInfo, effectiveDelayM
             Sentry.captureException(e, {
                 extra: {
                     op: "redis_updateRedisNextRequest",
+                    apiKeyId: client.apiKeyId,
+                    cleanIp: cleanIp
                 }
             });
             throw e;
