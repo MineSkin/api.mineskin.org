@@ -53,6 +53,7 @@ import { v2TestRouter } from "./routes/v2/test";
 import { v2ErrorHandler, v2NotFoundHandler } from "./middleware/error";
 import { Log } from "./Log";
 import { IRedisProvider, TYPES as CoreTypes } from "@mineskin/core";
+import { BillingService, TYPES as BillingTypes } from "@mineskin/billing";
 
 
 sourceMapSupport.install();
@@ -258,6 +259,10 @@ async function init() {
         // await initRedis();
         // TrafficService.init(redisClient!, redisPub!, redisSub!, Log.l.child({label: "Traffic"}));
         // BillingService.init(redisClient!, redisPub!, redisSub!, Log.l.child({label: "Billing"}));
+    }
+
+    {
+        container.get<BillingService>(BillingTypes.BillingService);
     }
 
     {

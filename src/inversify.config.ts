@@ -11,7 +11,7 @@ import {
     TYPES as GeneratorTypes
 } from "@mineskin/generator";
 
-const container = new Container();
+const container = new Container({defaultScope: 'Singleton'});
 container.bind(CoreTypes.LogProvider).to(ApiLogProvider).inSingletonScope();
 container.bind(CoreTypes.AuditLogger).to(ApiAuditLogger).inSingletonScope();
 container.bind(CoreTypes.FlagProvider).to(FlagsmithProvider).inSingletonScope();
