@@ -1,5 +1,5 @@
 import { MineSkinV2Request } from "../../routes/v2/types";
-import { IFlagProvider, Migrations, SkinService } from "@mineskin/generator";
+import { IFlagProvider, Log, Migrations, SkinService } from "@mineskin/generator";
 import { Response } from "express";
 import { IPopulatedSkin2Document, ISkin2Document, isPopulatedSkin2Document, Skin2 } from "@mineskin/database";
 import { RootFilterQuery } from "mongoose";
@@ -11,6 +11,7 @@ import { ListReqQuery } from "../../validation/skins";
 import { UUID } from "../../validation/misc";
 import { Caching } from "../../generator/Caching";
 import { container } from "tsyringe";
+import * as Sentry from "@sentry/node";
 
 export async function v2SkinList(req: MineSkinV2Request, res: Response<V2SkinListResponseBody>): Promise<V2SkinListResponseBody> {
     return await v2ListSkins(req, res);
@@ -112,11 +113,16 @@ export async function v2GetSkin(req: MineSkinV2Request, res: Response<V2SkinResp
     let skin = await container.resolve(SkinService).findForUuid(uuid);
 
     const flags = container.resolve<IFlagProvider>("FlagProvider");
-    if (!skin && await flags.isEnabled('migrations.api.get')) {
-        const v1Doc = await Caching.getSkinByUuid(uuid);
-        if (v1Doc) {
-            await Migrations.migrateV1ToV2(v1Doc, "skin-get");
+    try {
+        if (!skin && await flags.isEnabled('migrations.api.get')) {
+            const v1Doc = await Caching.getSkinByUuid(uuid);
+            if (v1Doc) {
+                await Migrations.migrateV1ToV2(v1Doc, "skin-get");
+            }
         }
+    } catch (e) {
+        Sentry.captureException(e);
+        Log.l.error(e);
     }
 
     if (!skin || !isPopulatedSkin2Document(skin)) {
