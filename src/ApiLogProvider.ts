@@ -4,6 +4,7 @@ import winston, { format } from "winston";
 import nodeUtil from "node:util";
 import { injectable } from "inversify";
 import { ILogProvider } from "@mineskin/core";
+import SentryTransport from "winston-transport-sentry-node";
 
 @injectable()
 export class ApiLogProvider implements ILogProvider {
@@ -53,15 +54,23 @@ export class ApiLogProvider implements ILogProvider {
                 format.errors({stack: true}),
                 utilFormatter(),
                 format.colorize(),
-                format.printf(
-                    ({level, message, timestamp, label}) =>
-                        `${ timestamp } ${ label || '-' } ${ level }: ${ message }`,
-                ),
+                // format.printf(
+                //     ({level, message, timestamp, label}) =>
+                //         `${ timestamp } ${ label || '-' } ${ level }: ${ message }`,
+                // ),
+                format.printf(({timestamp, label, level, message, stack}) => {
+                    const text = `${ timestamp } ${ label || '-' } ${ level } ${ message }`;
+                    return stack ? text + '\n' + stack : text;
+                }),
             ),
             transports: [
                 logRotate,
                 new winston.transports.Console({
                     level: 'debug',
+                }),
+                new SentryTransport({
+                    skipSentryInit: true,
+                    level: 'warn'
                 })
             ],
         });
