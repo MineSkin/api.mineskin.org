@@ -73,40 +73,50 @@ export const register = (app: Application) => {
     // v2 compatibility layers
     app.use("/generate", async (req: V2CompatRequest & MineSkinV2Request, res: Response, next: NextFunction) => {
         req.v2Compat = false;
-        const flags =  container.resolve<IFlagProvider>("FlagProvider");
-        const apiKey = (req as V2CompatRequest).apiKey;
-        if (apiKey) {
-            if (req.query["v2"]) {
-                req.v2Compat = true;
-            } else {
-                if (apiKey.grants && (apiKey.grants as any).v2_compat) {
-                    req.v2Compat = true
-                } else if (apiKey && await flags.isEnabled('api.v2_compat.all_requests')) {
+        const flags = container.resolve<IFlagProvider>("FlagProvider");
+        try {
+            const apiKey = (req as V2CompatRequest).apiKey;
+            if (apiKey) {
+                if (req.query["v2"]) {
                     req.v2Compat = true;
+                } else {
+                    if (apiKey.grants && (apiKey.grants as any).v2_compat) {
+                        req.v2Compat = true
+                    } else if (apiKey && await flags.isEnabled('api.v2_compat.all_requests')) {
+                        req.v2Compat = true;
+                    }
                 }
             }
+        } catch (e) {
+            Sentry.captureException(e);
+            Log.l.error(e);
         }
 
         if (req.v2Compat) {
-            const [enabled, chance] = await Promise.all([
-                flags.isEnabled('api.v2_compat.chance'),
-                flags.getValue('api.v2_compat.chance')
-            ]);
-            if (!enabled) {
-                req.v2Compat = false;
-                req.warnings.push({
-                    code: "compat_disabled",
-                    message: "v2 compatibility is currently disabled"
-                });
-            } else if (chance) {
-                const random = Math.random();
-                if (random > Number(chance)) {
+            try {
+                const [enabled, chance] = await Promise.all([
+                    flags.isEnabled('api.v2_compat.chance'),
+                    flags.getValue('api.v2_compat.chance')
+                ]);
+                if (!enabled) {
                     req.v2Compat = false;
                     req.warnings.push({
                         code: "compat_disabled",
                         message: "v2 compatibility is currently disabled"
                     });
+                } else if (chance) {
+                    const random = Math.random();
+                    if (random > Number(chance)) {
+                        req.v2Compat = false;
+                        req.warnings.push({
+                            code: "compat_disabled",
+                            message: "v2 compatibility is currently disabled"
+                        });
+                    }
                 }
+            } catch (e) {
+                Sentry.captureException(e);
+                Log.l.error(e);
             }
         }
 
