@@ -1,6 +1,6 @@
 import { MineSkinV2Request } from "../../routes/v2/types";
 import { Response } from "express";
-import { MineSkinError } from "@mineskin/types";
+import { CreditType, MineSkinError } from "@mineskin/types";
 import { formatV2Response } from "../../middleware/response";
 import { V2MiscResponseBody } from "../../typings/v2/V2MiscResponseBody";
 import { BillingService, TYPES as BillingTypes, UserCreditHolder } from "@mineskin/billing";
@@ -120,8 +120,9 @@ export async function v2GetCreditsInfo(req: MineSkinV2Request, res: Response<V2M
     //         }
     //     }
     // }
-    const totalBalance = holder.getFreeCreditsNow()+holder.getGeneralCreditsNow();
-    const total = 1; //FIXME
+    const totalBalanceRedis = holder.getFreeCreditsNow() + holder.getGeneralCreditsNow();
+    const totalBalanceMongo = await holder.getMongoTypeTotal(CreditType.FREE, CreditType.INTERNAL, CreditType.REWARD, CreditType.PAID);
+    const total = await holder.getMongoTypeTotal(CreditType.FREE, CreditType.INTERNAL, CreditType.REWARD, CreditType.PAID);
     res.json(formatV2Response<V2MiscResponseBody>(req, {
         credit: {
             current: {
@@ -130,7 +131,7 @@ export async function v2GetCreditsInfo(req: MineSkinV2Request, res: Response<V2M
                 total: credit?.total
             },
             all: {
-                balance: totalBalance,
+                balance: Math.min(totalBalanceRedis, totalBalanceMongo),
                 total: total
             }
         }
