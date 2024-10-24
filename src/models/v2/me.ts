@@ -120,8 +120,8 @@ export async function v2GetCreditsInfo(req: MineSkinV2Request, res: Response<V2M
     //         }
     //     }
     // }
-    const totalBalanceRedis = holder.getFreeCreditsNow() + holder.getGeneralCreditsNow();
-    const totalBalanceMongo = await holder.getMongoTypeTotal(CreditType.FREE, CreditType.INTERNAL, CreditType.REWARD, CreditType.PAID);
+    const totalBalanceRedis = Math.max(holder.getFreeCreditsNow(), 0) + Math.max(holder.getGeneralCreditsNow(), 0);
+    const totalBalanceMongo = await holder.getMongoTypeBalance(CreditType.FREE, CreditType.INTERNAL, CreditType.REWARD, CreditType.PAID);
     const total = await holder.getMongoTypeTotal(CreditType.FREE, CreditType.INTERNAL, CreditType.REWARD, CreditType.PAID);
     res.json(formatV2Response<V2MiscResponseBody>(req, {
         credit: {

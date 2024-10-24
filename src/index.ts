@@ -2,6 +2,7 @@ import "dotenv/config"
 import "./instrument"
 import "reflect-metadata";
 
+import { container } from "./inversify.config";
 import { httpLogger } from "./util/log";
 import * as sourceMapSupport from "source-map-support";
 import * as Sentry from "@sentry/node";
@@ -51,7 +52,6 @@ import * as http from "node:http";
 import { v2TestRouter } from "./routes/v2/test";
 import { v2ErrorHandler, v2NotFoundHandler } from "./middleware/error";
 import { Log } from "./Log";
-import { container } from "./inversify.config";
 import { IRedisProvider, TYPES as CoreTypes } from "@mineskin/core";
 
 

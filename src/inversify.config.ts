@@ -6,10 +6,8 @@ import { ApiAuditLogger } from "./ApiAuditLogger";
 import {
     FlagsmithProvider,
     generatorModule,
-    ImageService,
     MongoGeneratorClient,
     RedisProvider,
-    TrafficService,
     TYPES as GeneratorTypes
 } from "@mineskin/generator";
 
@@ -22,8 +20,6 @@ container.bind(CoreTypes.RedisProvider).to(RedisProvider).inSingletonScope();
 container.load(billingModule);
 container.load(generatorModule);
 
-container.bind(GeneratorTypes.TrafficService).to(TrafficService).inSingletonScope();
 container.bind(GeneratorTypes.GeneratorClient).to(MongoGeneratorClient).inSingletonScope();
-container.bind(GeneratorTypes.ImageService).to(ImageService).inSingletonScope();
 
 export { container };
