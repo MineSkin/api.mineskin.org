@@ -261,7 +261,8 @@ async function init() {
     }
 
     {
-        // console.info("Connecting to Redis...")
+        console.info("Connecting to Redis...")
+        await container.resolve(RedisProvider).connect();
         // await initRedis();
         // TrafficService.init(redisClient!, redisPub!, redisSub!, Log.l.child({label: "Traffic"}));
         // BillingService.init(redisClient!, redisPub!, redisSub!, Log.l.child({label: "Billing"}));
