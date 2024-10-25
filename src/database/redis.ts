@@ -54,6 +54,7 @@ export async function trackRedisGenerated(isNew: boolean, apiKey: Maybe<string>,
         const redis = container.get<IRedisProvider>(CoreTypes.RedisProvider);
 
         if (!redis.client) {
+            Log.l.warn("No redis client");
             return;
         }
 
@@ -106,6 +107,7 @@ export async function getRedisNextRequest(client: Pick<ClientInfo, 'ip' | 'apiKe
     }, async span => {
         const redis = container.get<IRedisProvider>(CoreTypes.RedisProvider);
         if (!redis.client) {
+            Log.l.warn("No redis client");
             return 0;
         }
 
@@ -156,6 +158,7 @@ export async function getRedisLastRequest(client: Pick<ClientInfo, 'ip' | 'apiKe
     }, async span => {
         const redis = container.get<IRedisProvider>(CoreTypes.RedisProvider);
         if (!redis.client) {
+            Log.l.warn("No redis client");
             return 0;
         }
 
@@ -200,6 +203,7 @@ export async function updateRedisNextRequest(client: ClientInfo, effectiveDelayM
     }, async span => {
         const redis = container.get<IRedisProvider>(CoreTypes.RedisProvider);
         if (!redis.client) {
+            Log.l.warn("No redis client");
             return;
         }
 
