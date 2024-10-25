@@ -409,15 +409,9 @@ export const register = (app: Application) => {
 
         const time = Date.now();
 
-        Log.l.info(debug(`${ req.breadcrumb } Agent:       ${ req.headers["user-agent"] }`), {
-            breadcrumb: req.breadcrumb,
-            userAgent: req.headers["user-agent"]
-        });
+        Log.l.info(debug(`${ req.breadcrumb } Agent:       ${ req.headers["user-agent"] }`));
         if (req.headers['origin']) {
-            Log.l.info(debug(`${ req.breadcrumb } Origin:      ${ req.headers['origin'] }`), {
-                breadcrumb: req.breadcrumb,
-                origin: req.headers['origin']
-            });
+            Log.l.info(debug(`${ req.breadcrumb } Origin:      ${ req.headers['origin'] }`));
         }
         console.log(debug(`${ req.breadcrumb } Key:         ${ req.apiKey?.name ?? "none" } ${ req.apiKey?._id ?? "" }`));
 

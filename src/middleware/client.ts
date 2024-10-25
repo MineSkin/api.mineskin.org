@@ -28,15 +28,9 @@ export const initRequestClient = (req: MineSkinV2Request, res: Response) => {
         })
     }
 
-    Log.l.debug(`${ req.breadcrumbC } Agent:       ${ req.headers["user-agent"] }`, {
-        breadcrumb: req.breadcrumb,
-        userAgent: req.headers["user-agent"]
-    });
+    Log.l.debug(`${ req.breadcrumbC } Agent:       ${ req.headers["user-agent"] }`);
     if (req.headers['origin']) {
-        Log.l.debug(`${ req.breadcrumbC } Origin:      ${ req.headers['origin'] }`, {
-            breadcrumb: req.breadcrumb,
-            origin: req.headers['origin']
-        });
+        Log.l.debug(`${ req.breadcrumbC } Origin:      ${ req.headers['origin'] }`);
     }
 
     if (!res.hasHeader("X-MineSkin-Api-Version")) {
