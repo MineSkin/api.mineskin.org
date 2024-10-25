@@ -64,13 +64,13 @@ export class ApiLogProvider implements ILogProvider {
                 }),
             ),
             transports: [
-                logRotate,
-                new winston.transports.Console({
-                    level: 'debug',
-                }),
                 new SentryTransport({
                     skipSentryInit: true,
                     level: 'error'
+                }),
+                logRotate,
+                new winston.transports.Console({
+                    level: 'debug',
                 })
             ],
         });
