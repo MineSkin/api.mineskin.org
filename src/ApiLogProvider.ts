@@ -70,7 +70,7 @@ export class ApiLogProvider implements ILogProvider {
                 }),
                 new SentryTransport({
                     skipSentryInit: true,
-                    level: 'warn'
+                    level: 'error'
                 })
             ],
         });
