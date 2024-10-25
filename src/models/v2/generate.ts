@@ -129,7 +129,7 @@ export async function v2GenerateEnqueue(req: GenerateV2Request, res: Response<V2
                 message: "Found existing skin"
             }],
             job: {
-                id: job?.id || 'unknown',
+                id: job?.id || null,
                 status: job?.status || 'completed',
                 timestamp: job?.createdAt?.getTime() || 0,
                 result: skin.id
@@ -146,7 +146,7 @@ export async function v2GenerateEnqueue(req: GenerateV2Request, res: Response<V2
             message: "Job queued"
         }],
         job: {
-            id: job?.id || 'unknown',
+            id: job?.id || null,
             status: job?.status || 'unknown',
             timestamp: job?.createdAt?.getTime() || 0
         },
@@ -176,7 +176,7 @@ export async function v2GetJob(req: GenerateV2Request, res: Response<V2GenerateR
                 message: "Job completed"
             }],
             job: {
-                id: job?.id || 'unknown',
+                id: job?.id || null,
                 status: job?.status || 'completed',
                 timestamp: job?.createdAt?.getTime() || 0,
                 result: result.skin
@@ -216,7 +216,7 @@ export async function v2GetJob(req: GenerateV2Request, res: Response<V2GenerateR
             message: "Job pending"
         }],
         job: {
-            id: job?.id || 'unknown',
+            id: job?.id || null,
             status: job?.status || 'unknown',
             timestamp: job?.createdAt?.getTime() || 0
         }
