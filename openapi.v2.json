@@ -125,6 +125,9 @@
                     },
                     "rateLimit": {
                       "$ref": "#/components/schemas/RateLimitInfo"
+                    },
+                    "usage": {
+                      "$ref": "#/components/schemas/UsageInfo"
                     }
                   }
                 },
@@ -240,6 +243,9 @@
                     },
                     "rateLimit": {
                       "$ref": "#/components/schemas/RateLimitInfo"
+                    },
+                    "usage": {
+                      "$ref": "#/components/schemas/UsageInfo"
                     }
                   }
                 },
@@ -272,6 +278,9 @@
                     },
                     "rateLimit": {
                       "$ref": "#/components/schemas/RateLimitInfo"
+                    },
+                    "usage": {
+                      "$ref": "#/components/schemas/UsageInfo"
                     }
                   }
                 },
@@ -293,6 +302,25 @@
           },
           "message": {
             "type": "string"
+          }
+        }
+      },
+      "CreditsUsageInfo": {
+        "type": "object",
+        "required": [
+          "used",
+          "remaining"
+        ],
+        "properties": {
+          "used": {
+            "type": "number",
+            "description": "Credits used for this request",
+            "example": 1
+          },
+          "remaining": {
+            "type": "number",
+            "description": "Remaining credits",
+            "example": 23
           }
         }
       },
@@ -460,13 +488,26 @@
         "properties": {
           "limit": {
             "type": "number",
-            "description": "Limit of requests in the current window (usually 1 minute)",
+            "description": "Limit of requests in the current window (usually 1 minute). Same as the 'X-RateLimit-Limit' header",
             "example": 60
           },
           "remaining": {
             "type": "number",
-            "description": "Remaining requests in the current window",
+            "description": "Remaining requests in the current window. Same as the 'X-RateLimit-Remaining' header",
             "example": 58
+          }
+        }
+      },
+      "MeteredUsageInfo": {
+        "type": "object",
+        "required": [
+          "used"
+        ],
+        "properties": {
+          "used": {
+            "type": "number",
+            "description": "Number of metered units used for this request",
+            "example": 1
           }
         }
       },
@@ -729,6 +770,18 @@
             }
           }
         ]
+      },
+      "UsageInfo": {
+        "type": "object",
+        "required": [],
+        "properties": {
+          "credits": {
+            "$ref": "#/components/schemas/CreditsUsageInfo"
+          },
+          "metered": {
+            "$ref": "#/components/schemas/MeteredUsageInfo"
+          }
+        }
       },
       "UserGenerateBody": {
         "type": "object",
