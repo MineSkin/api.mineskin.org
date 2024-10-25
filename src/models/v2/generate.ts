@@ -149,7 +149,8 @@ export async function v2GenerateEnqueue(req: GenerateV2Request, res: Response<V2
             id: job?.id || 'unknown',
             status: job?.status || 'unknown',
             timestamp: job?.createdAt?.getTime() || 0
-        }
+        },
+        rateLimit: V2GenerateHandler.makeRateLimitInfo(req)
     };
 }
 
@@ -181,7 +182,6 @@ export async function v2GetJob(req: GenerateV2Request, res: Response<V2GenerateR
                 result: result.skin
             },
             skin: V2GenerateHandler.skinToJson(queried, !!result.duplicate),
-            rateLimit: V2GenerateHandler.makeRateLimitInfo(req),
             usage: result.usage
         };
     }
