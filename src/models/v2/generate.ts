@@ -124,6 +124,10 @@ export async function v2GenerateEnqueue(req: GenerateV2Request, res: Response<V2
         res.status(200);
         return {
             success: true,
+            messages: [{
+                code: 'skin_found',
+                message: "Found existing skin"
+            }],
             job: {
                 id: job?.id || 'unknown',
                 status: job?.status || 'completed',
@@ -137,6 +141,10 @@ export async function v2GenerateEnqueue(req: GenerateV2Request, res: Response<V2
     res.status(202);
     return {
         success: true,
+        messages: [{
+            code: 'job_queued',
+            message: "Job queued"
+        }],
         job: {
             id: job?.id || 'unknown',
             status: job?.status || 'unknown',
@@ -162,6 +170,10 @@ export async function v2GetJob(req: GenerateV2Request, res: Response<V2GenerateR
         const queried = await querySkinOrThrow(result.skin);
         return {
             success: true,
+            messages: [{
+                code:'job_completed',
+                message: "Job completed"
+            }],
             job: {
                 id: job?.id || 'unknown',
                 status: job?.status || 'completed',
@@ -182,6 +194,10 @@ export async function v2GetJob(req: GenerateV2Request, res: Response<V2GenerateR
         }
         return {
             success: true,
+            messages: [{
+                code: 'job_failed',
+                message: "Job failed"
+            }],
             job: {
                 id: job.id,
                 status: job.status,
@@ -195,6 +211,10 @@ export async function v2GetJob(req: GenerateV2Request, res: Response<V2GenerateR
     }
     return {
         success: true,
+        messages: [{
+            code: 'job_pending',
+            message: "Job pending"
+        }],
         job: {
             id: job?.id || 'unknown',
             status: job?.status || 'unknown',
