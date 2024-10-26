@@ -97,8 +97,8 @@ export const verifyRateLimit = async (req: GenerateV2Request, res: Response, wit
         req.requestsThisMinute = await trafficService.getRequestCounter(req.clientInfo);
         req.maxPerMinute = req.client.getPerMinuteRateLimit();
         res.header('X-RateLimit-Limit', `${ req.maxPerMinute }`);
-        res.header('X-RateLimit-Remaining', `${ req.maxPerMinute - req.requestsThisMinute }`);
-        if (req.requestsThisMinute > req.maxPerMinute) {
+        res.header('X-RateLimit-Remaining', `${ req.maxPerMinute - req.requestsThisMinute - 1 }`);
+        if (req.requestsThisMinute >= req.maxPerMinute) {
             throw new GeneratorError('rate_limit', `rate limit exceeded, ${ req.requestsThisMinute } > ${ req.maxPerMinute }`, {httpCode: 429});
         }
     }
