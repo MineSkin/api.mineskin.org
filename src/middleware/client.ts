@@ -11,7 +11,7 @@ export const clientMiddleware = async (req: MineSkinV2Request, res: Response, ne
 }
 
 export const initRequestClient = (req: MineSkinV2Request, res: Response) => {
-    const rawUserAgent = req.header("user-agent") || "n/a";
+    const rawUserAgent = req.header("mineskin-user-agent") || req.header("user-agent") || "n/a";
     const origin = req.header("origin");
     const ip = getIp(req);
     const via = getVia(req);
@@ -28,7 +28,7 @@ export const initRequestClient = (req: MineSkinV2Request, res: Response) => {
         })
     }
 
-    Log.l.debug(`${ req.breadcrumbC } Agent:       ${ req.headers["user-agent"] }`);
+    Log.l.debug(`${ req.breadcrumbC } Agent:       ${ req.headers["mineskin-user-agent"] || '' } ${ req.headers["user-agent"] }`);
     if (req.headers['origin']) {
         Log.l.debug(`${ req.breadcrumbC } Origin:      ${ req.headers['origin'] }`);
     }
