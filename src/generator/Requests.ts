@@ -218,7 +218,7 @@ export class Requests {
 
     private static setupProxiedAxiosInstance(key: string, subkey: string, proxyConfig: HttpsProxyAgentOptions, requestConfig: AxiosRequestConfig, constr?: AxiosConstructor): void {
         proxyConfig.headers = Object.assign({}, {
-            "X-MineSkin-Server": SERVER
+            "MineSkin-Server": SERVER
         }, proxyConfig.headers);
         requestConfig.httpsAgent = new HttpsProxyAgent(proxyConfig);
         if (!requestConfig.headers) {
@@ -335,12 +335,12 @@ export class Requests {
 
     private static getInstanceSubkey(request: AxiosRequestConfig): string {
         if (!request.headers) return SERVER;
-        return request.headers["x-mineskin-request-proxy"] || SERVER;
+        return request.headers["mineskin-request-proxy"] || SERVER;
     }
 
     static putInstanceSubkey(request: AxiosRequestConfig, subkey: string): void {
         if (!request.headers) request.headers = {};
-        request.headers["x-mineskin-request-proxy"] = subkey;
+        request.headers["mineskin-request-proxy"] = subkey;
     }
 
     static putInstanceSubkeyForAccount(request: AxiosRequestConfig, account: IAccountDocument): void {
@@ -439,14 +439,14 @@ export class Requests {
     private static addBreadcrumb(request: AxiosRequestConfig, bread?: string) {
         if (bread) {
             if (!request.headers) request.headers = {};
-            request.headers["x-mineskin-breadcrumb"] = bread;
+            request.headers["mineskin-breadcrumb"] = bread;
         }
     }
 
     private static getBreadcrumb(request: AxiosRequestConfig): Maybe<string> {
-        const h = request.headers?.["x-mineskin-breadcrumb"];
+        const h = request.headers?.["mineskin-breadcrumb"];
         if (h) {
-            delete request.headers?.["x-mineskin-breadcrumb"];
+            delete request.headers?.["mineskin-breadcrumb"];
             return h;
         }
         return undefined;
@@ -527,14 +527,14 @@ export class Requests {
         }, span => {
             if (span) {
                 if (!request.headers) request.headers = {};
-                request.headers["x-mineskin-sentry-transaction"] = span;
+                request.headers["mineskin-sentry-transaction"] = span;
             }
             return callback(span);
         });
     }
 
     private static trackSentryStart<T>(request: AxiosRequestConfig, callback: (span: Span) => T): T {
-        return Sentry.withActiveSpan(request.headers?.["x-mineskin-sentry-transaction"] as Span, () => {
+        return Sentry.withActiveSpan(request.headers?.["mineskin-sentry-transaction"] as Span, () => {
             return Sentry.startSpan({
                 op: "request_start",
                 name: `${ request.method || "GET" } ${ request.url }`,
@@ -544,7 +544,7 @@ export class Requests {
                 }
             }, span => {
                 const r = callback(span);
-                delete request.headers?.["x-mineskin-sentry-transaction"];
+                delete request.headers?.["xmineskin-sentry-transaction"];
                 return r;
             });
         })

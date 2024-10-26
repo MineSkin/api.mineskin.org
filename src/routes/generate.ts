@@ -54,7 +54,7 @@ export const register = (app: Application) => {
     app.use("/generate", corsWithAuthMiddleware);
     app.use("/generate", (req: GenerateRequest, res: Response, next) => {
         addBreadcrumb(req, res);
-        res.header("X-MineSkin-Api-Version", "v1");
+        res.header("MineSkin-Api-Version", "v1");
         next();
     });
     app.use("/generate", generateLimiter);
@@ -63,9 +63,9 @@ export const register = (app: Application) => {
             const key = await getAndValidateRequestApiKey(req);
             const delay = await Generator.getDelay(key);
             req.delayInfo = delay;
-            res.header("X-MineSkin-Delay", `${ delay.seconds || 5 }`); //deprecated
-            res.header("X-MineSkin-Delay-Seconds", `${ delay.seconds || 5 }`);
-            res.header("X-MineSkin-Delay-Millis", `${ delay.millis || 5000 }`);
+            res.header("MineSkin-Delay", `${ delay.seconds || 5 }`); //deprecated
+            res.header("MineSkin-Delay-Seconds", `${ delay.seconds || 5 }`);
+            res.header("MineSkin-Delay-Millis", `${ delay.millis || 5000 }`);
             next();
         } catch (e) {
             next(e);
@@ -124,8 +124,8 @@ export const register = (app: Application) => {
 
         if (req.v2Compat) {
             Log.l.info(`${ req.breadcrumbC } Redirecting to v2 compatibility layer`);
-            res.header("X-MineSkin-Api-Version", "v1-with-v2-compat");
-            res.header("X-MineSkin-Api-Deprecated", "true");
+            res.header("MineSkin-Api-Version", "v1-with-v2-compat");
+            res.header("MineSkin-Api-Deprecated", "true");
             Sentry.setExtra('v2_compat', true);
             if (!req.warnings) {
                 req.warnings = [];
@@ -438,6 +438,8 @@ export const register = (app: Application) => {
         req.breadcrumb = breadcrumb;
         res.header("X-MineSkin-Breadcrumb", breadcrumbId);
         res.header("X-MineSkin-Timestamp", `${ Date.now() }`);
+        res.header("MineSkin-Breadcrumb", breadcrumbId);
+        res.header("MineSkin-Timestamp", `${ Date.now() }`);
         Sentry.setExtra("generate_breadcrumb", breadcrumbId);
     }
 

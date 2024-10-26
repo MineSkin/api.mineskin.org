@@ -48,8 +48,8 @@ export const verifyCredits = async (req: MineSkinV2Request, res: Response) => {
             } else {
                 req.client.setCredits(credit);
             }
-            res.header('X-MineSkin-Credits-Type', credit.type);
-            res.header('X-MineSkin-Credits-Balance', `${ credit.balance }`);
+            res.header('MineSkin-Credits-Type', credit.type);
+            res.header('MineSkin-Credits-Balance', `${ credit.balance }`);
         }
     }
 }

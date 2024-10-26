@@ -169,6 +169,7 @@ async function init() {
         app.use(cookieParser(config.cookie.secret));
         app.use((req, res, next) => {
             res.header("X-MineSkin-Server", config.server || "default");
+            res.header("MineSkin-Server", config.server || "default");
             next();
         });
         app.use((req, res, next) => metrics.apiRequestsMiddleware(req, res, next));

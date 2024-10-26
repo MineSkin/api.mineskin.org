@@ -301,8 +301,8 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
     //             });
     //             req.clientInfo.credits = false;
     //         }
-    //         res.header('X-MineSkin-Credits-Type', credit.type);
-    //         res.header('X-MineSkin-Credits-Balance', `${ credit.balance }`);
+    //         res.header('MineSkin-Credits-Type', credit.type);
+    //         res.header('MineSkin-Credits-Balance', `${ credit.balance }`);
     //     }
     // }
 

@@ -103,8 +103,8 @@ export async function v2GetCreditsInfo(req: MineSkinV2Request, res: Response<V2M
                 message: "insufficient credits"
             });
         }
-        res.header('X-MineSkin-Credits-Type', credit.type);
-        res.header('X-MineSkin-Credits-Balance', `${ credit.balance }`);
+        res.header('MineSkin-Credits-Type', credit.type);
+        res.header('MineSkin-Credits-Balance', `${ credit.balance }`);
     }
     // let balance = credit?.balance || 0;
     // let total = credit?.total || 0;

@@ -15,7 +15,7 @@ export const applyBreadcrumb = (req: MineSkinV2Request, res: Response) => {
     req.breadcrumbColor = color;
     req.breadcrumbC = color(id);
 
-    res.header("X-MineSkin-Breadcrumb", req.breadcrumb);
+    res.header("MineSkin-Breadcrumb", req.breadcrumb);
 
     if (!req.warnings) {
         req.warnings = [];

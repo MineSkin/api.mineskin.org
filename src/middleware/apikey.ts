@@ -65,7 +65,7 @@ export const verifyApiKey = async (req: MineSkinV2Request, res: Response) => {
         }
 
         if (await req.client.isBillable()) {
-            res.header("X-MineSkin-Billable", "true");
+            res.header("MineSkin-Billable", "true");
             if (await req.client.isMetered() && await req.client.usePaidCredits()) {
                 throw new MineSkinError('invalid_billing', "Cannot use metered and credit billing at the same time");
             }
