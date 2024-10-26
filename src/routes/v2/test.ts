@@ -3,7 +3,7 @@ import { TrafficService, TYPES as GeneratorTypes } from "@mineskin/generator";
 import { BillingService, TYPES as BillingTypes, UserCreditHolder } from "@mineskin/billing";
 import { MineSkinV2Request } from "./types";
 import { Response } from "express";
-import { rateLimitMiddleware } from "../../middleware/rateLimit";
+import { globalConcurrencyLimitMiddleware, globalPerMinuteRateLimitMiddleware } from "../../middleware/rateLimit";
 import { mineskinOnlyCorsWithCredentials } from "../../middleware/cors";
 import { container } from "../../inversify.config";
 
@@ -33,25 +33,25 @@ router.post("/billing/simulate-new-skin", async (req: MineSkinV2Request, res: Re
     res.json({success: true});
 });
 
-router.post("/generate/rate-limit", rateLimitMiddleware, async (req: MineSkinV2Request, res: Response) => {
+router.post("/generate/rate-limit", globalPerMinuteRateLimitMiddleware, async (req: MineSkinV2Request, res: Response) => {
     const trafficService = container.get<TrafficService>(GeneratorTypes.TrafficService);
     const count = await trafficService.incRequest(req.clientInfo!);
     res.json({count});
 });
 
-router.post("/generate/concurrency", rateLimitMiddleware, async (req: MineSkinV2Request, res: Response) => {
+router.post("/generate/concurrency", globalConcurrencyLimitMiddleware, async (req: MineSkinV2Request, res: Response) => {
     const trafficService = container.get<TrafficService>(GeneratorTypes.TrafficService);
     const count = await trafficService.getConcurrent(req.clientInfo!);
     res.json({count});
 });
 
-router.post("/generate/concurrency/inc", rateLimitMiddleware, async (req: MineSkinV2Request, res: Response) => {
+router.post("/generate/concurrency/inc", globalConcurrencyLimitMiddleware, async (req: MineSkinV2Request, res: Response) => {
     const trafficService = container.get<TrafficService>(GeneratorTypes.TrafficService);
     const count = await trafficService.incrementConcurrent(req.clientInfo!);
     res.json({count});
 });
 
-router.post("/generate/concurrency/dec", rateLimitMiddleware, async (req: MineSkinV2Request, res: Response) => {
+router.post("/generate/concurrency/dec", globalConcurrencyLimitMiddleware, async (req: MineSkinV2Request, res: Response) => {
     const trafficService = container.get<TrafficService>(GeneratorTypes.TrafficService);
     const count = await trafficService.decrementConcurrent(req.clientInfo!);
     res.json({count});
