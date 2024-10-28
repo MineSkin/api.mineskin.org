@@ -61,6 +61,7 @@ export async function trackRedisGenerated(isNew: boolean, apiKey: Maybe<string>,
         let trans = redis.client.multi();
 
         trans = trans.incr(`mineskin:generated:total:${ newOrDup }`);
+        trackRedisGenerated0(trans, newOrDup, `mineskin:generated:global`);
 
         if (apiKey) {
             trackRedisGenerated0(trans, newOrDup, `mineskin:generated:apikey:${ apiKey }`);
