@@ -10,6 +10,11 @@ import { container } from "../../inversify.config";
 export async function v2AddView(req: MineSkinV2Request, res: Response<V2ResponseBody>) {
     const uuid = UUID.parse(req.params.uuid);
     await Skin2.incViews(uuid);
+    const redis = container.get<IRedisProvider>(CoreTypes.RedisProvider);
+    if (!redis.client) {
+        return;
+    }
+    await redis.client.incr(`mineskin:interactions:views:total`);
 }
 
 export async function v2AddLike(req: MineSkinV2Request, res: Response<V2ResponseBody>) {
@@ -26,4 +31,5 @@ export async function v2AddLike(req: MineSkinV2Request, res: Response<V2Response
     if (!result) {
         throw new MineSkinError('already_liked', "Already liked", {httpCode: 409});
     }
+    await redis.client.incr(`mineskin:interactions:likes:total`);
 }
