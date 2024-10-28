@@ -58,6 +58,8 @@ export async function trackRedisGenerated(isNew: boolean, apiKey: Maybe<string>,
             return;
         }
 
+        const date = new Date();
+
         let trans = redis.client.multi();
 
         trans = trans.incr(`mineskin:generated:total:${ newOrDup }`);
@@ -88,17 +90,17 @@ function trackRedisGenerated0(trans: any, newOrDup: string, prefix: string) {
 
     trans?.incr(`${ prefix }:alltime:${ newOrDup }`);
 
-    trans?.incr(`${ prefix }:${ date.getFullYear() }:${ newOrDup }`, {
-        EX: ONE_YEAR_SECONDS * 5
-    });
+    let key = `${ prefix }:${ date.getFullYear() }:${ newOrDup }`;
+    trans?.incr(key);
+    trans.expire(key, ONE_YEAR_SECONDS * 5);
 
-    trans?.incr(`${ prefix }:${ date.getFullYear() }:${ date.getMonth() + 1 }:${ newOrDup }`,{
-        EX: ONE_YEAR_SECONDS * 2
-    });
+    key = `${ prefix }:${ date.getFullYear() }:${ date.getMonth() + 1 }:${ newOrDup }`;
+    trans?.incr(key);
+    trans.expire(key, ONE_YEAR_SECONDS * 2);
 
-    trans?.incr(`${ prefix }:${ date.getFullYear() }:${ date.getMonth() + 1 }:${ date.getDate() }:${ newOrDup }`,{
-        EX: ONE_MONTH_SECONDS * 3
-    });
+    key = `${ prefix }:${ date.getFullYear() }:${ date.getMonth() + 1 }:${ date.getDate() }:${ newOrDup }`;
+    trans?.incr(key);
+    trans.expire(key, ONE_MONTH_SECONDS * 3);
 }
 
 export async function getRedisNextRequest(client: Pick<ClientInfo, 'ip' | 'apiKeyId' | 'time'>): Promise<number> {
