@@ -518,8 +518,8 @@ export function isTempFile(obj: any): obj is TempFile {
 export const corsMiddleware = (req: Request, res: Response, next: NextFunction) => {
     res.header('Access-Control-Allow-Origin', '*');
     res.header("Access-Control-Allow-Methods", "POST, GET, OPTIONS, DELETE, PUT");
-    res.header("Access-Control-Allow-Headers", "X-Requested-With, Accept, Content-Type, Origin");
-    res.header("Access-Control-Request-Headers", "X-Requested-With, Accept, Content-Type, Origin");
+    res.header("Access-Control-Allow-Headers", "X-Requested-With, Accept, Content-Type, Origin, MineSkin-User-Agent");
+    res.header("Access-Control-Request-Headers", "X-Requested-With, Accept, Content-Type, Origin, MineSkin-User-Agent");
     if (req.method === 'OPTIONS') {
         return res.sendStatus(200);
     } else {
@@ -530,8 +530,8 @@ export const corsWithAuthMiddleware = (req: Request, res: Response, next: NextFu
     res.header('Access-Control-Allow-Origin', '*');
     res.header("Access-Control-Allow-Credentials", "true");
     res.header("Access-Control-Allow-Methods", "POST, GET, OPTIONS, DELETE, PUT");
-    res.header("Access-Control-Allow-Headers", "X-Requested-With, Accept, Content-Type, Origin, Authorization, Cookie");
-    res.header("Access-Control-Request-Headers", "X-Requested-With, Accept, Content-Type, Origin, Authorization, Cookie");
+    res.header("Access-Control-Allow-Headers", "X-Requested-With, Accept, Content-Type, Origin, Authorization, Cookie, MineSkin-User-Agent");
+    res.header("Access-Control-Request-Headers", "X-Requested-With, Accept, Content-Type, Origin, Authorization, Cookie, MineSkin-User-Agent");
     if (req.method === 'OPTIONS') {
         return res.sendStatus(200);
     } else {
@@ -545,8 +545,8 @@ export const corsWithCredentialsMiddleware = (req: Request, res: Response, next:
     }
     res.header("Access-Control-Allow-Credentials", "true");
     res.header("Access-Control-Allow-Methods", "POST, GET, OPTIONS, DELETE, PUT");
-    res.header("Access-Control-Allow-Headers", "X-Requested-With, Accept, Content-Type, Origin, Authorization, Cookie");
-    res.header("Access-Control-Request-Headers", "X-Requested-With, Accept, Content-Type, Origin, Authorization, Cookie");
+    res.header("Access-Control-Allow-Headers", "X-Requested-With, Accept, Content-Type, Origin, Authorization, Cookie, MineSkin-User-Agent");
+    res.header("Access-Control-Request-Headers", "X-Requested-With, Accept, Content-Type, Origin, Authorization, Cookie, MineSkin-User-Agent");
     if (req.method === 'OPTIONS') {
         return res.sendStatus(200);
     } else {
