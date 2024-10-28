@@ -64,6 +64,9 @@ export async function trackRedisGenerated(isNew: boolean, apiKey: Maybe<string>,
 
         trans = trans.incr(`mineskin:generated:total:${ newOrDup }`);
         trackRedisGenerated0(trans, newOrDup, `mineskin:generated:global`);
+        let key = `mineskin:generated:global:${ date.getFullYear() }:${ date.getMonth() + 1 }:${ date.getDate() }:${ date.getHours() }:${ newOrDup }`;
+        trans.incr(key);
+        trans.expire(key, ONE_MONTH_SECONDS);
 
         if (apiKey) {
             trackRedisGenerated0(trans, newOrDup, `mineskin:generated:apikey:${ apiKey }`);
@@ -72,7 +75,7 @@ export async function trackRedisGenerated(isNew: boolean, apiKey: Maybe<string>,
             trackRedisGenerated0(trans, newOrDup, `mineskin:generated:agent:${ userAgent.toLowerCase() }`);
         }
 
-        await trans?.exec().catch(e => {
+        await trans.exec().catch(e => {
             Log.l.debug(e.replies);
             Log.l.debug(e.errorIndexes);
             Sentry.captureException(e, {
@@ -88,18 +91,18 @@ export async function trackRedisGenerated(isNew: boolean, apiKey: Maybe<string>,
 function trackRedisGenerated0(trans: any, newOrDup: string, prefix: string) {
     const date = new Date();
 
-    trans?.incr(`${ prefix }:alltime:${ newOrDup }`);
+    trans.incr(`${ prefix }:alltime:${ newOrDup }`);
 
     let key = `${ prefix }:${ date.getFullYear() }:${ newOrDup }`;
-    trans?.incr(key);
+    trans.incr(key);
     trans.expire(key, ONE_YEAR_SECONDS * 5);
 
     key = `${ prefix }:${ date.getFullYear() }:${ date.getMonth() + 1 }:${ newOrDup }`;
-    trans?.incr(key);
+    trans.incr(key);
     trans.expire(key, ONE_YEAR_SECONDS * 2);
 
     key = `${ prefix }:${ date.getFullYear() }:${ date.getMonth() + 1 }:${ date.getDate() }:${ newOrDup }`;
-    trans?.incr(key);
+    trans.incr(key);
     trans.expire(key, ONE_MONTH_SECONDS * 3);
 }
 
