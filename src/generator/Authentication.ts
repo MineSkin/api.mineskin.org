@@ -218,7 +218,7 @@ export class Microsoft {
                     account_uuid: account?.uuid
                 }
             });
-            Discord.postDiscordMessage("🔑 Account " + account.id + "/" + account.uuid + " needs a new access token (expiration)");
+            //Discord.postDiscordMessage("🔑 Account " + account.id + "/" + account.uuid + " needs a new access token (expiration)");
             return await Microsoft.refreshAccessTokenOrLogin(account, bread);
         }
 
