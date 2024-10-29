@@ -33,11 +33,5 @@ export function formatV2GenerateResponse<B extends V2GenerateResponseBody>(req: 
     if (!b.usage) {
         b.usage = {};
     }
-    if (!b.usage.limit) {
-        b.usage.limit = {
-            limit: req.maxPerMinute || 0,
-            remaining: (req.maxPerMinute || 0) - (req.requestsThisMinute || 0),
-        }
-    }
     return b as B;
 }

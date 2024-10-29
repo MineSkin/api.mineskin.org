@@ -3,7 +3,6 @@ import { Response } from "express";
 import { CreditsUsageInfo, CreditType, MineSkinError, UsageInfo } from "@mineskin/types";
 import { V2MiscResponseBody } from "../../typings/v2/V2MiscResponseBody";
 import { BillingService, TYPES as BillingTypes, UserCreditHolder } from "@mineskin/billing";
-import { TrafficService, TYPES as GeneratorTypes } from "@mineskin/generator";
 import { container } from "../../inversify.config";
 
 
@@ -34,18 +33,18 @@ export async function v2GetUsageInfo(req: MineSkinV2Request, res: Response<V2Mis
         } as CreditsUsageInfo; //FIXME: make id+type optional
     }
 
-    {
-        const trafficService = container.get<TrafficService>(GeneratorTypes.TrafficService);
-
-        const thisMinute = await trafficService.getRequestCounter(req.clientInfo);
-        const limit = req.client.getPerMinuteRateLimit();
-        const remaining = limit - thisMinute;
-
-        info.limit = {
-            limit,
-            remaining
-        };
-    }
+    // {
+    //     const trafficService = container.get<TrafficService>(GeneratorTypes.TrafficService);
+    //
+    //     const thisMinute = await trafficService.getRequestCounter(req.clientInfo);
+    //     const limit = req.client.getPerMinuteRateLimit();
+    //     const remaining = limit - thisMinute;
+    //
+    //     info.limit = {
+    //         limit,
+    //         remaining
+    //     };
+    // }
 
     //TODO: add metered usage
     //TODO: add concurrency info
