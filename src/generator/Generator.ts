@@ -71,7 +71,7 @@ import {
 } from "@mineskin/database";
 import { GenerateType, MineSkinError, SkinInfo, SkinVariant, SkinVisibility } from "@mineskin/types";
 import { Accounts } from "./Accounts";
-import { GeneratorError, GenError } from "@mineskin/generator";
+import { GeneratorError, GenError, StatsHandler, TYPES as GeneratorTypes } from "@mineskin/generator";
 import { trackRedisGenerated } from "../database/redis";
 import { Log } from "../Log";
 import { container } from "../inversify.config";
@@ -593,6 +593,12 @@ export class Generator {
                 Sentry.captureException(e);
             }
             try {
+                const statsHandler = container.get<StatsHandler>(GeneratorTypes.StatsHandler);
+                statsHandler.trackClientSkinGenerated(client, true);
+            } catch (e) {
+                Sentry.captureException(e);
+            }
+            try {
                 await trackRedisGenerated(true, client.apiKeyId, client.userAgent.ua);
             } catch (e) {
                 Sentry.captureException(e);
@@ -828,6 +834,12 @@ export class Generator {
                         .tag("userAgent", client.userAgent.ua)
                         .tag("genEnv", "api")
                         .inc();
+                } catch (e) {
+                    Sentry.captureException(e);
+                }
+                try {
+                    const statsHandler = container.get<StatsHandler>(GeneratorTypes.StatsHandler);
+                    statsHandler.trackClientSkinGenerated(client, false);
                 } catch (e) {
                     Sentry.captureException(e);
                 }
@@ -1076,7 +1088,7 @@ export class Generator {
         }, account, breadcrumb).catch(err => {
             if (err.response) {
                 if (err.response?.status === 429) {
-                    Sentry.captureException(new Error("skin change 429"),{
+                    Sentry.captureException(new Error("skin change 429"), {
                         level: 'fatal',
                         extra: {
                             error_account: account.id
@@ -1250,7 +1262,7 @@ export class Generator {
             data: body
         }, account, breadcrumb).catch(err => {
             if (err.response) {
-                Sentry.captureException(new Error("skin change 429"),{
+                Sentry.captureException(new Error("skin change 429"), {
                     level: 'fatal',
                     extra: {
                         error_account: account.id
