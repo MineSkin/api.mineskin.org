@@ -1,7 +1,7 @@
 import { MineSkinV2Request } from "../../routes/v2/types";
 import { Migrations, SkinService, TYPES as GeneratorTypes } from "@mineskin/generator";
 import { Response } from "express";
-import { IPopulatedSkin2Document, ISkin2Document, isPopulatedSkin2Document, Skin2 } from "@mineskin/database";
+import { IPopulatedSkin2Document, ISkin2Document, isPopulatedSkin2Document, Skin2, SkinData } from "@mineskin/database";
 import { RootFilterQuery } from "mongoose";
 import { MineSkinError, SkinVisibility2 } from "@mineskin/types";
 import { ListedSkin, V2SkinListResponseBody } from "../../typings/v2/V2SkinListResponseBody";
@@ -119,7 +119,8 @@ export async function v2GetSkin(req: MineSkinV2Request, res: Response<V2SkinResp
         if (!skin && await flags.isEnabled('migrations.api.get')) {
             const v1Doc = await Caching.getSkinByUuid(uuid);
             if (v1Doc) {
-                await Migrations.migrateV1ToV2(v1Doc, "skin-get");
+                skin = await Migrations.migrateV1ToV2(v1Doc, "skin-get");
+                skin.data = await SkinData.findById(skin.data) || skin.data;
             }
         }
     } catch (e) {
