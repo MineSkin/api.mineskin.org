@@ -69,7 +69,14 @@ import {
     SkinModel,
     Stat
 } from "@mineskin/database";
-import { GenerateType, MineSkinError, SkinInfo, SkinVariant, SkinVisibility } from "@mineskin/types";
+import {
+    ClientInfo as ClientInfoV2,
+    GenerateType,
+    MineSkinError,
+    SkinInfo,
+    SkinVariant,
+    SkinVisibility
+} from "@mineskin/types";
 import { Accounts } from "./Accounts";
 import { GeneratorError, GenError, StatsHandler, TYPES as GeneratorTypes } from "@mineskin/generator";
 import { trackRedisGenerated } from "../database/redis";
@@ -594,7 +601,12 @@ export class Generator {
             }
             try {
                 const statsHandler = container.get<StatsHandler>(GeneratorTypes.StatsHandler);
-                statsHandler.trackClientSkinGenerated(client, true);
+                statsHandler.trackClientSkinGenerated({
+                    key: client.apiKeyId,
+                    agent: client.userAgent.ua
+                } as ClientInfoV2, true).catch(e => {
+                    Sentry.captureException(e);
+                })
             } catch (e) {
                 Sentry.captureException(e);
             }
@@ -839,7 +851,12 @@ export class Generator {
                 }
                 try {
                     const statsHandler = container.get<StatsHandler>(GeneratorTypes.StatsHandler);
-                    statsHandler.trackClientSkinGenerated(client, false);
+                    statsHandler.trackClientSkinGenerated({
+                        key: client.apiKeyId,
+                        agent: client.userAgent.ua
+                    } as ClientInfoV2, false).catch(e => {
+                        Sentry.captureException(e);
+                    })
                 } catch (e) {
                     Sentry.captureException(e);
                 }

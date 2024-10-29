@@ -1376,14 +1376,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@mineskin/billing@git+ssh://git@github.com/MineSkin/mineskin-billing.git#inverse":
+"@mineskin/billing@git+ssh://git@github.com/MineSkin/mineskin-billing.git":
   version: 0.0.0
-  resolution: "@mineskin/billing@git+ssh://git@github.com/MineSkin/mineskin-billing.git#commit=424b0fcdbc7bcbab887071c90f2593e24e8820c9"
+  resolution: "@mineskin/billing@git+ssh://git@github.com/MineSkin/mineskin-billing.git#commit=056acac9b734a410e557986aacd82adf83c083ea"
   dependencies:
     "@inventivetalent/imghash": "npm:^1.1.1"
     "@inventivetalent/loading-cache": "npm:^0.7.1"
     "@inventivetalent/time": "npm:^1.0.3"
-    "@mineskin/core": "git+ssh://git@github.com/MineSkin/mineskin-core.git#inverse"
+    "@mineskin/core": "git+ssh://git@github.com/MineSkin/mineskin-core.git"
     "@mineskin/database": "git+ssh://git@github.com/MineSkin/mineskin-database.git"
     "@mineskin/requests": "git+ssh://git@github.com/MineSkin/mineskin-requests.git"
     "@mineskin/types": "git+ssh://git@github.com/MineSkin/mineskin-types.git"
@@ -1404,7 +1404,25 @@ __metadata:
     uuid: "npm:^10.0.0"
     winston: "npm:^3.14.2"
     winston-daily-rotate-file: "npm:^5.0.0"
-  checksum: 10c0/71ea9c65ab513f9e766c521b93ff9c2e623aecda356db02e1b99fdb381d415d3e1f08fca5167754b8b993bcc11b26e140f38176654e1bd1b5a517c657dbd3a31
+  checksum: 10c0/ca1bd487134c2307b753b642631b7db6946419f64edbfb2b0ca61b71adbc9e17f2e10d8a778fd92d3e81b9582dbca51bf715910a8453c73da76a326598433548
+  languageName: node
+  linkType: hard
+
+"@mineskin/core@git+ssh://git@github.com/MineSkin/mineskin-core.git":
+  version: 0.0.0
+  resolution: "@mineskin/core@git+ssh://git@github.com/MineSkin/mineskin-core.git#commit=313a58ccac0153ae9722df6833d8051c942dea2d"
+  dependencies:
+    "@sentry/cli": "npm:^2.32.2"
+    "@sentry/node": "npm:^8.18.0"
+    "@sentry/profiling-node": "npm:^8.18.0"
+    dotenv: "npm:^16.4.5"
+    flagsmith-nodejs: "npm:^3.3.3"
+    inversify: "npm:^6.0.3"
+    redis: "npm:^4.7.0"
+    reflect-metadata: "npm:^0.2.2"
+    winston: "npm:^3.14.2"
+    winston-daily-rotate-file: "npm:^5.0.0"
+  checksum: 10c0/0d256b19f184156188754a1373e3130890554709935a84fe56fd56cd4de075e023a561198e7100fe4c87698c73e1380c00370a371ded5ac32ea1f7cfebfe16ee
   languageName: node
   linkType: hard
 
@@ -1441,9 +1459,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git#inverse":
+"@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git":
   version: 0.0.0
-  resolution: "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git#commit=e39db37f4c303baf8e0241abe86eb29b71f66512"
+  resolution: "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git#commit=5b15344c9f61268cdf33405e4529803a577adfc5"
   dependencies:
     "@inventivetalent/imghash": "npm:^1.1.1"
     "@inventivetalent/loading-cache": "npm:^0.7.1"
@@ -1452,8 +1470,8 @@ __metadata:
     "@jimp/js-png": "npm:^1.6.0"
     "@jimp/png": "npm:^0.22.12"
     "@mineskin/auth": "git+ssh://git@github.com/MineSkin/mineskin-auth.git"
-    "@mineskin/billing": "git+ssh://git@github.com/MineSkin/mineskin-billing.git#inverse"
-    "@mineskin/core": "git+ssh://git@github.com/MineSkin/mineskin-core.git#inverse"
+    "@mineskin/billing": "git+ssh://git@github.com/MineSkin/mineskin-billing.git"
+    "@mineskin/core": "git+ssh://git@github.com/MineSkin/mineskin-core.git"
     "@mineskin/database": "git+ssh://git@github.com/MineSkin/mineskin-database.git"
     "@mineskin/hash-rust": "npm:^1.0.5"
     "@mineskin/requests": "git+ssh://git@github.com/MineSkin/mineskin-requests.git"
@@ -1480,7 +1498,7 @@ __metadata:
     winston: "npm:^3.14.2"
     winston-daily-rotate-file: "npm:^5.0.0"
     winston-transport-sentry-node: "npm:^3.0.0"
-  checksum: 10c0/2a76884dcd843c0925dd0c2c6587b499e7a84d060ba431637d294dd0228132dad1475b048910aa0bc8fe6dfb95231848fd511837cdcf746cfd4bc454d1a94f3b
+  checksum: 10c0/e9ea0bd60d390a8d0353e2fd6448b9179f69c5d4e5e8d1566a301789c54a9fac68f135a42e75b10cf8285ae01b1d6deece87feece36b3a534a0d043731a5fd4a
   languageName: node
   linkType: hard
 
@@ -4016,10 +4034,10 @@ __metadata:
     "@inventivetalent/typescript-memoize": "npm:^1.0.0-alpha.5"
     "@logtail/node": "npm:^0.4.21"
     "@logtail/winston": "npm:^0.4.21"
-    "@mineskin/billing": "git+ssh://git@github.com/MineSkin/mineskin-billing.git#inverse"
+    "@mineskin/billing": "git+ssh://git@github.com/MineSkin/mineskin-billing.git"
     "@mineskin/core": "git+ssh://git@github.com/MineSkin/mineskin-core.git#inverse"
     "@mineskin/database": "git+ssh://git@github.com/MineSkin/mineskin-database.git"
-    "@mineskin/generator": "git+ssh://git@github.com/MineSkin/mineskin-generator.git#inverse"
+    "@mineskin/generator": "git+ssh://git@github.com/MineSkin/mineskin-generator.git"
     "@mineskin/hash-rust": "npm:^1.0.5"
     "@mineskin/types": "git+ssh://git@github.com/MineSkin/mineskin-types.git"
     "@sentry/node": "npm:8.9.2"
