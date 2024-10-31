@@ -99,6 +99,7 @@ export const register = (app: Application) => {
             style: 'capital',
             seed: seed
         });
+        res.header("Cache-Control", "public, max-age=3600");
         res.json({name});
     });
 
