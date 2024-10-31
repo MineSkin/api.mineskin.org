@@ -4,6 +4,7 @@ import * as Sentry from "@sentry/node";
 import { corsMiddleware } from "../util";
 import { randomPNG } from "random-png";
 import { validateLimiter } from "../util/rateLimiters";
+import { adjectives, animals, colors, uniqueNamesGenerator } from 'unique-names-generator';
 
 export const register = (app: Application) => {
 
@@ -86,6 +87,17 @@ export const register = (app: Application) => {
             'Content-Disposition': `inline; filename="random${ Math.round(Math.random() * 1000) }.png"`
         });
         res.end(buffer);
+    });
+
+    app.get("/random-name", (req: Request, res: Response) => {
+        const seed = req.query.seed as string || `${ Math.random() }`;
+        const name = uniqueNamesGenerator({
+            dictionaries: [adjectives, colors, animals],
+            separator: ' ',
+            style: 'capital',
+            seed: seed
+        });
+        res.json({name});
     });
 
 };

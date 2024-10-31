@@ -82,6 +82,7 @@
     "tmp": "0.2.1",
     "tunnel-ssh": "^4.1.4",
     "ua-parser-js": "^1.0.38",
+    "unique-names-generator": "^4.7.1",
     "user-agent-stripper": "^1.0.1",
     "uuid": "^3.4.0",
     "winston": "^3.13.0",
