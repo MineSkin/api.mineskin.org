@@ -89,6 +89,8 @@ export const register = (app: Application) => {
         res.end(buffer);
     });
 
+    app.use("/random-name", corsMiddleware);
+
     app.get("/random-name", (req: Request, res: Response) => {
         const seed = req.query.seed as string || `${ Math.random() }`;
         const name = uniqueNamesGenerator({

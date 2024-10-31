@@ -1461,7 +1461,7 @@ __metadata:
 
 "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git":
   version: 0.0.0
-  resolution: "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git#commit=cc989f8133fa048d8284a86b6f45b16a7b923a9f"
+  resolution: "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git#commit=332da9bc99700306eeb8c5955eafefb9fc44cb92"
   dependencies:
     "@inventivetalent/imghash": "npm:^1.1.1"
     "@inventivetalent/loading-cache": "npm:^0.7.1"
