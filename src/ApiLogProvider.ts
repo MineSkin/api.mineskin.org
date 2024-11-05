@@ -47,7 +47,7 @@ export class ApiLogProvider implements ILogProvider {
         const utilFormatter = format(transform);
 
         const logger = winston.createLogger({
-            level: 'http',
+            level: 'debug',
             format: format.combine(
                 format.timestamp({format: 'YYYY-MM-DD HH:mm:ss.SSS'}),
                 format.errors({stack: true}),
