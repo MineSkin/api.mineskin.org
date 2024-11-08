@@ -504,9 +504,11 @@ export const register = (app: Application) => {
         const visibility = oldVisibility === SkinVisibility.PRIVATE ? SkinVisibility2.PRIVATE
             : oldVisibility === SkinVisibility.UNLISTED ? SkinVisibility2.UNLISTED
                 : SkinVisibility2.PUBLIC;
+        const name = validateName(req.body["name"] || req.query["name"]);
 
         req.body["variant"] = variant;
         req.body["visibility"] = visibility;
+        req.body["name"] = name;
     }
 
     function validateModel(model?: string): SkinModel {
