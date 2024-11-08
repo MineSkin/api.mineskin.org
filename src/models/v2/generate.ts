@@ -172,7 +172,7 @@ export async function v2GetJob(req: GenerateV2Request, res: Response<V2GenerateR
         return {
             success: true,
             messages: [{
-                code:'job_completed',
+                code: 'job_completed',
                 message: "Job completed"
             }],
             job: {
@@ -256,10 +256,12 @@ export async function v2ListJobs(req: GenerateV2Request, res: Response<V2MiscRes
 async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2GenerateResponseBody | V2SkinResponse>): Promise<JobWithSkin> {
 
     // need to call multer stuff first so fields are parsed
-    if (req.is('multipart/form-data')) {
-        await tryHandleFileUpload(req, res);
-    } else {
-        upload.none();
+    if (!(req as any)._uploadProcessed) { //TODO: remove
+        if (req.is('multipart/form-data')) {
+            await tryHandleFileUpload(req, res);
+        } else {
+            upload.none();
+        }
     }
 
     const options = getAndValidateOptions(req);

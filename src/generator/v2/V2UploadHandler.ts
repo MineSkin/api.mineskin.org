@@ -35,9 +35,27 @@ export class V2UploadHandler extends V2GenerateHandler {
             dir: UPL_DIR
         });
 
-        Readable.from(file.buffer)
-            .pipe(new ExifTransformer()) // strip metadata
-            .pipe(fs.createWriteStream(this.tempFile.path));
+        if (file.buffer) {
+            await new Promise((resolve, reject) => {
+                Readable.from(file.buffer)
+                    .pipe(new ExifTransformer()) // strip metadata
+                    .pipe(fs.createWriteStream(this.tempFile!.path))
+                    .on('finish', resolve)
+                    .on('error', reject);
+            });
+        } else if (file.path) {
+            await new Promise((resolve, reject) => {
+                fs.createReadStream(file.path)
+                    .pipe(new ExifTransformer()) // strip metadata
+                    .pipe(fs.createWriteStream(this.tempFile!.path))
+                    .on('finish', resolve)
+                    .on('error', reject);
+            });
+        } else {
+            throw new GeneratorError('missing_file', "No file uploaded", {
+                httpCode: 500
+            });
+        }
 
         const buffer = await readFile(this.tempFile.path);
         return {buffer};

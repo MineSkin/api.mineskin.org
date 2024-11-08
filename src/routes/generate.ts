@@ -188,15 +188,6 @@ export const register = (app: Application) => {
     //// UPLOAD
 
     app.post("/generate/upload", async (req: GenerateRequest & V2CompatRequest, res: Response) => {
-        if (req.v2Compat) {
-            rewriteV2Options(req);
-            const result = await v2GenerateAndWait(req as any as GenerateV2Request, res);
-            if ('skin' in result) {
-                await sendV2WrappedSkin(req as any as GenerateV2Request, res, (result as V2SkinResponse));
-            }
-            return;
-        }
-
         try {
             await new Promise<void>((resolve, reject) => {
                 upload.single('file')(req, res, function (err) {
@@ -207,6 +198,7 @@ export const register = (app: Application) => {
                     }
                 })
             });
+            (req as any)._uploadProcessed = true;
         } catch (e) {
             Sentry.captureException(e);
             if (e instanceof MulterError) {
@@ -216,6 +208,15 @@ export const register = (app: Application) => {
                 res.status(500).json({error: "upload error"});
                 return;
             }
+        }
+
+        if (req.v2Compat) {
+            rewriteV2Options(req);
+            const result = await v2GenerateAndWait(req as any as GenerateV2Request, res);
+            if ('skin' in result) {
+                await sendV2WrappedSkin(req as any as GenerateV2Request, res, (result as V2SkinResponse));
+            }
+            return;
         }
 
         const options = getAndValidateOptions(GenerateType.UPLOAD, req, res);
@@ -495,7 +496,7 @@ export const register = (app: Application) => {
 
     function rewriteV2Options(req: GenerateRequest | GenerateV2Request) {
         const variant = validateVariant(req.body["variant"] || req.query["variant"]);
-        let oldVisibility = validateVisibility(req.body["visibility"] || req.query["visibility"]);
+        const oldVisibility = validateVisibility(req.body["visibility"] || req.query["visibility"]);
         const visibility = oldVisibility === SkinVisibility.PRIVATE ? SkinVisibility2.PRIVATE
             : oldVisibility === SkinVisibility.UNLISTED ? SkinVisibility2.UNLISTED
                 : SkinVisibility2.PUBLIC;
