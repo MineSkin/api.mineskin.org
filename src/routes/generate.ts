@@ -95,6 +95,9 @@ export const register = (app: Application) => {
         }
 
         if (req.v2Compat) {
+            if (!req.warnings) {
+                req.warnings = [];
+            }
             try {
                 const [enabled, chance] = await Promise.all([
                     flags.isEnabled('api.v2_compat.chance'),
