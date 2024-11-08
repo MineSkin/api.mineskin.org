@@ -27,7 +27,7 @@ import { isApiKeyRequest } from "../typings/ApiKeyRequest";
 import { getUserFromRequest } from "./account";
 import multer, { MulterError } from "multer";
 import { DelayInfo } from "../typings/DelayInfo";
-import { GenerateType, SkinVariant, SkinVisibility, UUID } from "@mineskin/types";
+import { GenerateType, SkinVariant, SkinVisibility, SkinVisibility2, UUID } from "@mineskin/types";
 import { SkinModel } from "@mineskin/database";
 import { Temp } from "../generator/Temp";
 import { Migrations } from "@mineskin/generator";
@@ -493,9 +493,12 @@ export const register = (app: Application) => {
 
     }
 
-    function rewriteV2Options(req: GenerateRequest|GenerateV2Request) {
+    function rewriteV2Options(req: GenerateRequest | GenerateV2Request) {
         const variant = validateVariant(req.body["variant"] || req.query["variant"]);
-        const visibility = validateVisibility(req.body["visibility"] || req.query["visibility"]);
+        let oldVisibility = validateVisibility(req.body["visibility"] || req.query["visibility"]);
+        const visibility = oldVisibility === SkinVisibility.PRIVATE ? SkinVisibility2.PRIVATE
+            : oldVisibility === SkinVisibility.UNLISTED ? SkinVisibility2.UNLISTED
+                : SkinVisibility2.PUBLIC;
 
         req.body["variant"] = variant;
         req.body["visibility"] = visibility;
