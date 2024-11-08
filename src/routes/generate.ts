@@ -362,6 +362,7 @@ export const register = (app: Application) => {
         const json: any = Migrations.v2SkinInfoToV1Json(skin.skin);
         const delayInfo = await Generator.getDelay(req.apiKey);
         json.duplicate = skin.skin.duplicate;
+        delete json.visibility;
         if (delayInfo) {
             json.nextRequest = Math.round(delayInfo.seconds); // deprecated
 
