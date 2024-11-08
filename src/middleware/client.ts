@@ -4,6 +4,7 @@ import { getIp, getVia, simplifyUserAgent } from "../util";
 import * as Sentry from "@sentry/node";
 import { RequestClient } from "@mineskin/generator";
 import { Log } from "../Log";
+import process from "node:process";
 
 export const clientMiddleware = async (req: MineSkinV2Request, res: Response, next: NextFunction) => {
     initRequestClient(req, res);
@@ -36,6 +37,8 @@ export const initRequestClient = (req: MineSkinV2Request, res: Response) => {
     if (!res.hasHeader("MineSkin-Api-Version")) {
         res.header("MineSkin-Api-Version", "v2");
     }
+
+    res.header("MineSkin-Version", `api-${ process.env.SOURCE_COMMIT || "dev" }`);
 
     req.client = new RequestClient(Date.now(), userAgent.ua, origin, ip, via);
 }
