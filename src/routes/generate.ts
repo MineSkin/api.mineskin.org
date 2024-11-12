@@ -73,7 +73,7 @@ export const register = (app: Application) => {
     });
 
     // v2 compatibility layers
-    app.use("/generate", async (req: V2CompatRequest & MineSkinV2Request, res: Response, next: NextFunction) => {
+    const v2CompatMiddleware = async (req: V2CompatRequest & MineSkinV2Request, res: Response, next: NextFunction) => {
         req.v2Compat = false;
         const flags = container.get<IFlagProvider>(CoreTypes.FlagProvider);
         try {
@@ -141,13 +141,16 @@ export const register = (app: Application) => {
         }
 
         next();
-    });
-    app.use("/generate", async (req: MineSkinV2Request & V2CompatRequest, res: Response, next: NextFunction) => {
+    }
+    const v2CompatDelayMiddleware = async (req: V2CompatRequest & MineSkinV2Request, res: Response, next: NextFunction) => {
         if (req.v2Compat) {
             return await rateLimitMiddlewareWithDelay(req, res, next);
         }
         next();
-    });
+    }
+
+    app.use("/generate", v2CompatMiddleware);
+    app.use("/generate", v2CompatDelayMiddleware);
 
     //// URL
 
