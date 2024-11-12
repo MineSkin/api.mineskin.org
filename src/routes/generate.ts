@@ -149,12 +149,9 @@ export const register = (app: Application) => {
         next();
     }
 
-    app.use("/generate", v2CompatMiddleware);
-    app.use("/generate", v2CompatDelayMiddleware);
-
     //// URL
 
-    app.post("/generate/url", upload.none(), async (req: GenerateRequest & V2CompatRequest, res: Response) => {
+    app.post("/generate/url", [v2CompatMiddleware, v2CompatDelayMiddleware, upload.none()], async (req: GenerateRequest & V2CompatRequest, res: Response) => {
         if (req.v2Compat) {
             rewriteV2Options(req);
             const result = await v2GenerateAndWait(req as any as GenerateV2Request, res);
@@ -193,7 +190,7 @@ export const register = (app: Application) => {
 
     //// UPLOAD
 
-    app.post("/generate/upload", async (req: GenerateRequest & V2CompatRequest, res: Response) => {
+    app.post("/generate/upload", [v2CompatMiddleware, v2CompatDelayMiddleware], async (req: GenerateRequest & V2CompatRequest, res: Response) => {
         try {
             await new Promise<void>((resolve, reject) => {
                 upload.single('file')(req, res, function (err) {
