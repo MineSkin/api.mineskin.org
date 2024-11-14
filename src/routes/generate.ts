@@ -27,7 +27,7 @@ import { isApiKeyRequest } from "../typings/ApiKeyRequest";
 import { getUserFromRequest } from "./account";
 import multer, { MulterError } from "multer";
 import { DelayInfo } from "../typings/DelayInfo";
-import { GenerateType, SkinVariant, SkinVisibility, SkinVisibility2, UUID } from "@mineskin/types";
+import { GenerateType, SkinVariant, UUID } from "@mineskin/types";
 import { SkinModel } from "@mineskin/database";
 import { Temp } from "../generator/Temp";
 import { Migrations } from "@mineskin/generator";
@@ -39,6 +39,8 @@ import { rateLimitMiddlewareWithDelay } from "../middleware/rateLimit";
 import { IFlagProvider, TYPES as CoreTypes } from "@mineskin/core";
 import { container } from "../inversify.config";
 import { Log } from "../Log";
+import { validateModel, validateName, validateVariant, validateVisibility } from "../util/validate";
+import { rewriteV2Options } from "../util/compat";
 
 export const register = (app: Application) => {
 
@@ -496,65 +498,6 @@ export const register = (app: Application) => {
             };
         })
 
-    }
-
-    function rewriteV2Options(req: GenerateRequest | GenerateV2Request) {
-        const variant = validateVariant(req.body["variant"] || req.query["variant"]);
-        const oldVisibility = validateVisibility(req.body["visibility"] || req.query["visibility"]);
-        const visibility = oldVisibility === SkinVisibility.PRIVATE ? SkinVisibility2.PRIVATE
-            : oldVisibility === SkinVisibility.UNLISTED ? SkinVisibility2.UNLISTED
-                : SkinVisibility2.PUBLIC;
-        let name = validateName(req.body["name"] || req.query["name"]);
-        name = name ? name.replace(/[^a-zA-Z0-9_.\- ]/g, "") : name;
-
-        req.body["variant"] = variant;
-        req.body["visibility"] = visibility;
-        req.body["name"] = name;
-    }
-
-    function validateModel(model?: string): SkinModel {
-        if (!model || model.length < 3) {
-            return SkinModel.UNKNOWN;
-        }
-        model = model.toLowerCase();
-
-        if (model === "classic" || model === "default" || model === "steve") {
-            return SkinModel.CLASSIC;
-        }
-        if (model === "slim" || model === "alex") {
-            return SkinModel.SLIM;
-        }
-
-        return SkinModel.UNKNOWN;
-    }
-
-    function validateVariant(variant?: string): SkinVariant {
-        if (!variant || variant.length < 3) {
-            return SkinVariant.UNKNOWN;
-        }
-        variant = variant.toLowerCase();
-
-        if (variant === "classic" || variant === "default" || variant === "steve") {
-            return SkinVariant.CLASSIC;
-        }
-        if (variant === "slim" || variant === "alex") {
-            return SkinVariant.SLIM;
-        }
-
-        return SkinVariant.UNKNOWN;
-    }
-
-    function validateVisibility(visibility?: number): SkinVisibility {
-        return visibility == 1 ? SkinVisibility.UNLISTED : SkinVisibility.PUBLIC;
-    }
-
-    function validateName(name?: string): Maybe<string> {
-        if (!name) {
-            return undefined;
-        }
-        name = `${ name }`.substr(0, 20);
-        if (name.length === 0) return undefined;
-        return name;
     }
 
 }
