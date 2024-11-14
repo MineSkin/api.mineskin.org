@@ -525,7 +525,7 @@ function getAndValidateOptions(req: GenerateV2Request): GenerateOptions {
         return {
             variant: variant!,
             visibility: visibility!,
-            name: name
+            name: name?.trim()
         };
     })
 
