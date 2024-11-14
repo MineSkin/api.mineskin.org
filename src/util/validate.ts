@@ -42,7 +42,7 @@ export function validateName(name?: string): Maybe<string> {
     if (!name) {
         return undefined;
     }
-    name = `${ name }`.substr(0, 20);
+    name = `${ name }`.substr(0, 24).trim();
     if (name.length === 0) return undefined;
     return name;
 }
