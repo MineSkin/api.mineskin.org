@@ -17,6 +17,26 @@ describe('generate runtype', () => {
             }
             expect(t).toThrow(ZodError);
         });
+        test('should allow valid name', () => {
+            const t = () => {
+                let checked = GenerateReqUrl.parse({
+                    name: 'some name',
+                    visibility: 'public',
+                    variant: 'classic',
+                    url: 'https://example.com'
+                });
+            }
+        });
+        test('should allow empty name', () => {
+            const t = () => {
+                let checked = GenerateReqUrl.parse({
+                    name: '',
+                    visibility: 'public',
+                    variant: 'classic',
+                    url: 'https://example.com'
+                });
+            }
+        });
         test('should disallow invalid name characters', () => {
             const t = () => {
                 let checked = GenerateReqUrl.parse({
@@ -49,6 +69,13 @@ describe('generate runtype', () => {
                 });
             }
             expect(t).toThrow(ZodError);
+        });
+        test('should allow missing options', () => {
+            const t = () => {
+                let checked = GenerateReqUrl.parse({
+                    url: 'https://example.com'
+                });
+            }
         });
     })
 

@@ -505,7 +505,7 @@ export const register = (app: Application) => {
             : oldVisibility === SkinVisibility.UNLISTED ? SkinVisibility2.UNLISTED
                 : SkinVisibility2.PUBLIC;
         let name = validateName(req.body["name"] || req.query["name"]);
-        name = name ? name.replace(/^[a-zA-Z0-9_.\- ]+$/, "") : name;
+        name = name ? name.replace(/[^a-zA-Z0-9_.\- ]/g, "") : name;
 
         req.body["variant"] = variant;
         req.body["visibility"] = visibility;
