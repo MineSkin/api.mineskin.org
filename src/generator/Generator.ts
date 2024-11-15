@@ -1156,13 +1156,15 @@ export class Generator {
                 }
                 const follow = URL_FOLLOW_WHITELIST.includes(url.host!);
                 return await Requests.genericRequest({
-                    method: "GET",
+                    method: "HEAD",
                     url: url.href,
                     maxRedirects: follow ? MAX_FOLLOW_REDIRECTS : 0,
                     timeout: 1000,
                     headers: {
                         "User-Agent": "MineSkin"
-                    }
+                    },
+                    maxBodyLength: MAX_IMAGE_SIZE,
+                    maxContentLength: MAX_IMAGE_SIZE,
                 }, breadcrumb).then(res => {
                     return res;
                 });
