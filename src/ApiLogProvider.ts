@@ -19,6 +19,7 @@ export class ApiLogProvider implements ILogProvider {
             maxSize: '20m',
             maxFiles: '7d',
             createSymlink: true,
+            symlinkName: 'mineskin.log',
         });
 
         logRotate.on('error', error => {
