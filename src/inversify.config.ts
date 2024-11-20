@@ -10,6 +10,7 @@ import {
     RedisProvider,
     TYPES as GeneratorTypes
 } from "@mineskin/generator";
+import { MineSkinMetrics } from "./util/metrics";
 
 const container = new Container({defaultScope: 'Singleton'});
 try{
@@ -22,6 +23,7 @@ container.bind(CoreTypes.LogProvider).to(ApiLogProvider).inSingletonScope();
 container.bind(CoreTypes.AuditLogger).to(ApiAuditLogger).inSingletonScope();
 container.bind(CoreTypes.FlagProvider).to(FlagsmithProvider).inSingletonScope();
 container.bind(CoreTypes.RedisProvider).to(RedisProvider).inSingletonScope();
+container.bind(CoreTypes.MetricsProvider).to(MineSkinMetrics).inSingletonScope();
 
 container.load(billingModule);
 container.load(generatorModule);

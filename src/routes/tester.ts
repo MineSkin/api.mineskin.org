@@ -2,8 +2,10 @@ import { Application, Request, Response } from "express";
 import * as Sentry from "@sentry/node";
 import { Discord } from "../util/Discord";
 import { getConfig } from "../typings/Configs";
-import { MineSkinMetrics } from "../util/metrics";
 import { Skin, Stat } from "@mineskin/database";
+import { container } from "../inversify.config";
+import { IMetricsProvider } from "@mineskin/core";
+import { TYPES as CoreTypes } from "@mineskin/core/dist/ditypes";
 
 
 export const register = (app: Application) => {
@@ -15,13 +17,12 @@ export const register = (app: Application) => {
         if (req.headers["user-agent"] !== "mineskin-tester") return;
 
         try {
-            MineSkinMetrics.get().then(metrics => {
-                metrics.tester
-                    .tag("server", config.server)
-                    .tag("result", req.body.data.r || "fail")
-                    .tag("mismatches", req.body.data.m > 0 ? "true" : "false")
-                    .inc();
-            })
+            const metrics = container.get<IMetricsProvider>(CoreTypes.MetricsProvider);
+            metrics.getMetric('tester')
+                .tag("server", config.server)
+                .tag("result", req.body.data.r || "fail")
+                .tag("mismatches", req.body.data.m > 0 ? "true" : "false")
+                .inc();
         } catch (e) {
             console.warn(e);
             Sentry.captureException(e);

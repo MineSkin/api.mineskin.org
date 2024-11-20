@@ -2,13 +2,15 @@ import { Maybe } from "@mineskin/types";
 import { Account, IAccountDocument, User } from "@mineskin/database";
 import { Bread } from "../typings/Bread";
 import * as Sentry from "@sentry/node";
-import { MineSkinMetrics } from "../util/metrics";
 import { Generator, MIN_ACCOUNT_DELAY } from "./Generator";
 import { debug, error, warn } from "../util/colors";
 import { Caching } from "./Caching";
 import { Discord } from "../util/Discord";
 import { getConfig } from "../typings/Configs";
 import { FilterQuery } from "mongoose";
+import { IMetricsProvider, TYPES as CoreTypes } from "@mineskin/core";
+import { container } from "../inversify.config";
+import { HOSTNAME } from "../util/host";
 
 export class Accounts {
 
@@ -18,7 +20,7 @@ export class Accounts {
             name: "Account.findUsable"
         }, async span => {
             const time = Math.floor(Date.now() / 1000);
-            const metrics = await MineSkinMetrics.get();
+            const metrics = container.get<IMetricsProvider>(CoreTypes.MetricsProvider);
             const account = await Account.findOne(await Accounts.usableAccountsQuery()).sort({
                 lastUsed: 1,
                 lastSelected: 1,
@@ -52,10 +54,10 @@ export class Accounts {
             let usedDiffMins = Math.round(usedDiff / 60 / 2) * 2;
             Sentry.setTag("used_diff_mins", `${ usedDiffMins }`);
             try {
-                metrics.metrics!.influx.writePoints([{
+                metrics.getMetrics().influx.writePoints([{
                     measurement: 'account_selection_difference',
                     tags: {
-                        server: metrics.config.server,
+                        server: HOSTNAME,
                         account: account.id
                     },
                     fields: {

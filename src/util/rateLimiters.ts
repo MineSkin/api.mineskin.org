@@ -2,8 +2,12 @@ import { NextFunction, Request, Response } from "express";
 import rateLimit, { Options } from "express-rate-limit";
 import { getAndValidateRequestApiKey, getIp, simplifyUserAgent } from "./index";
 import { Generator } from "../generator/Generator";
-import { MineSkinMetrics } from "./metrics";
 import { Log } from "../Log";
+import { container } from "../inversify.config";
+import { IMetricsProvider } from "@mineskin/core";
+import { TYPES as CoreTypes } from "@mineskin/core/dist/ditypes";
+import { HOSTNAME } from "./host";
+import * as Sentry from "@sentry/node";
 
 function keyGenerator(req: Request): string {
     return getIp(req);
@@ -33,13 +37,16 @@ export const generateLimiter = rateLimit({
         // onLimitReached code here
         const agent = simplifyUserAgent(request.headers["user-agent"] as string);
         Log.l.warn(`${ agent.ua } ${ getIp(request) } reached their rate limit`);
-        MineSkinMetrics.get().then(metrics => {
-            metrics.rateLimit
-                .tag("server", metrics.config.server)
+        try {
+            const metrics = container.get<IMetricsProvider>(CoreTypes.MetricsProvider);
+            metrics.getMetric('api_rate_limit')
+                .tag("server", HOSTNAME)
                 .tag("limiter", "express")
                 .tag("ua", agent.ua)
                 .inc();
-        })
+        } catch (e) {
+            Sentry.captureException(e);
+        }
         response.status(options.statusCode).json(options.message)
     }
 });

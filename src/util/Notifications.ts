@@ -1,9 +1,11 @@
 import * as Sentry from "@sentry/node";
 import { Discord, OWNER_CHANNEL, SUPPORT_CHANNEL } from "./Discord";
 import { Email } from "./Email";
-import { MineSkinMetrics } from "./metrics";
 import { IAccountDocument } from "@mineskin/database";
 import { AccountType, GenerateType, MineSkinError } from "@mineskin/types";
+import { container } from "../inversify.config";
+import { IMetricsProvider } from "@mineskin/core";
+import { TYPES as CoreTypes } from "@mineskin/core/dist/ditypes";
 
 const ERROR_THRESHOLD = 3;
 
@@ -14,13 +16,14 @@ export class Notifications {
                                                publicMessage: (account: IAccountDocument) => string,
                                                htmlMessage: (account: IAccountDocument) => string,
                                                subject: (account: IAccountDocument) => string) {
+        const metrics = container.get<IMetricsProvider>(CoreTypes.MetricsProvider);
         if (account.discordUser && !account.discordMessageSent) {
             try {
                 await Discord.sendDiscordDirectMessage(simpleMessage(account, false), account.discordUser, async () => {
                     if (publicMessage && (!account.sendEmails || !account.email)) {
                         await Discord.postDiscordMessage(publicMessage(account), OWNER_CHANNEL);
 
-                        (await MineSkinMetrics.get()).accountNotifications
+                        metrics.getMetric('account_notifications')
                             .tag('type', 'discord_public')
                             .tag('account', `${ account.id }`)
                             .tag('account_type', account.accountType || 'unknown')
@@ -30,7 +33,7 @@ export class Notifications {
 
                 account.discordMessageSent = true;
 
-                (await MineSkinMetrics.get()).accountNotifications
+                metrics.getMetric('account_notifications')
                     .tag('type', 'discord')
                     .tag('account', `${ account.id }`)
                     .tag('account_type', account.accountType || 'unknown')
@@ -45,7 +48,7 @@ export class Notifications {
 
                 account.emailSent = true;
 
-                (await MineSkinMetrics.get()).accountNotifications
+                metrics.getMetric('account_notifications')
                     .tag('type', 'email')
                     .tag('account', `${ account.id }`)
                     .tag('account_type', account.accountType || 'unknown')

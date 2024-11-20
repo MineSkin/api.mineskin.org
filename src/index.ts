@@ -52,7 +52,7 @@ import * as http from "node:http";
 import { v2TestRouter } from "./routes/v2/test";
 import { v2ErrorHandler, v2NotFoundHandler } from "./middleware/error";
 import { Log } from "./Log";
-import { IRedisProvider, TYPES as CoreTypes } from "@mineskin/core";
+import { IMetricsProvider, IRedisProvider, TYPES as CoreTypes } from "@mineskin/core";
 import { BillingService, TYPES as BillingTypes } from "@mineskin/billing";
 import { v2UsageRouter } from "./routes/v2/usage";
 
@@ -161,7 +161,7 @@ async function init() {
         console.log("Setting up express middleware")
 
         port = config.port || 3014;
-        const metrics = await MineSkinMetrics.get();
+        const metrics = container.get<MineSkinMetrics>(CoreTypes.MetricsProvider);
 
         app.set("trust proxy", 1);
         app.use(bodyParser.urlencoded({extended: true, limit: '50kb'}));
@@ -290,8 +290,8 @@ async function init() {
         });
 
         app.get("/health", async function (req, res) {
-            const metrics = await MineSkinMetrics.get();
-            const influx_ = await metrics.metrics?.influx.ping(5000);
+            const metrics = container.get<IMetricsProvider>(CoreTypes.MetricsProvider);
+            const influx_ = await metrics.getMetrics().influx.ping(5000);
             const influx = influx_ && influx_.length > 0 ? influx_[0] : undefined;
             const mongo = mongoose.connection.readyState;
             const redis = await container.get<IRedisProvider>(CoreTypes.RedisProvider).client.ping();

@@ -1,14 +1,14 @@
 import { AllStats, CountDuplicateViewStats } from "../typings/AllStats";
 import { getConfig } from "../typings/Configs";
 import * as Sentry from "@sentry/node";
-import { MineSkinMetrics } from "../util/metrics";
 import { debug } from "../util/colors";
 import { simplifyUserAgent } from "../util";
 import { Account, ApiKey, Skin, Stat, User } from "@mineskin/database";
 import { Accounts } from "./Accounts";
-import { IRedisProvider, TYPES as CoreTypes } from "@mineskin/core";
+import { IMetricsProvider, IRedisProvider, TYPES as CoreTypes } from "@mineskin/core";
 import { container } from "../inversify.config";
 import { Log } from "../Log";
+import { HOSTNAME } from "../util/host";
 
 export const ACCOUNTS_TOTAL = "accounts.total";
 export const ACCOUNTS_HEALTHY = "accounts.healthy";
@@ -177,12 +177,12 @@ export class Stats {
         const usableAccounts = await Accounts.countGlobalUsable();
 
         try {
-            const metrics = await MineSkinMetrics.get();
-            await metrics.metrics!.influx.writePoints([
+            const metrics = container.get<IMetricsProvider>(CoreTypes.MetricsProvider);
+            await metrics.getMetrics().influx.writePoints([
                 {
                     measurement: 'accounts',
                     tags: {
-                        server: metrics.config.server
+                        server: HOSTNAME
                     },
                     fields: {
                         total: enabledAccounts,
@@ -228,8 +228,8 @@ export class Stats {
         });
 
         try {
-            const metrics = await MineSkinMetrics.get();
-            await metrics.metrics!.influx.writePoints(points, {
+            const metrics = container.get<IMetricsProvider>(CoreTypes.MetricsProvider);
+            await metrics.getMetrics().influx.writePoints(points, {
                 database: 'mineskin',
                 precision: 's'
             })
@@ -243,8 +243,8 @@ export class Stats {
         const userCount = await User.countDocuments();
 
         try {
-            const metrics = await MineSkinMetrics.get();
-            await metrics.metrics!.influx.writePoints([
+            const metrics = container.get<IMetricsProvider>(CoreTypes.MetricsProvider);
+            await metrics.getMetrics().influx.writePoints([
                 {
                     measurement: 'users',
                     fields: {
@@ -280,8 +280,8 @@ export class Stats {
         const unique = await Stat.get(SKINS_UNIQUE);
         const duplicate = await Stat.get(SKINS_DUPLICATE);
         try {
-            const metrics = await MineSkinMetrics.get();
-            await metrics.metrics!.influx.writePoints([
+            const metrics = container.get<IMetricsProvider>(CoreTypes.MetricsProvider);
+            await metrics.getMetrics().influx.writePoints([
                 {
                     measurement: 'skins',
                     fields: {
@@ -336,8 +336,8 @@ export class Stats {
 
 
             try {
-                const metrics = await MineSkinMetrics.get();
-                await metrics.metrics!.influx.writePoints([
+                const metrics = container.get<IMetricsProvider>(CoreTypes.MetricsProvider);
+                await metrics.getMetrics().influx.writePoints([
                     {
                         measurement: 'skins',
                         fields: {

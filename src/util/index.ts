@@ -9,7 +9,6 @@ import * as fileType from "file-type";
 import readChunk from "read-chunk";
 import * as crypto from "crypto";
 import { Caching } from "../generator/Caching";
-import { MineSkinMetrics } from "./metrics";
 import { MineSkinRequest } from "../typings";
 import { imageHash } from "@inventivetalent/imghash";
 import { ClientInfo } from "../typings/ClientInfo";
@@ -19,6 +18,10 @@ import { IApiKeyDocument, ISkinDocument, SkinModel } from "@mineskin/database";
 import { MineSkinError, SkinVariant } from "@mineskin/types";
 import { TempFile } from "../generator/Temp";
 import { Log } from "../Log";
+import { container } from "../inversify.config";
+import { IMetricsProvider } from "@mineskin/core";
+import { TYPES as CoreTypes } from "@mineskin/core/dist/ditypes";
+import { HOSTNAME } from "./host";
 
 export function resolveHostname() {
     if (process.env.NODE_HOSTNAME && !process.env.NODE_HOSTNAME.startsWith("{{")) {
@@ -85,13 +88,16 @@ export async function checkTraffic(client: ClientInfo, req: Request, res: Respon
                 now: client.time
             });
             Log.l.warn(`${ client.userAgent.ua } Request too soon (${ nextRequest } > ${ client.time } = ${ nextRequest - client.time })`);
-            MineSkinMetrics.get().then(metrics => {
-                metrics.rateLimit
-                    .tag("server", metrics.config.server)
+            try {
+                const metrics = container.get<IMetricsProvider>(CoreTypes.MetricsProvider);
+                metrics.getMetric('api_rate_limit')
+                    .tag("server", HOSTNAME)
                     .tag("limiter", "redis")
                     .tag("ua", client.userAgent.ua)
                     .inc();
-            })
+            } catch (e) {
+                Sentry.captureException(e);
+            }
             return false;
         }
 
@@ -122,7 +128,7 @@ export async function checkTraffic(client: ClientInfo, req: Request, res: Respon
             console.log(debug("Request too soon"));
             MineSkinMetrics.get().then(metrics => {
                 metrics.rateLimit
-                    .tag("server", metrics.config.server)
+                    .tag("server", HOSTNAME)
                     .tag("limiter", "mongo")
                     .inc();
             })
@@ -173,7 +179,7 @@ export async function getAndValidateRequestApiKey(req: MineSkinRequest): Promise
 
         const key = await Caching.getApiKey(Caching.cachedSha512(keyStr));
         if (!key) {
-            throw new MineSkinError("invalid_api_key", "Invalid API Key", {httpCode:403});
+            throw new MineSkinError("invalid_api_key", "Invalid API Key", {httpCode: 403});
         }
 
         key.updateLastUsed(new Date()); // don't await, don't really care
@@ -185,13 +191,13 @@ export async function getAndValidateRequestApiKey(req: MineSkinRequest): Promise
             const ip = getIp(req);
             if (!ip || key.allowedIps.includes(ip.trim())) {
                 console.log(debug(`Client ${ ip } not allowed`));
-                throw new MineSkinError("invalid_api_key", "Client not allowed", {httpCode:403});
+                throw new MineSkinError("invalid_api_key", "Client not allowed", {httpCode: 403});
             }
         } else if (key.allowedOrigins && key.allowedOrigins.length > 0) {
             const origin = req.headers.origin;
             if (!origin || !key.allowedOrigins.includes(origin.trim().toLowerCase())) {
                 console.log(debug(`Origin ${ origin } not allowed`));
-                throw new MineSkinError("invalid_api_key", "Origin not allowed", {httpCode:403});
+                throw new MineSkinError("invalid_api_key", "Origin not allowed", {httpCode: 403});
             }
         }
 
@@ -199,7 +205,7 @@ export async function getAndValidateRequestApiKey(req: MineSkinRequest): Promise
             const agent = req.headers["user-agent"];
             if (!agent || !key.allowedAgents.includes(agent.trim().toLowerCase())) {
                 console.log(debug(`Agent ${ agent } not allowed`));
-                throw new MineSkinError("invalid_api_key", "Agent not allowed", {httpCode:403});
+                throw new MineSkinError("invalid_api_key", "Agent not allowed", {httpCode: 403});
             }
         }
 

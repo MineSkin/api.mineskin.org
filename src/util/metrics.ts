@@ -1,88 +1,74 @@
 import { IntervalFlusher, Metric, Metrics } from "metrics-node";
 import { NextFunction, Request, Response } from "express";
 import * as Sentry from "@sentry/node";
-import { getConfig, MineSkinConfig } from "../typings/Configs";
+import { MineSkinConfig } from "../typings/Configs";
 import { isApiKeyRequest } from "../typings/ApiKeyRequest";
 import { Maybe } from "./index";
 import { GenerateType } from "@mineskin/types";
+import { inject, injectable } from "inversify";
+import { TYPES as CoreTypes } from "@mineskin/core/dist/ditypes";
+import { ILogProvider, IMetricsProvider } from "@mineskin/core";
 
 let config: Maybe<MineSkinConfig>;
 
-export class MineSkinMetrics {
+@injectable()
+export class MineSkinMetrics implements IMetricsProvider {
 
     private static instance: Maybe<MineSkinMetrics>;
 
-    public readonly config: MineSkinConfig;
+    private readonly metricMap: Map<string, Metric> = new Map<string, Metric>();
+
     public readonly metrics: Maybe<Metrics>;
     private readonly flusher: Maybe<IntervalFlusher>;
 
-    public readonly apiRequests: Metric;
-    public readonly rateLimit: Metric;
-    public readonly urlHosts: Metric;
-    public readonly authentication: Metric;
-    public readonly requests: Metric;
 
-    /**@deprecated**/
-    public readonly newDuplicate: Metric;
-    public readonly genNew: Metric;
-    public readonly genDuplicate: Metric;
-    /**@deprecated**/
-    public readonly successFail: Metric;
-    public readonly genSuccess: Metric;
-    public readonly genFail: Metric;
-
-    public readonly genClients: Metric;
-    public readonly genAccounts: Metric;
-
-    public readonly noAccounts: Metric;
-    public readonly hashMismatch: Metric;
-    public readonly urlMismatch: Metric;
-    public readonly accountNotifications: Metric;
-    public readonly accountCapes: Metric;
-
-    public readonly tester: Metric;
-
-    static async get(): Promise<MineSkinMetrics> {
-        if (MineSkinMetrics.instance) {
-            return MineSkinMetrics.instance;
-        }
-
-        if (!config) {
-            config = await getConfig();
-        }
-
-        MineSkinMetrics.instance = new MineSkinMetrics(config);
-        return MineSkinMetrics.instance;
-    }
-
-    constructor(config: MineSkinConfig) {
-        this.config = config;
-        this.metrics = new Metrics(config!.metrics);
+    constructor(@inject(CoreTypes.LogProvider) readonly log: ILogProvider) {
+        this.metrics = new Metrics();
         this.flusher = new IntervalFlusher(this.metrics, 10000);
         this.metrics.setFlusher(this.flusher);
 
-        this.apiRequests = this.metrics.metric('mineskin', 'api_requests');
-        this.rateLimit = this.metrics.metric('mineskin', 'api_rate_limit');
-        this.urlHosts = this.metrics.metric('mineskin', 'generate_url_hosts');
-        this.requests = this.metrics.metric('mineskin', 'requests', 'one_month');
-        this.authentication = this.metrics.metric('mineskin', 'authentication');
+        this.register('api_requests', this.metrics.metric('mineskin', 'api_requests'));
+        this.register('api_rate_limit', this.metrics.metric('mineskin', 'api_rate_limit'));
+        this.register('url_hosts', this.metrics.metric('mineskin', 'generate_url_hosts'));
+        this.register('requests', this.metrics.metric('mineskin', 'requests', 'one_month'));
+        this.register('authentication', this.metrics.metric('mineskin', 'authentication'));
 
-        this.newDuplicate = this.metrics.metric('mineskin', 'generate_new_duplicate');
-        this.genNew = this.metrics.metric('mineskin', 'generate_new');
-        this.genDuplicate = this.metrics.metric('mineskin', 'generate_duplicate');
+        this.register('generate_new_duplicate', this.metrics.metric('mineskin', 'generate_new_duplicate'));
+        this.register('generate_new', this.metrics.metric('mineskin', 'generate_new'));
+        this.register('generate_duplicate', this.metrics.metric('mineskin', 'generate_duplicate'));
 
-        this.successFail = this.metrics.metric('mineskin', 'generate_success_fail');
-        this.genSuccess = this.metrics.metric('mineskin', 'generate_success');
-        this.genFail = this.metrics.metric('mineskin', 'generate_fail');
-        this.genClients = this.metrics.metric('mineskin', 'generate_clients', 'one_year');
-        this.genAccounts = this.metrics.metric('mineskin', 'generate_accounts');
+        this.register('generate_success_fail', this.metrics.metric('mineskin', 'generate_success_fail'));
+        this.register('generate_success', this.metrics.metric('mineskin', 'generate_success'));
+        this.register('generate_fail', this.metrics.metric('mineskin', 'generate_fail'));
+        this.register('generate_clients', this.metrics.metric('mineskin', 'generate_clients', 'one_year'));
+        this.register('generate_accounts', this.metrics.metric('mineskin', 'generate_accounts'));
 
-        this.noAccounts = this.metrics.metric('mineskin', 'no_accounts');
-        this.hashMismatch = this.metrics.metric('mineskin', 'hash_mismatch', 'one_month');
-        this.urlMismatch = this.metrics.metric('mineskin', 'url_mismatch', 'one_month');
-        this.tester = this.metrics.metric('mineskin', 'tester');
-        this.accountNotifications = this.metrics.metric('mineskin', 'account_notifications', 'one_month');
-        this.accountCapes = this.metrics.metric('mineskin', 'account_capes', 'one_year');
+        this.register('no_accounts', this.metrics.metric('mineskin', 'no_accounts'));
+        this.register('hash_mismatch', this.metrics.metric('mineskin', 'hash_mismatch', 'one_month'));
+        this.register('url_mismatch', this.metrics.metric('mineskin', 'url_mismatch', 'one_month'));
+        this.register('tester', this.metrics.metric('mineskin', 'tester'));
+        this.register('account_notifications', this.metrics.metric('mineskin', 'account_notifications', 'one_month'));
+        this.register('account_capes', this.metrics.metric('mineskin', 'account_capes', 'one_year'));
+
+        this.register('skin_migrations', this.metrics.metric('mineskin', 'skin_migrations', 'one_year'));
+
+        this.register('credit_usage', this.metrics.metric('mineskin', 'credit_usage', 'one_year'));
+    }
+
+    private register(key: string, metric: Metric) {
+        this.metricMap.set(key, metric);
+    }
+
+    getMetrics(): Metrics {
+        return this.metrics!;
+    }
+
+    getMetric(key: string): Metric {
+        let metric = this.metricMap.get(key);
+        if (!metric) {
+            throw new Error(`Metric ${ key } not found`);
+        }
+        return metric!;
     }
 
     apiRequestsMiddleware(req: Request, res: Response, next: NextFunction) {
@@ -92,7 +78,7 @@ export class MineSkinMetrics {
                 if (route) {
                     const path = route["path"];
                     if (path) {
-                        const m = this.apiRequests
+                        const m = this.getMetric('api_requests')
                             .tag("server", config!.server)
                             .tag("method", req.method)
                             .tag("path", path)

@@ -10,12 +10,14 @@ import { Bread } from "../typings/Bread";
 import { Notifications } from "../util/Notifications";
 import { Account, IAccountDocument } from "@mineskin/database";
 import { epochSeconds, Maybe, toEpochSeconds } from "../util";
-import { MineSkinMetrics } from "../util/metrics";
 import { MicrosoftAuthInfo } from "../typings/MicrosoftAuthInfo";
 import { Generator } from "./Generator";
 import { AccessTokenSource, AccountType, ErrorSource, MineSkinError } from "@mineskin/types";
 import { Accounts } from "./Accounts";
 import { Discord } from "../util/Discord";
+import { container } from "../inversify.config";
+import { IMetricsProvider, TYPES as CoreTypes } from "@mineskin/core";
+import { HOSTNAME } from "../util/host";
 
 const ACCESS_TOKEN_EXPIRATION_MOJANG = 86360;
 const ACCESS_TOKEN_EXPIRATION_MICROSOFT = 86360;
@@ -591,9 +593,9 @@ export class Authentication {
             op: "auth_authenticate",
             name: "authenticate",
         }, async span => {
-            const metrics = await MineSkinMetrics.get();
-            const metric = metrics.authentication
-                .tag("server", metrics.config.server)
+            const metrics = container.get<IMetricsProvider>(CoreTypes.MetricsProvider)
+            const metric = metrics.getMetric('authentication')
+                .tag("server", HOSTNAME)
                 .tag("type", account.accountType || AccountType.MICROSOFT)
                 .tag("account", account.id)
                 .tag("genEnv", "api");

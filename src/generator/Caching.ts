@@ -16,14 +16,14 @@ import { BasicMojangProfile } from "./Authentication";
 import { ProfileSkinData } from "../typings/SkinData";
 import { User } from "../typings/User";
 import { ProfileResponse } from "../typings/ProfileResponse";
-import { MineSkinMetrics } from "../util/metrics";
 import { Bread } from "../typings/Bread";
 import { IPendingDiscordLink } from "../typings/DiscordAccountLink";
 import { Time } from "@inventivetalent/time";
 import { MojangAccountLink } from "../typings/MojangAccountLink";
 import { ApiKey, IApiKeyDocument, ISkinDocument, Skin, Traffic } from "@mineskin/database";
-import { IRedisProvider, TYPES as CoreTypes } from "@mineskin/core";
+import { IMetricsProvider, IRedisProvider, TYPES as CoreTypes } from "@mineskin/core";
 import { container } from "../inversify.config";
+import { HOSTNAME } from "../util/host";
 
 export class Caching {
 
@@ -263,7 +263,7 @@ export class Caching {
     ////
 
     protected static metricsCollector = setInterval(async () => {
-        const metrics = await MineSkinMetrics.get();
+        const metrics = container.get<IMetricsProvider>(CoreTypes.MetricsProvider);
         const caches = new Map<string, ICacheBase<any, any>>([
             ["skinData", Caching.skinDataCache],
             ["userByName", Caching.userByNameCache],
@@ -286,7 +286,7 @@ export class Caching {
                 measurement: "caches",
                 tags: {
                     cache: name,
-                    server: metrics.config.server
+                    server: HOSTNAME
                 },
                 fields: {
                     size: cache.keys().length,
@@ -301,7 +301,7 @@ export class Caching {
             cache.stats.reset();
         });
         try {
-            metrics.metrics!.influx.writePoints(points, {
+            metrics.getMetrics().influx.writePoints(points, {
                 precision: 'ms'
             });
         } catch (e) {

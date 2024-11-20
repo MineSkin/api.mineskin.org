@@ -16,6 +16,10 @@ import * as https from "https";
 import { networkInterfaces } from "os";
 import { requestShutdown } from "../index";
 import { IAccountDocument } from "@mineskin/database";
+import { container } from "../inversify.config";
+import { IMetricsProvider } from "@mineskin/core";
+import { TYPES as CoreTypes } from "@mineskin/core/dist/ditypes";
+import { HOSTNAME } from "../util/host";
 
 export const GENERIC = "generic";
 export const MOJANG_AUTH = "mojangAuth";
@@ -91,18 +95,15 @@ export class Requests {
             }
         }
         try {
-            MineSkinMetrics.get().then(metrics => {
-                return metrics.metrics!.influx.writePoints(points, {
-                    precision: 's'
-                });
-            }).catch(e => {
-                console.error(e);
-                Sentry.captureException(e);
-                console.error("influx error, restarting");
-                requestShutdown('INFLUX_ERROR', 1);
-            })
+            const metrics = container.get<MineSkinMetrics>(CoreTypes.MetricsProvider);
+            return metrics.getMetrics().influx.writePoints(points, {
+                precision: 's'
+            });
         } catch (e) {
+            console.error(e);
             Sentry.captureException(e);
+            console.error("influx error, restarting");
+            requestShutdown('INFLUX_ERROR', 1);
         }
     }, 5000);
 
@@ -368,10 +369,10 @@ export class Requests {
     }
 
     static async processRequestMetric<T>(responseOrError: T, request?: AxiosRequestConfig, response?: AxiosResponse, instance?: AxiosInstance, err?: any): Promise<T> {
-        const metrics = await MineSkinMetrics.get();
+        const metrics = container.get<IMetricsProvider>(CoreTypes.MetricsProvider);
         try {
-            const m = metrics.requests
-                .tag("server", metrics.config.server)
+            const m = metrics.getMetric('requests')
+                .tag("server", HOSTNAME)
                 .tag("hasRequest", `${ typeof request !== "undefined" }`)
                 .tag("hasResponse", `${ typeof response !== "undefined" }`);
             if (request) {
@@ -426,7 +427,7 @@ export class Requests {
             Sentry.captureException(err, {
                 level: 'error',
                 tags: {
-                    server: metrics.config.server,
+                    server: HOSTNAME,
                     proxy: request ? this.getInstanceSubkey(request) : "unknown",
                     method: request?.method || "GET"
                 }
