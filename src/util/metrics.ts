@@ -1,15 +1,13 @@
 import { IntervalFlusher, Metric, Metrics } from "metrics-node";
 import { NextFunction, Request, Response } from "express";
 import * as Sentry from "@sentry/node";
-import { MineSkinConfig } from "../typings/Configs";
 import { isApiKeyRequest } from "../typings/ApiKeyRequest";
 import { Maybe } from "./index";
 import { GenerateType } from "@mineskin/types";
 import { inject, injectable } from "inversify";
 import { TYPES as CoreTypes } from "@mineskin/core/dist/ditypes";
 import { ILogProvider, IMetricsProvider } from "@mineskin/core";
-
-let config: Maybe<MineSkinConfig>;
+import { HOSTNAME } from "./host";
 
 @injectable()
 export class MineSkinMetrics implements IMetricsProvider {
@@ -79,7 +77,7 @@ export class MineSkinMetrics implements IMetricsProvider {
                     const path = route["path"];
                     if (path) {
                         const m = this.getMetric('api_requests')
-                            .tag("server", config!.server)
+                            .tag("server", HOSTNAME)
                             .tag("method", req.method)
                             .tag("path", path)
                             .tag("status", `${ res.statusCode }`);
@@ -101,7 +99,7 @@ export class MineSkinMetrics implements IMetricsProvider {
             this.metrics!.influx.writePoints([{
                 measurement: 'duration',
                 tags: {
-                    server: config!.server,
+                    server: HOSTNAME,
                     type: type,
                     duplicate: duplicate ? 'true' : 'false',
                     genEnv: process.env.MINESKIN_GEN_ENV || 'api'
