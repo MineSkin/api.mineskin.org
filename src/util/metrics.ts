@@ -27,7 +27,7 @@ export class MineSkinMetrics implements IMetricsProvider {
 
         this.register('api_requests', this.metrics.metric('mineskin', 'api_requests'));
         this.register('api_rate_limit', this.metrics.metric('mineskin', 'api_rate_limit'));
-        this.register('url_hosts', this.metrics.metric('mineskin', 'generate_url_hosts'));
+        this.register('generate_url_hosts', this.metrics.metric('mineskin', 'generate_url_hosts'));
         this.register('requests', this.metrics.metric('mineskin', 'requests', 'one_month'));
         this.register('authentication', this.metrics.metric('mineskin', 'authentication'));
 
