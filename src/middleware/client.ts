@@ -50,5 +50,9 @@ export const clientFinalMiddleware = async (req: MineSkinV2Request, res: Respons
 
 export const finalizeRequestClient = async (req: MineSkinV2Request, res: Response) => {
     req.clientInfo = await req.client.asClientInfo(req);
+    Sentry.setUser({
+        username: `${ req.clientInfo.key?.substring(0, 16) } ${ req.clientInfo.agent }`,
+        ip_address: `${ req.clientInfo.ip }`
+    });
 }
 
