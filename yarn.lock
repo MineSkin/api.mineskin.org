@@ -1426,24 +1426,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@mineskin/core@git+ssh://git@github.com/MineSkin/mineskin-core.git#inverse":
-  version: 0.0.0
-  resolution: "@mineskin/core@git+ssh://git@github.com/MineSkin/mineskin-core.git#commit=8f26b646d93f95c11d0af39c51fbc67e91edea5f"
-  dependencies:
-    "@sentry/cli": "npm:^2.32.2"
-    "@sentry/node": "npm:^8.18.0"
-    "@sentry/profiling-node": "npm:^8.18.0"
-    dotenv: "npm:^16.4.5"
-    flagsmith-nodejs: "npm:^3.3.3"
-    inversify: "npm:^6.0.3"
-    redis: "npm:^4.7.0"
-    reflect-metadata: "npm:^0.2.2"
-    winston: "npm:^3.14.2"
-    winston-daily-rotate-file: "npm:^5.0.0"
-  checksum: 10c0/a2cd1d6fe13ec100faaf6ee4633173c54d7aa58a02cf833acb701645143e06a21a6459fd3ad1ee31547b711522c4e8a09becb1454bb446f717037097218cf0c0
-  languageName: node
-  linkType: hard
-
 "@mineskin/database@git+ssh://git@github.com/MineSkin/mineskin-database.git":
   version: 1.0.0
   resolution: "@mineskin/database@git+ssh://git@github.com/MineSkin/mineskin-database.git#commit=b21ee94623717e0d0f3628582f5c29c03c275875"
@@ -4035,7 +4017,7 @@ __metadata:
     "@logtail/node": "npm:^0.4.21"
     "@logtail/winston": "npm:^0.4.21"
     "@mineskin/billing": "git+ssh://git@github.com/MineSkin/mineskin-billing.git"
-    "@mineskin/core": "git+ssh://git@github.com/MineSkin/mineskin-core.git#inverse"
+    "@mineskin/core": "git+ssh://git@github.com/MineSkin/mineskin-core.git"
     "@mineskin/database": "git+ssh://git@github.com/MineSkin/mineskin-database.git"
     "@mineskin/generator": "git+ssh://git@github.com/MineSkin/mineskin-generator.git"
     "@mineskin/hash-rust": "npm:^1.0.5"
