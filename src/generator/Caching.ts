@@ -246,10 +246,14 @@ export class Caching {
         .expirationInterval(Time.seconds(30))
         .build();
 
-    protected static readonly recentAccountsLock: SimpleCache<number, string> = Caches.builder()
+    protected static readonly recentAccountsLock: AsyncLoadingCache<number, Maybe<string>> = Caches.builder()
         .expireAfterWrite(Time.seconds(30))
         .expirationInterval(Time.seconds(10))
-        .build();
+        .buildAsync(async id => {
+            const redis = container.get<IRedisProvider>(CoreTypes.RedisProvider);
+            const value = await redis.client.get(`mineskin:account:lock:${ id }`);
+            return value ? value : undefined;
+        });
 
     protected static readonly hashCache: LoadingCache<string, string> = Caches.builder()
         .expireAfterAccess(Time.seconds(40))
@@ -404,14 +408,18 @@ export class Caching {
 
     public static lockSelectedAccount(accountId: number, bread?: Bread): void {
         this.recentAccountsLock.put(accountId, bread?.breadcrumb ?? `${ accountId }`);
+        const redis = container.get<IRedisProvider>(CoreTypes.RedisProvider);
+        redis.client.set(`mineskin:account:lock:${ accountId }`, `${ bread?.breadcrumb ?? accountId }`, {
+            EX: 30
+        }).catch(e => Sentry.captureException(e));
     }
 
     public static getLockedAccounts(): number[] {
         return this.recentAccountsLock.keys();
     }
 
-    public static isAccountLocked(accountId: number): boolean {
-        return !!this.recentAccountsLock.getIfPresent(accountId);
+    public static async isAccountLocked(accountId: number): Promise<boolean> {
+        return !!(await this.recentAccountsLock.get(accountId));
     }
 
     public static cachedSha512(str: string): string {
