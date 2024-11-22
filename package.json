@@ -30,7 +30,7 @@
     "@logtail/winston": "^0.4.21",
     "@mineskin/billing": "git+ssh://git@github.com/MineSkin/mineskin-billing.git",
     "@mineskin/core": "git+ssh://git@github.com/MineSkin/mineskin-core.git",
-    "@mineskin/database": "git+ssh://git@github.com/MineSkin/mineskin-database.git",
+    "@mineskin/database": "git+ssh://git@github.com/MineSkin/mineskin-database.git#tags",
     "@mineskin/generator": "git+ssh://git@github.com/MineSkin/mineskin-generator.git",
     "@mineskin/hash-rust": "^1.0.5",
     "@mineskin/types": "git+ssh://git@github.com/MineSkin/mineskin-types.git",
