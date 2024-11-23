@@ -1525,10 +1525,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@mineskin/types@git+ssh://git@github.com/MineSkin/mineskin-types.git":
+"@mineskin/types@git+ssh://git@github.com/MineSkin/mineskin-types.git#tags":
   version: 1.0.1
-  resolution: "@mineskin/types@git+ssh://git@github.com/MineSkin/mineskin-types.git#commit=28214b2e578106150f2512c3c991bc89fc78f080"
-  checksum: 10c0/92e531de7868021030dbf53987a8a7a8b96d1c0cc4746bfa6611a45abc74a55f1413f1c62d43ff45fb6a228a801472575c0a86c2a4c3894aba27d8ce88c8927e
+  resolution: "@mineskin/types@git+ssh://git@github.com/MineSkin/mineskin-types.git#commit=cab05e8d66f87476857542814656cef29995a814"
+  checksum: 10c0/49df81de73d9509de351b29f74fe74da096f52d2f6e79930830666ef4fb591348febb3caf7d10687b81e66a918c7a8ae46283d6d14994f87231e02f484d037b9
   languageName: node
   linkType: hard
 
