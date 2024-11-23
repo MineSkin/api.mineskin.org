@@ -92,6 +92,7 @@ export class V2GenerateHandler {
                 version: 'unknown', //TODO
                 duration: skin.data.queue?.end?.getTime() - skin.data.queue?.start?.getTime() || 0
             },
+            tags: skin.tags?.map(t => ({tag: t.tag})),
             views: skin.interaction.views,
             duplicate: duplicate
         };
