@@ -247,7 +247,7 @@ export class Caching {
         .build();
 
     protected static readonly recentAccountsLock: AsyncLoadingCache<number, Maybe<string>> = Caches.builder()
-        .expireAfterWrite(Time.seconds(30))
+        .expireAfterWrite(Time.seconds(5))
         .expirationInterval(Time.seconds(10))
         .buildAsync(async id => {
             const redis = container.get<IRedisProvider>(CoreTypes.RedisProvider);
