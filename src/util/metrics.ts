@@ -50,6 +50,8 @@ export class MineSkinMetrics implements IMetricsProvider {
 
         this.register('skin_migrations', this.metrics.metric('mineskin', 'skin_migrations', 'one_year'));
 
+        this.register('skin_tags', this.metrics.metric('mineskin', 'skin_tags', 'one_year'));
+
         this.register('credit_usage', this.metrics.metric('mineskin', 'credit_usage', 'one_year'));
     }
 

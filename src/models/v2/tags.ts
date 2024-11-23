@@ -7,6 +7,10 @@ import { container } from "../../inversify.config";
 import { MineSkinError, SkinVisibility2, TagVoteType } from "@mineskin/types";
 import { TagVoteReqBody } from "../../validation/tags";
 import { SkinService, TYPES as GeneratorTypes } from "@mineskin/generator";
+import * as Sentry from "@sentry/node";
+import { IMetricsProvider } from "@mineskin/core";
+import { TYPES as CoreTypes } from "@mineskin/core/dist/ditypes";
+import { HOSTNAME } from "../../util/host";
 
 export async function addSkinTagVote(req: MineSkinV2Request, res: Response<V2ResponseBody>) {
     const uuid = UUID.parse(req.params.uuid);
@@ -65,4 +69,13 @@ export async function addSkinTagVote(req: MineSkinV2Request, res: Response<V2Res
         success: true,
         messages: [{code: "vote_added", message: "Vote added successfully"}]
     });
+    try {
+        const metrics = container.get<IMetricsProvider>(CoreTypes.MetricsProvider);
+        metrics.getMetric('skin_tags')
+            .tag("server", HOSTNAME)
+            .tag("vote", vote)
+            .inc();
+    } catch (e) {
+        Sentry.captureException(e);
+    }
 }
