@@ -2,7 +2,7 @@ import { MineSkinV2Request } from "../../routes/v2/types";
 import { Response } from "express";
 import { V2ResponseBody } from "../../typings/v2/V2ResponseBody";
 import { UUID } from "../../validation/misc";
-import { ISkinTagDocument, isPopulatedSkin2Document } from "@mineskin/database";
+import { ISkinTagDocument, isPopulatedSkin2Document, SkinTag } from "@mineskin/database";
 import { container } from "../../inversify.config";
 import { MineSkinError, SkinVisibility2 } from "@mineskin/types";
 import { TagVoteReqBody } from "../../validation/tags";
@@ -15,6 +15,7 @@ export async function addSkinTagVote(req: MineSkinV2Request, res: Response<V2Res
     if (!req.client.hasUser()) {
         throw new MineSkinError('unauthorized', "Unauthorized", {httpCode: 401});
     }
+    const userId = req.client.userId!;
     const {tag, vote} = TagVoteReqBody.parse(req.body);
 
     const skin = await container.get<SkinService>(GeneratorTypes.SkinService).findForUuid(uuid);
@@ -23,10 +24,7 @@ export async function addSkinTagVote(req: MineSkinV2Request, res: Response<V2Res
     }
 
     if (skin.meta.visibility === SkinVisibility2.PRIVATE) {
-        let usersMatch = false;
-        if (req.client.hasUser()) {
-            usersMatch = skin.clients.some(c => c.user === req.client.userId);
-        }
+        const usersMatch = skin.clients.some(c => c.user === userId);
         if (!usersMatch) {
             throw new MineSkinError('skin_not_found', 'Skin not found', {httpCode: 404});
         }
@@ -35,15 +33,15 @@ export async function addSkinTagVote(req: MineSkinV2Request, res: Response<V2Res
     if (!skin.tags) {
         skin.tags = [];
     }
-    let theTag: ISkinTagDocument = skin.tags.find(t => t.tag === tag);
+    let theTag = skin.tags.find(t => t.tag === tag);
     if (theTag) {
-        if (vote === TagVoteType.UP && theTag.upvoters.includes(req.client.userId)) {
+        if (vote === TagVoteType.UP && theTag.upvoters.includes(userId)) {
             res.status(204).json({
                 messages: [{code: "already_voted", message: "You already upvoted for this tag"}]
             });
             return;
         }
-        if (vote === TagVoteType.DOWN && theTag.downvoters.includes(req.client.userId)) {
+        if (vote === TagVoteType.DOWN && theTag.downvoters.includes(userId)) {
             res.status(204).json({
                 messages: [{code: "already_voted", message: "You already downvoted for this tag"}]
             });
@@ -51,20 +49,20 @@ export async function addSkinTagVote(req: MineSkinV2Request, res: Response<V2Res
         }
     }
     if (!theTag) {
-        theTag = {
+        theTag = new SkinTag({
             tag: tag,
             votes: 0,
             upvoters: [],
             downvoters: []
-        } as ISkinTagDocument;
+        });
     }
     if (vote === TagVoteType.UP) {
         theTag.votes++;
-        theTag.upvoters.push(req.client.userId);
+        theTag.upvoters.push(userId);
         theTag.downvoters = theTag.downvoters.filter(u => u !== req.client.userId);
     } else {
         theTag.votes--;
-        theTag.downvoters.push(req.client.userId);
+        theTag.downvoters.push(userId);
         theTag.upvoters = theTag.upvoters.filter(u => u !== req.client.userId);
     }
     await skin.save();

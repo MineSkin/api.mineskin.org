@@ -36,7 +36,7 @@ export class ApiLogProvider implements ILogProvider {
             const {message: rawMessage} = info;
             // Combine all the args with util.format
             // also do a util.format of the rawMessage which handles JSON
-            const message = args
+            const message = Array.isArray(args)
                 ? nodeUtil.format(rawMessage, ...args)
                 : nodeUtil.format(rawMessage);
             return {

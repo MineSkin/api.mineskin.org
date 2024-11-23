@@ -16,6 +16,9 @@
     "redoc": "npx @redocly/cli build-docs openapi.v2.json"
   },
   "author": "Haylee Schäfer",
+  "resolutions": {
+    "@mineskin/database": "git+ssh://git@github.com/MineSkin/mineskin-database.git#tags"
+  },
   "dependencies": {
     "@inventivetalent/axios-rate-limit": "^1.3.5",
     "@inventivetalent/express-github-webhook": "^1.0.3",
@@ -30,7 +33,7 @@
     "@logtail/winston": "^0.4.21",
     "@mineskin/billing": "git+ssh://git@github.com/MineSkin/mineskin-billing.git",
     "@mineskin/core": "git+ssh://git@github.com/MineSkin/mineskin-core.git",
-    "@mineskin/database": "git+ssh://git@github.com/MineSkin/mineskin-database.git#tags",
+    "@mineskin/database": "git+ssh://git@github.com/MineSkin/mineskin-database.git",
     "@mineskin/generator": "git+ssh://git@github.com/MineSkin/mineskin-generator.git",
     "@mineskin/hash-rust": "^1.0.5",
     "@mineskin/types": "git+ssh://git@github.com/MineSkin/mineskin-types.git",

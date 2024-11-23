@@ -244,7 +244,7 @@ export const register = (app: Application) => {
             skins: skins.map(s => {
                 s.uuid = s.skinUuid || s.uuid;
                 delete s.skinUuid;
-                s.variant = getVariant(s);
+                s.variant = getVariant(s as ISkinDocument);
                 return s;
             }),
             page: {

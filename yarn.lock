@@ -1440,24 +1440,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@mineskin/database@git+ssh://git@github.com/MineSkin/mineskin-database.git":
-  version: 1.0.0
-  resolution: "@mineskin/database@git+ssh://git@github.com/MineSkin/mineskin-database.git#commit=b21ee94623717e0d0f3628582f5c29c03c275875"
-  dependencies:
-    "@mineskin/types": "git+ssh://git@github.com/MineSkin/mineskin-types.git"
-    "@sentry/cli": "npm:^2.32.2"
-    "@sentry/node": "npm:^8.18.0"
-    "@sentry/profiling-node": "npm:^8.18.0"
-    dotenv: "npm:^16.4.5"
-    mongoose: "npm:^8.5.3"
-    uuid: "npm:^10.0.0"
-  checksum: 10c0/c76c193c6ea4d4b20848768b9593e4d08ad3f7834f2586c385af828c3b5426400bb45e798438d5a7588266141629e94d3d019e81605445bd2e4cbcee8a32ebde
-  languageName: node
-  linkType: hard
-
 "@mineskin/database@git+ssh://git@github.com/MineSkin/mineskin-database.git#tags":
   version: 1.0.0
-  resolution: "@mineskin/database@git+ssh://git@github.com/MineSkin/mineskin-database.git#commit=630d5bbc9b26b5bd626262d8f7a0df9228fe300c"
+  resolution: "@mineskin/database@git+ssh://git@github.com/MineSkin/mineskin-database.git#commit=b273ecc819af03f6e730c917c0068b829cafdda8"
   dependencies:
     "@mineskin/types": "git+ssh://git@github.com/MineSkin/mineskin-types.git"
     "@sentry/cli": "npm:^2.32.2"
@@ -1466,7 +1451,7 @@ __metadata:
     dotenv: "npm:^16.4.5"
     mongoose: "npm:^8.5.3"
     uuid: "npm:^10.0.0"
-  checksum: 10c0/3cb0cdd4a5ca9684689aa4f0544ee760db27f1c505766a79a34dc57317e9560c1b082ebfae71b6a152682ef8c59d2cdd51a2ba0e66eed0914ecc29e4b7a37980
+  checksum: 10c0/e9ef819dbe57bd33289cdc50ebd0a7cc2cdabbb5a70f26c2a439ebadacfc2b7b4e25afae6db6a1ea62edce02e1729ba96d4668567bdeba5a6ccada701bd59010
   languageName: node
   linkType: hard
 
@@ -3664,11 +3649,11 @@ __metadata:
   linkType: hard
 
 "@types/node@npm:*":
-  version: 22.9.1
-  resolution: "@types/node@npm:22.9.1"
+  version: 22.9.3
+  resolution: "@types/node@npm:22.9.3"
   dependencies:
     undici-types: "npm:~6.19.8"
-  checksum: 10c0/ea489ae603aa8874e4e88980aab6f2dad09c755da779c88dd142983bfe9609803c89415ca7781f723072934066f63daf2b3339ef084a8ad1a8079cf3958be243
+  checksum: 10c0/954ec72bf29436ea62425a9563914a9c1e93f97b18194acd51d74d13998a701977547ed2985ed3a0e97211b785436d28377116e5f613bfcf3182d9bd81d784dc
   languageName: node
   linkType: hard
 
@@ -3687,11 +3672,11 @@ __metadata:
   linkType: hard
 
 "@types/node@npm:^18.19.37":
-  version: 18.19.64
-  resolution: "@types/node@npm:18.19.64"
+  version: 18.19.65
+  resolution: "@types/node@npm:18.19.65"
   dependencies:
     undici-types: "npm:~5.26.4"
-  checksum: 10c0/a54009cd222f5751c903e5f4889a0f12e3d3755a1f87ce919455eeaf00a9ba0c9215c4a92bc3d8df585a894fa3e4cf218e5afccced355688624133e1a4b88235
+  checksum: 10c0/9c093f13749dccd16a3e9cd17080db057d1e94cb5205a871d2818ad51ec19d7d392a7c12a11661c6a6f4404cbd85b19d09ab6c564a4763cab2ff5bb0e198617d
   languageName: node
   linkType: hard
 
@@ -4116,7 +4101,7 @@ __metadata:
     "@logtail/winston": "npm:^0.4.21"
     "@mineskin/billing": "git+ssh://git@github.com/MineSkin/mineskin-billing.git"
     "@mineskin/core": "git+ssh://git@github.com/MineSkin/mineskin-core.git"
-    "@mineskin/database": "git+ssh://git@github.com/MineSkin/mineskin-database.git#tags"
+    "@mineskin/database": "git+ssh://git@github.com/MineSkin/mineskin-database.git"
     "@mineskin/generator": "git+ssh://git@github.com/MineSkin/mineskin-generator.git"
     "@mineskin/hash-rust": "npm:^1.0.5"
     "@mineskin/types": "git+ssh://git@github.com/MineSkin/mineskin-types.git"
@@ -4190,7 +4175,7 @@ __metadata:
     tmp: "npm:0.2.1"
     ts-jest: "npm:^29.2.5"
     tunnel-ssh: "npm:^4.1.4"
-    typescript: "npm:^5.4.5"
+    typescript: "npm:5.6.3"
     ua-parser-js: "npm:^1.0.38"
     unique-names-generator: "npm:^4.7.1"
     user-agent-stripper: "npm:^1.0.1"
@@ -4652,8 +4637,8 @@ __metadata:
   linkType: hard
 
 "bullmq@npm:^5.13.0":
-  version: 5.29.0
-  resolution: "bullmq@npm:5.29.0"
+  version: 5.29.1
+  resolution: "bullmq@npm:5.29.1"
   dependencies:
     cron-parser: "npm:^4.6.0"
     ioredis: "npm:^5.4.1"
@@ -4662,7 +4647,7 @@ __metadata:
     semver: "npm:^7.5.4"
     tslib: "npm:^2.0.0"
     uuid: "npm:^9.0.0"
-  checksum: 10c0/7b68e350e5cce71a6c731b92ca20f895de325cb3de7ea8ea128595141edd0013026f431002e9fdc75a45a8fdae242303323a6733f0dff0b78ad1a1d85eff2393
+  checksum: 10c0/7c0ae9a43310e61f2d0f7f835159ee55710e9721f8779d7948057089230f16d0e2d33253bed76f49548ea50a62694974cc407d15aa288df5ad9ed18e22fb39cf
   languageName: node
   linkType: hard
 
@@ -10832,6 +10817,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"typescript@npm:5.6.3":
+  version: 5.6.3
+  resolution: "typescript@npm:5.6.3"
+  bin:
+    tsc: bin/tsc
+    tsserver: bin/tsserver
+  checksum: 10c0/44f61d3fb15c35359bc60399cb8127c30bae554cd555b8e2b46d68fa79d680354b83320ad419ff1b81a0bdf324197b29affe6cc28988cd6a74d4ac60c94f9799
+  languageName: node
+  linkType: hard
+
 "typescript@npm:^4.1.2, typescript@npm:^4.1.3, typescript@npm:^4.1.5":
   version: 4.9.5
   resolution: "typescript@npm:4.9.5"
@@ -10842,13 +10837,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:^5.4.5":
-  version: 5.7.2
-  resolution: "typescript@npm:5.7.2"
+"typescript@patch:typescript@npm%3A5.6.3#optional!builtin<compat/typescript>":
+  version: 5.6.3
+  resolution: "typescript@patch:typescript@npm%3A5.6.3#optional!builtin<compat/typescript>::version=5.6.3&hash=8c6c40"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: 10c0/a873118b5201b2ef332127ef5c63fb9d9c155e6fdbe211cbd9d8e65877283797cca76546bad742eea36ed7efbe3424a30376818f79c7318512064e8625d61622
+  checksum: 10c0/7c9d2e07c81226d60435939618c91ec2ff0b75fbfa106eec3430f0fcf93a584bc6c73176676f532d78c3594fe28a54b36eb40b3d75593071a7ec91301533ace7
   languageName: node
   linkType: hard
 
@@ -10859,16 +10854,6 @@ __metadata:
     tsc: bin/tsc
     tsserver: bin/tsserver
   checksum: 10c0/e3333f887c6829dfe0ab6c1dbe0dd1e3e2aeb56c66460cb85c5440c566f900c833d370ca34eb47558c0c69e78ced4bfe09b8f4f98b6de7afed9b84b8d1dd06a1
-  languageName: node
-  linkType: hard
-
-"typescript@patch:typescript@npm%3A^5.4.5#optional!builtin<compat/typescript>":
-  version: 5.7.2
-  resolution: "typescript@patch:typescript@npm%3A5.7.2#optional!builtin<compat/typescript>::version=5.7.2&hash=8c6c40"
-  bin:
-    tsc: bin/tsc
-    tsserver: bin/tsserver
-  checksum: 10c0/c891ccf04008bc1305ba34053db951f8a4584b4a1bf2f68fd972c4a354df3dc5e62c8bfed4f6ac2d12e5b3b1c49af312c83a651048f818cd5b4949d17baacd79
   languageName: node
   linkType: hard
 

@@ -1268,7 +1268,7 @@ export class Generator {
 
     }
 
-    protected static async changeSkinUpload(account: IAccountDocument, file: ArrayBufferLike, variant: string, breadcrumb?: string): Promise<AxiosResponse> {
+    protected static async changeSkinUpload(account: IAccountDocument, file: Buffer, variant: string, breadcrumb?: string): Promise<AxiosResponse> {
         const body = new FormData();
         body.append("variant", variant);
         body.append("file", file, {
