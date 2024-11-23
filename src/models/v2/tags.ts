@@ -6,8 +6,7 @@ import { isPopulatedSkin2Document, SkinTag } from "@mineskin/database";
 import { container } from "../../inversify.config";
 import { MineSkinError, SkinVisibility2, TagVoteType } from "@mineskin/types";
 import { TagVoteReqBody } from "../../validation/tags";
-import { SkinService } from "@mineskin/generator";
-import { TYPES as GeneratorTypes } from "@mineskin/generator/dist/ditypes";
+import { SkinService, TYPES as GeneratorTypes } from "@mineskin/generator";
 
 export async function addSkinTagVote(req: MineSkinV2Request, res: Response<V2ResponseBody>) {
     const uuid = UUID.parse(req.params.uuid);
