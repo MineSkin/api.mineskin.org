@@ -62,6 +62,7 @@ export async function addSkinTagVote(req: MineSkinV2Request, res: Response<V2Res
     }
     await skin.save();
     res.status(200).json({
+        success: true,
         messages: [{code: "vote_added", message: "Vote added successfully"}]
     });
 }
