@@ -55,6 +55,7 @@ export async function addSkinTagVote(req: MineSkinV2Request, res: Response<V2Res
             upvoters: [],
             downvoters: []
         });
+        skin.tags.push(theTag);
     }
     if (vote === TagVoteType.UP) {
         theTag.votes++;
