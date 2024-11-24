@@ -6,9 +6,10 @@ import { MineSkinV2Request } from "./types";
 import { V2SkinListResponseBody } from "../../typings/v2/V2SkinListResponseBody";
 import { V2SkinResponse } from "../../typings/v2/V2SkinResponse";
 import { formatV2Response } from "../../middleware/response";
-import { v2AddLike, v2AddView } from "../../models/v2/interactions";
+import { v2AddLike, v2AddView, v2ReportSkin } from "../../models/v2/interactions";
 import { wildcardCorsWithCredentials } from "../../middleware/cors";
 import { addSkinTagVote } from "../../models/v2/tags";
+import { V2MiscResponseBody } from "../../typings/v2/V2MiscResponseBody";
 
 const router: Router = v2Router();
 router.use(wildcardCorsWithCredentials);
@@ -23,19 +24,27 @@ router.get("/:uuid", expressAsyncHandler(async (req: MineSkinV2Request, res: Res
     res.json(formatV2Response(req, result));
 }));
 
-router.post("/:uuid/interactions/views", expressAsyncHandler(async (req: MineSkinV2Request, res: Response<V2SkinResponse>) => {
+router.post("/:uuid/interactions/views", expressAsyncHandler(async (req: MineSkinV2Request, res: Response<V2MiscResponseBody>) => {
     await v2AddView(req, res);
     res.status(204).end();
 }));
 
-router.post("/:uuid/interactions/likes", expressAsyncHandler(async (req: MineSkinV2Request, res: Response<V2SkinResponse>) => {
+router.post("/:uuid/interactions/likes", expressAsyncHandler(async (req: MineSkinV2Request, res: Response<V2MiscResponseBody>) => {
     await v2AddLike(req, res);
     res.status(204).end();
 }));
 
-router.post("/:uuid/tags", expressAsyncHandler(async (req: MineSkinV2Request, res: Response<V2SkinResponse>) => {
+router.post("/:uuid/tags", expressAsyncHandler(async (req: MineSkinV2Request, res: Response<V2MiscResponseBody>) => {
     await addSkinTagVote(req, res);
     res.status(204).end();
+}));
+
+router.post("/:uuid/report", expressAsyncHandler(async (req: MineSkinV2Request, res: Response<V2MiscResponseBody>) => {
+    await v2ReportSkin(req, res);
+    res.status(200).json(formatV2Response(req, {
+        success: true,
+        messages: [{code: "reported", message: "Skin reported successfully"}]
+    }));
 }));
 
 
