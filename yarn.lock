@@ -1392,7 +1392,7 @@ __metadata:
 
 "@mineskin/billing@git+ssh://git@github.com/MineSkin/mineskin-billing.git":
   version: 0.0.0
-  resolution: "@mineskin/billing@git+ssh://git@github.com/MineSkin/mineskin-billing.git#commit=3e479f95b628b0353dc0e85fbe8aab732fe51e38"
+  resolution: "@mineskin/billing@git+ssh://git@github.com/MineSkin/mineskin-billing.git#commit=c837bfa46126eff5928c668f6dbe610f65e6af2d"
   dependencies:
     "@inventivetalent/imghash": "npm:^1.1.1"
     "@inventivetalent/loading-cache": "npm:^0.7.1"
@@ -1418,7 +1418,7 @@ __metadata:
     uuid: "npm:^10.0.0"
     winston: "npm:^3.14.2"
     winston-daily-rotate-file: "npm:^5.0.0"
-  checksum: 10c0/f9d46265e58785b92ebb06b3b17db12446b36d79842ac6c775bcde8530c82741842437054c4ef04b99863e0820aae356db197342367c94c55d2df33026be1033
+  checksum: 10c0/ec44df31c78d605dfcef42a321a426f44d0d5165986c19f72758e3906f0214b2e3566f3b9f7693fe26949714a07a317d10359a9c15181d0f25d6b5a631b43f01
   languageName: node
   linkType: hard
 
