@@ -9,6 +9,7 @@ import { container } from "../../inversify.config";
 import { SkinService } from "@mineskin/generator";
 import { TYPES as GeneratorTypes } from "@mineskin/generator/dist/ditypes";
 import { Discord } from "../../util/Discord";
+import { ReportReqBody } from "../../validation/report";
 
 export async function v2AddView(req: MineSkinV2Request, res: Response<V2ResponseBody>) {
     const uuid = UUID.parse(req.params.uuid);
@@ -45,6 +46,8 @@ export async function v2ReportSkin(req: MineSkinV2Request, res: Response<V2Respo
     }
     //TODO: turnstile
 
+    const {reason} = ReportReqBody.parse(req.body);
+
     const skin = await container.get<SkinService>(GeneratorTypes.SkinService).findForUuid(uuid);
     if (!skin || !isPopulatedSkin2Document(skin) || skin.meta.visibility === SkinVisibility2.PRIVATE) {
         throw new MineSkinError('skin_not_found', 'Skin not found', {httpCode: 404});
@@ -60,10 +63,11 @@ export async function v2ReportSkin(req: MineSkinV2Request, res: Response<V2Respo
     }
     skin.reports.push({
         user: userId,
-        time: new Date()
+        time: new Date(),
+        reason: reason
     });
     await skin.save();
 
     //TODO: move this
-    Discord.postDiscordMessage(`Skin reported: https://minesk.in/${ uuid } by ${ userId }`);
+    Discord.postDiscordMessage(`Skin reported: https://minesk.in/${ uuid } by ${ userId } - reason: ${ reason }, visibility: ${ skin.meta.visibility }`);
 }
