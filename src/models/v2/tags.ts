@@ -11,6 +11,8 @@ import * as Sentry from "@sentry/node";
 import { IMetricsProvider } from "@mineskin/core";
 import { TYPES as CoreTypes } from "@mineskin/core/dist/ditypes";
 import { HOSTNAME } from "../../util/host";
+import { verifyTurnstileToken } from "../../util/turnstile";
+import { getIp } from "../../util";
 
 export async function addSkinTagVote(req: MineSkinV2Request, res: Response<V2ResponseBody>) {
     const uuid = UUID.parse(req.params.uuid);
@@ -19,6 +21,11 @@ export async function addSkinTagVote(req: MineSkinV2Request, res: Response<V2Res
     }
     const userId = req.client.userId!;
     const {tag, vote} = TagVoteReqBody.parse(req.body);
+
+    const valid = await verifyTurnstileToken(req.header('Turnstile-Token'), getIp(req));
+    if (!valid) {
+        throw new MineSkinError('unauthorized', "Invalid Turnstile Token", {httpCode: 401});
+    }
 
     const skin = await container.get<SkinService>(GeneratorTypes.SkinService).findForUuid(uuid);
     if (!skin || !isPopulatedSkin2Document(skin)) {

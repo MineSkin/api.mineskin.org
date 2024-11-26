@@ -10,6 +10,8 @@ import { SkinService } from "@mineskin/generator";
 import { TYPES as GeneratorTypes } from "@mineskin/generator/dist/ditypes";
 import { Discord } from "../../util/Discord";
 import { ReportReqBody } from "../../validation/report";
+import { verifyTurnstileToken } from "../../util/turnstile";
+import { getIp } from "../../util";
 
 export async function v2AddView(req: MineSkinV2Request, res: Response<V2ResponseBody>) {
     const uuid = UUID.parse(req.params.uuid);
@@ -26,7 +28,12 @@ export async function v2AddLike(req: MineSkinV2Request, res: Response<V2Response
     if (!req.client.hasUser()) {
         throw new MineSkinError('unauthorized', "Unauthorized", {httpCode: 401});
     }
-    //TODO: turnstile
+
+    const valid = await verifyTurnstileToken(req.header('Turnstile-Token'), getIp(req));
+    if (!valid) {
+        throw new MineSkinError('unauthorized', "Invalid Turnstile Token", {httpCode: 401});
+    }
+
     const key = `${ req.client.userId }:${ uuid }`;
     const redis = container.get<IRedisProvider>(CoreTypes.RedisProvider);
     if (!redis.client) {
@@ -44,7 +51,11 @@ export async function v2ReportSkin(req: MineSkinV2Request, res: Response<V2Respo
     if (!req.client.hasUser()) {
         throw new MineSkinError('unauthorized', "Unauthorized", {httpCode: 401});
     }
-    //TODO: turnstile
+
+    const valid = await verifyTurnstileToken(req.header('Turnstile-Token'), getIp(req));
+    if (!valid) {
+        throw new MineSkinError('unauthorized', "Invalid Turnstile Token", {httpCode: 401});
+    }
 
     const {reason} = ReportReqBody.parse(req.body);
 

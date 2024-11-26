@@ -1,6 +1,7 @@
 import { Requests } from "../generator/Requests";
 
-export async function verifyTurnstileToken(token: string, ip: string) {
+export async function verifyTurnstileToken(token: string | undefined, ip: string) {
+    if (!token) return false;
     const response = await Requests.genericRequest({
         method: 'POST',
         url: 'https://challenges.cloudflare.com/turnstile/v0/siteverify',
