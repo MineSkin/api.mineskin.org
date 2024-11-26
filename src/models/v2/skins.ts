@@ -8,12 +8,13 @@ import { ListedSkin, V2SkinListResponseBody } from "../../typings/v2/V2SkinListR
 import { V2SkinResponse } from "../../typings/v2/V2SkinResponse";
 import { V2GenerateHandler } from "../../generator/v2/V2GenerateHandler";
 import { ListReqQuery } from "../../validation/skins";
-import { UUID } from "../../validation/misc";
+import { UUIDOrShortId } from "../../validation/misc";
 import { Caching } from "../../generator/Caching";
 import * as Sentry from "@sentry/node";
 import { IFlagProvider, TYPES as CoreTypes } from "@mineskin/core";
 import { container } from "../../inversify.config";
 import { Log } from "../../Log";
+import { stripUuid } from "../../util";
 
 export async function v2SkinList(req: MineSkinV2Request, res: Response<V2SkinListResponseBody>): Promise<V2SkinListResponseBody> {
     return await v2ListSkins(req, res);
@@ -107,17 +108,23 @@ export async function v2ListSkins(req: MineSkinV2Request, res: Response<V2SkinLi
 }
 
 export async function v2GetSkin(req: MineSkinV2Request, res: Response<V2SkinResponse>): Promise<V2SkinResponse> {
-    const uuid = UUID.parse(req.params.uuid);
+    const uuidOrShort = UUIDOrShortId.parse(req.params.uuid);
 
-    req.links.skin = `/v2/skins/${ uuid }`;
+    req.links.skin = `/v2/skins/${ uuidOrShort }`;
     req.links.self = req.links.skin;
 
-    let skin = await container.get<SkinService>(GeneratorTypes.SkinService).findForUuid(uuid);
+    const skinService = container.get<SkinService>(GeneratorTypes.SkinService);
+    let skin;
+    if (uuidOrShort.length === 8) {
+        skin = await skinService.findForShortId(uuidOrShort);
+    } else {
+        skin = skinService.findForUuid(stripUuid(uuidOrShort));
+    }
 
     const flags = container.get<IFlagProvider>(CoreTypes.FlagProvider);
     try {
-        if (!skin && await flags.isEnabled('migrations.api.get')) {
-            const v1Doc = await Caching.getSkinByUuid(uuid);
+        if (!skin && uuidOrShort.length !== 8 && await flags.isEnabled('migrations.api.get')) {
+            const v1Doc = await Caching.getSkinByUuid(uuidOrShort);
             if (v1Doc) {
                 skin = await Migrations.migrateV1ToV2(v1Doc, "skin-get");
                 skin.data = await SkinData.findById(skin.data) || skin.data;
@@ -141,6 +148,9 @@ export async function v2GetSkin(req: MineSkinV2Request, res: Response<V2SkinResp
             throw new MineSkinError('skin_not_found', 'Skin not found', {httpCode: 404});
         }
     }
+
+    req.links.skin = `/v2/skins/${ skin.uuid }`;
+    req.links.self = req.links.skin;
 
     return {
         success: true,
