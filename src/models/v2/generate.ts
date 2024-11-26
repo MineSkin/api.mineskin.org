@@ -171,7 +171,7 @@ export async function v2GetJob(req: GenerateV2Request, res: Response<V2GenerateR
     req.links.job = `/v2/queue/${ jobId }`;
     req.links.self = req.links.job;
 
-    if (jobId.startsWith('f4k3')) {
+    if (jobId.startsWith('f4c3')) {
         const fakeJob = await getFakeJob(jobId);
         // if (!fakeJob) {
         //     throw new GeneratorError('job_not_found', `Fake job not found: ${ jobId }`, {httpCode: 404});
@@ -525,7 +525,7 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
 }
 
 async function saveFakeJob(result: string, status: JobStatus = 'completed'): Promise<JobInfo> {
-    const id = 'f4k3' + result.substring(4, 24);
+    const id = 'f4c3' + result.substring(4, 24);
     const job: JobInfo = {
         id: id,
         status: status,
