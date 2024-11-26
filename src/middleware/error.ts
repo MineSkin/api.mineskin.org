@@ -29,7 +29,7 @@ export function v2ErrorHandler(err: Error, req: GenerateV2Request, res: Response
         for (const issue of err.issues) {
             errors.push({
                 code: issue.code,
-                message: issue.message
+                message: issue.message + (issue.path ? ` (${ issue.path.join('.') })` : '')
             });
         }
         return res.status(400).json({
@@ -57,7 +57,7 @@ export function v2NotFoundHandler(req: GenerateV2Request, res: Response<V2Genera
         success: false,
         errors: [{
             code: "not_found",
-            message: `Not found (${req.originalUrl})`
+            message: `Not found (${ req.originalUrl })`
         }]
     });
 }
