@@ -1,7 +1,7 @@
 import cors from "cors"
 import process from "node:process";
 
-const ALLOWED_HEADERS = ["Content-Type", "Authorization", "MineSkin-User-Agent", "Origin"];
+const ALLOWED_HEADERS = ["Content-Type", "Authorization", "MineSkin-User-Agent", "Origin", "Turnstile-Token"];
 
 const WEB_WHITELIST = process.env.WEB_CORS!.split(',');
 
