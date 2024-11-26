@@ -8,7 +8,7 @@ import { V2SkinResponse } from "../../typings/v2/V2SkinResponse";
 import { formatV2Response } from "../../middleware/response";
 import { v2AddLike, v2AddView, v2ReportSkin } from "../../models/v2/interactions";
 import { wildcardCorsWithCredentials } from "../../middleware/cors";
-import { addSkinTagVote } from "../../models/v2/tags";
+import { addSkinTagVote, getSkinTags } from "../../models/v2/tags";
 import { V2MiscResponseBody } from "../../typings/v2/V2MiscResponseBody";
 
 const router: Router = v2Router();
@@ -32,6 +32,11 @@ router.post("/:uuid/interactions/views", expressAsyncHandler(async (req: MineSki
 router.post("/:uuid/interactions/likes", expressAsyncHandler(async (req: MineSkinV2Request, res: Response<V2MiscResponseBody>) => {
     await v2AddLike(req, res);
     res.status(204).end();
+}));
+
+router.get("/:uuid/tags", expressAsyncHandler(async (req: MineSkinV2Request, res: Response<V2MiscResponseBody>) => {
+    const result = await getSkinTags(req, res);
+    res.json(formatV2Response(req, result));
 }));
 
 router.post("/:uuid/tags", expressAsyncHandler(async (req: MineSkinV2Request, res: Response<V2MiscResponseBody>) => {

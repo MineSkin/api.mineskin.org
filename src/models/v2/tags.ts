@@ -13,6 +13,32 @@ import { TYPES as CoreTypes } from "@mineskin/core/dist/ditypes";
 import { HOSTNAME } from "../../util/host";
 import { verifyTurnstileToken } from "../../util/turnstile";
 import { getIp } from "../../util";
+import { V2MiscResponseBody } from "../../typings/v2/V2MiscResponseBody";
+
+export async function getSkinTags(req: MineSkinV2Request, res: Response<V2ResponseBody>): Promise<V2MiscResponseBody> {
+    const uuid = UUID.parse(req.params.uuid);
+
+    const skin = await container.get<SkinService>(GeneratorTypes.SkinService).findForUuid(uuid);
+    if (!skin || !isPopulatedSkin2Document(skin)) {
+        throw new MineSkinError('skin_not_found', 'Skin not found', {httpCode: 404});
+    }
+
+    if (skin.meta.visibility === SkinVisibility2.PRIVATE) {
+        const usersMatch = req.client.userId && skin.clients.some(c => c.user === req.client.userId);
+        if (!usersMatch) {
+            throw new MineSkinError('skin_not_found', 'Skin not found', {httpCode: 404});
+        }
+    }
+
+    if (!skin.tags) {
+        skin.tags = [];
+    }
+
+    return {
+        success: true,
+        tags: skin.tags.map(t => ({tag: t.tag}))
+    }
+}
 
 export async function addSkinTagVote(req: MineSkinV2Request, res: Response<V2ResponseBody>) {
     const uuid = UUID.parse(req.params.uuid);
