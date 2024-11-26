@@ -2,9 +2,9 @@ import { MineSkinV2Request } from "../../routes/v2/types";
 import { Response } from "express";
 import { V2ResponseBody } from "../../typings/v2/V2ResponseBody";
 import { UUID } from "../../validation/misc";
-import { isPopulatedSkin2Document, SkinTag } from "@mineskin/database";
+import { SkinTag } from "@mineskin/database";
 import { container } from "../../inversify.config";
-import { MineSkinError, SkinVisibility2, TagVoteType } from "@mineskin/types";
+import { MineSkinError, TagVoteType } from "@mineskin/types";
 import { TagVoteReqBody } from "../../validation/tags";
 import { SkinService, TYPES as GeneratorTypes } from "@mineskin/generator";
 import * as Sentry from "@sentry/node";
@@ -14,21 +14,13 @@ import { HOSTNAME } from "../../util/host";
 import { verifyTurnstileToken } from "../../util/turnstile";
 import { getIp } from "../../util";
 import { V2MiscResponseBody } from "../../typings/v2/V2MiscResponseBody";
+import { validateRequestedSkin } from "./skins";
 
 export async function getSkinTags(req: MineSkinV2Request, res: Response<V2ResponseBody>): Promise<V2MiscResponseBody> {
     const uuid = UUID.parse(req.params.uuid);
 
-    const skin = await container.get<SkinService>(GeneratorTypes.SkinService).findForUuid(uuid);
-    if (!skin || !isPopulatedSkin2Document(skin)) {
-        throw new MineSkinError('skin_not_found', 'Skin not found', {httpCode: 404});
-    }
-
-    if (skin.meta.visibility === SkinVisibility2.PRIVATE) {
-        const usersMatch = req.client.userId && skin.clients.some(c => c.user === req.client.userId);
-        if (!usersMatch) {
-            throw new MineSkinError('skin_not_found', 'Skin not found', {httpCode: 404});
-        }
-    }
+    let skin = await container.get<SkinService>(GeneratorTypes.SkinService).findForUuid(uuid);
+    skin = validateRequestedSkin(req, skin);
 
     if (!skin.tags) {
         skin.tags = [];
@@ -53,17 +45,8 @@ export async function addSkinTagVote(req: MineSkinV2Request, res: Response<V2Res
         throw new MineSkinError('unauthorized', "Invalid Turnstile Token", {httpCode: 401});
     }
 
-    const skin = await container.get<SkinService>(GeneratorTypes.SkinService).findForUuid(uuid);
-    if (!skin || !isPopulatedSkin2Document(skin)) {
-        throw new MineSkinError('skin_not_found', 'Skin not found', {httpCode: 404});
-    }
-
-    if (skin.meta.visibility === SkinVisibility2.PRIVATE) {
-        const usersMatch = skin.clients.some(c => c.user === userId);
-        if (!usersMatch) {
-            throw new MineSkinError('skin_not_found', 'Skin not found', {httpCode: 404});
-        }
-    }
+    let skin = await container.get<SkinService>(GeneratorTypes.SkinService).findForUuid(uuid);
+    skin = validateRequestedSkin(req, skin);
 
     if (!skin.tags) {
         skin.tags = [];

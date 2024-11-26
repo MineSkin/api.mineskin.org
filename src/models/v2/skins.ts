@@ -3,7 +3,7 @@ import { Migrations, SkinService, TYPES as GeneratorTypes } from "@mineskin/gene
 import { Response } from "express";
 import { IPopulatedSkin2Document, ISkin2Document, isPopulatedSkin2Document, Skin2, SkinData } from "@mineskin/database";
 import { RootFilterQuery } from "mongoose";
-import { MineSkinError, SkinVisibility2 } from "@mineskin/types";
+import { Maybe, MineSkinError, SkinVisibility2 } from "@mineskin/types";
 import { ListedSkin, V2SkinListResponseBody } from "../../typings/v2/V2SkinListResponseBody";
 import { V2SkinResponse } from "../../typings/v2/V2SkinResponse";
 import { V2GenerateHandler } from "../../generator/v2/V2GenerateHandler";
@@ -135,6 +135,18 @@ export async function v2GetSkin(req: MineSkinV2Request, res: Response<V2SkinResp
         Log.l.error(e);
     }
 
+    skin = validateRequestedSkin(req, skin);
+
+    req.links.skin = `/v2/skins/${ skin.uuid }`;
+    req.links.self = req.links.skin;
+
+    return {
+        success: true,
+        skin: V2GenerateHandler.skinToJson(skin)
+    };
+}
+
+export function validateRequestedSkin(req: MineSkinV2Request, skin: Maybe<ISkin2Document>): IPopulatedSkin2Document {
     if (!skin || !isPopulatedSkin2Document(skin)) {
         throw new MineSkinError('skin_not_found', 'Skin not found', {httpCode: 404});
     }
@@ -149,13 +161,7 @@ export async function v2GetSkin(req: MineSkinV2Request, res: Response<V2SkinResp
         }
     }
 
-    req.links.skin = `/v2/skins/${ skin.uuid }`;
-    req.links.self = req.links.skin;
-
-    return {
-        success: true,
-        skin: V2GenerateHandler.skinToJson(skin)
-    };
+    return skin!;
 }
 
 function skinToSimpleJson(skin: ISkin2Document | IPopulatedSkin2Document): ListedSkin {

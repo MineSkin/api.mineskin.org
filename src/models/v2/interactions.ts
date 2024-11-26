@@ -2,8 +2,8 @@ import { MineSkinV2Request } from "../../routes/v2/types";
 import { Response } from "express";
 import { V2ResponseBody } from "../../typings/v2/V2ResponseBody";
 import { UUID } from "../../validation/misc";
-import { isPopulatedSkin2Document, Skin2 } from "@mineskin/database";
-import { MineSkinError, SkinVisibility2 } from "@mineskin/types";
+import { Skin2 } from "@mineskin/database";
+import { MineSkinError } from "@mineskin/types";
 import { IRedisProvider, TYPES as CoreTypes } from "@mineskin/core";
 import { container } from "../../inversify.config";
 import { SkinService } from "@mineskin/generator";
@@ -12,6 +12,7 @@ import { Discord } from "../../util/Discord";
 import { ReportReqBody } from "../../validation/report";
 import { verifyTurnstileToken } from "../../util/turnstile";
 import { getIp } from "../../util";
+import { validateRequestedSkin } from "./skins";
 
 export async function v2AddView(req: MineSkinV2Request, res: Response<V2ResponseBody>) {
     const uuid = UUID.parse(req.params.uuid);
@@ -59,10 +60,8 @@ export async function v2ReportSkin(req: MineSkinV2Request, res: Response<V2Respo
 
     const {reason} = ReportReqBody.parse(req.body);
 
-    const skin = await container.get<SkinService>(GeneratorTypes.SkinService).findForUuid(uuid);
-    if (!skin || !isPopulatedSkin2Document(skin) || skin.meta.visibility === SkinVisibility2.PRIVATE) {
-        throw new MineSkinError('skin_not_found', 'Skin not found', {httpCode: 404});
-    }
+    let skin = await container.get<SkinService>(GeneratorTypes.SkinService).findForUuid(uuid);
+    skin = validateRequestedSkin(req, skin);
 
     const userId = req.client.userId!;
 
