@@ -118,7 +118,7 @@ export async function v2GetSkin(req: MineSkinV2Request, res: Response<V2SkinResp
     if (uuidOrShort.length === 8) {
         skin = await skinService.findForShortId(uuidOrShort);
     } else {
-        skin = skinService.findForUuid(stripUuid(uuidOrShort));
+        skin = await skinService.findForUuid(stripUuid(uuidOrShort));
     }
 
     const flags = container.get<IFlagProvider>(CoreTypes.FlagProvider);
