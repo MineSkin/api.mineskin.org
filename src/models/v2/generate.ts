@@ -13,6 +13,7 @@ import {
     MAX_IMAGE_SIZE,
     MongoGeneratorClient,
     QueueOptions,
+    RedisProvider,
     SkinService,
     TrafficService,
     TYPES as GeneratorTypes
@@ -24,6 +25,8 @@ import {
     GenerateRequest,
     GenerateResult,
     GenerateType,
+    JobInfo,
+    JobStatus,
     MineSkinError,
     SkinVariant,
     SkinVisibility2,
@@ -41,10 +44,11 @@ import { IPopulatedSkin2Document, IQueueDocument, isPopulatedSkin2Document } fro
 import { GenerateReqOptions, GenerateTimeout } from "../../validation/generate";
 import { V2MiscResponseBody } from "../../typings/v2/V2MiscResponseBody";
 import { V2JobListResponse } from "../../typings/v2/V2JobListResponse";
-import { ObjectId } from "../../validation/misc";
+import { ObjectId as ZObjectId } from "../../validation/misc";
 import { V2UserHandler } from "../../generator/v2/V2UserHandler";
 import { container } from "../../inversify.config";
 import { Log } from "../../Log";
+import { TYPES as CoreTypes } from "@mineskin/core/dist/ditypes";
 
 const upload = multer({
     limits: {
@@ -121,6 +125,18 @@ export async function v2GenerateEnqueue(req: GenerateV2Request, res: Response<V2
         req.links.skin = `/v2/skins/${ skin.id }`;
         const queried = await querySkinOrThrow(skin.id);
 
+        let jobInfo: JobInfo;
+        if (job) {
+            jobInfo = {
+                id: job?.id || null,
+                status: job?.status || 'completed',
+                timestamp: job?.createdAt?.getTime() || 0,
+                result: skin.id
+            };
+        } else {
+            jobInfo = await saveFakeJob(skin.id);
+        }
+
         res.status(200);
         return {
             success: true,
@@ -128,12 +144,7 @@ export async function v2GenerateEnqueue(req: GenerateV2Request, res: Response<V2
                 code: 'skin_found',
                 message: "Found existing skin"
             }],
-            job: {
-                id: job?.id || null,
-                status: job?.status || 'completed',
-                timestamp: job?.createdAt?.getTime() || 0,
-                result: skin.id
-            },
+            job: jobInfo,
             skin: V2GenerateHandler.skinToJson(queried, skin.duplicate),
             rateLimit: V2GenerateHandler.makeRateLimitInfo(req)
         };
@@ -155,14 +166,43 @@ export async function v2GenerateEnqueue(req: GenerateV2Request, res: Response<V2
 }
 
 export async function v2GetJob(req: GenerateV2Request, res: Response<V2GenerateResponseBody | V2JobResponse>): Promise<V2JobResponse> {
-    const jobId = ObjectId.parse(req.params.jobId);
+    const jobId = ZObjectId.parse(req.params.jobId);
+
+    req.links.job = `/v2/queue/${ jobId }`;
+    req.links.self = req.links.job;
+
+    if (jobId.startsWith('f4k3')) {
+        const fakeJob = await getFakeJob(jobId);
+        // if (!fakeJob) {
+        //     throw new GeneratorError('job_not_found', `Fake job not found: ${ jobId }`, {httpCode: 404});
+        // }
+
+        if (fakeJob && fakeJob.status === 'completed') {
+            const result = fakeJob.result!;
+            req.links.skin = `/v2/skins/${ result }`;
+            const queried = await querySkinOrThrow(result);
+            return {
+                success: true,
+                messages: [{
+                    code: 'job_completed',
+                    message: "Job completed"
+                }],
+                job: {
+                    id: fakeJob.id,
+                    status: fakeJob.status || 'completed',
+                    timestamp: fakeJob.timestamp || 0,
+                    result: result
+                },
+                skin: V2GenerateHandler.skinToJson(queried, false)
+            };
+        }
+    }
+
     const job = await getClient().getJob(jobId);
     if (!job) {
         throw new GeneratorError('job_not_found', `Job not found: ${ jobId }`, {httpCode: 404});
     }
 
-    req.links.job = `/v2/queue/${ jobId }`;
-    req.links.self = req.links.job;
     req.links.image = `/v2/images/${ job.request.image }`;
 
     if (job.status === 'completed') {
@@ -482,6 +522,28 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
     };
     const job = await getClient().submitRequest(request, queueOptions);
     return {job};
+}
+
+async function saveFakeJob(result: string, status: JobStatus = 'completed'): Promise<JobInfo> {
+    const id = 'f4k3' + result.substring(4, 24);
+    const job: JobInfo = {
+        id: id,
+        status: status,
+        timestamp: Date.now(),
+        result: result
+    };
+    const redis = container.get<RedisProvider>(CoreTypes.RedisProvider);
+    await redis.client.set(`mineskin:fake-job:${ job.id }`, JSON.stringify(job), {
+        EX: 60 * 60
+    });
+    return job;
+}
+
+async function getFakeJob(id: string): Promise<Maybe<JobInfo>> {
+    const redis = container.get<RedisProvider>(CoreTypes.RedisProvider);
+    const data = await redis.client.get(`mineskin:fake-job:${ id }`);
+    if (!data) return undefined;
+    return JSON.parse(data);
 }
 
 function getAndValidateOptions(req: GenerateV2Request): GenerateOptions {
