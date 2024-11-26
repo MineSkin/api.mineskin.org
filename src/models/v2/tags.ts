@@ -2,13 +2,13 @@ import { MineSkinV2Request } from "../../routes/v2/types";
 import { Response } from "express";
 import { V2ResponseBody } from "../../typings/v2/V2ResponseBody";
 import { UUID } from "../../validation/misc";
-import { SkinTag } from "@mineskin/database";
+import { ISkinTagDocument, SkinTag } from "@mineskin/database";
 import { container } from "../../inversify.config";
 import { MineSkinError, TagVoteType } from "@mineskin/types";
 import { TagVoteReqBody } from "../../validation/tags";
 import { SkinService, TYPES as GeneratorTypes } from "@mineskin/generator";
 import * as Sentry from "@sentry/node";
-import { IMetricsProvider } from "@mineskin/core";
+import { IFlagProvider, IMetricsProvider } from "@mineskin/core";
 import { TYPES as CoreTypes } from "@mineskin/core/dist/ditypes";
 import { HOSTNAME } from "../../util/host";
 import { verifyTurnstileToken } from "../../util/turnstile";
@@ -22,13 +22,36 @@ export async function getSkinTags(req: MineSkinV2Request, res: Response<V2Respon
     let skin = await container.get<SkinService>(GeneratorTypes.SkinService).findForUuid(uuid);
     skin = validateRequestedSkin(req, skin);
 
+    const flags = container.get<IFlagProvider>(CoreTypes.FlagProvider);
+    const threshold = Number(await flags.getValue('tags.vote_threshold.visible'));
+
     if (!skin.tags) {
         skin.tags = [];
     }
 
+    const userFilter: (tag: ISkinTagDocument) => boolean = t => !!req.client.userId &&
+        (t.upvoters.includes(req.client.userId) || t.downvoters.includes(req.client.userId));
+    const voteMapper = (tag: ISkinTagDocument): TagVoteType | null => {
+        if (!req.client.userId) {
+            return null;
+        }
+        if (tag.upvoters.includes(req.client.userId)) {
+            return TagVoteType.UP;
+        }
+        if (tag.downvoters.includes(req.client.userId)) {
+            return TagVoteType.DOWN;
+        }
+        return null;
+    }
+
     return {
         success: true,
-        tags: skin.tags.map(t => ({tag: t.tag}))
+        tags: skin.tags
+            .filter(t => t.votes >= threshold || userFilter(t))
+            .map(t => ({
+                tag: t.tag,
+                vote: voteMapper(t)
+            }))
     }
 }
 
