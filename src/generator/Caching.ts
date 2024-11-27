@@ -326,6 +326,12 @@ export class Caching {
     /// REQUESTS
 
     public static getSkinData(uuid: string, invalidate?: boolean): Promise<ProfileSkinData> {
+        AuditLogBuilder.create()
+            .context('account')
+            .action('get_skin_data')
+            .resource('account', uuid)
+            .meta('invalidate', invalidate || false)
+            .insert();
         if (invalidate) {
             this.skinDataCache.invalidate(uuid);
         }
@@ -418,7 +424,7 @@ export class Caching {
             .context('account')
             .action('lock')
             .resource('account', accountId)
-            .meta('breadcrumb', bread?.breadcrumbId||'')
+            .meta('breadcrumb', bread?.breadcrumbId || '')
             .insert();
     }
 

@@ -78,7 +78,7 @@ import {
     SkinVisibility
 } from "@mineskin/types";
 import { Accounts } from "./Accounts";
-import { GeneratorError, GenError, StatsHandler, TYPES as GeneratorTypes } from "@mineskin/generator";
+import { AuditLogBuilder, GeneratorError, GenError, StatsHandler, TYPES as GeneratorTypes } from "@mineskin/generator";
 import { trackRedisGenerated } from "../database/redis";
 import { Log } from "../Log";
 import { container } from "../inversify.config";
@@ -1092,6 +1092,16 @@ export class Generator {
     }
 
     protected static async changeSkinUrl(account: IAccountDocument, url: string, variant: string, breadcrumb?: string): Promise<AxiosResponse> {
+        AuditLogBuilder.create()
+            .context('account')
+            .action('upload_skin')
+            .resource('account', account.uuid)
+            .meta({
+                variant: variant,
+                method: 'url',
+                breadcrumb: breadcrumb
+            })
+            .insert();
         const body = {
             variant: variant,
             url: url
@@ -1269,6 +1279,16 @@ export class Generator {
     }
 
     protected static async changeSkinUpload(account: IAccountDocument, file: Buffer, variant: string, breadcrumb?: string): Promise<AxiosResponse> {
+        AuditLogBuilder.create()
+            .context('account')
+            .action('upload_skin')
+            .resource('account', account.uuid)
+            .meta({
+                variant: variant,
+                method: 'upload',
+                breadcrumb: breadcrumb
+            })
+            .insert();
         const body = new FormData();
         body.append("variant", variant);
         body.append("file", file, {
@@ -1316,6 +1336,15 @@ export class Generator {
             const skinChangeResponse = skinResponse.data as SkinChangeResponse;
             const minecraftSkinId = skinChangeResponse?.skins[0]?.id;
 
+            AuditLogBuilder.create()
+                .context('account')
+                .action('skin_changed')
+                .resource('account', account.uuid)
+                .meta({
+                    minecraftSkinId: minecraftSkinId,
+                    breadcrumb: options.breadcrumbId
+                })
+                .insert();
 
             const config = await getConfig();
 
@@ -1335,8 +1364,28 @@ export class Generator {
                 account.forcedTimeoutAt = Math.floor(Date.now() / 1000);
                 account.errorCounter++;
                 account.totalErrorCounter++;
+                AuditLogBuilder.create()
+                    .context('account')
+                    .action('inc_errors')
+                    .resource('account', account.uuid)
+                    .meta({
+                        reason: 'url_mismatch',
+                        errorCounter: account.errorCounter,
+                        breadcrumb: options.breadcrumbId
+                    })
+                    .insert();
                 console.warn(warn(options.breadcrumb + " [Generator] Account #" + account.id + " forced timeout (url mismatch)"));
                 console.debug(JSON.stringify(skinChangeResponse));
+                AuditLogBuilder.create()
+                    .context('account')
+                    .action('url_mismatch')
+                    .resource('account', account.uuid)
+                    .meta({
+                        changedTo: skinChangeResponse.skins[0].url,
+                        textureData: data.decodedValue!.textures!.SKIN!.url,
+                        breadcrumb: options.breadcrumbId
+                    })
+                    .insert();
             }
             const mojangHash = await this.getMojangHash(data.decodedValue!.textures!.SKIN!.url, options);
 
