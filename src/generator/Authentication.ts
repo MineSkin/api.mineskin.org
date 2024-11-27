@@ -18,6 +18,7 @@ import { Discord } from "../util/Discord";
 import { container } from "../inversify.config";
 import { IMetricsProvider, TYPES as CoreTypes } from "@mineskin/core";
 import { HOSTNAME } from "../util/host";
+import { AuditLogBuilder } from "@mineskin/generator";
 
 const ACCESS_TOKEN_EXPIRATION_MOJANG = 86360;
 const ACCESS_TOKEN_EXPIRATION_MICROSOFT = 86360;
@@ -284,6 +285,13 @@ export class Microsoft {
         }
 
         console.log(debug(bread?.breadcrumb + " [Auth] Refreshing " + account.toSimplifiedString()));
+        AuditLogBuilder.create()
+            .context('auth')
+            .action('refresh_access_token')
+            .resource('account', account.uuid)
+            .meta('breadcrumb', bread?.breadcrumbId || '')
+            .insert();
+
         const newMinecraftAccessToken = await Microsoft.refreshXboxAccessToken(account.microsoftAuth.auth.refreshToken, true, xboxInfo => {
             account.microsoftAuth = xboxInfo.msa as MicrosoftAuthInfo;
         }).catch(err => {
@@ -600,6 +608,12 @@ export class Authentication {
                 .tag("account", account.id)
                 .tag("genEnv", "api");
             try {
+                AuditLogBuilder.create()
+                    .context('auth')
+                    .action('authenticate')
+                    .resource('account', account.uuid)
+                    .meta('breadcrumb', bread?.breadcrumbId || '')
+                    .insert();
                 let prevAccessTokenExpiration = account.accessTokenExpiration;
                 let result: IAccountDocument;
                 if (account.accountType === AccountType.MICROSOFT) {

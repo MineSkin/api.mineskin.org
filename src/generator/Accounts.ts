@@ -11,6 +11,7 @@ import { FilterQuery } from "mongoose";
 import { IMetricsProvider, TYPES as CoreTypes } from "@mineskin/core";
 import { container } from "../inversify.config";
 import { HOSTNAME } from "../util/host";
+import { AuditLogBuilder } from "@mineskin/generator";
 
 export class Accounts {
 
@@ -42,7 +43,15 @@ export class Accounts {
                 })
                 return Accounts.findUsable(bread);
             }
-            Caching.lockSelectedAccount(account.id, bread);
+            Caching.lockSelectedAccount(account.uuid, bread);
+
+            AuditLogBuilder.create()
+                .context('account')
+                .action('select')
+                .resource('account', account.uuid)
+                .meta('breadcrumb', bread?.breadcrumbId || '')
+                .meta('requestServer', account.requestServer || '')
+                .insert();
 
             let usedDiff = Math.round(time - (account.lastUsed || 0));
             let selectedDiff = Math.round(time - (account.lastSelected || 0));
@@ -168,7 +177,7 @@ export class Accounts {
         let allowedRequestServers: string[] = ["default", ...await Generator.getRequestServers()];
         return {
             enabled: true,
-            id: {$nin: Caching.getLockedAccounts()},
+            uuid: {$nin: Caching.getLockedAccounts()},
             $and: [
                 {
                     $or: [
