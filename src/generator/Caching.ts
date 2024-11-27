@@ -321,6 +321,9 @@ export class Caching {
             console.log('Received apikey invalidation message', message, channel);
             this.apiKeyCache.invalidate(message);
         })
+        redis.sub.subscribe('mineskin:account:lock', (message, channel) => {
+            this.recentAccountsLock.put(message, message);
+        });
     }
 
     /// REQUESTS
@@ -420,6 +423,7 @@ export class Caching {
         redis.client.set(`mineskin:account:lock:${ accountId }`, `${ bread?.breadcrumb ?? accountId }`, {
             EX: 30
         }).catch(e => Sentry.captureException(e));
+        redis.pub.publish('mineskin:account:lock', accountId).catch(e => Sentry.captureException(e));
         AuditLogBuilder.create()
             .context('account')
             .action('lock')
