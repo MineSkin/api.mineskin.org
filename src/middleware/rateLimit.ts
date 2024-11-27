@@ -3,6 +3,7 @@ import { NextFunction, Response } from "express";
 import { GeneratorError, TrafficService, TYPES as GeneratorTypes } from "@mineskin/generator";
 import { container } from "../inversify.config";
 import { IFlagProvider, TYPES as CoreTypes } from "@mineskin/core";
+import { Log } from "../Log";
 
 export const rateLimitMiddlewareWithDelay = async (req: GenerateV2Request, res: Response, next: NextFunction) => {
     await verifyRateLimit(req, res, true);
@@ -27,6 +28,7 @@ export const globalDelayRateLimitMiddleware = async (req: GenerateV2Request, res
         res.header('X-RateLimit-NextRequest', `${ req.nextRequest }`);
         if (req.nextRequest > req.clientInfo.time) {
             res.header('Retry-After', `${ Math.round((req.nextRequest - Date.now()) / 1000) }`);
+            Log.l.warn(`${ req.client.apiKeyRef }/${ req.client.userAgent } speed limit exceeded, ${ req.nextRequest } > ${ req.clientInfo.time }`);
             throw new GeneratorError('rate_limit', `request too soon, next request in ${ ((Math.round(req.nextRequest - Date.now()) / 100) * 100) }ms`, {httpCode: 429});
         }
     }
@@ -47,6 +49,7 @@ export const globalPerMinuteRateLimitMiddleware = async (req: GenerateV2Request,
         res.header('X-RateLimit-Limit', `${ req.maxPerMinute }`);
         res.header('X-RateLimit-Remaining', `${ req.maxPerMinute - req.requestsThisMinute }`);
         if (req.requestsThisMinute > req.maxPerMinute) {
+            Log.l.warn(`${ req.client.apiKeyRef }/${ req.client.userAgent } rate limit exceeded, ${ req.requestsThisMinute } > ${ req.maxPerMinute }`);
             throw new GeneratorError('rate_limit', `rate limit exceeded, ${ req.requestsThisMinute } > ${ req.maxPerMinute }`, {httpCode: 429});
         }
     }
@@ -62,12 +65,13 @@ export const globalConcurrencyLimitMiddleware = async (req: GenerateV2Request, r
 
     const trafficService = container.get<TrafficService>(GeneratorTypes.TrafficService);
     if (req.client.useConcurrencyLimit()) {
-        const flags =  container.get<IFlagProvider>(CoreTypes.FlagProvider);
+        const flags = container.get<IFlagProvider>(CoreTypes.FlagProvider);
         const block = await flags.isEnabled('generator.concurrency.block');
         req.concurrentRequests = await trafficService.getConcurrent(req.clientInfo);
         req.maxConcurrent = req.client.getConcurrencyLimit();
-        if (block && req.concurrentRequests >=  req.maxConcurrent) {
-            throw new GeneratorError('concurrency_limit', `concurrency limit exceeded, ${ req.concurrentRequests } > ${  req.maxConcurrent }`, {httpCode: 429});
+        if (block && req.concurrentRequests >= req.maxConcurrent) {
+            Log.l.warn(`${ req.client.apiKeyRef }/${ req.client.userAgent } concurrency limit exceeded, ${ req.concurrentRequests } > ${ req.maxConcurrent }`);
+            throw new GeneratorError('concurrency_limit', `concurrency limit exceeded, ${ req.concurrentRequests } > ${ req.maxConcurrent }`, {httpCode: 429});
         }
     }
 
@@ -89,6 +93,7 @@ export const verifyRateLimit = async (req: GenerateV2Request, res: Response, wit
         res.header('X-RateLimit-NextRequest', `${ req.nextRequest }`);
         if (req.nextRequest > req.clientInfo.time) {
             res.header('Retry-After', `${ Math.round((req.nextRequest - Date.now()) / 1000) }`);
+            Log.l.warn(`${ req.client.apiKeyRef }/${ req.client.userAgent } speed limit exceeded, ${ req.nextRequest } > ${ req.clientInfo.time }`);
             throw new GeneratorError('rate_limit', `request too soon, next request in ${ ((Math.round(req.nextRequest - Date.now()) / 100) * 100) }ms`, {httpCode: 429});
         }
     }
@@ -99,17 +104,19 @@ export const verifyRateLimit = async (req: GenerateV2Request, res: Response, wit
         res.header('X-RateLimit-Limit', `${ req.maxPerMinute }`);
         res.header('X-RateLimit-Remaining', `${ req.maxPerMinute - req.requestsThisMinute - 1 }`);
         if (req.requestsThisMinute >= req.maxPerMinute) {
+            Log.l.warn(`${ req.client.apiKeyRef }/${ req.client.userAgent } rate limit exceeded, ${ req.requestsThisMinute } > ${ req.maxPerMinute }`);
             throw new GeneratorError('rate_limit', `rate limit exceeded, ${ req.requestsThisMinute } > ${ req.maxPerMinute }`, {httpCode: 429});
         }
     }
 
     if (req.client.useConcurrencyLimit()) {
-        const flags =  container.get<IFlagProvider>(CoreTypes.FlagProvider);
+        const flags = container.get<IFlagProvider>(CoreTypes.FlagProvider);
         const block = await flags.isEnabled('generator.concurrency.block');
         req.concurrentRequests = await trafficService.getConcurrent(req.clientInfo);
         req.maxConcurrent = req.client.getConcurrencyLimit();
-        if (block && req.concurrentRequests >=  req.maxConcurrent) {
-            throw new GeneratorError('concurrency_limit', `concurrency limit exceeded, ${ req.concurrentRequests } > ${  req.maxConcurrent }`, {httpCode: 429});
+        if (block && req.concurrentRequests >= req.maxConcurrent) {
+            Log.l.warn(`${ req.client.apiKeyRef }/${ req.client.userAgent } concurrency limit exceeded, ${ req.concurrentRequests } > ${ req.maxConcurrent }`);
+            throw new GeneratorError('concurrency_limit', `concurrency limit exceeded, ${ req.concurrentRequests } > ${ req.maxConcurrent }`, {httpCode: 429});
         }
     }
 }
