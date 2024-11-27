@@ -247,8 +247,8 @@ export class Caching {
         .build();
 
     protected static readonly recentAccountsLock: AsyncLoadingCache<number, Maybe<string>> = Caches.builder()
-        .expireAfterWrite(Time.seconds(5))
-        .expirationInterval(Time.seconds(10))
+        .expireAfterWrite(Time.millis(500))
+        .expirationInterval(Time.seconds(5))
         .buildAsync(async id => {
             const redis = container.get<IRedisProvider>(CoreTypes.RedisProvider);
             const value = await redis.client.get(`mineskin:account:lock:${ id }`);
