@@ -34,8 +34,8 @@ export class Accounts {
                 })
                 return undefined;
             }
-            if (await Caching.isAccountLocked(account.id)) {
-                console.warn(warn(bread?.breadcrumb + " Selecting a different account since " + account.id + " got locked since querying"));
+            if (await Caching.isAccountLocked(account.uuid)) {
+                console.warn(warn(bread?.breadcrumb + " Selecting a different account since " + account.uuid + "/" + account.id + " got locked since querying"));
                 span?.setStatus({
                     code: 2,
                     message: "not_found"

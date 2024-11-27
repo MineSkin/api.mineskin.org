@@ -24,6 +24,8 @@ import { ApiKey, IApiKeyDocument, ISkinDocument, Skin, Traffic } from "@mineskin
 import { IMetricsProvider, IRedisProvider, TYPES as CoreTypes } from "@mineskin/core";
 import { container } from "../inversify.config";
 import { HOSTNAME } from "../util/host";
+import { AuditLogBuilder } from "@mineskin/generator";
+import { UUID } from "@mineskin/types";
 
 export class Caching {
 
@@ -246,7 +248,7 @@ export class Caching {
         .expirationInterval(Time.seconds(30))
         .build();
 
-    protected static readonly recentAccountsLock: AsyncLoadingCache<number, Maybe<string>> = Caches.builder()
+    protected static readonly recentAccountsLock: AsyncLoadingCache<string, Maybe<string>> = Caches.builder()
         .expireAfterWrite(Time.millis(500))
         .expirationInterval(Time.seconds(5))
         .buildAsync(async id => {
@@ -406,19 +408,25 @@ export class Caching {
         this.pendingDiscordLinkByStateCache.invalidate(state);
     }
 
-    public static lockSelectedAccount(accountId: number, bread?: Bread): void {
+    public static lockSelectedAccount(accountId: UUID, bread?: Bread): void {
         this.recentAccountsLock.put(accountId, bread?.breadcrumb ?? `${ accountId }`);
         const redis = container.get<IRedisProvider>(CoreTypes.RedisProvider);
         redis.client.set(`mineskin:account:lock:${ accountId }`, `${ bread?.breadcrumb ?? accountId }`, {
             EX: 30
         }).catch(e => Sentry.captureException(e));
+        AuditLogBuilder.create()
+            .context('account')
+            .action('lock')
+            .resource('account', accountId)
+            .meta('breadcrumb', bread?.breadcrumbId||'')
+            .insert();
     }
 
-    public static getLockedAccounts(): number[] {
+    public static getLockedAccounts(): UUID[] {
         return this.recentAccountsLock.keys();
     }
 
-    public static async isAccountLocked(accountId: number): Promise<boolean> {
+    public static async isAccountLocked(accountId: UUID): Promise<boolean> {
         return !!(await this.recentAccountsLock.get(accountId));
     }
 
