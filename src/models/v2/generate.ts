@@ -1,7 +1,7 @@
 import { GenerateV2Request } from "../../routes/v2/types";
 import * as Sentry from "@sentry/node";
 import multer, { MulterError } from "multer";
-import { Maybe } from "../../util";
+import { Maybe, sleep } from "../../util";
 import {
     DuplicateChecker,
     GeneratorError,
@@ -91,6 +91,7 @@ export async function v2GenerateAndWait(req: GenerateV2Request, res: Response<V2
         const timeoutSeconds = GenerateTimeout.parse(req.query.timeout);
         const result = await getClient().waitForJob(job.id, timeoutSeconds * 1000) as GenerateResult; //TODO: configure timeout
         Log.l.debug(JSON.stringify(result, null, 2));
+        await sleep(200);
         req.links.skin = `/v2/skins/${ result.skin }`;
         const queried = await querySkinOrThrow(result.skin);
         return {
