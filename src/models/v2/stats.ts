@@ -22,7 +22,7 @@ const statsWrapper = new class {
     private cached: Promise<any> | null = null;
     private time: number = 0;
 
-    async getCachedV2Stats() {
+    async getCachedV2Stats(): Promise<any> {
         if (!this.cached || Date.now() - this.time > 1000 * 60) {
             this.cached = this._queryStats();
             this.time = Date.now();

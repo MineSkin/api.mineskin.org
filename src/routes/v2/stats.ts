@@ -12,7 +12,7 @@ router.use(wildcardCors);
 
 router.get("/", expressAsyncHandler(async (req: MineSkinV2Request, res) => {
     const resp = await v2GetStats(req, res);
-    formatV2Response<V2MiscResponseBody>(req, resp);
+    res.json(formatV2Response<V2MiscResponseBody>(req, resp));
 }));
 
 export const v2StatsRouter: Router = router;
