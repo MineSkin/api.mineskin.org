@@ -98,23 +98,14 @@ async function requestAiTags(skin: IPopulatedSkin2Document) {
         if (!tags) return;
         Log.l.info(`Received AI tags for skin ${ skin.uuid }: ${ tags.join(', ') }`);
 
-        const tagObjects = tags
-            .filter(t => !skin.tags?.some(st => st.tag === t))
-            .map(t => new SkinTag({
-                tag: t,
-                votes: 1,
-                upvoters: [AI_TAG_USER],
-                downvoters: [],
-                status: 'suggested'
-            }));
-        skin.tags?.push(...tagObjects);
-        await Skin2.updateOne({uuid: skin.uuid}, {
-            $addToSet: {
-                tags: {
-                    $each: tagObjects
-                }
-            }
-        }).exec();
+        skin = (await Skin2.findForUuid(skin.uuid)) as IPopulatedSkin2Document;
+        if (!skin) return;
+        let promises: Promise<boolean>[] = [];
+        for (let tag of tags) {
+            promises.push(internalTagVote(skin, tag, TagVoteType.UP, AI_TAG_USER, false));
+        }
+        await Promise.all(promises);
+        await skin.save();
     } catch (e) {
         Sentry.captureException(e);
     }
@@ -133,27 +124,47 @@ export async function addSkinTagVote(req: MineSkinV2Request, res: Response<V2Res
         throw new MineSkinError('unauthorized', "Invalid Turnstile Token", {httpCode: 401});
     }
 
-    let skin = await container.get<SkinService>(GeneratorTypes.SkinService).findForUuid(uuid);
+    let skin = await Skin2.findForUuid(uuid);
     skin = validateRequestedSkin(req, skin);
 
+    const added = await internalTagVote(skin as IPopulatedSkin2Document, tag, vote, userId);
+    if (added) {
+        res.status(200).json({
+            success: true,
+            messages: [{code: "vote_added", message: "Vote added successfully"}]
+        });
+        try {
+            const metrics = container.get<IMetricsProvider>(CoreTypes.MetricsProvider);
+            metrics.getMetric('skin_tags')
+                .tag("server", HOSTNAME)
+                .tag("vote", vote)
+                .inc();
+        } catch (e) {
+            Sentry.captureException(e);
+        }
+    } else {
+        res.status(200).json({
+            success: true,
+            messages: [{code: "already_voted", message: "Already voted"}]
+        });
+    }
+
+}
+
+/**
+ * @returns true if the vote was added, false if the user already voted
+ */
+async function internalTagVote(skin: IPopulatedSkin2Document, tag: string, vote: TagVoteType, userId: string, save: boolean = true): Promise<boolean> {
     if (!skin.tags) {
         skin.tags = [];
     }
     let theTag = skin.tags.find(t => t.tag === tag);
     if (theTag) {
         if (vote === TagVoteType.UP && theTag.upvoters.includes(userId)) {
-           res.status(200).json({
-                success: true,
-                messages: [{code: "already_voted", message: "Already voted"}]
-            });
-            return;
+            return false;
         }
         if (vote === TagVoteType.DOWN && theTag.downvoters.includes(userId)) {
-            res.status(200).json({
-                success: true,
-                messages: [{code: "already_voted", message: "Already voted"}]
-            });
-            return;
+            return false;
         }
     }
     if (!theTag) {
@@ -168,28 +179,20 @@ export async function addSkinTagVote(req: MineSkinV2Request, res: Response<V2Res
         if (vote === TagVoteType.UP) {
             theTag.votes++;
             theTag.upvoters.push(userId);
-            theTag.downvoters = theTag.downvoters.filter(u => u !== req.client.userId);
+            theTag.downvoters = theTag.downvoters.filter(u => u !== userId);
         } else {
             theTag.votes--;
             theTag.downvoters.push(userId);
-            theTag.upvoters = theTag.upvoters.filter(u => u !== req.client.userId);
+            theTag.upvoters = theTag.upvoters.filter(u => u !== userId);
         }
         if (theTag.status === 'suggested') {
             theTag.status = 'pending';
+        } else if (userId === AI_TAG_USER) {
+            theTag.status = 'suggested';
         }
     }
-    await skin.save();
-    res.status(200).json({
-        success: true,
-        messages: [{code: "vote_added", message: "Vote added successfully"}]
-    });
-    try {
-        const metrics = container.get<IMetricsProvider>(CoreTypes.MetricsProvider);
-        metrics.getMetric('skin_tags')
-            .tag("server", HOSTNAME)
-            .tag("vote", vote)
-            .inc();
-    } catch (e) {
-        Sentry.captureException(e);
+    if (save) {
+        await skin.save();
     }
+    return true;
 }
