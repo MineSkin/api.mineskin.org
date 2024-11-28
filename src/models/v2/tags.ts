@@ -78,6 +78,7 @@ async function requestAiTags(skin: IPopulatedSkin2Document) {
         ]);
         if (!taggingEnabled) return;
         if (Math.random() > Number(taggingChanceStr)) return;
+        Log.l.info(`Requesting AI tags for skin ${ skin.uuid }`);
         const res = await Requests.genericRequest({
             method: 'GET',
             url: process.env.AI_TAG_ENDPOINT,
