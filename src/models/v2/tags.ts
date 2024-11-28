@@ -152,22 +152,22 @@ export async function addSkinTagVote(req: MineSkinV2Request, res: Response<V2Res
     if (!theTag) {
         theTag = new SkinTag({
             tag: tag,
-            votes: 0,
-            upvoters: [],
-            downvoters: []
+            votes: vote === TagVoteType.UP ? 1 : -1,
+            upvoters: vote === TagVoteType.UP ? [userId] : [],
+            downvoters: vote === TagVoteType.DOWN ? [userId] : [],
         });
         skin.tags.push(theTag);
-    }
-    if (vote === TagVoteType.UP) {
-        theTag.votes++;
-        theTag.upvoters.push(userId);
-        theTag.downvoters = theTag.downvoters.filter(u => u !== req.client.userId);
     } else {
-        theTag.votes--;
-        theTag.downvoters.push(userId);
-        theTag.upvoters = theTag.upvoters.filter(u => u !== req.client.userId);
+        if (vote === TagVoteType.UP) {
+            theTag.votes++;
+            theTag.upvoters.push(userId);
+            theTag.downvoters = theTag.downvoters.filter(u => u !== req.client.userId);
+        } else {
+            theTag.votes--;
+            theTag.downvoters.push(userId);
+            theTag.upvoters = theTag.upvoters.filter(u => u !== req.client.userId);
+        }
     }
-    skin.markModified('tags');
     await skin.save();
     res.status(200).json({
         success: true,
