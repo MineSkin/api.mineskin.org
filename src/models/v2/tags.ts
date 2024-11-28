@@ -142,11 +142,17 @@ export async function addSkinTagVote(req: MineSkinV2Request, res: Response<V2Res
     let theTag = skin.tags.find(t => t.tag === tag);
     if (theTag) {
         if (vote === TagVoteType.UP && theTag.upvoters.includes(userId)) {
-            res.status(204).end();
+           res.status(200).json({
+                success: true,
+                messages: [{code: "already_voted", message: "Already voted"}]
+            });
             return;
         }
         if (vote === TagVoteType.DOWN && theTag.downvoters.includes(userId)) {
-            res.status(204).end();
+            res.status(200).json({
+                success: true,
+                messages: [{code: "already_voted", message: "Already voted"}]
+            });
             return;
         }
     }
