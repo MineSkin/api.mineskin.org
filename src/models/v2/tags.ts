@@ -99,18 +99,18 @@ async function requestAiTags(skin: IPopulatedSkin2Document) {
 
         const tagObjects = tags
             .filter(t => !skin.tags?.some(st => st.tag === t))
-            .map(t => ({
+            .map(t => new SkinTag({
                 tag: t,
                 votes: 1,
                 upvoters: [AI_TAG_USER],
                 downvoters: [],
                 status: 'suggested'
             }));
+        skin.tags?.push(...tagObjects);
         await Skin2.updateOne({uuid: skin.uuid}, {
-            $push: {
+            $addToSet: {
                 tags: {
-                    $each: tagObjects,
-                    $position: 0
+                    $each: tagObjects
                 }
             }
         }).exec();
