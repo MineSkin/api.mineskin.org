@@ -58,7 +58,8 @@ export async function getSkinTags(req: MineSkinV2Request, res: Response<V2Respon
             .filter(t => t.votes >= threshold || userFilter(t))
             .map(t => ({
                 tag: t.tag,
-                vote: voteMapper(t)
+                vote: voteMapper(t),
+                suggested: t.status === 'suggested',
             }))
     }
 }
