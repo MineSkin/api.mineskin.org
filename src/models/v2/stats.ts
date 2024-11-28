@@ -18,15 +18,15 @@ export async function v2GetStats(req: MineSkinV2Request, res: Response<V2Respons
 //TODO
 const statsWrapper = new class {
 
-    private cached: any = null;
+    private cached: Promise<any> | null = null;
     private time: number = 0;
 
     async getCachedV2Stats() {
         if (!this.cached || Date.now() - this.time > 1000 * 60) {
-            this.cached = await this._queryStats();
+            this.cached = this._queryStats();
             this.time = Date.now();
         }
-        return this.cached;
+        return await this.cached;
     }
 
     async _queryStats() {
