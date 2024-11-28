@@ -155,10 +155,11 @@ export async function addSkinTagVote(req: MineSkinV2Request, res: Response<V2Res
  * @returns true if the vote was added, false if the user already voted
  */
 async function internalTagVote(skin: IPopulatedSkin2Document, tag: string, vote: TagVoteType, userId: string, save: boolean = true): Promise<boolean> {
+    tag = tag.toLowerCase();
     if (!skin.tags) {
         skin.tags = [];
     }
-    let theTag = skin.tags.find(t => t.tag === tag);
+    let theTag = skin.tags.find(t => t.tag.toLowerCase() === tag);
     if (theTag) {
         if (vote === TagVoteType.UP && theTag.upvoters.includes(userId)) {
             return false;
