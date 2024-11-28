@@ -67,6 +67,7 @@ export class V2GenerateHandler {
         }
         return {
             uuid: skin.uuid,
+            shortId: skin.shortId,
             name: skin.meta.name,
             visibility: skin.meta.visibility,
             variant: skin.meta.variant,
