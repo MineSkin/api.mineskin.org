@@ -35,7 +35,7 @@ export class Accounts {
                 })
                 return undefined;
             }
-            if (await Caching.isAccountLocked(account.uuid)) {
+            if (await Caching.isAccountLocked(account.uuid, bread?.breadcrumbId || '')) {
                 console.warn(warn(bread?.breadcrumb + " Selecting a different account since " + account.uuid + "/" + account.id + " got locked since querying"));
                 span?.setStatus({
                     code: 2,
@@ -43,7 +43,7 @@ export class Accounts {
                 })
                 return Accounts.findUsable(bread);
             }
-            Caching.lockSelectedAccount(account.uuid, bread);
+            await Caching.lockSelectedAccount(account.uuid, bread?.breadcrumbId || '');
 
             AuditLogBuilder.create()
                 .context('account')

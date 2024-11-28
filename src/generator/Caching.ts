@@ -16,7 +16,6 @@ import { BasicMojangProfile } from "./Authentication";
 import { ProfileSkinData } from "../typings/SkinData";
 import { User } from "../typings/User";
 import { ProfileResponse } from "../typings/ProfileResponse";
-import { Bread } from "../typings/Bread";
 import { IPendingDiscordLink } from "../typings/DiscordAccountLink";
 import { Time } from "@inventivetalent/time";
 import { MojangAccountLink } from "../typings/MojangAccountLink";
@@ -322,7 +321,8 @@ export class Caching {
             this.apiKeyCache.invalidate(message);
         })
         redis.sub.subscribe('mineskin:account:lock', (message, channel) => {
-            this.recentAccountsLock.put(message, message);
+            const [server, account, lock] = message.split(':');
+            this.recentAccountsLock.put(account, lock);
         });
     }
 
@@ -417,33 +417,41 @@ export class Caching {
         this.pendingDiscordLinkByStateCache.invalidate(state);
     }
 
-    public static lockSelectedAccount(accountId: UUID, bread?: Bread): void {
-        this.recentAccountsLock.put(accountId, bread?.breadcrumb ?? `${ accountId }`);
+    public static async lockSelectedAccount(accountId: UUID, breadcrumb: string): Promise<string> {
+        const lock = breadcrumb ?? `${ accountId }`;
+        this.recentAccountsLock.put(accountId, lock);
         const redis = container.get<IRedisProvider>(CoreTypes.RedisProvider);
-        redis.client.set(`mineskin:account:lock:${ accountId }`, `${ bread?.breadcrumb ?? accountId }`, {
-            EX: 30
-        }).catch(e => Sentry.captureException(e));
-        redis.pub.publish('mineskin:account:lock', accountId).catch(e => Sentry.captureException(e));
         AuditLogBuilder.create()
             .context('account')
             .action('lock')
             .resource('account', accountId)
-            .meta('breadcrumb', bread?.breadcrumbId || '')
+            .meta('breadcrumb', breadcrumb)
             .insert();
+        await redis.pub.publish('mineskin:account:lock', `${ HOSTNAME }:${ accountId }:${ lock }`).catch(e => Sentry.captureException(e));
+        await redis.client.set(`mineskin:account:lock:${ accountId }`, lock, {
+            EX: 30
+        }).catch(e => Sentry.captureException(e));
+        return lock;
     }
 
     public static getLockedAccounts(): UUID[] {
         return this.recentAccountsLock.keys();
     }
 
-    public static async isAccountLocked(accountId: UUID): Promise<boolean> {
+    public static async getAccountLock(accountId: UUID, breadcrumb: string): Promise<string> {
         const val = await this.recentAccountsLock.get(accountId);
         AuditLogBuilder.create()
             .context('account')
             .action('check_lock')
             .resource('account', accountId)
             .meta('locked', val || false)
+            .meta('breadcrumb', breadcrumb)
             .insert();
+        return val!;
+    }
+
+    public static async isAccountLocked(accountId: UUID, breadcrumb: string): Promise<boolean> {
+        const val = await this.getAccountLock(accountId, breadcrumb);
         if (!val) {
             this.recentAccountsLock.invalidate(accountId);
             return false;
