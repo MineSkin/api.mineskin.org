@@ -17,7 +17,7 @@ router.use((req: MineSkinV2Request, res, next) => {
 
 router.get("/", expressAsyncHandler(async (req: MineSkinV2Request, res) => {
     const usage = await v2GetUsageInfo(req, res);
-    formatV2Response<V2MiscResponseBody>(req, {usage});
+    res.json(formatV2Response<V2MiscResponseBody>(req, {usage}));
 }));
 
 export const v2UsageRouter: Router = router;
