@@ -472,6 +472,7 @@ export const register = (app: Application) => {
             const checkOnly = !!(req.body["checkOnly"] || req.query["checkOnly"])
 
             const breadcrumb = req.breadcrumb;
+            const breadcrumbId = req.breadcrumbId;
 
             console.log(debug(`${ breadcrumb } Type:        ${ type }`))
             console.log(debug(`${ breadcrumb } Variant:     ${ variant }`));
@@ -494,6 +495,7 @@ export const register = (app: Application) => {
                 visibility,
                 name,
                 breadcrumb,
+                breadcrumbId,
                 checkOnly
             };
         })
