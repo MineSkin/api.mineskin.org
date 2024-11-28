@@ -5,6 +5,7 @@ import { container } from "../../inversify.config";
 import { IRedisProvider } from "@mineskin/core";
 import { TYPES as CoreTypes } from "@mineskin/core/dist/ditypes";
 import { V2MiscResponseBody } from "../../typings/v2/V2MiscResponseBody";
+import { Log } from "../../Log";
 
 
 export async function v2GetStats(req: MineSkinV2Request, res: Response<V2ResponseBody>): Promise<V2MiscResponseBody> {
@@ -53,6 +54,8 @@ const statsWrapper = new class {
             thisHourNew,
             thisHourDup
         ] = timeMGet;
+
+        Log.l.debug(`redis stats query took ${ Date.now() - date.getTime() }ms`);
 
         return {
             raw: {
