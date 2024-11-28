@@ -438,6 +438,12 @@ export class Caching {
 
     public static async isAccountLocked(accountId: UUID): Promise<boolean> {
         const val = await this.recentAccountsLock.get(accountId);
+        AuditLogBuilder.create()
+            .context('account')
+            .action('check_lock')
+            .resource('account', accountId)
+            .meta('locked', val || false)
+            .insert();
         if (!val) {
             this.recentAccountsLock.invalidate(accountId);
             return false;
