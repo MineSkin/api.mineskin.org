@@ -167,6 +167,9 @@ export async function addSkinTagVote(req: MineSkinV2Request, res: Response<V2Res
             theTag.downvoters.push(userId);
             theTag.upvoters = theTag.upvoters.filter(u => u !== req.client.userId);
         }
+        if (theTag.status === 'suggested') {
+            theTag.status = 'pending';
+        }
     }
     await skin.save();
     res.status(200).json({
