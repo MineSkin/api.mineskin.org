@@ -437,7 +437,12 @@ export class Caching {
     }
 
     public static async isAccountLocked(accountId: UUID): Promise<boolean> {
-        return !!(await this.recentAccountsLock.get(accountId));
+        const val = await this.recentAccountsLock.get(accountId);
+        if (!val) {
+            this.recentAccountsLock.invalidate(accountId);
+            return false;
+        }
+        return true;
     }
 
     public static cachedSha512(str: string): string {
