@@ -160,7 +160,7 @@ export async function addSkinTagVote(req: MineSkinV2Request, res: Response<V2Res
  * @returns true if the vote was added, false if the user already voted
  */
 async function internalTagVote(skin: IPopulatedSkin2Document, tag: string, vote: TagVoteType, userId: string, save: boolean = true): Promise<boolean> {
-    tag = tag.toLowerCase();
+    tag = tag.toLowerCase().replace(/[^a-z- ]/g, ' ').trim();
     if (!skin.tags) {
         skin.tags = [];
     }
