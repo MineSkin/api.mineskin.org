@@ -7,7 +7,7 @@ import { TYPES as CoreTypes } from "@mineskin/core/dist/ditypes";
 import { V2MiscResponseBody } from "../../typings/v2/V2MiscResponseBody";
 import { Log } from "../../Log";
 import { ONE_DAY_SECONDS } from "../../util";
-
+import * as Sentry from "@sentry/node";
 
 export async function v2GetStats(req: MineSkinV2Request, res: Response<V2ResponseBody>): Promise<V2MiscResponseBody> {
     const stats = await statsWrapper.getCachedV2Stats();
@@ -25,7 +25,12 @@ const statsWrapper = new class {
 
     async getCachedV2Stats(): Promise<any> {
         if (!this.cached || Date.now() - this.time > 1000 * 60) {
-            this.cached = this._queryStats();
+            try {
+                this.cached = this._queryStats();
+            } catch (e) {
+                Sentry.captureException(e);
+                return;
+            }
             this.time = Date.now();
         }
         return await this.cached;
