@@ -80,13 +80,19 @@ const statsWrapper = new class {
         const statsKeys = await redis.client.keys('mineskin:generator:stats:*');
         const genStatsHelper = new MGetHelper();
         const capacities: MGetGetter[] = [];
+        const activities: MGetGetter[] = [];
         for (const key of statsKeys) {
-            if(!key.endsWith('capacity')) continue;
-            capacities.push(genStatsHelper.add(key));
+            if(key.endsWith('capacity')) {
+                capacities.push(genStatsHelper.add(key));
+            }
+            if (key.endsWith('active')) {
+                activities.push(genStatsHelper.add(key));
+            }
         }
         const genStatsResult = await genStatsHelper.execute(redis);
 
         const globalCapacity = capacities.reduce((acc, cur) => acc + parseInt(cur.toString()), 0);
+        const globalActive = activities.reduce((acc, cur) => acc + parseInt(cur.toString()), 0);
 
         Log.l.debug(`redis stats query took ${ Date.now() - date.getTime() }ms`);
 
@@ -116,6 +122,9 @@ const statsWrapper = new class {
             generator: {
                 capacity: {
                     global: globalCapacity
+                },
+                active: {
+                    global: globalActive
                 }
             }
         };
