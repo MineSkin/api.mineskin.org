@@ -33,7 +33,10 @@ const statsWrapper = new class {
             }
             this.time = Date.now();
         }
-        return await this.cached;
+        return {
+            ...await this.cached,
+            time: this.time
+        };
     }
 
     makeKey(date: Date, month: boolean, day: boolean, hour: boolean, newDup: boolean) {
