@@ -16,11 +16,13 @@ router.use(wildcardCorsWithCredentials);
 
 router.get("/", expressAsyncHandler(async (req: MineSkinV2Request, res: Response<V2SkinListResponseBody>) => {
     const result = await v2SkinList(req, res);
+    res.header('Cache-Control', 'public, max-age=3600');
     res.json(formatV2Response(req, result));
 }));
 
 router.get("/:uuid", expressAsyncHandler(async (req: MineSkinV2Request, res: Response<V2SkinResponse>) => {
     const result = await v2GetSkin(req, res);
+    res.header('Cache-Control', 'public, max-age=10800');
     res.json(formatV2Response(req, result));
 }));
 
@@ -36,6 +38,7 @@ router.post("/:uuid/interactions/likes", expressAsyncHandler(async (req: MineSki
 
 router.get("/:uuid/tags", expressAsyncHandler(async (req: MineSkinV2Request, res: Response<V2MiscResponseBody>) => {
     const result = await getSkinTags(req, res);
+    res.header('Cache-Control', 'public, max-age=60');
     res.json(formatV2Response(req, result));
 }));
 
