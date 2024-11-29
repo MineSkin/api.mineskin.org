@@ -60,16 +60,16 @@ const statsWrapper = new class {
     }
 
     addQueries(helper: MGetHelper, date: Date, month: boolean = false, day: boolean = false, hour: boolean = false): Getter<{
-        new: string | null,
-        duplicate: string | null
+        new: number,
+        duplicate: number
     }> {
         const _new = this.addQuery(helper, date, month, day, hour, true);
         const _duplicate = this.addQuery(helper, date, month, day, hour, false);
         return {
             get() {
                 return {
-                    new: _new.get(),
-                    duplicate: _duplicate.get()
+                    new: Number(_new.get()),
+                    duplicate: Number(_duplicate.get())
                 }
             }
         };
@@ -128,18 +128,18 @@ const statsWrapper = new class {
             generated: {
                 time: {
                     hour: {
-                        current: Number(thisHour.get()),
-                        last: Number(lastHour.get())
+                        current: thisHour.get(),
+                        last: lastHour.get()
                     },
                     day: {
-                        current: Number(thisDay.get()),
-                        last: Number(lastDay.get())
+                        current: thisDay.get(),
+                        last: lastDay.get()
                     },
                     month: {
-                        current: Number(thisMonth.get())
+                        current: thisMonth.get()
                     },
                     year: {
-                        current: Number(thisYear.get())
+                        current: thisYear.get()
                     }
                 }
             },
