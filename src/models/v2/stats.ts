@@ -110,10 +110,10 @@ const statsWrapper = new class {
         }
         const statsResult = await statsHelper.execute(redis);
 
-        const globalCapacity = capacities.map(g => g.get()).filter(g => !!g).reduce((acc, cur) => acc + parseInt(cur!), 0);
-        const globalActive = activities.map(g => g.get()).filter(g => !!g).reduce((acc, cur) => acc + parseInt(cur!), 0);
+        const globalCapacity = capacities.map(g => g.get()).filter(g => !!g).reduce((acc, cur) => acc + Number(cur), 0);
+        const globalActive = activities.map(g => g.get()).filter(g => !!g).reduce((acc, cur) => acc + Number(cur), 0);
 
-        const globalUsableAccounts = usableAccounts.map(g => g.get()).filter(g => !!g).reduce((acc, cur) => acc + parseInt(cur!), 0);
+        const globalUsableAccounts = usableAccounts.map(g => g.get()).filter(g => !!g).reduce((acc, cur) => acc + Number(cur), 0);
 
         Log.l.debug(`redis stats query took ${ Date.now() - date.getTime() }ms`);
 
@@ -125,18 +125,18 @@ const statsWrapper = new class {
             generated: {
                 time: {
                     hour: {
-                        current: thisHour.get(),
-                        last: lastHour.get()
+                        current: Number(thisHour.get()),
+                        last: Number(lastHour.get())
                     },
                     day: {
-                        current: thisDay.get(),
-                        last: lastDay.get()
+                        current: Number(thisDay.get()),
+                        last: Number(lastDay.get())
                     },
                     month: {
-                        current: thisMonth.get()
+                        current: Number(thisMonth.get())
                     },
                     year: {
-                        current: thisYear.get()
+                        current: Number(thisYear.get())
                     }
                 }
             },
