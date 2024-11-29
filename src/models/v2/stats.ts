@@ -51,13 +51,19 @@ const statsWrapper = new class {
         return helper.add(this.makeKey(date, month, day, hour, newDup));
     }
 
-    addQueries(helper: MGetHelper, date: Date, month: boolean = false, day: boolean = false, hour: boolean = false): {
-        new: MGetGetter,
-        duplicate: MGetGetter
-    } {
+    addQueries(helper: MGetHelper, date: Date, month: boolean = false, day: boolean = false, hour: boolean = false): Getter<{
+        new: string | null,
+        duplicate: string | null
+    }> {
+        const _new = this.addQuery(helper, date, month, day, hour, true);
+        const _duplicate = this.addQuery(helper, date, month, day, hour, false);
         return {
-            new: this.addQuery(helper, date, month, day, hour, true),
-            duplicate: this.addQuery(helper, date, month, day, hour, false)
+            get() {
+                return {
+                    new: _new.get(),
+                    duplicate: _duplicate.get()
+                }
+            }
         };
     }
 
@@ -87,24 +93,22 @@ const statsWrapper = new class {
         const activities: MGetGetter[] = [];
         const usableAccounts: MGetGetter[] = [];
         for (const key of statsKeys) {
-            if (key.startsWith('mineskin:generator:stats:')) {
-                if (key.endsWith('capacity')) {
-                    capacities.push(statsHelper.add(key));
-                }
-                if (key.endsWith('active')) {
-                    activities.push(statsHelper.add(key));
-                }
+            if (key.endsWith('capacity')) {
+                capacities.push(statsHelper.add(key));
             }
-            if (key.startsWith('mineskin:accounts:usable:')) {
-                usableAccounts.push(statsHelper.add(key));
+            if (key.endsWith('active')) {
+                activities.push(statsHelper.add(key));
             }
+        }
+        for (const key of accountsKeys) {
+            usableAccounts.push(statsHelper.add(key));
         }
         const statsResult = await statsHelper.execute(redis);
 
-        const globalCapacity = capacities.reduce((acc, cur) => acc + parseInt(cur.toString()), 0);
-        const globalActive = activities.reduce((acc, cur) => acc + parseInt(cur.toString()), 0);
+        const globalCapacity = capacities.map(g => g.get()).filter(g => !!g).reduce((acc, cur) => acc + parseInt(cur!), 0);
+        const globalActive = activities.map(g => g.get()).filter(g => !!g).reduce((acc, cur) => acc + parseInt(cur!), 0);
 
-        const globalUsableAccounts = usableAccounts.reduce((acc, cur) => acc + parseInt(cur.toString()), 0);
+        const globalUsableAccounts = usableAccounts.map(g => g.get()).filter(g => !!g).reduce((acc, cur) => acc + parseInt(cur!), 0);
 
         Log.l.debug(`redis stats query took ${ Date.now() - date.getTime() }ms`);
 
@@ -116,18 +120,18 @@ const statsWrapper = new class {
             generated: {
                 time: {
                     hour: {
-                        current: thisHour,
-                        last: lastHour
+                        current: thisHour.get(),
+                        last: lastHour.get()
                     },
                     day: {
-                        current: thisDay,
-                        last: lastDay
+                        current: thisDay.get(),
+                        last: lastDay.get()
                     },
                     month: {
-                        current: thisMonth
+                        current: thisMonth.get()
                     },
                     year: {
-                        current: thisYear
+                        current: thisYear.get()
                     }
                 }
             },
@@ -169,7 +173,7 @@ class MGetHelper {
 
 }
 
-class MGetGetter {
+class MGetGetter implements Getter<string | null> {
 
     private readonly helper: MGetHelper;
     private readonly key: string;
@@ -187,4 +191,8 @@ class MGetGetter {
         return this.get() || '0';
     }
 
+}
+
+interface Getter<T> {
+    get(): T;
 }
