@@ -16,6 +16,12 @@ import { validateRequestedSkin } from "./skins";
 
 export async function v2AddView(req: MineSkinV2Request, res: Response<V2ResponseBody>) {
     const uuid = UUID.parse(req.params.uuid);
+
+    const valid = await verifyTurnstileToken(req.header('Turnstile-Token'), getIp(req));
+    if (!valid) {
+        return;
+    }
+
     await Skin2.incViews(uuid);
     const redis = container.get<IRedisProvider>(CoreTypes.RedisProvider);
     if (!redis.client) {
