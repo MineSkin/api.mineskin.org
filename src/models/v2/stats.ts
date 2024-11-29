@@ -65,23 +65,35 @@ const statsWrapper = new class {
         const date = new Date();
         const redis = container.get<IRedisProvider>(CoreTypes.RedisProvider);
 
-        const helper = new MGetHelper();
+        const timeHelper = new MGetHelper();
 
-        const thisYear = this.addQueries(helper, date);
-        const thisMonth = this.addQueries(helper, date, true);
-        const thisDay = this.addQueries(helper, date, true, true);
-        const thisHour = this.addQueries(helper, date, true, true, true);
+        const thisYear = this.addQueries(timeHelper, date);
+        const thisMonth = this.addQueries(timeHelper, date, true);
+        const thisDay = this.addQueries(timeHelper, date, true, true);
+        const thisHour = this.addQueries(timeHelper, date, true, true, true);
 
-        const lastDay = this.addQueries(helper, new Date(date.getTime() - ONE_DAY_SECONDS * 1000), true, true);
-        const lastHour = this.addQueries(helper, new Date(date.getTime() - 60 * 60 * 1000), true, true, true);
+        const lastDay = this.addQueries(timeHelper, new Date(date.getTime() - ONE_DAY_SECONDS * 1000), true, true);
+        const lastHour = this.addQueries(timeHelper, new Date(date.getTime() - 60 * 60 * 1000), true, true, true);
 
-        let result = await helper.execute(redis);
+        let timeResult = await timeHelper.execute(redis);
+
+        const statsKeys = await redis.client.keys('mineskin:generator:stats:*');
+        const genStatsHelper = new MGetHelper();
+        const capacities: MGetGetter[] = [];
+        for (const key of statsKeys) {
+            if(!key.endsWith('capacity')) continue;
+            capacities.push(genStatsHelper.add(key));
+        }
+        const genStatsResult = await genStatsHelper.execute(redis);
+
+        const globalCapacity = capacities.reduce((acc, cur) => acc + parseInt(cur.toString()), 0);
 
         Log.l.debug(`redis stats query took ${ Date.now() - date.getTime() }ms`);
 
         return {
             raw: {
-                result
+                timeResult,
+                genStatsResult
             },
             generated: {
                 time: {
@@ -99,6 +111,11 @@ const statsWrapper = new class {
                     year: {
                         current: thisYear
                     }
+                }
+            },
+            generator: {
+                capacity: {
+                    global: globalCapacity
                 }
             }
         };
