@@ -12,7 +12,7 @@ import { IFlagProvider, IMetricsProvider } from "@mineskin/core";
 import { TYPES as CoreTypes } from "@mineskin/core/dist/ditypes";
 import { HOSTNAME } from "../../util/host";
 import { verifyTurnstileToken } from "../../util/turnstile";
-import { getIp } from "../../util";
+import { getIp, timeout } from "../../util";
 import { V2MiscResponseBody } from "../../typings/v2/V2MiscResponseBody";
 import { validateRequestedSkin } from "./skins";
 import { Requests } from "../../generator/Requests";
@@ -33,9 +33,14 @@ export async function getSkinTags(req: MineSkinV2Request, res: Response<V2Respon
         skin.tags = [];
     }
 
-    requestAiTags(skin as IPopulatedSkin2Document).catch(e => {
-        Sentry.captureException(e);
-    });
+    try {
+        const aiPromise = requestAiTags(skin as IPopulatedSkin2Document).catch(e => {
+            Sentry.captureException(e);
+        });
+        await timeout(aiPromise, 1000, 'request-ai-tags');
+    } catch (e) {
+
+    }
 
     const userFilter: (tag: ISkinTagDocument) => boolean = t => !!req.client.userId &&
         (t.upvoters.includes(req.client.userId) || t.downvoters.includes(req.client.userId));
