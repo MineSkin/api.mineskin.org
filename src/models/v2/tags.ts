@@ -4,7 +4,7 @@ import { V2ResponseBody } from "../../typings/v2/V2ResponseBody";
 import { UUID } from "../../validation/misc";
 import { IPopulatedSkin2Document, ISkinTagDocument, Skin2, SkinTag } from "@mineskin/database";
 import { container } from "../../inversify.config";
-import { MineSkinError, TagVoteType } from "@mineskin/types";
+import { Maybe, MineSkinError, TagVoteType } from "@mineskin/types";
 import { TagVoteReqBody } from "../../validation/tags";
 import { SkinService, TYPES as GeneratorTypes } from "@mineskin/generator";
 import * as Sentry from "@sentry/node";
@@ -37,9 +37,11 @@ export async function getSkinTags(req: MineSkinV2Request, res: Response<V2Respon
         const aiPromise = requestAiTags(skin as IPopulatedSkin2Document).catch(e => {
             Sentry.captureException(e);
         });
-        await timeout(aiPromise, 1000, 'request-ai-tags');
+        const updatedSkin = await timeout(aiPromise, 1000, 'request-ai-tags');
+        if (updatedSkin) {
+            skin = updatedSkin;
+        }
     } catch (e) {
-
     }
 
     const userFilter: (tag: ISkinTagDocument) => boolean = t => !!req.client.userId &&
@@ -59,7 +61,7 @@ export async function getSkinTags(req: MineSkinV2Request, res: Response<V2Respon
 
     return {
         success: true,
-        tags: skin.tags
+        tags: (skin.tags || [])
             .filter(t => t.votes >= threshold || userFilter(t))
             .map(t => ({
                 tag: t.tag,
@@ -69,21 +71,21 @@ export async function getSkinTags(req: MineSkinV2Request, res: Response<V2Respon
     }
 }
 
-async function requestAiTags(skin: IPopulatedSkin2Document) {
+async function requestAiTags(skin: IPopulatedSkin2Document): Promise<Maybe<IPopulatedSkin2Document>> {
     try {
-        if (!skin) return;
-        if (!process.env.AI_TAG_ENDPOINT) return;
+        if (!skin) return skin;
+        if (!process.env.AI_TAG_ENDPOINT) return skin;
         const hasAiTags = skin.tags && skin.tags.some(t => t.upvoters.includes(AI_TAG_USER));
-        if (hasAiTags) return;
+        if (hasAiTags) return skin;
         const texture = (skin as IPopulatedSkin2Document)?.data?.hash?.skin?.minecraft;
-        if (!texture) return;
+        if (!texture) return skin;
         const flags = container.get<IFlagProvider>(CoreTypes.FlagProvider);
         const [taggingEnabled, taggingChanceStr] = await Promise.all([
             flags.isEnabled('tags.ai_auto_tag'),
             flags.getValue('tags.ai_auto_tag')
         ]);
-        if (!taggingEnabled) return;
-        if (Math.random() > Number(taggingChanceStr)) return;
+        if (!taggingEnabled) return skin;
+        if (Math.random() > Number(taggingChanceStr)) return skin;
         Log.l.info(`Requesting AI tags for skin ${ skin.uuid }`);
         const res = await Requests.genericRequest({
             method: 'GET',
@@ -97,23 +99,24 @@ async function requestAiTags(skin: IPopulatedSkin2Document) {
             if (res.data) {
                 Log.l.warn(res.data);
             }
-            return;
+            return skin;
         }
         const tags: string[] = (res.data.tags as string[]).map(t => t.toLowerCase());
-        if (!tags) return;
+        if (!tags) return skin;
         Log.l.info(`Received AI tags for skin ${ skin.uuid }: ${ tags.join(', ') }`);
 
         skin = (await Skin2.findForUuid(skin.uuid)) as IPopulatedSkin2Document;
-        if (!skin) return;
+        if (!skin) return skin;
         let promises: Promise<boolean>[] = [];
         for (let tag of tags) {
             promises.push(internalTagVote(skin, tag, TagVoteType.UP, AI_TAG_USER, false));
         }
         await Promise.all(promises);
-        await skin.save();
+        return await skin.save();
     } catch (e) {
         Sentry.captureException(e);
     }
+    return undefined;
 }
 
 export async function addSkinTagVote(req: MineSkinV2Request, res: Response<V2ResponseBody>) {
