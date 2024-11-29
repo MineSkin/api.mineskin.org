@@ -172,6 +172,9 @@ class MGetHelper {
     }
 
     async execute(redis: IRedisProvider) {
+        if (this.keys.length === 0) {
+            return [];
+        }
         this.values = await redis.client.mGet(this.keys);
         return this.values;
     }
