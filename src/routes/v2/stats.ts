@@ -12,6 +12,7 @@ router.use(wildcardCors);
 
 router.get("/", expressAsyncHandler(async (req: MineSkinV2Request, res) => {
     const resp = await v2GetStats(req, res);
+    res.header('Cache-Control', 'public, max-age=60');
     res.json(formatV2Response<V2MiscResponseBody>(req, resp));
 }));
 

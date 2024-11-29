@@ -121,10 +121,6 @@ const statsWrapper = new class {
         Log.l.debug(`redis stats query took ${ Date.now() - date.getTime() }ms`);
 
         return {
-            raw: {
-                timeResult,
-                statsResult
-            },
             generated: {
                 time: {
                     hour: {
