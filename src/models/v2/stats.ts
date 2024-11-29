@@ -77,29 +77,41 @@ const statsWrapper = new class {
 
         let timeResult = await timeHelper.execute(redis);
 
-        const statsKeys = await redis.client.keys('mineskin:generator:stats:*');
-        const genStatsHelper = new MGetHelper();
+        const [statsKeys, accountsKeys] = await Promise.all([
+            redis.client.keys('mineskin:generator:stats:*'),
+            redis.client.keys('mineskin:accounts:usable:*'),
+        ]);
+
+        const statsHelper = new MGetHelper();
         const capacities: MGetGetter[] = [];
         const activities: MGetGetter[] = [];
+        const usableAccounts: MGetGetter[] = [];
         for (const key of statsKeys) {
-            if(key.endsWith('capacity')) {
-                capacities.push(genStatsHelper.add(key));
+            if (key.startsWith('mineskin:generator:stats:')) {
+                if (key.endsWith('capacity')) {
+                    capacities.push(statsHelper.add(key));
+                }
+                if (key.endsWith('active')) {
+                    activities.push(statsHelper.add(key));
+                }
             }
-            if (key.endsWith('active')) {
-                activities.push(genStatsHelper.add(key));
+            if (key.startsWith('mineskin:accounts:usable:')) {
+                usableAccounts.push(statsHelper.add(key));
             }
         }
-        const genStatsResult = await genStatsHelper.execute(redis);
+        const statsResult = await statsHelper.execute(redis);
 
         const globalCapacity = capacities.reduce((acc, cur) => acc + parseInt(cur.toString()), 0);
         const globalActive = activities.reduce((acc, cur) => acc + parseInt(cur.toString()), 0);
+
+        const globalUsableAccounts = usableAccounts.reduce((acc, cur) => acc + parseInt(cur.toString()), 0);
 
         Log.l.debug(`redis stats query took ${ Date.now() - date.getTime() }ms`);
 
         return {
             raw: {
                 timeResult,
-                genStatsResult
+                statsResult
             },
             generated: {
                 time: {
@@ -125,6 +137,11 @@ const statsWrapper = new class {
                 },
                 active: {
                     global: globalActive
+                }
+            },
+            accounts: {
+                usable: {
+                    global: globalUsableAccounts
                 }
             }
         };
