@@ -9,7 +9,6 @@ import { SkinVisibility2 } from "@mineskin/types";
 const router: Router = v2Router();
 
 router.get("/web-skins.xml", expressAsyncHandler(async (req: MineSkinV2Request, res: Response) => {
-    req.query.size = '128';
     res.header('Cache-Control', 'public, max-age=3600');
     res.header('Content-Type', 'application/xml');
 
@@ -18,7 +17,7 @@ router.get("/web-skins.xml", expressAsyncHandler(async (req: MineSkinV2Request, 
     };
      const skins = await Skin2.find(query)
         .limit(1024)
-        .select('uuid meta data updatedAt')
+        .select('uuid meta updatedAt')
         .sort({_id: -1})
         .exec();
 
