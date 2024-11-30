@@ -56,6 +56,7 @@ import { IMetricsProvider, IRedisProvider, TYPES as CoreTypes } from "@mineskin/
 import { BillingService, TYPES as BillingTypes } from "@mineskin/billing";
 import { v2UsageRouter } from "./routes/v2/usage";
 import { v2StatsRouter } from "./routes/v2/stats";
+import { v2SitemapsRouter } from "./routes/v2/sitemaps";
 
 
 sourceMapSupport.install();
@@ -353,6 +354,7 @@ async function init() {
         app.use("/v2/images", v2ImagesRouter);
         app.use("/v2/usage", v2UsageRouter);
         app.use("/v2/stats", v2StatsRouter);
+        app.use("/v2/sitemaps", v2SitemapsRouter);
         if (process.env.NODE_ENV !== 'production') {
             app.use("/v2/test", v2TestRouter);
         }
