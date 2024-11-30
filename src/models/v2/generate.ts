@@ -84,6 +84,13 @@ export async function v2GenerateAndWait(req: GenerateV2Request, res: Response<V2
             rateLimit: V2GenerateHandler.makeRateLimitInfo(req)
         };
     }
+
+    //TODO: figure out a better way to handle this
+    const checkOnly = (!!(req.body as any)["checkOnly"] || !!req.query["checkOnly"])
+    if (checkOnly) {
+        throw new GeneratorError(GenError.NO_DUPLICATE, "No duplicate found", {httpCode: 400})
+    }
+
     if (!job) {
         throw new GeneratorError('job_not_found', "Job not found", {httpCode: 404});
     }
