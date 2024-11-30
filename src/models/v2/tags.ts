@@ -4,7 +4,7 @@ import { V2ResponseBody } from "../../typings/v2/V2ResponseBody";
 import { UUID } from "../../validation/misc";
 import { IPopulatedSkin2Document, ISkinTagDocument, Skin2, SkinTag } from "@mineskin/database";
 import { container } from "../../inversify.config";
-import { Maybe, MineSkinError, TagVoteType } from "@mineskin/types";
+import { Maybe, MineSkinError, SkinVisibility2, TagVoteType } from "@mineskin/types";
 import { TagVoteReqBody } from "../../validation/tags";
 import { SkinService, TYPES as GeneratorTypes } from "@mineskin/generator";
 import * as Sentry from "@sentry/node";
@@ -75,6 +75,7 @@ async function requestAiTags(skin: IPopulatedSkin2Document): Promise<Maybe<IPopu
     try {
         if (!skin) return skin;
         if (!process.env.AI_TAG_ENDPOINT) return skin;
+        if (skin.meta.visibility == SkinVisibility2.PRIVATE) return skin;
         const hasAiTags = skin.tags && skin.tags.some(t => t.upvoters.includes(AI_TAG_USER));
         if (hasAiTags) return skin;
         const texture = (skin as IPopulatedSkin2Document)?.data?.hash?.skin?.minecraft;
