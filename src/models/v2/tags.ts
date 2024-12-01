@@ -183,6 +183,7 @@ async function internalTagVote(skin: IPopulatedSkin2Document, tag: string, vote:
             votes: vote === TagVoteType.UP ? 1 : -1,
             upvoters: vote === TagVoteType.UP ? [userId] : [],
             downvoters: vote === TagVoteType.DOWN ? [userId] : [],
+            status: userId === AI_TAG_USER ? 'suggested' : 'pending'
         });
         skin.tags.push(theTag);
     } else {
