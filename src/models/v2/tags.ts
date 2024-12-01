@@ -102,7 +102,7 @@ async function requestAiTags(skin: IPopulatedSkin2Document): Promise<Maybe<IPopu
             }
             return skin;
         }
-        const tags: string[] = (res.data.tags as string[]).map(t => t.toLowerCase());
+        const tags: string[] = (res.data.tags as string[])?.map(t => t.toLowerCase());
         if (!tags) return skin;
         Log.l.info(`Received AI tags for skin ${ skin.uuid }: ${ tags.join(', ') }`);
 
