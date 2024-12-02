@@ -57,6 +57,7 @@ import { BillingService, TYPES as BillingTypes } from "@mineskin/billing";
 import { v2UsageRouter } from "./routes/v2/usage";
 import { v2StatsRouter } from "./routes/v2/stats";
 import { v2SitemapsRouter } from "./routes/v2/sitemaps";
+import { requestLogMiddleware } from "./middleware/log";
 
 
 sourceMapSupport.install();
@@ -335,6 +336,8 @@ async function init() {
                 "Disallow: /generate\n" +
                 "Disallow: /account\n")
         });
+
+        app.use(requestLogMiddleware);
 
         generateRoute.register(app);
         getRoute.register(app);
