@@ -1765,7 +1765,7 @@ export class Generator {
                     code: 2,
                     message: "invalid_argument"
                 });
-                throw new GeneratorError(GenError.INVALID_IMAGE, "Invalid file type: " + fType, {httpCode: 400});
+                throw new GeneratorError(GenError.INVALID_IMAGE, "Invalid file type: " + fType?.mime, {httpCode: 400});
             }
 
             let dimensions;
