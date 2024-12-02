@@ -111,6 +111,10 @@ const statsWrapper = new class {
         for (const key of accountsKeys) {
             usableAccounts.push(statsHelper.add(key));
         }
+
+        const totalNew = statsHelper.add('mineskin:generated:total:new');
+        const totalDuplicate = statsHelper.add('mineskin:generated:total:duplicate');
+
         const statsResult = await statsHelper.execute(redis);
 
         const globalCapacity = capacities.map(g => g.get()).filter(g => !!g).reduce((acc, cur) => acc + Number(cur), 0);
@@ -137,6 +141,10 @@ const statsWrapper = new class {
                     year: {
                         current: thisYear.get()
                     }
+                },
+                total: {
+                    new: Number(totalNew.get()),
+                    duplicate: Number(totalDuplicate.get())
                 }
             },
             generator: {
