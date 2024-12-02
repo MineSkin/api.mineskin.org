@@ -4,9 +4,12 @@ import { Caching } from "../generator/Caching";
 import { corsWithAuthMiddleware, getAndValidateRequestApiKey, getIp, getVariant, stripUuid } from "../util";
 import * as Sentry from "@sentry/node";
 import { GENERATED_UPLOAD_VIEWS, GENERATED_URL_VIEWS, GENERATED_USER_VIEWS, SKINS_VIEWS } from "../generator/Stats";
-import { ISkinDocument, Skin, Stat } from "@mineskin/database";
+import { ISkinDocument, isPopulatedSkin2Document, Skin, Stat } from "@mineskin/database";
 import { GenerateType } from "@mineskin/types";
 import { getRedisLastRequest, getRedisNextRequest } from "../database/redis";
+import { container } from "../inversify.config";
+import { Migrations, SkinService, TYPES as GeneratorTypes } from "@mineskin/generator";
+import { V2GenerateHandler } from "../generator/v2/V2GenerateHandler";
 
 export const register = (app: Application) => {
 
@@ -91,15 +94,27 @@ export const register = (app: Application) => {
             res.status(400).json({error: "invalid uuid"});
             return;
         }
-        const skin = await Caching.getSkinByUuid(stripUuid(uuid));
+        const v1SkinDoc = await Caching.getSkinByUuid(stripUuid(uuid));
+        let skin: any;
+        if (v1SkinDoc) {
+            skin = v1SkinDoc.toResponseJson();
+            await incSkinViews(v1SkinDoc);
+        } else {
+            // try to find v2 skin
+            const skinService = container.get<SkinService>(GeneratorTypes.SkinService);
+            const v2SkinDoc = await skinService.findForUuid(stripUuid(uuid));
+            if (isPopulatedSkin2Document(v2SkinDoc)) {
+                const v2Skin = V2GenerateHandler.skinToJson(v2SkinDoc);
+                skin = Migrations.v2SkinInfoToV1Json(v2Skin);
+            }
+        }
         if (!skin) {
             res.status(404).json({error: "Skin not found"});
             return;
         }
         res
             .header("Cache-Control", "public, max-age=3600")
-            .json(await skin.toResponseJson());
-        await incSkinViews(skin);
+            .json(skin);
     })
 
     // TODO: add route to get by hash
