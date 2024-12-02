@@ -536,6 +536,15 @@ init().then(() => {
             setTimeout(() => {
                 updatingApp = false;
                 console.log(info("Accepting connections."));
+                try {
+                    Balancer.restoreSelfPoolAfterMaintenance(config).catch(e => {
+                        console.error(e);
+                        Sentry.captureException(e);
+                    });
+                } catch (e) {
+                    console.error(e);
+                    Sentry.captureException(e);
+                }
             }, 100);
         });
         const timeout = 30000;
@@ -551,6 +560,15 @@ export function shutdown(signal: string, value: number) {
     console.log("shutdown");
     Sentry.captureException(new Error(`Shutdown by ${ signal } with value ${ value }`));
     updatingApp = true;
+    try {
+        Balancer.disableSelfPoolForMaintenance(config).catch(e => {
+            console.error(e);
+            Sentry.captureException(e);
+        });
+    } catch (e) {
+        console.error(e);
+        Sentry.captureException(e);
+    }
     setInterval(() => {
         console.error("shutdown timeout");
         process.exit(128 + value);

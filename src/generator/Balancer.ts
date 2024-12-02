@@ -7,6 +7,8 @@ import { AccountType } from "@mineskin/types";
 import { Account } from "@mineskin/database";
 import { IFlagProvider, TYPES as CoreTypes } from "@mineskin/core";
 import { container } from "../inversify.config";
+import { HOSTNAME } from "../util/host";
+import { RedisProvider } from "@mineskin/generator";
 
 export class Balancer {
 
@@ -14,8 +16,8 @@ export class Balancer {
     static async balance(): Promise<void> {
         console.log(info("Balancing servers..."));
 
-        const flags =  container.get<IFlagProvider>(CoreTypes.FlagProvider);
-        if(await flags.isEnabled('balancer.disabled')) {
+        const flags = container.get<IFlagProvider>(CoreTypes.FlagProvider);
+        if (await flags.isEnabled('balancer.disabled')) {
             console.log(warn("Balancer is disabled"));
             return;
         }
@@ -77,7 +79,7 @@ export class Balancer {
             await Account.updateOne({
                 enabled: true,
                 requestServer: highest.name,
-                errorCounter: { $lt: config.errorThreshold },
+                errorCounter: {$lt: config.errorThreshold},
                 accountType: AccountType.MICROSOFT
             }, {
                 $set: {
@@ -169,19 +171,136 @@ export class Balancer {
         }
     }
 
+    public static async disableSelfPoolForMaintenance(config: MineSkinConfig): Promise<void> {
+        const redis = container.get<RedisProvider>(CoreTypes.RedisProvider);
+        let foundOrigin = false;
+        for (let poolId of config.cloudflare.pools) {
+            try {
+                const currentPoolConfigResponse = await this.getPoolDetails(config, poolId);
+                if (!currentPoolConfigResponse.success) {
+                    console.warn(warn("failed to get pool config for " + poolId));
+                    console.warn(currentPoolConfigResponse);
+                    continue;
+                }
+                const currentPoolConfig = currentPoolConfigResponse.result;
+                const currentOriginConfig = currentPoolConfig.origins;
+                let madeChanges = false;
+                const newOriginConfig = [];
+                for (let origin of currentOriginConfig) {
+                    if (!origin.enabled || origin.name !== HOSTNAME) {
+                        newOriginConfig.push(origin);
+                        continue;
+                    }
+                    foundOrigin = true;
+                    console.info(`Disabling ${ origin.name } for maintenance`);
+                    await redis.client.set(`balancer:${ origin.name }:pre_maintenance_weight`, `${ origin.weight }`);
+                    let newOrigin: Origin = {
+                        ...origin,
+                        weight: 0
+                    }
+                    newOriginConfig.push(newOrigin);
+                    if (newOrigin.weight !== origin.weight) {
+                        madeChanges = true;
+                    }
+                }
+
+                if (madeChanges && newOriginConfig.length === currentOriginConfig.length) {
+                    console.log(JSON.stringify(newOriginConfig));
+                    const updateResponse = await this.patchPoolOrigins(config, poolId, newOriginConfig);
+                    if (!updateResponse.success) {
+                        console.warn(warn("failed to update pool config for " + poolId));
+                        console.warn(updateResponse);
+                        continue;
+                    }
+                    break; // only need to update one origin
+                }
+            } catch (e) {
+                console.warn(warn("exception while updating pool config for " + poolId));
+                if ("response" in e) {
+                    console.warn(e.response);
+                    if ("data" in e.response) {
+                        console.warn(JSON.stringify(e.response.data));
+                    }
+                }
+                continue;
+            }
+        }
+        if (!foundOrigin) {
+            console.warn(warn("No CF origin found for " + HOSTNAME));
+        }
+    }
+
+    public static async restoreSelfPoolAfterMaintenance(config: MineSkinConfig): Promise<void> {
+        const redis = container.get<RedisProvider>(CoreTypes.RedisProvider);
+        const preMaintenanceWeight = await redis.client.get(`balancer:${ HOSTNAME }:pre_maintenance_weight`);
+        if (!preMaintenanceWeight) {
+            console.warn(warn(`No pre-maintenance weight found for ${ HOSTNAME }`));
+            return;
+        }
+        for (let poolId of config.cloudflare.pools) {
+            try {
+                const currentPoolConfigResponse = await this.getPoolDetails(config, poolId);
+                if (!currentPoolConfigResponse.success) {
+                    console.warn(warn("failed to get pool config for " + poolId));
+                    console.warn(currentPoolConfigResponse);
+                    continue;
+                }
+                const currentPoolConfig = currentPoolConfigResponse.result;
+                const currentOriginConfig = currentPoolConfig.origins;
+                let madeChanges = false;
+                const newOriginConfig = [];
+                for (let origin of currentOriginConfig) {
+                    if (!origin.enabled || origin.name !== HOSTNAME) {
+                        newOriginConfig.push(origin);
+                        continue;
+                    }
+                    console.info(`Restoring ${ origin.name } after maintenance`);
+                    let newOrigin: Origin = {
+                        ...origin,
+                        weight: parseFloat(preMaintenanceWeight)
+                    }
+                    newOriginConfig.push(newOrigin);
+                    if (newOrigin.weight !== origin.weight) {
+                        madeChanges = true;
+                    }
+                }
+
+                if (madeChanges && newOriginConfig.length === currentOriginConfig.length) {
+                    console.log(JSON.stringify(newOriginConfig));
+                    const updateResponse = await this.patchPoolOrigins(config, poolId, newOriginConfig);
+                    if (!updateResponse.success) {
+                        console.warn(warn("failed to update pool config for " + poolId));
+                        console.warn(updateResponse);
+                        continue;
+                    }
+                    break; // only need to update one origin
+                }
+            } catch (e) {
+                console.warn(warn("exception while updating pool config for " + poolId));
+                if ("response" in e) {
+                    console.warn(e.response);
+                    if ("data" in e.response) {
+                        console.warn(JSON.stringify(e.response.data));
+                    }
+                }
+                continue;
+            }
+        }
+    }
+
     private static async getAccountsPerServer(config: MineSkinConfig): Promise<{ [k: string]: number }> {
         const res: { _id: number; count: number; }[] = await Account.aggregate([
             {
                 $match: {
                     enabled: true,
-                    errorCounter: { $lt: config.errorThreshold },
+                    errorCounter: {$lt: config.errorThreshold},
                     // $and: [
                     //     { lastSelected: { $ne: 0 } },
                     //     { lastSelected: { $gt: (Date.now() / 1000) - (60 * 60) } }
                     // ]
                 }
             },
-            { $group: { _id: '$requestServer', count: { $sum: 1 } } }
+            {$group: {_id: '$requestServer', count: {$sum: 1}}}
         ]).exec();
         console.log(res)
         const out: { [k: string]: number } = {};
