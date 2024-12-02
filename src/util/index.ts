@@ -549,6 +549,9 @@ export const corsWithCredentialsMiddleware = (req: Request, res: Response, next:
     if (req.headers.origin === "https://testing.mineskin.org") {
         res.header('Access-Control-Allow-Origin', 'https://testing.mineskin.org');
     }
+    if (req.headers.origin === "https://classic.mineskin.org") {
+        res.header('Access-Control-Allow-Origin', 'https://classic.mineskin.org');
+    }
     res.header("Access-Control-Allow-Credentials", "true");
     res.header("Access-Control-Allow-Methods", "POST, GET, OPTIONS, DELETE, PUT");
     res.header("Access-Control-Allow-Headers", "X-Requested-With, Accept, Content-Type, Origin, Authorization, Cookie, MineSkin-User-Agent");

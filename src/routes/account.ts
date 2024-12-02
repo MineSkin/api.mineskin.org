@@ -457,7 +457,8 @@ export async function getUserFromRequest(req: Request, res: Response, reject: bo
     if (!!req.headers.origin) {
         let originAllowed = req.headers.origin.startsWith('https://mineskin.org') ||
             req.headers.origin.startsWith('https://www.mineskin.org') ||
-            req.headers.origin.startsWith('https://testing.mineskin.org');
+            req.headers.origin.startsWith('https://testing.mineskin.org') ||
+            req.headers.origin.startsWith('https://classic.mineskin.org');
         if (!originAllowed) {
             if (reject) res.status(400).json({error: 'origin not allowed'});
             return;
