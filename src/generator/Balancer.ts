@@ -193,7 +193,7 @@ export class Balancer {
                     }
                     foundOrigin = true;
                     console.info(`Disabling ${ origin.name } for maintenance`);
-                    await redis.client.set(`balancer:${ origin.name }:pre_maintenance_weight`, `${ origin.weight }`);
+                    await redis.client.set(`mineskin:balancer:${ origin.name }:pre_maintenance_weight`, `${ origin.weight }`);
                     let newOrigin: Origin = {
                         ...origin,
                         weight: 0
@@ -232,7 +232,7 @@ export class Balancer {
 
     public static async restoreSelfPoolAfterMaintenance(config: MineSkinConfig): Promise<void> {
         const redis = container.get<RedisProvider>(CoreTypes.RedisProvider);
-        const preMaintenanceWeight = await redis.client.get(`balancer:${ HOSTNAME }:pre_maintenance_weight`);
+        const preMaintenanceWeight = await redis.client.get(`mineskin:balancer:${ HOSTNAME }:pre_maintenance_weight`);
         if (!preMaintenanceWeight) {
             console.warn(warn(`No pre-maintenance weight found for ${ HOSTNAME }`));
             return;
