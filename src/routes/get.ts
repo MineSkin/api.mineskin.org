@@ -97,7 +97,7 @@ export const register = (app: Application) => {
         const v1SkinDoc = await Caching.getSkinByUuid(stripUuid(uuid));
         let skin: any;
         if (v1SkinDoc) {
-            skin = v1SkinDoc.toResponseJson();
+            skin = await v1SkinDoc.toResponseJson();
             await incSkinViews(v1SkinDoc);
         } else {
             // try to find v2 skin
