@@ -373,6 +373,10 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
         }
     }
 
+    if (!req.client.hasCredits()) {
+        await sleep(500 * Math.random());
+    }
+
     if (options.visibility === SkinVisibility2.PRIVATE) {
         if (!req.apiKey && !req.client.hasUser()) {
             throw new GeneratorError('unauthorized', "private skins require an API key or User", {httpCode: 401});
