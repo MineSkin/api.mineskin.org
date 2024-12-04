@@ -103,7 +103,7 @@ export const register = (app: Application) => {
             // try to find v2 skin
             const skinService = container.get<SkinService>(GeneratorTypes.SkinService);
             const v2SkinDoc = await skinService.findForUuid(stripUuid(uuid));
-            if (isPopulatedSkin2Document(v2SkinDoc)) {
+            if (v2SkinDoc && isPopulatedSkin2Document(v2SkinDoc)) {
                 const v2Skin = V2GenerateHandler.skinToJson(v2SkinDoc);
                 skin = Migrations.v2SkinInfoToV1Json(v2Skin);
             }
