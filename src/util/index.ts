@@ -101,6 +101,10 @@ export async function checkTraffic(client: ClientInfo, req: Request, res: Respon
             return false;
         }
 
+        if (!apiKey) {
+            await sleep(800 * Math.random());
+        }
+
         /*
         const lastRequest = apiKey ? await Caching.getTrafficRequestTimeByApiKey(apiKey) : await Caching.getTrafficRequestTimeByIp(ip);
         if (!lastRequest) { // First request
