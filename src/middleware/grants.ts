@@ -3,6 +3,7 @@ import { NextFunction, Response } from "express";
 import { CreditType } from "@mineskin/types";
 import { IFlagProvider, TYPES as CoreTypes } from "@mineskin/core";
 import { container } from "../inversify.config";
+import * as Sentry from "@sentry/node";
 
 export const grantsMiddleware = async (req: MineSkinV2Request, res: Response, next: NextFunction) => {
     await verifyGrants(req, res);
@@ -10,18 +11,23 @@ export const grantsMiddleware = async (req: MineSkinV2Request, res: Response, ne
 }
 
 export const verifyGrants = async (req: MineSkinV2Request, res: Response) => {
-    const hasApiKey = req.client.hasApiKey();
-    const hasUser = req.client.hasUser();
+    return await Sentry.startSpan({
+        op: 'middleware',
+        name: 'verifyGrants'
+    }, async span => {
+        const hasApiKey = req.client.hasApiKey();
+        const hasUser = req.client.hasUser();
 
-    const credits = await req.client.getCredits();
-    const creditType = credits && credits.isValid() && credits.balance > 0 ? credits.type : undefined;
+        const credits = await req.client.getCredits();
+        const creditType = credits && credits.isValid() && credits.balance > 0 ? credits.type : undefined;
 
-    const grants = await getDefaultGrants(hasApiKey, hasUser, creditType);
-    req.client.grants = {...grants, ...req.client.grants};
+        const grants = await getDefaultGrants(hasApiKey, hasUser, creditType);
+        req.client.grants = {...grants, ...req.client.grants};
+    })
 }
 
 async function getDefaultGrants(hasApiKey: boolean, hasUser: boolean, creditType: CreditType | undefined) {
-    const flags =  container.get<IFlagProvider>(CoreTypes.FlagProvider);
+    const flags = container.get<IFlagProvider>(CoreTypes.FlagProvider);
     if (!hasApiKey) {
         // no api key, can't check credits -> use default
         return JSON.parse(await flags.getValue('generator.default_grants.base'));

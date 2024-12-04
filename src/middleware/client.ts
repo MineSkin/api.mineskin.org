@@ -12,35 +12,40 @@ export const clientMiddleware = async (req: MineSkinV2Request, res: Response, ne
 }
 
 export const initRequestClient = (req: MineSkinV2Request, res: Response) => {
-    const rawUserAgent = req.header("mineskin-user-agent") || req.header("user-agent") || "n/a";
-    const origin = req.header("origin");
-    const ip = getIp(req);
-    const via = getVia(req);
+    Sentry.startSpan({
+        op: 'middleware',
+        name: 'initRequestClient'
+    }, span => {
+        const rawUserAgent = req.header("mineskin-user-agent") || req.header("user-agent") || "n/a";
+        const origin = req.header("origin");
+        const ip = getIp(req);
+        const via = getVia(req);
 
-    Sentry.setTags({
-        "generate_via": via
-    });
+        Sentry.setTags({
+            "generate_via": via
+        });
 
-    const userAgent = simplifyUserAgent(rawUserAgent);
-    if (userAgent.generic) {
-        req.warnings.push({
-            code: "generic_user_agent",
-            message: "User agent is generic. Please use a more specific user agent."
-        })
-    }
+        const userAgent = simplifyUserAgent(rawUserAgent);
+        if (userAgent.generic) {
+            req.warnings.push({
+                code: "generic_user_agent",
+                message: "User agent is generic. Please use a more specific user agent."
+            })
+        }
 
-    Log.l.debug(`${ req.breadcrumbC } Agent:       ${ req.headers["mineskin-user-agent"] || '' } ${ req.headers["user-agent"] }`);
-    if (req.headers['origin']) {
-        Log.l.debug(`${ req.breadcrumbC } Origin:      ${ req.headers['origin'] }`);
-    }
+        Log.l.debug(`${ req.breadcrumbC } Agent:       ${ req.headers["mineskin-user-agent"] || '' } ${ req.headers["user-agent"] }`);
+        if (req.headers['origin']) {
+            Log.l.debug(`${ req.breadcrumbC } Origin:      ${ req.headers['origin'] }`);
+        }
 
-    if (!res.hasHeader("MineSkin-Api-Version")) {
-        res.header("MineSkin-Api-Version", "v2");
-    }
+        if (!res.hasHeader("MineSkin-Api-Version")) {
+            res.header("MineSkin-Api-Version", "v2");
+        }
 
-    res.header("MineSkin-Version", `api-${ process.env.SOURCE_COMMIT || "dev" }`);
+        res.header("MineSkin-Version", `api-${ process.env.SOURCE_COMMIT || "dev" }`);
 
-    req.client = new RequestClient(Date.now(), userAgent.ua, origin, ip, via);
+        req.client = new RequestClient(Date.now(), userAgent.ua, origin, ip, via);
+    })
 }
 
 export const clientFinalMiddleware = async (req: MineSkinV2Request, res: Response, next: NextFunction) => {
@@ -49,10 +54,15 @@ export const clientFinalMiddleware = async (req: MineSkinV2Request, res: Respons
 }
 
 export const finalizeRequestClient = async (req: MineSkinV2Request, res: Response) => {
-    req.clientInfo = await req.client.asClientInfo(req);
-    Sentry.setUser({
-        username: `${ req.clientInfo.key } ${ req.clientInfo.agent }`,
-        ip_address: `${ req.clientInfo.ip }`
-    });
+    return await Sentry.startSpan({
+        op: 'middleware',
+        name: 'finalizeRequestClient'
+    }, async span => {
+        req.clientInfo = await req.client.asClientInfo(req);
+        Sentry.setUser({
+            username: `${ req.clientInfo.key } ${ req.clientInfo.agent }`,
+            ip_address: `${ req.clientInfo.ip }`
+        });
+    })
 }
 
