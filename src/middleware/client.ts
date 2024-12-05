@@ -60,6 +60,7 @@ export const finalizeRequestClient = async (req: MineSkinV2Request, res: Respons
     }, async span => {
         req.clientInfo = await req.client.asClientInfo(req);
         Sentry.setUser({
+            id: req.clientInfo.user,
             username: `${ req.clientInfo.key } ${ req.clientInfo.agent }`,
             ip_address: `${ req.clientInfo.ip }`
         });
