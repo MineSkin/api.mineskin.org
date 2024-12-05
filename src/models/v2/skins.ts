@@ -69,7 +69,7 @@ export async function v2ListSkins(req: MineSkinV2Request, res: Response<V2SkinLi
 
     const skins = await Skin2.find(query)
         .limit(size || 16)
-        .select('uuid meta data') //TODO
+        .select('uuid meta data updatedAt') //TODO
         .populate('data', 'hash.skin.minecraft')
         .sort({_id: -1})
         .exec();
@@ -168,6 +168,7 @@ function skinToSimpleJson(skin: ISkin2Document | IPopulatedSkin2Document): Liste
     return {
         uuid: skin.uuid,
         name: skin.meta.name,
-        texture: isPopulatedSkin2Document(skin) ? skin.data?.hash?.skin?.minecraft : undefined
+        texture: isPopulatedSkin2Document(skin) ? skin.data?.hash?.skin?.minecraft : undefined,
+        timestamp: skin.updatedAt?.getTime()
     };
 }

@@ -13,4 +13,4 @@ export interface V2SkinListResponseBody extends V2ResponseBody {
     }
 }
 
-export type ListedSkin = Pick<SkinInfo2,'uuid'|'name'> & {texture?: string};
+export type ListedSkin = Pick<SkinInfo2,'uuid'|'name'> & {texture?: string;timestamp?:number;};
