@@ -1668,10 +1668,6 @@ export class Generator {
             .tag("apiKey", client.apiKey || "none")
             .tag("via", client.via)
             .tag("genEnv", "api");
-        if (account) {
-            m.tag("account", account.id)
-                .tag("accountType", account.accountType || "unknown")
-        }
         if (e instanceof MineSkinError) {
             m.tag("error", e.code);
         } else {
