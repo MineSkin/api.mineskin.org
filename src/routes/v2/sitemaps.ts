@@ -16,7 +16,7 @@ router.get("/web-skins.xml", expressAsyncHandler(async (req: MineSkinV2Request, 
         'meta.visibility': SkinVisibility2.PUBLIC
     };
      const skins = await Skin2.find(query)
-        .limit(1024)
+        .limit(2048)
         .select('uuid meta updatedAt')
         .sort({_id: -1})
         .exec();
