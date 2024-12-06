@@ -25,7 +25,7 @@ router.get("/web-skins.xml", expressAsyncHandler(async (req: MineSkinV2Request, 
     xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
     for (let skin of skins) {
         xml += '  <url>\n';
-        xml += `    <loc>https://beta.mineskin.org/skins/${ skin.uuid }</loc>\n`;
+        xml += `    <loc>https://mineskin.org/skins/${ skin.uuid }</loc>\n`;
         xml += `    <lastmod>${ skin.updatedAt.toISOString() }</lastmod>\n`;
         xml += '  </url>\n';
     }
