@@ -7,6 +7,7 @@ import { webOnlyCorsWithCredentials } from "../../middleware/cors";
 import { V2SkinListResponseBody } from "../../typings/v2/V2SkinListResponseBody";
 import { v2UserLegacySkinList, v2UserSkinList } from "../../models/v2/skins";
 import { formatV2Response } from "../../middleware/response";
+import { V2MiscResponseBody } from "../../typings/v2/V2MiscResponseBody";
 
 const router: Router = v2Router();
 router.use(webOnlyCorsWithCredentials);
@@ -42,7 +43,7 @@ router.get("/skins", expressAsyncHandler(async (req: MineSkinV2Request, res: Res
     res.json(formatV2Response(req, result));
 }));
 
-router.get("/legacyskins", expressAsyncHandler(async (req: MineSkinV2Request, res: Response<V2SkinListResponseBody>) => {
+router.get("/legacyskins", expressAsyncHandler(async (req: MineSkinV2Request, res: Response<V2MiscResponseBody>) => {
     const result = await v2UserLegacySkinList(req, res);
     res.json(formatV2Response(req, result));
 }));

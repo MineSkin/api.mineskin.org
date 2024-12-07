@@ -22,6 +22,7 @@ import { IFlagProvider, TYPES as CoreTypes } from "@mineskin/core";
 import { container } from "../../inversify.config";
 import { Log } from "../../Log";
 import { stripUuid } from "../../util";
+import { V2MiscResponseBody } from "../../typings/v2/V2MiscResponseBody";
 
 export async function v2SkinList(req: MineSkinV2Request, res: Response<V2SkinListResponseBody>): Promise<V2SkinListResponseBody> {
     return await v2ListSkins(req, res);
@@ -153,7 +154,7 @@ export async function v2GetSkin(req: MineSkinV2Request, res: Response<V2SkinResp
     };
 }
 
-export async function v2UserLegacySkinList(req: MineSkinV2Request, res: Response<V2SkinListResponseBody>): Promise<V2SkinListResponseBody> {
+export async function v2UserLegacySkinList(req: MineSkinV2Request, res: Response<V2SkinListResponseBody>): Promise<V2MiscResponseBody> {
     if (!req.client.hasUser()) {
         throw new MineSkinError('unauthorized', 'Unauthorized', {httpCode: 401});
     }
@@ -162,17 +163,10 @@ export async function v2UserLegacySkinList(req: MineSkinV2Request, res: Response
         throw new MineSkinError('user_not_found', 'User not found', {httpCode: 404});
     }
     user.skins = user.skins || [];
-    const skins = await Skin2.find({uuid: {$in: user.skins}})
-        .select('uuid meta data updatedAt')
-        .populate('data', 'hash.skin.minecraft')
-        .sort({_id: -1})
-        .exec();
     return {
         success: true,
-        skins: skins.map(skinToSimpleJson),
-        pagination: {
-            current: {},
-            next: {}
+        skins: {
+            v1: user.skins
         }
     };
 }
