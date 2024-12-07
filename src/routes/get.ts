@@ -69,7 +69,11 @@ export const register = (app: Application) => {
     })
 
     app.get("/get/id/:id", async (req: Request, res: Response) => {
-        const id = parseInt(req.params["id"]);
+        const idStr = req.params["id"];
+        if (idStr.length === 32 || idStr.length === 36) {
+            return res.redirect(301, `/get/uuid/${ idStr }`);
+        }
+        const id = parseInt(idStr);
         if (isNaN(id)) {
             res.status(400).json({error: "invalid number"});
             return;
