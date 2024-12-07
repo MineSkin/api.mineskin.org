@@ -1,7 +1,14 @@
 import { MineSkinV2Request } from "../../routes/v2/types";
 import { Migrations, SkinService, TYPES as GeneratorTypes } from "@mineskin/generator";
 import { Response } from "express";
-import { IPopulatedSkin2Document, ISkin2Document, isPopulatedSkin2Document, Skin2, SkinData } from "@mineskin/database";
+import {
+    IPopulatedSkin2Document,
+    ISkin2Document,
+    isPopulatedSkin2Document,
+    Skin2,
+    SkinData,
+    User
+} from "@mineskin/database";
 import { RootFilterQuery } from "mongoose";
 import { Maybe, MineSkinError, SkinVisibility2 } from "@mineskin/types";
 import { ListedSkin, V2SkinListResponseBody } from "../../typings/v2/V2SkinListResponseBody";
@@ -143,6 +150,30 @@ export async function v2GetSkin(req: MineSkinV2Request, res: Response<V2SkinResp
     return {
         success: true,
         skin: V2GenerateHandler.skinToJson(skin)
+    };
+}
+
+export async function v2UserLegacySkinList(req: MineSkinV2Request, res: Response<V2SkinListResponseBody>): Promise<V2SkinListResponseBody> {
+    if (!req.client.hasUser()) {
+        throw new MineSkinError('unauthorized', 'Unauthorized', {httpCode: 401});
+    }
+    const user = await User.findByUUID(req.client.userId!);
+    if (!user) {
+        throw new MineSkinError('user_not_found', 'User not found', {httpCode: 404});
+    }
+    user.skins = user.skins || [];
+    const skins = await Skin2.find({_id: {$in: user.skins}})
+        .select('uuid meta data updatedAt')
+        .populate('data', 'hash.skin.minecraft')
+        .sort({_id: -1})
+        .exec();
+    return {
+        success: true,
+        skins: skins.map(skinToSimpleJson),
+        pagination: {
+            current: {},
+            next: {}
+        }
     };
 }
 
