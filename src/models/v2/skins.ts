@@ -162,7 +162,7 @@ export async function v2UserLegacySkinList(req: MineSkinV2Request, res: Response
         throw new MineSkinError('user_not_found', 'User not found', {httpCode: 404});
     }
     user.skins = user.skins || [];
-    const skins = await Skin2.find({_id: {$in: user.skins}})
+    const skins = await Skin2.find({uuid: {$in: user.skins}})
         .select('uuid meta data updatedAt')
         .populate('data', 'hash.skin.minecraft')
         .sort({_id: -1})
