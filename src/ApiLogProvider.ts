@@ -13,6 +13,7 @@ export class ApiLogProvider implements ILogProvider {
     constructor() {
         const logRotate: DailyRotateFile = new DailyRotateFile({
             level: 'debug',
+            handleExceptions: true,
             filename: 'logs/mineskin-%DATE%.log',
             datePattern: 'YYYY-MM-DD-HH',
             zippedArchive: true,
