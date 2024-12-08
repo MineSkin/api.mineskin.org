@@ -371,11 +371,11 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
         if (pendingByIp > 5) { // TODO: configurable / client grant
             throw new GeneratorError('job_limit', "You have too many jobs in the queue", {httpCode: 429});
         }
-        await sleep(500 * Math.random());
+        await sleep(400 * Math.random());
     }
 
     if (!req.client.hasCredits()) {
-        await sleep(500 * Math.random());
+        await sleep(400 * Math.random());
     }
 
     if (options.visibility === SkinVisibility2.PRIVATE) {
@@ -516,7 +516,7 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
     handler.cleanupImage();
 
     if (!req.client.hasUser() || !req.client.hasCredits()) {
-        await sleep(500 * Math.random());
+        await sleep(200 * Math.random());
     }
 
     if (req.client.useConcurrencyLimit()) {
