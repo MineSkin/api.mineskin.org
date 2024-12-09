@@ -27,10 +27,20 @@ export const verifyApiKey = async (req: MineSkinV2Request, res: Response) => {
         if (keyStr) {
             req._apiKeyStr = keyStr;
 
+            if (keyStr.length !== 64) {
+                console.log(debug(`Invalid API Key length: ${ keyStr.length }`));
+                throw new MineSkinError("invalid_api_key", "Invalid API Key Length", {
+                    httpCode: 403,
+                    error: new MineSkinError("invalid_api_key_length", "Invalid API Key Length")
+                });
+            }
 
             const key = await Caching.getApiKey(Caching.cachedSha512(keyStr));
             if (!key) {
-                throw new MineSkinError("invalid_api_key", "Invalid API Key", {httpCode: 403});
+                throw new MineSkinError("invalid_api_key", "Invalid API Key", {
+                    httpCode: 403,
+                    error: new MineSkinError("api_key_not_found", "API Key not found")
+                });
             }
 
             key.updateLastUsed(new Date()); // don't await, don't really care
