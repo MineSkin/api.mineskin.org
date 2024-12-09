@@ -1457,7 +1457,7 @@ __metadata:
 
 "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git":
   version: 0.0.0
-  resolution: "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git#commit=ec32a6b7193220ce936b8c7badfaf11ea78446c6"
+  resolution: "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git#commit=f6a675dee6d6ef21497d104d7224bfb040310309"
   dependencies:
     "@inventivetalent/imghash": "npm:^1.1.1"
     "@inventivetalent/loading-cache": "npm:^0.7.1"
@@ -1494,7 +1494,7 @@ __metadata:
     winston: "npm:^3.14.2"
     winston-daily-rotate-file: "npm:^5.0.0"
     winston-transport-sentry-node: "npm:^3.0.0"
-  checksum: 10c0/5cd1ff4b8089b4d14d847413ab1e6f43a611044e82bac8f046200ae512c920b933bdc76399c762bd451596486d5a43aef400ff2ff8a70f5fdf4e7a65fb071370
+  checksum: 10c0/70af98a58c4cb9103e84823575bb632505d23ce4bff53e18185bdcbb516e45d528127a5224b8c59a374365ca51c1b1ee1df7f7b113e7c6e84e80e6e9091a28bb
   languageName: node
   linkType: hard
 
@@ -1507,7 +1507,7 @@ __metadata:
 
 "@mineskin/requests@git+ssh://git@github.com/MineSkin/mineskin-requests.git":
   version: 1.0.1
-  resolution: "@mineskin/requests@git+ssh://git@github.com/MineSkin/mineskin-requests.git#commit=7df2b114428a7db22b5fbbcd900720048508a43e"
+  resolution: "@mineskin/requests@git+ssh://git@github.com/MineSkin/mineskin-requests.git#commit=85db6f248f16e4a25e5ea2c1db6184c6b3c543c9"
   dependencies:
     "@inventivetalent/axios-rate-limit": "npm:^1.3.5"
     "@inventivetalent/time": "npm:^1.0.3"
@@ -1521,7 +1521,7 @@ __metadata:
     https-proxy-agent: "npm:5.0.1"
     ip-address: "npm:^10.0.0"
     jobqu: "npm:^2.0.5"
-  checksum: 10c0/09f6e422de2454670c2fa5fbb0a9d618e87d58338cc4150bfe67e1c811bf8a3aa0ae3eed0c15e782023ab0324014c02af69ef180901229f27e0b68776b3177fa
+  checksum: 10c0/75e4222727d13ad5a574384b9323fe675b82bbada857484411bb9200f2b506411333c4058d16292715db920d4ecf24fdf922fc6285c5cb9a112de06acefe4c1f
   languageName: node
   linkType: hard
 
