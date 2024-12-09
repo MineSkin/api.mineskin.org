@@ -58,6 +58,7 @@ import { v2UsageRouter } from "./routes/v2/usage";
 import { v2StatsRouter } from "./routes/v2/stats";
 import { v2SitemapsRouter } from "./routes/v2/sitemaps";
 import { requestLogMiddleware } from "./middleware/log";
+import { RequestManager } from "@mineskin/requests";
 
 
 sourceMapSupport.install();
@@ -133,6 +134,7 @@ async function init() {
 
         Requests.init(config);
     }
+    RequestManager.init();
 
     // const version = await gitsha();
     const version = process.env.SOURCE_COMMIT || "unknown";

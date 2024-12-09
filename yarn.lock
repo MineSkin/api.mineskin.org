@@ -4104,6 +4104,7 @@ __metadata:
     "@mineskin/database": "git+ssh://git@github.com/MineSkin/mineskin-database.git"
     "@mineskin/generator": "git+ssh://git@github.com/MineSkin/mineskin-generator.git"
     "@mineskin/hash-rust": "npm:^1.0.5"
+    "@mineskin/requests": "git+ssh://git@github.com/MineSkin/mineskin-requests.git"
     "@mineskin/types": "git+ssh://git@github.com/MineSkin/mineskin-types.git"
     "@sentry/node": "npm:8.9.2"
     "@sentry/profiling-node": "npm:8.9.2"
