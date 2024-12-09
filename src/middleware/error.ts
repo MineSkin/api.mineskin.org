@@ -10,13 +10,24 @@ import { Log } from "../Log";
 
 export function v2ErrorHandler(err: Error, req: GenerateV2Request, res: Response<V2GenerateResponseBody>, next: NextFunction) {
     if (err instanceof MineSkinError) {
-        return res.status(err.meta?.httpCode || 500).json({
+        let errors: CodeAndMessage[] = [{
+            code: err.code,
+            message: err.msg || err.message
+        }];
+
+        let next = err.meta?.error;
+        while (next && next instanceof MineSkinError) {
+            errors.push({
+                code: next.code,
+                message: next.msg || next.message
+            });
+            next = next.meta?.error;
+        }
+
+        return res.status(err?.meta?.httpCode || 500).json({
             success: false,
             rateLimit: V2GenerateHandler.makeRateLimitInfo(req),
-            errors: [{
-                code: err.code,
-                message: err.msg || err.message
-            }]
+            errors: errors
         });
     }
     if (err instanceof ZodError) {
