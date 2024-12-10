@@ -1582,6 +1582,7 @@ export class Generator {
             .tag("variant", options.variant)
             .tag("userAgent", client.userAgent.ua)
             .tag("apiKey", client.apiKey || "none")
+            .tag("apiKeyId", client.apiKeyId || "none")
             .inc();
         metrics.getMetric('generate_accounts')
             .tag("state", "success")
@@ -1650,6 +1651,7 @@ export class Generator {
             .tag("variant", options.variant)
             .tag("userAgent", client.userAgent.ua)
             .tag("apiKey", client.apiKey || "none")
+            .tag("apiKeyId", client.apiKeyId || "none")
             .inc();
         if (account) {
             metrics.getMetric('generate_accounts')
