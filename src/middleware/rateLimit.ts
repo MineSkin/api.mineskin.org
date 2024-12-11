@@ -22,8 +22,9 @@ export const globalDelayRateLimitMiddleware = async (req: GenerateV2Request, res
 
     const trafficService = container.get<TrafficService>(GeneratorTypes.TrafficService);
     if (req.client.useDelayRateLimit()) {
+        const credits = await req.client?.getCredits();
         req.nextRequest = await trafficService.getNextRequest(req.clientInfo);
-        req.minDelay = await trafficService.getMinDelaySeconds(req.clientInfo, req.apiKey) * 1000;
+        req.minDelay = await trafficService.getMinDelaySeconds(req.clientInfo, req.apiKey, credits?.type) * 1000;
         res.header('X-RateLimit-Delay', `${ req.minDelay }`);
         res.header('X-RateLimit-NextRequest', `${ req.nextRequest }`);
         if (req.nextRequest > req.clientInfo.time) {
@@ -87,8 +88,9 @@ export const verifyRateLimit = async (req: GenerateV2Request, res: Response, wit
     // check rate limit
     const trafficService = container.get<TrafficService>(GeneratorTypes.TrafficService);
     if (withDelay && req.client.useDelayRateLimit()) {
+         const credits = await req.client?.getCredits();
         req.nextRequest = await trafficService.getNextRequest(req.clientInfo);
-        req.minDelay = await trafficService.getMinDelaySeconds(req.clientInfo, req.apiKey) * 1000;
+        req.minDelay = await trafficService.getMinDelaySeconds(req.clientInfo, req.apiKey, credits?.type) * 1000;
         res.header('X-RateLimit-Delay', `${ req.minDelay }`);
         res.header('X-RateLimit-NextRequest', `${ req.nextRequest }`);
         if (req.nextRequest > req.clientInfo.time) {
