@@ -27,7 +27,9 @@ const URL_REWRITES = new Map<RegExp, string>([
 const URL_FOLLOW_WHITELIST = [
     "novask.in",
     "imgur.com",
-    "i.imgur.com"
+    "i.imgur.com",
+    "mineskin.org",
+    "minesk.in"
 ];
 const MAX_FOLLOW_REDIRECTS = 5;
 
