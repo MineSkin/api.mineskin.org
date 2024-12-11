@@ -376,14 +376,17 @@ export const register = (app: Application) => {
             }
             if (req.minDelay) {
                 json.delay = Math.floor(req.minDelay / 1000);
+                json.delayInfo = {
+                    millis: req.minDelay,
+                    seconds: Math.floor(req.minDelay / 1000)
+                };
             } else {
                 json.delay = delayInfo.seconds;
+                json.delayInfo = {
+                    millis: delayInfo.millis,
+                    seconds: delayInfo.seconds
+                };
             }
-
-            json.delayInfo = {
-                millis: delayInfo.millis,
-                seconds: delayInfo.seconds
-            };
         }
         if (req.warnings) {
             json.warnings = req.warnings;
