@@ -43,7 +43,8 @@ export const verifyApiKey = async (req: MineSkinV2Request, res: Response) => {
                 });
             }
 
-            key.updateLastUsed(new Date()); // don't await, don't really care
+            key.updateLastUsed(new Date()) // don't await, don't really care
+                .catch(e => Sentry.captureException(e));
 
             req.client.setApiKey(key);
 
