@@ -88,11 +88,14 @@ export const verifyRateLimit = async (req: GenerateV2Request, res: Response, wit
     // check rate limit
     const trafficService = container.get<TrafficService>(GeneratorTypes.TrafficService);
     if (withDelay && req.client.useDelayRateLimit()) {
-         const credits = await req.client?.getCredits();
+        const credits = await req.client?.getCredits();
         req.nextRequest = await trafficService.getNextRequest(req.clientInfo);
         req.minDelay = await trafficService.getMinDelaySeconds(req.clientInfo, req.apiKey, credits?.type) * 1000;
         res.header('X-RateLimit-Delay', `${ req.minDelay }`);
         res.header('X-RateLimit-NextRequest', `${ req.nextRequest }`);
+        res.header('MineSkin-Delay-Millis', `${ req.minDelay }`); // deprecated
+        res.header('MineSkin-Delay-Seconds', `${ Math.ceil(req.minDelay / 1000) }`); // deprecated
+        res.header('MineSkin-Delay', `${ Math.ceil(req.minDelay / 1000) }`); // deprecated
         if (req.nextRequest > req.clientInfo.time) {
             res.header('Retry-After', `${ Math.round((req.nextRequest - Date.now()) / 1000) }`);
             Log.l.warn(`${ req.client.apiKeyRef }/${ req.client.userAgent } speed limit exceeded, ${ req.nextRequest } > ${ req.clientInfo.time }`);
