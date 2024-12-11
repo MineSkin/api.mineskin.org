@@ -1,5 +1,5 @@
 import { Response, Router } from "express";
-import { v2GetSkin, v2SkinList } from "../../models/v2/skins";
+import { v2GetSkin, v2GetSkinTextureRedirect, v2SkinList } from "../../models/v2/skins";
 import { v2Router } from "./router";
 import expressAsyncHandler from "express-async-handler";
 import { MineSkinV2Request } from "./types";
@@ -24,6 +24,10 @@ router.get("/:uuid", expressAsyncHandler(async (req: MineSkinV2Request, res: Res
     const result = await v2GetSkin(req, res);
     res.header('Cache-Control', 'public, max-age=10800');
     res.json(formatV2Response(req, result));
+}));
+
+router.get("/:uuid/texture", expressAsyncHandler(async (req: MineSkinV2Request, res: Response<V2SkinResponse>) => {
+    await v2GetSkinTextureRedirect(req, res);
 }));
 
 router.post("/:uuid/interactions/views", expressAsyncHandler(async (req: MineSkinV2Request, res: Response<V2MiscResponseBody>) => {

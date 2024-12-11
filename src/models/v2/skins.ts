@@ -154,6 +154,22 @@ export async function v2GetSkin(req: MineSkinV2Request, res: Response<V2SkinResp
     };
 }
 
+export async function v2GetSkinTextureRedirect(req: MineSkinV2Request, res: Response<V2SkinResponse>): Promise<void> {
+    const uuidOrShort = UUIDOrShortId.parse(req.params.uuid);
+
+    const skinService = container.get<SkinService>(GeneratorTypes.SkinService);
+    let skin;
+    if (uuidOrShort.length === 8) {
+        skin = await skinService.findForShortId(uuidOrShort);
+    } else {
+        skin = await skinService.findForUuid(stripUuid(uuidOrShort));
+    }
+
+    skin = validateRequestedSkin(req, skin);
+
+    res.redirect(301, `https://mineskin.org/textures/${ skin.data?.hash?.skin?.minecraft }`)
+}
+
 export async function v2UserLegacySkinList(req: MineSkinV2Request, res: Response<V2SkinListResponseBody>): Promise<V2MiscResponseBody> {
     if (!req.client.hasUser()) {
         throw new MineSkinError('unauthorized', 'Unauthorized', {httpCode: 401});
