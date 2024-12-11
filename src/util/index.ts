@@ -186,7 +186,8 @@ export async function getAndValidateRequestApiKey(req: MineSkinRequest): Promise
             throw new MineSkinError("invalid_api_key", "Invalid API Key", {httpCode: 403});
         }
 
-        key.updateLastUsed(new Date()); // don't await, don't really care
+        key.updateLastUsed(new Date()) // don't await, don't really care
+            .catch(e => Sentry.captureException(e));
 
         req.apiKey = key;
 
