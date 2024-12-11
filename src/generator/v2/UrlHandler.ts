@@ -30,7 +30,8 @@ const URL_FOLLOW_WHITELIST = [
     "imgur.com",
     "i.imgur.com",
     "mineskin.org",
-    "minesk.in"
+    "minesk.in",
+    "api.mineskin.org"
 ];
 const MAX_FOLLOW_REDIRECTS = 5;
 
