@@ -369,12 +369,21 @@ export const register = (app: Application) => {
         json.duplicate = skin.skin.duplicate;
         delete json.visibility;
         if (delayInfo) {
-            json.nextRequest = Math.round(delayInfo.seconds); // deprecated
+            if (req.nextRequest) {
+                json.nextRequest = Math.floor(req.nextRequest / 1000);
+            } else {
+                json.nextRequest = Math.floor(Date.now() / 1000) + Math.round(delayInfo.seconds); // deprecated
+            }
+            if (req.minDelay) {
+                json.delay = Math.floor(req.minDelay / 1000);
+            } else {
+                json.delay = delayInfo.seconds;
+            }
 
             json.delayInfo = {
                 millis: delayInfo.millis,
                 seconds: delayInfo.seconds
-            }
+            };
         }
         if (req.warnings) {
             json.warnings = req.warnings;
