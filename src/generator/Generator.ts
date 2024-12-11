@@ -109,13 +109,17 @@ const URL_REWRITES = new Map<RegExp, string>([
     [/https?:\/\/imgur\.com\/(.+)/, 'https://i.imgur.com/$1.png'],
     [/https?:\/\/.+namemc\.com\/skin\/(.+)/, 'https://namemc.com/texture/$1.png'],
     [/https?:\/\/.+minecraftskins\.com\/skin\/(\d+)\/.+/, 'https://www.minecraftskins.com/skin/download/$1'],
-    [/https?:\/\/minecraft\.novaskin\.me\/skin\/(\d+)\/.+/, 'https://minecraft.novaskin.me/skin/$1/download']
+    [/https?:\/\/minecraft\.novaskin\.me\/skin\/(\d+)\/.+/, 'https://minecraft.novaskin.me/skin/$1/download'],
+    [/https?:\/\/minesk(\.in|in\.org)\/([0-9a-zA-Z]+)/, 'https://api.mineskin.org/v2/skins/$2/texture']
 ]);
 
 const URL_FOLLOW_WHITELIST = [
     "novask.in",
     "imgur.com",
-    "i.imgur.com"
+    "i.imgur.com",
+    "mineskin.org",
+    "minesk.in",
+    "api.mineskin.org"
 ];
 const MAX_FOLLOW_REDIRECTS = 5;
 
