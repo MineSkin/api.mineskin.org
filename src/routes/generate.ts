@@ -378,15 +378,15 @@ export const register = (app: Application) => {
             }
 
             if (req.nextRequest) {
-                json.nextRequest = Math.floor(req.nextRequest / 1000);
+                json.nextRequest = Math.ceil(req.nextRequest / 1000);
             } else {
-                json.nextRequest = Math.floor(Date.now() / 1000) + Math.round(delayInfo.seconds); // deprecated
+                json.nextRequest = Math.ceil(Date.now() / 1000) + Math.round(delayInfo.seconds); // deprecated
             }
             if (req.minDelay) {
-                json.delay = Math.floor(req.minDelay / 1000);
+                json.delay = Math.ceil(req.minDelay / 1000);
                 json.delayInfo = {
                     millis: req.minDelay,
-                    seconds: Math.floor(req.minDelay / 1000)
+                    seconds: Math.ceil(req.minDelay / 1000)
                 };
             } else {
                 json.delay = delayInfo.seconds;
