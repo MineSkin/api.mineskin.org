@@ -30,7 +30,7 @@ import { DelayInfo } from "../typings/DelayInfo";
 import { GenerateType, SkinVariant, UUID } from "@mineskin/types";
 import { SkinModel } from "@mineskin/database";
 import { Temp } from "../generator/Temp";
-import { Migrations, TrafficService } from "@mineskin/generator";
+import { Migrations } from "@mineskin/generator";
 import { GenerateV2Request, MineSkinV2Request } from "./v2/types";
 import { v2GenerateAndWait } from "../models/v2/generate";
 import { V2SkinResponse } from "../typings/v2/V2SkinResponse";
@@ -41,7 +41,6 @@ import { container } from "../inversify.config";
 import { Log } from "../Log";
 import { validateModel, validateName, validateVariant, validateVisibility } from "../util/validate";
 import { rewriteV2Options } from "../util/compat";
-import { TYPES as GeneratorTypes } from "@mineskin/generator/dist/ditypes";
 
 export const register = (app: Application) => {
 
@@ -370,18 +369,7 @@ export const register = (app: Application) => {
         json.duplicate = skin.skin.duplicate;
         delete json.visibility;
         if (delayInfo) {
-            if (req.client && req.clientInfo && req.client.useDelayRateLimit()) {
-                const trafficService = container.get<TrafficService>(GeneratorTypes.TrafficService);
-                const credits = await req.client?.getCredits();
-                req.nextRequest = await trafficService.getNextRequest(req.clientInfo);
-                req.minDelay = await trafficService.getMinDelaySeconds(req.clientInfo, req.apiKey, credits?.type) * 1000;
-            }
-
-            if (req.nextRequest) {
-                json.nextRequest = Math.ceil(req.nextRequest / 1000);
-            } else {
-                json.nextRequest = Math.ceil(Date.now() / 1000) + Math.round(delayInfo.seconds); // deprecated
-            }
+            json.nextRequest = Math.round(delayInfo.seconds); // deprecated
             if (req.minDelay) {
                 json.delay = Math.ceil(req.minDelay / 1000);
                 json.delayInfo = {

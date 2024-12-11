@@ -422,7 +422,7 @@ async function init() {
                             errorCode: err.code,
                             error: err.msg,
                             breadcrumb: isBreadRequest(req) ? req.breadcrumbId : null,
-                            nextRequest: Math.round((Date.now() / 1000) + delayInfo.seconds), // deprecated
+                            nextRequest: Math.round(delayInfo.seconds), // deprecated
                             delay: delayInfo.seconds, // deprecated
 
                             delayInfo: {

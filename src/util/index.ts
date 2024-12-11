@@ -78,7 +78,7 @@ export async function checkTraffic(client: ClientInfo, req: Request, res: Respon
             res.status(429).json({
                 error: "Too many requests",
                 limiter: "redis",
-                nextRequest: Math.round(nextRequest / 1000), // deprecated
+                nextRequest: delayInfo.seconds, // deprecated
                 delay: delayInfo.seconds, // deprecated
 
                 delayInfo: {
