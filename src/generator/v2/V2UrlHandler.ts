@@ -99,12 +99,19 @@ export class V2UrlHandler extends V2GenerateHandler {
     async checkDuplicateUrl(req: GenerateV2Request, url: string, options: GenerateOptions): Promise<UUID | false> {
         const originalUrlV2Duplicate = await DuplicateChecker.findDuplicateV2FromUrl(url, options, req.breadcrumb || "????");
         if (originalUrlV2Duplicate.existing) {
+            const isMineSkinOrTextureUrl = UrlHandler.isMineSkinUrl(url) || UrlHandler.isMinecraftTextureUrl(url);
             // found existing
-            const result = await DuplicateChecker.handleV2DuplicateResult({
+            const result = await DuplicateChecker.handleV2DuplicateResult(
+                {
                 source: originalUrlV2Duplicate.source,
                 existing: originalUrlV2Duplicate.existing,
                 data: originalUrlV2Duplicate.existing.data
-            }, options, req.clientInfo!, req.breadcrumb || "????");
+            },
+                options,
+                req.clientInfo!,
+                req.breadcrumb || "????",
+                isMineSkinOrTextureUrl // ignore visibility on mineskin/texture urls to return existing
+            );
             await DuplicateChecker.handleDuplicateResultMetrics(result, GenerateType.URL, options, req.clientInfo!);
             if (!!result.existing) {
                 // full duplicate, return existing skin
