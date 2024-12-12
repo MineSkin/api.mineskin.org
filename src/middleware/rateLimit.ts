@@ -29,7 +29,7 @@ export const globalDelayRateLimitMiddleware = async (req: GenerateV2Request, res
         res.header('X-RateLimit-NextRequest', `${ req.nextRequest }`);
         if (req.nextRequest > req.clientInfo.time) {
             res.header('Retry-After', `${ Math.round((req.nextRequest - Date.now()) / 1000) }`);
-            Log.l.warn(`${ req.client.apiKeyRef }/${ req.client.userAgent } speed limit exceeded, ${ req.nextRequest } > ${ req.clientInfo.time }`);
+            Log.l.warn(`${ req.client.apiKeyRef }/${ req.client.userAgent } speed limit exceeded, ${ req.nextRequest } > ${ req.clientInfo.time } (${ req.nextRequest - req.clientInfo.time })`);
             throw new GeneratorError('rate_limit', `request too soon, next request in ${ ((Math.round(req.nextRequest - Date.now()) / 100) * 100) }ms`, {httpCode: 429});
         }
     }
@@ -100,7 +100,7 @@ export const verifyRateLimit = async (req: GenerateV2Request, res: Response, wit
         }
         if (req.nextRequest > req.clientInfo.time) {
             res.header('Retry-After', `${ Math.round((req.nextRequest - Date.now()) / 1000) }`);
-            Log.l.warn(`${ req.client.apiKeyRef }/${ req.client.userAgent } speed limit exceeded, ${ req.nextRequest } > ${ req.clientInfo.time }`);
+            Log.l.warn(`${ req.client.apiKeyRef }/${ req.client.userAgent } speed limit exceeded, ${ req.nextRequest } > ${ req.clientInfo.time } (${ req.nextRequest - req.clientInfo.time })`);
             throw new GeneratorError('rate_limit', `request too soon, next request in ${ ((Math.round(req.nextRequest - Date.now()) / 100) * 100) }ms`, {httpCode: 429});
         }
     }
