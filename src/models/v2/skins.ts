@@ -33,6 +33,8 @@ export async function v2SkinList(req: MineSkinV2Request, res: Response<V2SkinLis
     return await v2ListSkins(req, res);
 }
 
+//TODO: popular skins list
+
 export async function v2UserSkinList(req: MineSkinV2Request, res: Response<V2SkinListResponseBody>): Promise<V2SkinListResponseBody> {
     if (!req.client.hasUser()) {
         throw new MineSkinError('unauthorized', 'Unauthorized', {httpCode: 401});
