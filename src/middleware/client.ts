@@ -37,6 +37,7 @@ export const initRequestClient = (req: MineSkinV2Request, res: Response) => {
         if (req.headers['origin']) {
             Log.l.debug(`${ req.breadcrumbC } Origin:      ${ req.headers['origin'] }`);
         }
+        Log.l.debug(`${ req.breadcrumbC } IP:          ${ ip }`);
 
         if (!res.hasHeader("MineSkin-Api-Version")) {
             res.header("MineSkin-Api-Version", "v2");

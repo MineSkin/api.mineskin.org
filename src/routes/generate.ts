@@ -430,6 +430,7 @@ export const register = (app: Application) => {
         if (req.headers['origin']) {
             Log.l.info(debug(`${ req.breadcrumb } Origin:      ${ req.headers['origin'] }`));
         }
+        Log.l.info(debug(`${ req.breadcrumb } IP:           ${ ip }`));
         console.log(debug(`${ req.breadcrumb } Key:         ${ req.apiKey?.name ?? "none" } ${ req.apiKey?._id ?? "" }`));
 
         return {
