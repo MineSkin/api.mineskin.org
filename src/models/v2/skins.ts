@@ -9,7 +9,7 @@ import {
     SkinData,
     User
 } from "@mineskin/database";
-import { RootFilterQuery } from "mongoose";
+import { FilterQuery, SortOrder } from "mongoose";
 import { Maybe, MineSkinError, SkinVisibility2 } from "@mineskin/types";
 import { ListedSkin, V2SkinListResponseBody } from "../../typings/v2/V2SkinListResponseBody";
 import { V2SkinResponse } from "../../typings/v2/V2SkinResponse";
@@ -24,6 +24,11 @@ import { Log } from "../../Log";
 import { stripUuid } from "../../util";
 import { V2MiscResponseBody } from "../../typings/v2/V2MiscResponseBody";
 
+type QueryCustomizer = (args: {
+    query: FilterQuery<ISkin2Document>,
+    sort: Record<string, SortOrder>
+}) => void;
+
 export async function v2SkinList(req: MineSkinV2Request, res: Response<V2SkinListResponseBody>): Promise<V2SkinListResponseBody> {
     return await v2ListSkins(req, res);
 }
@@ -32,27 +37,9 @@ export async function v2UserSkinList(req: MineSkinV2Request, res: Response<V2Ski
     if (!req.client.hasUser()) {
         throw new MineSkinError('unauthorized', 'Unauthorized', {httpCode: 401});
     }
-    return await v2ListSkins(req, res, req.client.userId);
-}
-
-export async function v2ListSkins(req: MineSkinV2Request, res: Response<V2SkinListResponseBody>, user?: string): Promise<V2SkinListResponseBody> {
-    const {
-        after,
-        size,
-        filter
-    } = ListReqQuery.parse(req.query);
-
-    const query: RootFilterQuery<ISkin2Document> = {
-        'meta.visibility': SkinVisibility2.PUBLIC
-    };
-
-    if (filter) {
-        query['$text'] = {$search: filter};
-    }
-
-    if (user) {
+    return await v2ListSkins(req, res, ({query, sort}) => {
         // filter by user
-        query['clients.user'] = user;
+        query['clients.user'] = req.client.userId;
         // allow all visibilities
         query['meta.visibility'] = {
             $in: [
@@ -66,6 +53,28 @@ export async function v2ListSkins(req: MineSkinV2Request, res: Response<V2SkinLi
         const oneWeekAgo = new Date();
         oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
         query['createdAt'] = {$gte: oneWeekAgo};
+    });
+}
+
+export async function v2ListSkins(req: MineSkinV2Request, res: Response<V2SkinListResponseBody>, customizer?: QueryCustomizer): Promise<V2SkinListResponseBody> {
+    const {
+        after,
+        size,
+        filter
+    } = ListReqQuery.parse(req.query);
+
+    const query: FilterQuery<ISkin2Document> = {
+        'meta.visibility': SkinVisibility2.PUBLIC
+    };
+
+    if (filter) {
+        query['$text'] = {$search: filter};
+    }
+
+    const sort: Record<string, SortOrder> = {_id: -1};
+
+    if (customizer) {
+        customizer({query, sort});
     }
 
     if (after) {
@@ -79,7 +88,7 @@ export async function v2ListSkins(req: MineSkinV2Request, res: Response<V2SkinLi
         .limit(size || 16)
         .select('uuid meta data updatedAt') //TODO
         .populate('data', 'hash.skin.minecraft')
-        .sort({_id: -1})
+        .sort(sort)
         .exec();
 
     let lastSkin = skins[skins.length - 1];
