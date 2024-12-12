@@ -35,6 +35,9 @@ const URL_FOLLOW_WHITELIST = [
 ];
 const MAX_FOLLOW_REDIRECTS = 5;
 
+const MINESKIN_URL_REGEX = /https?:\/\/minesk(\.in|in\.org)\/([0-9a-zA-Z]+)/i;
+const MINECRAFT_TEXTURE_REGEX = /https?:\/\/textures\.minecraft\.net\/texture\/([0-9a-z]+)/i;
+
 export class UrlHandler {
 
     public static isBlockedHost(urlStr: string) {
@@ -115,6 +118,14 @@ export class UrlHandler {
 
     public static getContentTypeFromResponse(response: AxiosResponse): string {
         return response.headers["content-type"];
+    }
+
+    public static isMineSkinUrl(url: string): boolean {
+        return MINESKIN_URL_REGEX.test(url);
+    }
+
+    public static isMinecraftTextureUrl(url: string): boolean {
+        return MINECRAFT_TEXTURE_REGEX.test(url);
     }
 
 }
