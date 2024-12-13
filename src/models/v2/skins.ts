@@ -38,7 +38,7 @@ export async function v2PopularSkinList(req: MineSkinV2Request, res: Response<V2
         //TODO: custom range (weekly/monthly)
         const oneDayAgo = new Date();
         oneDayAgo.setDate(oneDayAgo.getDate() - 1);
-        query['createdAt'] = {$gte: oneDayAgo}
+        query['updatedAt'] = {$gte: oneDayAgo}
 
         query['interaction.views'] = {$gt: 5};
 
