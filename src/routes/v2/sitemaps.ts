@@ -41,10 +41,16 @@ router.get("/web-skins-popular-24h.xml", expressAsyncHandler(async (req: MineSki
     const oneDayAgo = new Date();
     oneDayAgo.setDate(oneDayAgo.getDate() - 1);
 
+    // extra check to not include recently migrated skins
+    // TODO: remove
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
     const query: RootFilterQuery<ISkin2Document> = {
         'meta.visibility': SkinVisibility2.PUBLIC,
         'interaction.views': {$gt: 5},
-        updatedAt: {$gte: oneDayAgo}
+        updatedAt: {$gte: oneDayAgo},
+        createdAt: {$gte: oneWeekAgo}
     };
     const skins = await Skin2.find(query)
         .limit(2048)

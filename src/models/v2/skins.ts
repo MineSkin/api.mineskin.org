@@ -40,6 +40,12 @@ export async function v2PopularSkinList(req: MineSkinV2Request, res: Response<V2
         oneDayAgo.setDate(oneDayAgo.getDate() - 1);
         query['updatedAt'] = {$gte: oneDayAgo}
 
+        // extra check to not include recently migrated skins
+        // TODO: remove
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        query['createdAt'] = {$gte: oneWeekAgo}
+
         query['interaction.views'] = {$gt: 5};
 
         sort['interaction.views'] = -1;
