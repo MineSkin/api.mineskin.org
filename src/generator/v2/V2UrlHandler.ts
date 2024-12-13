@@ -1,7 +1,7 @@
 import { BufferResult, V2GenerateHandler } from "./V2GenerateHandler";
 import { Response } from "express";
 import { ALLOWED_IMAGE_TYPES, DuplicateChecker, GeneratorError, GenError, MAX_IMAGE_SIZE } from "@mineskin/generator";
-import { GenerateOptions, GenerateType, UUID } from "@mineskin/types";
+import { ErrorSource, GenerateOptions, GenerateType, UUID } from "@mineskin/types";
 import { readFile } from "fs/promises";
 import { GenerateV2Request } from "../../routes/v2/types";
 import { V2GenerateResponseBody } from "../../typings/v2/V2GenerateResponseBody";
@@ -28,7 +28,8 @@ export class V2UrlHandler extends V2GenerateHandler {
         if (UrlChecks.isBlockedHost(originalUrl)) {
             throw new GeneratorError('blocked_url_host', "The url host is not allowed", {
                 httpCode: 400,
-                details: originalUrl
+                details: originalUrl,
+                source: ErrorSource.CLIENT
             });
         }
 

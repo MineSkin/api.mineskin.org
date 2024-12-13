@@ -92,7 +92,10 @@ export async function v2GenerateAndWait(req: GenerateV2Request, res: Response<V2
     }
 
     if (!job) {
-        throw new GeneratorError('job_not_found', "Job not found", {httpCode: 404});
+        throw new GeneratorError('job_not_found', "Job not found", {
+            httpCode: 404,
+            source: ErrorSource.CLIENT
+        });
     }
     try {
         const timeoutSeconds = GenerateTimeout.parse(req.query.timeout);
@@ -113,7 +116,11 @@ export async function v2GenerateAndWait(req: GenerateV2Request, res: Response<V2
         }
         if (e.message.includes('timed out before finishing') || e.message.includes('Timeout')) { // this kinda sucks
             Log.l.warn(e);
-            throw new GeneratorError('generator_timeout', "generator request timed out", {httpCode: 500, error: e});
+            throw new GeneratorError('generator_timeout', "generator request timed out", {
+                httpCode: 500,
+                error: e,
+                source: ErrorSource.SERVER
+            });
         }
         Log.l.error(e);
         Sentry.captureException(e);
@@ -364,12 +371,18 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
     if (req.client.hasUser()) {
         const pendingByUser = await getClient().getPendingCountByUser(req.client.userId!)
         if (pendingByUser > 5) { // TODO: configurable / client grant
-            throw new GeneratorError('job_limit', "You have too many jobs in the queue", {httpCode: 429});
+            throw new GeneratorError('job_limit', "You have too many jobs in the queue", {
+                httpCode: 429,
+                source: ErrorSource.CLIENT
+            });
         }
     } else {
         const pendingByIp = await getClient().getPendingCountByIp(req.client.ip!)
         if (pendingByIp > 5) { // TODO: configurable / client grant
-            throw new GeneratorError('job_limit', "You have too many jobs in the queue", {httpCode: 429});
+            throw new GeneratorError('job_limit', "You have too many jobs in the queue", {
+                httpCode: 429,
+                source: ErrorSource.CLIENT
+            });
         }
         await sleep(200 * Math.random());
     }
@@ -380,10 +393,16 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
 
     if (options.visibility === SkinVisibility2.PRIVATE) {
         if (!req.apiKey && !req.client.hasUser()) {
-            throw new GeneratorError('unauthorized', "private skins require an API key or User", {httpCode: 401});
+            throw new GeneratorError('unauthorized', "private skins require an API key or User", {
+                httpCode: 401,
+                source: ErrorSource.CLIENT
+            });
         }
         if (!req.client.grants?.private_skins) {
-            throw new GeneratorError('insufficient_grants', "you are not allowed to generate private skins", {httpCode: 403});
+            throw new GeneratorError('insufficient_grants', "you are not allowed to generate private skins", {
+                httpCode: 403,
+                source: ErrorSource.CLIENT
+            });
         }
         Log.l.debug(`${ req.breadcrumbC } generating private`);
     }
@@ -401,7 +420,10 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
             //TODO: validate user
             handler = new V2UserHandler(req, res, options);
         } else {
-            throw new GeneratorError('invalid_request', `invalid request properties (expected url or user)`, {httpCode: 400});
+            throw new GeneratorError('invalid_request', `invalid request properties (expected url or user)`, {
+                httpCode: 400,
+                source: ErrorSource.CLIENT
+            });
         }
     } else {
         throw new GeneratorError('invalid_content_type', `invalid content type: ${ req.header('content-type') } (expected multipart/form-data or application/json)`, {httpCode: 400});
