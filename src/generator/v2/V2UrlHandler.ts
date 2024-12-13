@@ -11,6 +11,7 @@ import { Temp, URL_DIR } from "../Temp";
 import { UrlHandler } from "./UrlHandler";
 import { GenerateReqUrl } from "../../validation/generate";
 import { Log } from "../../Log";
+import { UrlChecks } from "./UrlChecks";
 
 export class V2UrlHandler extends V2GenerateHandler {
 
@@ -99,7 +100,7 @@ export class V2UrlHandler extends V2GenerateHandler {
     async checkDuplicateUrl(req: GenerateV2Request, url: string, options: GenerateOptions): Promise<UUID | false> {
         const originalUrlV2Duplicate = await DuplicateChecker.findDuplicateV2FromUrl(url, options, req.breadcrumb || "????");
         if (originalUrlV2Duplicate.existing) {
-            const isMineSkinOrTextureUrl = UrlHandler.isMineSkinUrl(url) || UrlHandler.isMinecraftTextureUrl(url);
+            const isMineSkinOrTextureUrl = UrlChecks.isMineSkinUrl(url) || UrlChecks.isMinecraftTextureUrl(url);
             // found existing
             const result = await DuplicateChecker.handleV2DuplicateResult(
                 {
