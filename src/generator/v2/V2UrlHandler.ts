@@ -15,7 +15,7 @@ import { UrlChecks } from "./UrlChecks";
 
 export class V2UrlHandler extends V2GenerateHandler {
 
-    tempFile: PathHolder|undefined;
+    tempFile: PathHolder | undefined;
 
     constructor(req: GenerateV2Request, res: Response<V2GenerateResponseBody | V2SkinResponse>, options: GenerateOptions) {
         super(req, res, options, GenerateType.URL);
@@ -24,6 +24,13 @@ export class V2UrlHandler extends V2GenerateHandler {
     async getImageBuffer(): Promise<BufferResult> {
         const {url: originalUrl} = GenerateReqUrl.parse(this.req.body);
         Log.l.debug(`${ this.req.breadcrumbC } URL:         "${ originalUrl }"`);
+
+        if (UrlChecks.isBlockedHost(originalUrl)) {
+            throw new GeneratorError('blocked_url_host', "The url host is not allowed", {
+                httpCode: 400,
+                details: originalUrl
+            });
+        }
 
         // check for duplicate texture or mineskin url
         const originalDuplicateCheck = await this.checkDuplicateUrl(this.req, originalUrl, this.options);
@@ -54,6 +61,12 @@ export class V2UrlHandler extends V2GenerateHandler {
             const followedUrlDuplicate = await this.checkDuplicateUrl(this.req, followedUrl, this.options);
             if (followedUrlDuplicate) {
                 return {existing: followedUrlDuplicate};
+            }
+            if (UrlChecks.isBlockedHost(followedUrl)) {
+                throw new GeneratorError('blocked_url_host', "The followed url host is not allowed", {
+                    httpCode: 400,
+                    details: originalUrl
+                });
             }
         }
 
@@ -104,10 +117,10 @@ export class V2UrlHandler extends V2GenerateHandler {
             // found existing
             const result = await DuplicateChecker.handleV2DuplicateResult(
                 {
-                source: originalUrlV2Duplicate.source,
-                existing: originalUrlV2Duplicate.existing,
-                data: originalUrlV2Duplicate.existing.data
-            },
+                    source: originalUrlV2Duplicate.source,
+                    existing: originalUrlV2Duplicate.existing,
+                    data: originalUrlV2Duplicate.existing.data
+                },
                 options,
                 req.clientInfo!,
                 req.breadcrumb || "????",
