@@ -1607,9 +1607,18 @@ export class Generator {
             .tag("apiKey", client.apiKey || "none")
             .tag("genEnv", "api")
             .inc();
+
         await Stat.inc(GENERATE_SUCCESS);
+
         const redis = container.get<IRedisProvider>(CoreTypes.RedisProvider);
-        await redis.client.incr("mineskin:generated:total:success");
+        let trans = redis.client.multi()
+            .incr("mineskin:generated:total:success");
+        if (account) {
+            trans = trans.set(`mineskin:generated:accounts:${ account.uuid }:success`, `${ account.totalSuccessCounter || 0 }`, {NX: true})
+                .incr(`mineskin:generated:accounts:${ account.uuid }:success`);
+        }
+        await trans.exec();
+
         if (!account) return;
         try {
             account.errorCounter = 0;
