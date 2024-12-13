@@ -29,7 +29,7 @@ type QueryCustomizer = (args: {
     sort: Record<string, SortOrder>
 }) => void;
 
-export async function v2SkinList(req: MineSkinV2Request, res: Response<V2SkinListResponseBody>): Promise<V2SkinListResponseBody> {
+export async function v2LatestSkinList(req: MineSkinV2Request, res: Response<V2SkinListResponseBody>): Promise<V2SkinListResponseBody> {
     return await v2ListSkins(req, res);
 }
 

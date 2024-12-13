@@ -1,5 +1,5 @@
 import { Response, Router } from "express";
-import { v2GetSkin, v2GetSkinTextureRedirect, v2PopularSkinList, v2SkinList } from "../../models/v2/skins";
+import { v2GetSkin, v2GetSkinTextureRedirect, v2LatestSkinList, v2PopularSkinList } from "../../models/v2/skins";
 import { v2Router } from "./router";
 import expressAsyncHandler from "express-async-handler";
 import { MineSkinV2Request } from "./types";
@@ -14,8 +14,15 @@ import { V2MiscResponseBody } from "../../typings/v2/V2MiscResponseBody";
 const router: Router = v2Router();
 router.use(wildcardCorsWithCredentials);
 
+// alias of /latest
 router.get("/", expressAsyncHandler(async (req: MineSkinV2Request, res: Response<V2SkinListResponseBody>) => {
-    const result = await v2SkinList(req, res);
+    const result = await v2LatestSkinList(req, res);
+    res.header('Cache-Control', 'public, max-age=3600');
+    res.json(formatV2Response(req, result));
+}));
+
+router.get("/latest", expressAsyncHandler(async (req: MineSkinV2Request, res: Response<V2SkinListResponseBody>) => {
+    const result = await v2LatestSkinList(req, res);
     res.header('Cache-Control', 'public, max-age=3600');
     res.json(formatV2Response(req, result));
 }));
