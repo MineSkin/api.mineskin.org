@@ -368,6 +368,8 @@ export const register = (app: Application) => {
         const delayInfo = await Generator.getDelay(req.apiKey);
         json.duplicate = skin.skin.duplicate;
         delete json.visibility;
+        json.usage = skin.usage;
+        json.rateLimit = skin.rateLimit;
         if (delayInfo) {
             json.nextRequest = Math.round(delayInfo.seconds); // deprecated
             if (req.minDelay) {
