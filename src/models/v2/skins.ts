@@ -69,9 +69,9 @@ export async function v2UserSkinList(req: MineSkinV2Request, res: Response<V2Ski
         };
 
         // limit results
-        const oneWeekAgo = new Date();
-        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-        query['createdAt'] = {$gte: oneWeekAgo};
+        const threeMonthsAgo = new Date();
+        threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+        query['createdAt'] = {$gte: threeMonthsAgo};
     });
 }
 
