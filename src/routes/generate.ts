@@ -30,7 +30,7 @@ import { DelayInfo } from "../typings/DelayInfo";
 import { GenerateType, SkinVariant, UUID } from "@mineskin/types";
 import { SkinModel } from "@mineskin/database";
 import { Temp } from "../generator/Temp";
-import { Migrations } from "@mineskin/generator";
+import { MigrationHandler } from "@mineskin/generator";
 import { GenerateV2Request, MineSkinV2Request } from "./v2/types";
 import { v2GenerateAndWait } from "../models/v2/generate";
 import { V2SkinResponse } from "../typings/v2/V2SkinResponse";
@@ -364,7 +364,7 @@ export const register = (app: Application) => {
     }
 
     async function sendV2WrappedSkin(req: GenerateV2Request, res: Response, skin: V2SkinResponse) {
-        const json: any = Migrations.v2SkinInfoToV1Json(skin.skin);
+        const json: any = MigrationHandler.v2SkinInfoToV1Json(skin.skin);
         const delayInfo = await Generator.getDelay(req.apiKey);
         json.duplicate = skin.skin.duplicate;
         delete json.visibility;

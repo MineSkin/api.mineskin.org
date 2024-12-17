@@ -491,16 +491,17 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
 
         // duplicate check V2, same as in generator
         //  just to avoid unnecessary submissions to generator
-        const duplicateV2Data = await DuplicateChecker.findDuplicateDataFromImageHash(hashes, options.variant, GenerateType.UPLOAD, req.breadcrumb || "????");
+        const duplicateChecker = container.get<DuplicateChecker>(GeneratorTypes.DuplicateChecker);
+        const duplicateV2Data = await duplicateChecker.findDuplicateDataFromImageHash(hashes, options.variant, GenerateType.UPLOAD, req.breadcrumb || "????");
         if (duplicateV2Data.existing) {
             // found existing data
-            const skinForDuplicateData = await DuplicateChecker.findV2ForData(duplicateV2Data.existing);
-            const result = await DuplicateChecker.handleV2DuplicateResult({
+            const skinForDuplicateData = await duplicateChecker.findV2ForData(duplicateV2Data.existing);
+            const result = await duplicateChecker.handleV2DuplicateResult({
                 source: duplicateV2Data.source,
                 existing: skinForDuplicateData,
                 data: duplicateV2Data.existing
             }, options, req.clientInfo, req.breadcrumb || "????");
-            await DuplicateChecker.handleDuplicateResultMetrics(result, GenerateType.UPLOAD, options, req.clientInfo);
+            await duplicateChecker.handleDuplicateResultMetrics(result, GenerateType.UPLOAD, options, req.clientInfo);
             if (!!result.existing) {
                 // full duplicate, return existing skin
                 //await V2GenerateHandler.queryAndSendSkin(req, res, result.existing.uuid, true);

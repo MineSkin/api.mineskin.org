@@ -1,5 +1,5 @@
 import { MineSkinV2Request } from "../../routes/v2/types";
-import { Migrations, SkinService, TYPES as GeneratorTypes } from "@mineskin/generator";
+import { MigrationHandler, SkinService, TYPES as GeneratorTypes } from "@mineskin/generator";
 import { Response } from "express";
 import {
     IPopulatedSkin2Document,
@@ -162,7 +162,8 @@ export async function v2GetSkin(req: MineSkinV2Request, res: Response<V2SkinResp
         if (!skin && uuidOrShort.length !== 8 && await flags.isEnabled('migrations.api.get')) {
             const v1Doc = await Caching.getSkinByUuid(uuidOrShort);
             if (v1Doc) {
-                skin = await Migrations.migrateV1ToV2(v1Doc, "skin-get");
+                const migrations = container.get<MigrationHandler>(GeneratorTypes.MigrationHandler);
+                skin = await migrations.migrateV1ToV2(v1Doc, "skin-get");
                 skin.data = await SkinData.findById(skin.data) || skin.data;
             }
         }

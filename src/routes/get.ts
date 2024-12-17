@@ -8,7 +8,7 @@ import { ISkinDocument, isPopulatedSkin2Document, Skin, Stat } from "@mineskin/d
 import { GenerateType } from "@mineskin/types";
 import { getRedisLastRequest, getRedisNextRequest } from "../database/redis";
 import { container } from "../inversify.config";
-import { Migrations, SkinService, TYPES as GeneratorTypes } from "@mineskin/generator";
+import { MigrationHandler, SkinService, TYPES as GeneratorTypes } from "@mineskin/generator";
 import { V2GenerateHandler } from "../generator/v2/V2GenerateHandler";
 
 export const register = (app: Application) => {
@@ -109,7 +109,7 @@ export const register = (app: Application) => {
             const v2SkinDoc = await skinService.findForUuid(stripUuid(uuid));
             if (v2SkinDoc && isPopulatedSkin2Document(v2SkinDoc)) {
                 const v2Skin = V2GenerateHandler.skinToJson(v2SkinDoc);
-                skin = Migrations.v2SkinInfoToV1Json(v2Skin);
+                skin = MigrationHandler.v2SkinInfoToV1Json(v2Skin);
             }
         }
         if (!skin) {

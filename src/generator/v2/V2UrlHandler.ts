@@ -12,6 +12,8 @@ import { UrlHandler } from "./UrlHandler";
 import { GenerateReqUrl } from "../../validation/generate";
 import { Log } from "../../Log";
 import { UrlChecks } from "./UrlChecks";
+import { container } from "../../inversify.config";
+import { TYPES as GeneratorTypes } from "@mineskin/generator/dist/ditypes";
 
 export class V2UrlHandler extends V2GenerateHandler {
 
@@ -112,11 +114,12 @@ export class V2UrlHandler extends V2GenerateHandler {
     }
 
     async checkDuplicateUrl(req: GenerateV2Request, url: string, options: GenerateOptions): Promise<UUID | false> {
-        const originalUrlV2Duplicate = await DuplicateChecker.findDuplicateV2FromUrl(url, options, req.breadcrumb || "????");
+        const duplicateChecker = container.get<DuplicateChecker>(GeneratorTypes.DuplicateChecker);
+        const originalUrlV2Duplicate = await duplicateChecker.findDuplicateV2FromUrl(url, options, req.breadcrumb || "????");
         if (originalUrlV2Duplicate.existing) {
             const isMineSkinOrTextureUrl = UrlChecks.isMineSkinUrl(url) || UrlChecks.isMinecraftTextureUrl(url);
             // found existing
-            const result = await DuplicateChecker.handleV2DuplicateResult(
+            const result = await duplicateChecker.handleV2DuplicateResult(
                 {
                     source: originalUrlV2Duplicate.source,
                     existing: originalUrlV2Duplicate.existing,
@@ -127,7 +130,7 @@ export class V2UrlHandler extends V2GenerateHandler {
                 req.breadcrumb || "????",
                 isMineSkinOrTextureUrl // ignore visibility on mineskin/texture urls to return existing
             );
-            await DuplicateChecker.handleDuplicateResultMetrics(result, GenerateType.URL, options, req.clientInfo!);
+            await duplicateChecker.handleDuplicateResultMetrics(result, GenerateType.URL, options, req.clientInfo!);
             if (!!result.existing) {
                 // full duplicate, return existing skin
                 // return await V2GenerateHandler.queryAndSendSkin(req, res, result.existing.uuid, true);
