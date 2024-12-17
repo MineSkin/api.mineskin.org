@@ -11,7 +11,7 @@ export class ApiLogProvider implements ILogProvider {
     _logger: winston.Logger;
 
     constructor() {
-        console.debug('ApiLogProvider init');
+        console.trace('ApiLogProvider init');
         const logRotate: DailyRotateFile = new DailyRotateFile({
             level: 'debug',
             handleExceptions: true,
