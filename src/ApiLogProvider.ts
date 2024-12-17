@@ -11,6 +11,7 @@ export class ApiLogProvider implements ILogProvider {
     _logger: winston.Logger;
 
     constructor() {
+        console.debug('ApiLogProvider init');
         const logRotate: DailyRotateFile = new DailyRotateFile({
             level: 'debug',
             handleExceptions: true,
@@ -72,28 +73,30 @@ export class ApiLogProvider implements ILogProvider {
             ],
         });
 
+        logger.debug('ApiLogProvider logger created');
 
         this._logger = logger;
 
+        this.replaceConsole();
+    }
 
-        (() => {
-            console.log = (...args: any[]) => {
-                this.l.info(args.join(' '));
-            }
-            console.error = (...args: any[]) => {
-                this.l.error(args.join(' '));
-            }
-            console.debug = (...args: any[]) => {
-                this.l.debug(args.join(' '));
-            }
-            console.info = (...args: any[]) => {
-                this.l.info(args.join(' '));
-            }
-            console.warn = (...args: any[]) => {
-                this.l.warn(args.join(' '));
-            }
-
-        })();
+    replaceConsole() {
+        console.log = (...args: any[]) => {
+            this.l.info(args.join(' '));
+        }
+        console.error = (...args: any[]) => {
+            this.l.error(args.join(' '));
+        }
+        console.debug = (...args: any[]) => {
+            this.l.debug(args.join(' '));
+        }
+        console.info = (...args: any[]) => {
+            this.l.info(args.join(' '));
+        }
+        console.warn = (...args: any[]) => {
+            this.l.warn(args.join(' '));
+        }
+        this.l.debug('ApiLogProvider replaced console');
     }
 
     get l(): winston.Logger {
