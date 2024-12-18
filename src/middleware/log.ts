@@ -26,6 +26,7 @@ export function requestLogMiddleware(req: Request, res: Response, next: NextFunc
                 'Authorization': !!req.get('Authorization'),
             }
         };
+        const breadcrumb = (req as any).breadcrumbId || (req as any).breadcrumb || 'unknown';
         const oldJson = res.json;
         res.json = (body) => {
             oldJson.call(res, body);
@@ -37,7 +38,7 @@ export function requestLogMiddleware(req: Request, res: Response, next: NextFunc
                 };
                 setTimeout(() => {
                     try {
-                        doLog(request, response);
+                        doLog(request, response, breadcrumb);
                     } catch (e) {
                         console.error(e);
                         Sentry.captureException(e);
@@ -56,7 +57,7 @@ export function requestLogMiddleware(req: Request, res: Response, next: NextFunc
     next();
 }
 
-function doLog(request: any, response: any) {
+function doLog(request: any, response: any, breadcrumb: string) {
     Sentry.startSpan({
         op: 'request_log',
         name: 'log request'
@@ -86,7 +87,8 @@ function doLog(request: any, response: any) {
         mongoose.connection.db?.collection('request_logs').insertOne({
             request,
             response,
-            timestamp: new Date()
+            timestamp: new Date(),
+            breadcrumb
         });
     }).catch(e => {
         console.error(e);
