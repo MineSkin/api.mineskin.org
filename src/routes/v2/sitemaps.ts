@@ -71,4 +71,36 @@ router.get("/web-skins-popular-24h.xml", expressAsyncHandler(async (req: MineSki
     res.send(xml);
 }));
 
+router.get("/web-skins-popular-30d.xml", expressAsyncHandler(async (req: MineSkinV2Request, res: Response) => {
+    res.header('Cache-Control', 'public, max-age=3600');
+    res.header('Content-Type', 'application/xml');
+
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setDate(oneMonthAgo.getDate() - 30);
+
+    const query: RootFilterQuery<ISkin2Document> = {
+        'meta.visibility': SkinVisibility2.PUBLIC,
+        'interaction.views': {$gt: 5},
+        updatedAt: {$gte: oneMonthAgo},
+        createdAt: {$gte: oneMonthAgo}
+    };
+    const skins = await Skin2.find(query)
+        .limit(2048)
+        .select('uuid meta updatedAt')
+        .sort({_id: -1, 'interaction.views': -1})
+        .exec();
+
+    let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+    xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
+    for (let skin of skins) {
+        xml += '  <url>\n';
+        xml += `    <loc>https://mineskin.org/skins/${ skin.uuid }</loc>\n`;
+        xml += `    <lastmod>${ skin.updatedAt.toISOString() }</lastmod>\n`;
+        xml += '  </url>\n';
+    }
+    xml += '</urlset>\n';
+
+    res.send(xml);
+}));
+
 export const v2SitemapsRouter: Router = router;
