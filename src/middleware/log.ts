@@ -24,7 +24,8 @@ export function requestLogMiddleware(req: Request, res: Response, next: NextFunc
                 'referer': req.get('Referer'),
                 'origin': req.get('Origin'),
                 'authorization': !!req.get('Authorization'),
-            }
+            },
+            timestamp: new Date(),
         };
         const breadcrumb = (req as any).breadcrumbId || (req as any).breadcrumb || 'unknown';
         const oldJson = res.json;
@@ -34,7 +35,8 @@ export function requestLogMiddleware(req: Request, res: Response, next: NextFunc
                 const response = {
                     statusCode: res.statusCode,
                     body: body,
-                    headers: res.getHeaders()
+                    headers: res.getHeaders(),
+                    timestamp: new Date(),
                 };
                 setTimeout(() => {
                     try {
