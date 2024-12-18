@@ -174,6 +174,8 @@ export async function v2GetSkin(req: MineSkinV2Request, res: Response<V2SkinResp
 
     skin = validateRequestedSkin(req, skin);
 
+    Skin2.incRequests(skin.uuid).catch(e => Sentry.captureException(e));
+
     req.links.skin = `/v2/skins/${ skin.uuid }`;
     req.links.self = req.links.skin;
 
