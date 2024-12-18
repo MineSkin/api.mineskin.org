@@ -13,17 +13,17 @@ export function requestLogMiddleware(req: Request, res: Response, next: NextFunc
             query: req.query,
             body: req.body,
             headers: {
-                'Host': req.get('Host'),
-                'User-Agent': req.get('User-Agent'),
-                'Content-Type': req.get('Content-Type'),
-                'Content-Length': req.get('Content-Length'),
-                'Accept': req.get('Accept'),
-                'Accept-Encoding': req.get('Accept-Encoding'),
-                'Accept-Language': req.get('Accept-Language'),
-                'Connection': req.get('Connection'),
-                'Referer': req.get('Referer'),
-                'Origin': req.get('Origin'),
-                'Authorization': !!req.get('Authorization'),
+                'host': req.get('Host'),
+                'user-agent': req.get('User-Agent'),
+                'content-type': req.get('Content-Type'),
+                'content-length': req.get('Content-Length'),
+                'accept': req.get('Accept'),
+                'accept-encoding': req.get('Accept-Encoding'),
+                'accept-language': req.get('Accept-Language'),
+                'connection': req.get('Connection'),
+                'referer': req.get('Referer'),
+                'origin': req.get('Origin'),
+                'authorization': !!req.get('Authorization'),
             }
         };
         const breadcrumb = (req as any).breadcrumbId || (req as any).breadcrumb || 'unknown';
