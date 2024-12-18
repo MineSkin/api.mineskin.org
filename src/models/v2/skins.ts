@@ -36,15 +36,15 @@ export async function v2LatestSkinList(req: MineSkinV2Request, res: Response<V2S
 export async function v2PopularSkinList(req: MineSkinV2Request, res: Response<V2SkinListResponseBody>): Promise<V2SkinListResponseBody> {
     return await v2ListSkins(req, res, ({query, sort}) => {
         //TODO: custom range (weekly/monthly)
-        const oneDayAgo = new Date();
-        oneDayAgo.setDate(oneDayAgo.getDate() - 1);
-        query['updatedAt'] = {$gte: oneDayAgo}
-
-        // extra check to not include recently migrated skins
-        // TODO: remove
         const oneWeekAgo = new Date();
         oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
         query['createdAt'] = {$gte: oneWeekAgo}
+
+        // extra check to not include recently migrated skins
+        // TODO: remove
+        const oneMonthAgo = new Date();
+        oneMonthAgo.setDate(oneMonthAgo.getDate() - 30);
+        query['createdAt'] = {$gte: oneMonthAgo}
 
         query['interaction.views'] = {$gt: 5};
 
