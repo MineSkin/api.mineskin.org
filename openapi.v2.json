@@ -498,6 +498,52 @@
           }
         }
       },
+      "MeClientInfo": {
+        "type": "object",
+        "required": [
+          "client"
+        ],
+        "properties": {
+          "client": {
+            "type": "object",
+            "description": "Client information",
+            "properties": {
+              "agent": {
+                "type": "string",
+                "description": "Client User-Agent",
+                "example": "PostmanRuntime"
+              },
+              "key": {
+                "type": "string",
+                "description": "ID of the API key used for this request",
+                "example": "21702ac21ab744d32b004fe0"
+              },
+              "user": {
+                "type": "string",
+                "description": "User ID",
+                "example": "ef4c52b01fea4715982d8e67fd93ef2d"
+              },
+              "ip": {
+                "type": "string",
+                "description": "Client IP address",
+                "example": "12.34.56.789"
+              },
+              "billable": {
+                "type": "boolean",
+                "description": "Whether the client is billable (i.e. has a paid plan)",
+                "example": false
+              }
+            },
+            "example": {
+              "agent": "PostmanRuntime",
+              "key": "21702ac21ab744d32b004fe0",
+              "user": "ef4c52b01fea4715982d8e67fd93ef2d",
+              "ip": "12.34.56.789",
+              "billable": false
+            }
+          }
+        }
+      },
       "MeInfo": {
         "type": "object",
         "required": [
@@ -1189,6 +1235,38 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/MeInfo"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundErrorResponse"
+          }
+        }
+      }
+    },
+    "/v2/me/client": {
+      "get": {
+        "summary": "Get the current client",
+        "description": "Get information about the current client",
+        "tags": [
+          "user"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/userAgent"
+          },
+          {
+            "$ref": "#/components/parameters/apiKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Client Info",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeClientInfo"
                 }
               }
             }
