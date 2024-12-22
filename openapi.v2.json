@@ -641,6 +641,80 @@
           }
         }
       },
+      "MeKeyInfo": {
+        "type": "object",
+        "required": [
+          "key"
+        ],
+        "properties": {
+          "key": {
+            "type": "object",
+            "description": "API Key information",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "API Key ID",
+                "example": "21702ac21ab744d32b004fe0"
+              },
+              "name": {
+                "type": "string",
+                "description": "API Key name",
+                "example": "Test Key"
+              },
+              "user": {
+                "type": "string",
+                "description": "User ID",
+                "example": "ef4c52b01fea4715982d8e67fd93ef2d"
+              },
+              "createdAt": {
+                "type": "string",
+                "description": "Creation date",
+                "example": "2022-11-01T18:06:58.634Z"
+              },
+              "allowedOrigins": {
+                "type": "array",
+                "description": "Allowed origins for this API key",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "allowedIps": {
+                "type": "array",
+                "description": "Allowed IPs for this API key",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "allowedAgents": {
+                "type": "array",
+                "description": "Allowed User-Agents for this API key",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "useCredits": {
+                "type": "boolean",
+                "description": "Whether this API key uses paid credits",
+                "example": true
+              }
+            },
+            "example": {
+              "id": "21702ac21ab744d32b004fe0",
+              "name": "Test Key",
+              "user": "ef4c52b01fea4715982d8e67fd93ef2d",
+              "createdAt": "2022-11-01T18:06:58.634Z",
+              "allowedOrigins": [],
+              "allowedIps": [
+                "12.34.56.789"
+              ],
+              "allowedAgents": [
+                "MineSkin-Test-App"
+              ],
+              "useCredits": true
+            }
+          }
+        }
+      },
       "MeteredUsageInfo": {
         "type": "object",
         "required": [
@@ -1306,6 +1380,38 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/MeInfo"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundErrorResponse"
+          }
+        }
+      }
+    },
+    "/v2/me/apikey": {
+      "get": {
+        "summary": "Get the current API key",
+        "description": "Get information about the API key used for this request",
+        "tags": [
+          "user"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/userAgent"
+          },
+          {
+            "$ref": "#/components/parameters/apiKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "API Key Info",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeKeyInfo"
                 }
               }
             }
