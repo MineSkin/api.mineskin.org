@@ -544,6 +544,77 @@
           }
         }
       },
+      "MeCreditsInfo": {
+        "type": "object",
+        "required": [
+          "credit"
+        ],
+        "properties": {
+          "credit": {
+            "type": "object",
+            "description": "Credits information",
+            "properties": {
+              "current": {
+                "description": "Current credits used for this API key. May be empty if the API key has no credits (see returned warnings).",
+                "type": "object",
+                "required": [
+                  "type",
+                  "balance",
+                  "total"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "description": "Type of credits",
+                    "example": "paid"
+                  },
+                  "balance": {
+                    "type": "number",
+                    "description": "Current balance",
+                    "example": 397
+                  },
+                  "total": {
+                    "type": "number",
+                    "description": "Total credits",
+                    "example": 500
+                  }
+                }
+              },
+              "all": {
+                "description": "All credits available for the current user",
+                "type": "object",
+                "required": [
+                  "balance",
+                  "total"
+                ],
+                "properties": {
+                  "balance": {
+                    "type": "number",
+                    "description": "Total balance",
+                    "example": 5839
+                  },
+                  "total": {
+                    "type": "number",
+                    "description": "Total credits",
+                    "example": 10000
+                  }
+                }
+              }
+            },
+            "example": {
+              "current": {
+                "type": "paid",
+                "balance": 397,
+                "total": 500
+              },
+              "all": {
+                "balance": 5839,
+                "total": 10000
+              }
+            }
+          }
+        }
+      },
       "MeInfo": {
         "type": "object",
         "required": [
@@ -1267,6 +1338,38 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/MeClientInfo"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundErrorResponse"
+          }
+        }
+      }
+    },
+    "/v2/me/credits": {
+      "get": {
+        "summary": "Get user credits",
+        "description": "Get information about the current user's credits",
+        "tags": [
+          "user"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/userAgent"
+          },
+          {
+            "$ref": "#/components/parameters/apiKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Credits Info",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeCreditsInfo"
                 }
               }
             }
