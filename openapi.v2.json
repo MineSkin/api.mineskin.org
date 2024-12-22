@@ -56,7 +56,7 @@
       },
       "userAgent": {
         "name": "User-Agent",
-        "description": "Custom User-Agent for your application, see [user-agent.dev](https://user-agent.dev/) for implementation examples",
+        "description": "Custom User-Agent for your application, see [user-agent.dev](https://user-agent.dev/) for implementation examples. Alternatively you can also use the 'MineSkin-User-Agent' header.",
         "example": "ExampleApp/v1.0",
         "in": "header",
         "required": true,
@@ -495,6 +495,32 @@
             "type": "number",
             "description": "Remaining requests in the current window. Same as the 'X-RateLimit-Remaining' header",
             "example": 58
+          }
+        }
+      },
+      "MeInfo": {
+        "type": "object",
+        "required": [
+          "user",
+          "grants"
+        ],
+        "properties": {
+          "user": {
+            "type": "string",
+            "description": "User UUID",
+            "example": "ef4c52b01fea4715982d8e67fd93ef2d"
+          },
+          "grants": {
+            "type": "object",
+            "description": "Grants for this user",
+            "example": {
+              "delay": 3,
+              "per_minute": 20,
+              "concurrency": 1,
+              "priority": 0,
+              "ad_free": true,
+              "private_skins": true
+            }
           }
         }
       },
@@ -1137,6 +1163,38 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/v2/me": {
+      "get": {
+        "summary": "Get the current user",
+        "description": "Get information about the current user (i.e. the user associated with the API key)",
+        "tags": [
+          "user"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/userAgent"
+          },
+          {
+            "$ref": "#/components/parameters/apiKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User Info",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeInfo"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundErrorResponse"
           }
         }
       }
