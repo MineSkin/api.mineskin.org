@@ -66,6 +66,20 @@
       }
     },
     "responses": {
+      "ForbiddenErrorResponse": {
+        "description": "Forbidden",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/ErrorResponseBody"
+                }
+              ]
+            }
+          }
+        }
+      },
       "GenerateErrorResponse": {
         "description": "Generator Error",
         "content": {
@@ -1384,6 +1398,9 @@
               }
             }
           },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenErrorResponse"
+          },
           "404": {
             "$ref": "#/components/responses/NotFoundErrorResponse"
           }
@@ -1415,6 +1432,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenErrorResponse"
           },
           "404": {
             "$ref": "#/components/responses/NotFoundErrorResponse"
@@ -1448,6 +1468,9 @@
               }
             }
           },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenErrorResponse"
+          },
           "404": {
             "$ref": "#/components/responses/NotFoundErrorResponse"
           }
@@ -1479,6 +1502,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenErrorResponse"
           },
           "404": {
             "$ref": "#/components/responses/NotFoundErrorResponse"
