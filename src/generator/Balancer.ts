@@ -9,6 +9,7 @@ import { IFlagProvider, TYPES as CoreTypes } from "@mineskin/core";
 import { container } from "../inversify.config";
 import { HOSTNAME } from "../util/host";
 import { RedisProvider } from "@mineskin/generator";
+import * as Sentry from "@sentry/node";
 
 export class Balancer {
 
@@ -216,7 +217,9 @@ export class Balancer {
                     break; // only need to update one origin
                 }
             } catch (e) {
+                Sentry.captureException(e);
                 console.warn(warn("exception while updating pool config for " + poolId));
+                console.error(e);
                 if ("response" in e) {
                     console.warn(e.response);
                     if ("data" in e.response) {
@@ -277,7 +280,9 @@ export class Balancer {
                     break; // only need to update one origin
                 }
             } catch (e) {
+                Sentry.captureException(e);
                 console.warn(warn("exception while updating pool config for " + poolId));
+                console.error(e);
                 if ("response" in e) {
                     console.warn(e.response);
                     if ("data" in e.response) {
