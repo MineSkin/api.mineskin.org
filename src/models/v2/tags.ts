@@ -67,7 +67,7 @@ export async function getSkinTags(req: MineSkinV2Request, res: Response<V2Respon
     }
 
     const tags = (skin.tags || [])
-        .filter(t => t.votes >= threshold || userFilter(t))
+        .filter(t => t.votes >= threshold || userFilter(t) || (t.votes >= 0 && t.upvoters.includes(AI_TAG_USER)))
         .map(t => ({
             tag: t.tag,
             vote: voteMapper(t),
