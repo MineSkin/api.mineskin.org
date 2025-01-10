@@ -69,7 +69,7 @@ export async function v2UserSkinList(req: MineSkinV2Request, res: Response<V2Ski
     });
 }
 
-export async function v2ListSkins(req: MineSkinV2Request, res: Response<V2SkinListResponseBody>, customizer?: QueryCustomizer): Promise<V2SkinListResponseBody> {
+async function v2ListSkins(req: MineSkinV2Request, res: Response<V2SkinListResponseBody>, customizer?: QueryCustomizer): Promise<V2SkinListResponseBody> {
     const {
         after,
         size,
