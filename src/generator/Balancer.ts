@@ -212,6 +212,7 @@ export class Balancer {
                         console.warn(updateResponse);
                         continue;
                     }
+                    await sleep(1000);
                     break; // only need to update one origin
                 }
             } catch (e) {
