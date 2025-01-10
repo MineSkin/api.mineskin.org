@@ -75,27 +75,39 @@ export async function getSkinTags(req: MineSkinV2Request, res: Response<V2Respon
         }));
     const tagNames = tags.map(t => t.tag);
 
-    try {
-        if (isPopulatedSkin2Document(skin) && skin.data) {
-            const classification = await Classification.findOne({
-                texture: skin.data.hash.skin.minecraft,
-                status: 'completed',
-                flagged: false
-            }).exec();
-            if (classification) {
-                classification.tags
-                    .filter(t => !tagNames.includes(t))
-                    .forEach(t => {
-                        tags.push({
-                            tag: t,
-                            vote: null,
-                            suggested: true
+    const hasAiTags = skin.tags && skin.tags.some(t => t.upvoters.includes(AI_TAG_USER));
+    if (!hasAiTags) {
+        try {
+            if (isPopulatedSkin2Document(skin) && skin.data) {
+                const classification = await Classification.findOne({
+                    texture: skin.data.hash.skin.minecraft,
+                    status: 'completed',
+                    flagged: false
+                }).exec();
+                if (classification) {
+                    // add suggested tags to this response
+                    classification.tags
+                        .filter(t => !tagNames.includes(t))
+                        .forEach(t => {
+                            tags.push({
+                                tag: t,
+                                vote: null,
+                                suggested: true
+                            });
                         });
-                    });
+
+                    // add suggested tags to the skin
+                    let promises: Promise<boolean>[] = [];
+                    for (let tag of classification.tags) {
+                        promises.push(internalTagVote(skin, tag, TagVoteType.UP, AI_TAG_USER, false));
+                    }
+                    await Promise.all(promises);
+                    await skin.save();
+                }
             }
+        } catch (e) {
+            Sentry.captureException(e);
         }
-    } catch (e) {
-        Sentry.captureException(e);
     }
 
     return {
