@@ -2,7 +2,13 @@ import { MineSkinV2Request } from "../../routes/v2/types";
 import { Response } from "express";
 import { V2ResponseBody } from "../../typings/v2/V2ResponseBody";
 import { UUID } from "../../validation/misc";
-import { IPopulatedSkin2Document, ISkinTagDocument, Skin2, SkinTag } from "@mineskin/database";
+import {
+    IPopulatedSkin2Document,
+    ISkinTagDocument,
+    isPopulatedSkin2Document,
+    Skin2,
+    SkinTag
+} from "@mineskin/database";
 import { container } from "../../inversify.config";
 import { Maybe, MineSkinError, SkinVisibility2, TagVoteType } from "@mineskin/types";
 import { TagVoteReqBody } from "../../validation/tags";
@@ -12,11 +18,12 @@ import { IFlagProvider, IMetricsProvider } from "@mineskin/core";
 import { TYPES as CoreTypes } from "@mineskin/core/dist/ditypes";
 import { HOSTNAME } from "../../util/host";
 import { verifyTurnstileToken } from "../../util/turnstile";
-import { getIp, timeout } from "../../util";
+import { getIp } from "../../util";
 import { V2MiscResponseBody } from "../../typings/v2/V2MiscResponseBody";
 import { validateRequestedSkin } from "./skins";
 import { Requests } from "../../generator/Requests";
 import { Log } from "../../Log";
+import { Classification } from "@mineskin/database/dist/schemas/Classification";
 
 const AI_TAG_USER = "78cd4d0a343846db8f14521892452389";
 
@@ -33,16 +40,16 @@ export async function getSkinTags(req: MineSkinV2Request, res: Response<V2Respon
         skin.tags = [];
     }
 
-    try {
-        const aiPromise = requestAiTags(skin as IPopulatedSkin2Document).catch(e => {
-            Sentry.captureException(e);
-        });
-        const updatedSkin = await timeout(aiPromise, 1000, 'request-ai-tags');
-        if (updatedSkin) {
-            skin = updatedSkin;
-        }
-    } catch (e) {
-    }
+    // try {
+    //     const aiPromise = requestAiTags(skin as IPopulatedSkin2Document).catch(e => {
+    //         Sentry.captureException(e);
+    //     });
+    //     const updatedSkin = await timeout(aiPromise, 1000, 'request-ai-tags');
+    //     if (updatedSkin) {
+    //         skin = updatedSkin;
+    //     }
+    // } catch (e) {
+    // }
 
     const userFilter: (tag: ISkinTagDocument) => boolean = t => !!req.client.userId &&
         (t.upvoters.includes(req.client.userId) || t.downvoters.includes(req.client.userId));
@@ -59,15 +66,41 @@ export async function getSkinTags(req: MineSkinV2Request, res: Response<V2Respon
         return null;
     }
 
+    const tags = (skin.tags || [])
+        .filter(t => t.votes >= threshold || userFilter(t))
+        .map(t => ({
+            tag: t.tag,
+            vote: voteMapper(t),
+            suggested: t.status === 'suggested',
+        }));
+    const tagNames = tags.map(t => t.tag);
+
+    try {
+        if (isPopulatedSkin2Document(skin) && skin.data) {
+            const classification = await Classification.findOne({
+                texture: skin.data.hash.skin.minecraft,
+                status: 'completed',
+                flagged: false
+            }).exec();
+            if (classification) {
+                classification.tags
+                    .filter(t => !tagNames.includes(t))
+                    .forEach(t => {
+                        tags.push({
+                            tag: t,
+                            vote: null,
+                            suggested: true
+                        });
+                    });
+            }
+        }
+    } catch (e) {
+        Sentry.captureException(e);
+    }
+
     return {
         success: true,
-        tags: (skin.tags || [])
-            .filter(t => t.votes >= threshold || userFilter(t))
-            .map(t => ({
-                tag: t.tag,
-                vote: voteMapper(t),
-                suggested: t.status === 'suggested',
-            }))
+        tags: tags
     }
 }
 

@@ -420,6 +420,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@hoangducnhuan/redlock@npm:^6.0.0":
+  version: 6.0.0
+  resolution: "@hoangducnhuan/redlock@npm:6.0.0"
+  dependencies:
+    node-abort-controller: "npm:^3.0.1"
+    redis: "npm:^4.7.0"
+  checksum: 10c0/8fda07e07e412bbdae494217d76042fab7979ebf1ae2297e03a14d211e62dd599dd453f9f53f0a264a7e7156cd6032f8791b3a2a89fa1d5acd080b446e2c42e2
+  languageName: node
+  linkType: hard
+
 "@inventivetalent/axios-rate-limit@npm:^1.3.5":
   version: 1.3.5
   resolution: "@inventivetalent/axios-rate-limit@npm:1.3.5"
@@ -1442,7 +1452,7 @@ __metadata:
 
 "@mineskin/database@git+ssh://git@github.com/MineSkin/mineskin-database.git":
   version: 1.0.0
-  resolution: "@mineskin/database@git+ssh://git@github.com/MineSkin/mineskin-database.git#commit=4947fecdb60efdc8ef93211943cc504ab343b251"
+  resolution: "@mineskin/database@git+ssh://git@github.com/MineSkin/mineskin-database.git#commit=fec1b5064b3822fe4be1207638ec75066c338cdd"
   dependencies:
     "@mineskin/types": "git+ssh://git@github.com/MineSkin/mineskin-types.git"
     "@sentry/cli": "npm:^2.32.2"
@@ -1451,14 +1461,15 @@ __metadata:
     dotenv: "npm:^16.4.5"
     mongoose: "npm:^8.5.3"
     uuid: "npm:^10.0.0"
-  checksum: 10c0/454313ad847f1f86a5a4e84ae3a5f54810cd434e1500ecb266f2649742d0ed7ecfd41ecde2ef71e16d66470737e942576cdb9d702f4ca5032300e571e3120662
+  checksum: 10c0/13c8b478f1d7dbc3f48a2cfb4dc1e029f4bd316fbc7609f3a2bd365c6e461806c0d13ff22a727d962437f9e08cadeb4204c558ea7e19a96f2639c79e4f523638
   languageName: node
   linkType: hard
 
 "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git":
   version: 0.0.0
-  resolution: "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git#commit=b72b9b7d985f33f5b45ffa18536e0421a0a97194"
+  resolution: "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git#commit=a4583f18890e23749195f030f7dd791e97a2e482"
   dependencies:
+    "@hoangducnhuan/redlock": "npm:^6.0.0"
     "@inventivetalent/imghash": "npm:^1.1.1"
     "@inventivetalent/loading-cache": "npm:^0.7.1"
     "@inventivetalent/time": "npm:^1.0.3"
@@ -1484,7 +1495,7 @@ __metadata:
     https-proxy-agent: "npm:^5.0.1"
     image-size: "npm:^1.1.1"
     inversify: "npm:^6.0.3"
-    metrics-node: "npm:^1.2.1"
+    metrics-node: "npm:^1.2.2"
     mongoose: "npm:^8.5.3"
     redis: "npm:^4.7.0"
     reflect-metadata: "npm:^0.2.2"
@@ -1494,7 +1505,7 @@ __metadata:
     winston: "npm:^3.14.2"
     winston-daily-rotate-file: "npm:^5.0.0"
     winston-transport-sentry-node: "npm:^3.0.0"
-  checksum: 10c0/955a5365a91f9e7169c14d34b932a7c7b03f92865e8be035e6bc2d1b5132e43ec60aff187740ffa72e125e5ff0ffaedc45c84eb2f54acb9e611042f7dc7f0939
+  checksum: 10c0/ee5eba711477e92f3a32eadeb90a262ca30c5a78bb5640e6620f9e02da6271103440a8b3a86d0b87b6613d8a4135a63af244ade97ff3262a3b22afc00a4067a8
   languageName: node
   linkType: hard
 
@@ -1507,7 +1518,7 @@ __metadata:
 
 "@mineskin/requests@git+ssh://git@github.com/MineSkin/mineskin-requests.git":
   version: 1.0.1
-  resolution: "@mineskin/requests@git+ssh://git@github.com/MineSkin/mineskin-requests.git#commit=9c6f8ccdd05beee7de7e18990a75420e4aa2fe61"
+  resolution: "@mineskin/requests@git+ssh://git@github.com/MineSkin/mineskin-requests.git#commit=68e176a7593b8c5bc9bc78962c7d4086eae80fe5"
   dependencies:
     "@inventivetalent/axios-rate-limit": "npm:^1.3.5"
     "@inventivetalent/time": "npm:^1.0.3"
@@ -1522,7 +1533,7 @@ __metadata:
     https-proxy-agent: "npm:5.0.1"
     ip-address: "npm:^10.0.0"
     jobqu: "npm:^2.0.5"
-  checksum: 10c0/b2c7490054d5dcfc468c8dfef0b3cd2e431f09fe8625b649b72325c7849a18afe718012c4ef455f32cb11007f98bc079be21c514768d0ee5ee26a1608d5d6bcd
+  checksum: 10c0/e3170a556563fcc40b8b7bcfc9752130963576164199fcd48b3d75962fba977a1d0fdf6f9ebd719526a222c258c0c8c1ecbbc13bae7993120aff79f2fe425405
   languageName: node
   linkType: hard
 
@@ -7888,7 +7899,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"metrics-node@npm:^1.1.1, metrics-node@npm:^1.2.1":
+"metrics-node@npm:^1.1.1":
   version: 1.2.1
   resolution: "metrics-node@npm:1.2.1"
   dependencies:
@@ -8347,7 +8358,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"node-abort-controller@npm:^3.1.1":
+"node-abort-controller@npm:^3.0.1, node-abort-controller@npm:^3.1.1":
   version: 3.1.1
   resolution: "node-abort-controller@npm:3.1.1"
   checksum: 10c0/f7ad0e7a8e33809d4f3a0d1d65036a711c39e9d23e0319d80ebe076b9a3b4432b4d6b86a7fab65521de3f6872ffed36fc35d1327487c48eb88c517803403eda3
