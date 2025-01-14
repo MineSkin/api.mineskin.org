@@ -208,13 +208,7 @@ export async function v2GetSkin(req: MineSkinV2Request, res: Response<V2SkinResp
     req.links.skin = `/v2/skins/${ uuidOrShort }`;
     req.links.self = req.links.skin;
 
-    const skinService = container.get<SkinService>(GeneratorTypes.SkinService);
-    let skin;
-    if (uuidOrShort.length === 8) {
-        skin = await skinService.findForShortId(uuidOrShort);
-    } else {
-        skin = await skinService.findForUuid(stripUuid(uuidOrShort));
-    }
+    let skin = await findV2SkinForId(req, uuidOrShort);
 
     const flags = container.get<IFlagProvider>(CoreTypes.FlagProvider);
     try {
@@ -222,16 +216,15 @@ export async function v2GetSkin(req: MineSkinV2Request, res: Response<V2SkinResp
             const v1Doc = await Caching.getSkinByUuid(uuidOrShort);
             if (v1Doc) {
                 const migrations = container.get<MigrationHandler>(GeneratorTypes.MigrationHandler);
-                skin = await migrations.migrateV1ToV2(v1Doc, "skin-get");
-                skin.data = await SkinData.findById(skin.data) || skin.data;
+                const migratedSkin = await migrations.migrateV1ToV2(v1Doc, "skin-get");
+                migratedSkin.data = await SkinData.findById(migratedSkin.data) || migratedSkin.data;
+                skin = validateRequestedSkin(req, migratedSkin);
             }
         }
     } catch (e) {
         Sentry.captureException(e);
         Log.l.error(e);
     }
-
-    skin = validateRequestedSkin(req, skin);
 
     Skin2.incRequests(skin.uuid).catch(e => Sentry.captureException(e));
 
@@ -246,19 +239,12 @@ export async function v2GetSkin(req: MineSkinV2Request, res: Response<V2SkinResp
 
 export async function v2GetSkinTextureRedirect(req: MineSkinV2Request, res: Response<V2SkinResponse>): Promise<void> {
     const uuidOrShort = UUIDOrShortId.parse(req.params.uuid);
-
-    const skinService = container.get<SkinService>(GeneratorTypes.SkinService);
-    let skin;
-    if (uuidOrShort.length === 8) {
-        skin = await skinService.findForShortId(uuidOrShort);
-    } else {
-        skin = await skinService.findForUuid(stripUuid(uuidOrShort));
-    }
-
-    skin = validateRequestedSkin(req, skin);
+    const skin = await findV2SkinForId(req, uuidOrShort);
 
     res.redirect(301, `https://mineskin.org/textures/${ skin.data?.hash?.skin?.minecraft }`)
 }
+
+
 
 export async function v2UserLegacySkinList(req: MineSkinV2Request, res: Response<V2SkinListResponseBody>): Promise<V2MiscResponseBody> {
     if (!req.client.hasUser()) {
@@ -275,6 +261,17 @@ export async function v2UserLegacySkinList(req: MineSkinV2Request, res: Response
             v1: user.skins
         }
     };
+}
+
+export async function findV2SkinForId(req: MineSkinV2Request, id: string): Promise<IPopulatedSkin2Document> {
+    const skinService = container.get<SkinService>(GeneratorTypes.SkinService);
+    let skin;
+    if (id.length === 8) {
+        skin = await skinService.findForShortId(id);
+    } else {
+        skin = await skinService.findForUuid(stripUuid(id));
+    }
+    return validateRequestedSkin(req, skin);
 }
 
 export function validateRequestedSkin(req: MineSkinV2Request, skin: Maybe<ISkin2Document>): IPopulatedSkin2Document {
