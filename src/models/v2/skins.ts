@@ -157,7 +157,7 @@ export async function v2ListRandomSkins(req: MineSkinV2Request, res: Response<V2
     }
 
     const skins = await Skin2.aggregate([
-        {$sample: {size: (size || 16) * 2}}, // pre-sample since the match can be slow
+        {$sample: {size: (size || 16) * 4}}, // pre-sample since the match can be slow
         {$match: query},
         {$sample: {size: size || 16}},
         {$sort: {_id: -1}},
