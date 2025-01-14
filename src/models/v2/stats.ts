@@ -115,6 +115,8 @@ const statsWrapper = new class {
         const totalNew = statsHelper.add('mineskin:generated:total:new');
         const totalDuplicate = statsHelper.add('mineskin:generated:total:duplicate');
 
+        const durationMean = statsHelper.add('mineskin:stats:duration:mean');
+
         const statsResult = await statsHelper.execute(redis);
 
         const globalCapacity = capacities.map(g => g.get()).filter(g => !!g).reduce((acc, cur) => acc + Number(cur), 0);
@@ -153,6 +155,9 @@ const statsWrapper = new class {
                 },
                 active: {
                     global: globalActive
+                },
+                duration: {
+                    mean: Number(durationMean.get())
                 }
             },
             accounts: {
