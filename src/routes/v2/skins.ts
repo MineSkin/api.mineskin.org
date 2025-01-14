@@ -16,6 +16,7 @@ import { v2AddLike, v2AddView, v2ReportSkin } from "../../models/v2/interactions
 import { wildcardCorsWithCredentials } from "../../middleware/cors";
 import { addSkinTagVote, getSkinTags } from "../../models/v2/tags";
 import { V2MiscResponseBody } from "../../typings/v2/V2MiscResponseBody";
+import { getSkinMeta } from "../../models/v2/meta";
 
 const router: Router = v2Router();
 router.use(wildcardCorsWithCredentials);
@@ -74,6 +75,12 @@ router.get("/:uuid/tags", expressAsyncHandler(async (req: MineSkinV2Request, res
 router.post("/:uuid/tags", expressAsyncHandler(async (req: MineSkinV2Request, res: Response<V2MiscResponseBody>) => {
     await addSkinTagVote(req, res);
     res.status(204).end();
+}));
+
+router.get("/:uuid/meta", expressAsyncHandler(async (req: MineSkinV2Request, res: Response<V2MiscResponseBody>) => {
+    const result = await getSkinMeta(req, res);
+    res.header('Cache-Control', 'public, max-age=3600');
+    res.json(formatV2Response(req, result));
 }));
 
 router.post("/:uuid/report", expressAsyncHandler(async (req: MineSkinV2Request, res: Response<V2MiscResponseBody>) => {
