@@ -125,6 +125,7 @@ async function v2ListSkins(req: MineSkinV2Request, res: Response<V2SkinListRespo
         if (filter) {
             params.set('filter', filter);
         }
+        //FIXME: these are wrong for popular/user skins
         req.links.self = `/v2/skins?${ params.toString() }`;
 
         params.set('after', lastSkin.uuid);
@@ -136,6 +137,70 @@ async function v2ListSkins(req: MineSkinV2Request, res: Response<V2SkinListRespo
         pagination: pagination
     };
 }
+
+export async function v2ListRandomSkins(req: MineSkinV2Request, res: Response<V2SkinListResponseBody>): Promise<V2SkinListResponseBody> {
+    const {
+        after,
+        size,
+        filter
+    } = ListReqQuery.parse(req.query);
+
+    const query: FilterQuery<ISkin2Document> = {
+        'meta.visibility': SkinVisibility2.PUBLIC
+    };
+
+    if (after) {
+        const anchor = await container.get<SkinService>(GeneratorTypes.SkinService).findForUuid(after);
+        if (anchor) {
+            query._id = {$lt: anchor._id};
+        }
+    }
+
+    const skins = await Skin2.aggregate([
+        {$sample: {size: (size || 16) * 2}}, // pre-sample since the match can be slow
+        {$match: query},
+        {$sample: {size: size || 16}},
+        {$sort: {_id: -1}},
+        {$project: {uuid: 1, meta: 1, data: 1, updatedAt: 1}}
+    ])
+        .limit(size || 16)
+        .exec();
+
+    await Skin2.populate(skins, {path: 'data', select: 'hash.skin.minecraft'});
+
+    let lastSkin = skins[skins.length - 1];
+
+    let pagination = {
+        current: {
+            after: after
+        },
+        next: {
+            after: lastSkin?.uuid
+        }
+    };
+
+    if (lastSkin) {
+        const params = new URLSearchParams();
+        if (after) {
+            params.set('after', after);
+        }
+        // params.set('after', lastSkin.uuid);
+        params.set('size', `${ size || 16 }`);
+        if (filter) {
+            params.set('filter', filter);
+        }
+        req.links.self = `/v2/skins/random?${ params.toString() }`;
+
+        params.set('after', lastSkin.uuid);
+        req.links.next = `/v2/skins/random?${ params.toString() }`;
+    }
+    return {
+        success: true,
+        skins: skins.map(skinToSimpleJson),
+        pagination: pagination
+    };
+}
+
 
 export async function v2GetSkin(req: MineSkinV2Request, res: Response<V2SkinResponse>): Promise<V2SkinResponse> {
     const uuidOrShort = UUIDOrShortId.parse(req.params.uuid);
