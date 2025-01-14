@@ -145,6 +145,7 @@ export async function v2ListRandomSkins(req: MineSkinV2Request, res: Response<V2
         filter
     } = ListReqQuery.parse(req.query);
 
+    const anchorQuery: FilterQuery<ISkin2Document> = {};
     const query: FilterQuery<ISkin2Document> = {
         'meta.visibility': SkinVisibility2.PUBLIC
     };
@@ -152,12 +153,13 @@ export async function v2ListRandomSkins(req: MineSkinV2Request, res: Response<V2
     if (after) {
         const anchor = await container.get<SkinService>(GeneratorTypes.SkinService).findForUuid(after);
         if (anchor) {
-            query._id = {$lt: anchor._id};
+            anchorQuery._id = {$lt: anchor._id};
         }
     }
 
     const skins = await Skin2.aggregate([
-        {$sample: {size: (size || 16) * 4}}, // pre-sample since the match can be slow
+        {$match: anchorQuery},
+        {$sample: {size: (size || 16) * 2}}, // pre-sample since the match can be slow
         {$match: query},
         {$sample: {size: size || 16}},
         {$sort: {_id: -1}},
@@ -243,7 +245,6 @@ export async function v2GetSkinTextureRedirect(req: MineSkinV2Request, res: Resp
 
     res.redirect(301, `https://mineskin.org/textures/${ skin.data?.hash?.skin?.minecraft }`)
 }
-
 
 
 export async function v2UserLegacySkinList(req: MineSkinV2Request, res: Response<V2SkinListResponseBody>): Promise<V2MiscResponseBody> {
