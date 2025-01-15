@@ -68,7 +68,7 @@ router.post("/:uuid/interactions/likes", expressAsyncHandler(async (req: MineSki
 
 router.get("/:uuid/tags", expressAsyncHandler(async (req: MineSkinV2Request, res: Response<V2MiscResponseBody>) => {
     const result = await getSkinTags(req, res);
-    res.header('Cache-Control', 'public, max-age=60');
+    res.header('Cache-Control', 'private, max-age=60');
     res.json(formatV2Response(req, result));
 }));
 
