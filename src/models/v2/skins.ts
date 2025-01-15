@@ -18,7 +18,7 @@ import { ListReqQuery } from "../../validation/skins";
 import { UUIDOrShortId } from "../../validation/misc";
 import { Caching } from "../../generator/Caching";
 import * as Sentry from "@sentry/node";
-import { IFlagProvider, TYPES as CoreTypes } from "@mineskin/core";
+import { IFlagProvider, IMetricsProvider, TYPES as CoreTypes } from "@mineskin/core";
 import { container } from "../../inversify.config";
 import { Log } from "../../Log";
 import { stripUuid } from "../../util";
@@ -230,6 +230,14 @@ export async function v2GetSkin(req: MineSkinV2Request, res: Response<V2SkinResp
     }
 
     Skin2.incRequests(skin.uuid).catch(e => Sentry.captureException(e));
+    try {
+        const metrics = container.get<IMetricsProvider>(CoreTypes.MetricsProvider);
+        metrics.getMetric('interactions')
+            .tag("interaction", "request")
+            .inc();
+    } catch (e) {
+        Sentry.captureException(e);
+    }
 
     req.links.skin = `/v2/skins/${ skin.uuid }`;
     req.links.self = req.links.skin;
