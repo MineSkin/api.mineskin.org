@@ -4,7 +4,7 @@ import { V2ResponseBody } from "../../typings/v2/V2ResponseBody";
 import { UUID } from "../../validation/misc";
 import { Skin2 } from "@mineskin/database";
 import { MineSkinError } from "@mineskin/types";
-import { IRedisProvider, TYPES as CoreTypes } from "@mineskin/core";
+import { IMetricsProvider, IRedisProvider, TYPES as CoreTypes } from "@mineskin/core";
 import { container } from "../../inversify.config";
 import { SkinService } from "@mineskin/generator";
 import { TYPES as GeneratorTypes } from "@mineskin/generator/dist/ditypes";
@@ -13,6 +13,7 @@ import { ReportReqBody } from "../../validation/report";
 import { verifyTurnstileToken } from "../../util/turnstile";
 import { getIp } from "../../util";
 import { validateRequestedSkin } from "./skins";
+import * as Sentry from "@sentry/node";
 
 export async function v2AddView(req: MineSkinV2Request, res: Response<V2ResponseBody>) {
     const uuid = UUID.parse(req.params.uuid);
@@ -28,6 +29,15 @@ export async function v2AddView(req: MineSkinV2Request, res: Response<V2Response
         return;
     }
     await redis.client.incr(`mineskin:interactions:views:total`);
+
+    try {
+        const metrics = container.get<IMetricsProvider>(CoreTypes.MetricsProvider);
+        metrics.getMetric('interactions')
+            .tag("interaction", "view")
+            .inc();
+    } catch (e) {
+        Sentry.captureException(e);
+    }
 }
 
 export async function v2AddLike(req: MineSkinV2Request, res: Response<V2ResponseBody>) {
@@ -51,6 +61,15 @@ export async function v2AddLike(req: MineSkinV2Request, res: Response<V2Response
         throw new MineSkinError('already_liked', "Already liked", {httpCode: 409});
     }
     await redis.client.incr(`mineskin:interactions:likes:total`);
+
+    try {
+        const metrics = container.get<IMetricsProvider>(CoreTypes.MetricsProvider);
+        metrics.getMetric('interactions')
+            .tag("interaction", "like")
+            .inc();
+    } catch (e) {
+        Sentry.captureException(e);
+    }
 }
 
 export async function v2ReportSkin(req: MineSkinV2Request, res: Response<V2ResponseBody>) {
