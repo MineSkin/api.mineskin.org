@@ -49,6 +49,7 @@ import { V2UserHandler } from "../../generator/v2/V2UserHandler";
 import { container } from "../../inversify.config";
 import { Log } from "../../Log";
 import { TYPES as CoreTypes } from "@mineskin/core/dist/ditypes";
+import { getCachedV2Stats } from "./stats";
 
 const upload = multer({
     limits: {
@@ -164,6 +165,16 @@ export async function v2GenerateEnqueue(req: GenerateV2Request, res: Response<V2
             rateLimit: V2GenerateHandler.makeRateLimitInfo(req)
         };
     }
+
+    let eta = undefined;
+    try {
+        const stats = await getCachedV2Stats();
+        const durationEta = (stats?.generator?.duration?.pending + stats?.generator?.duration?.generate) || undefined; //TODO: multiply pending by user's pending job count
+        eta = durationEta && job ? new Date(job?.createdAt?.getTime() + durationEta) : undefined;
+    } catch (e) {
+        Sentry.captureException(e);
+    }
+
     res.status(202);
     return {
         success: true,
@@ -174,7 +185,8 @@ export async function v2GenerateEnqueue(req: GenerateV2Request, res: Response<V2
         job: {
             id: job?.id || null,
             status: job?.status || 'unknown',
-            timestamp: job?.createdAt?.getTime() || 0
+            timestamp: job?.createdAt?.getTime() || 0,
+            eta: eta?.getTime() || undefined
         },
         rateLimit: V2GenerateHandler.makeRateLimitInfo(req)
     };
