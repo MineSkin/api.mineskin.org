@@ -17,14 +17,21 @@ export async function v2GetStats(req: MineSkinV2Request, res: Response<V2Respons
     };
 }
 
+export async function getCachedV2Stats(load: boolean = true): Promise<any | null> {
+    return await statsWrapper.getCachedV2Stats(load);
+}
+
 //TODO
 const statsWrapper = new class {
 
     private cached: Promise<any> | null = null;
     private time: number = 0;
 
-    async getCachedV2Stats(): Promise<any> {
+    async getCachedV2Stats(load: boolean = true): Promise<any> {
         if (!this.cached || Date.now() - this.time > 1000 * 20) {
+            if (!load) {
+                return null;
+            }
             try {
                 this.cached = this._queryStats();
             } catch (e) {
@@ -115,7 +122,8 @@ const statsWrapper = new class {
         const totalNew = statsHelper.add('mineskin:generated:total:new');
         const totalDuplicate = statsHelper.add('mineskin:generated:total:duplicate');
 
-        const durationMean = statsHelper.add('mineskin:stats:duration:mean');
+        const durationMean = statsHelper.add('mineskin:generator:stats:duration:mean');
+        const pendingDurationMean = statsHelper.add('mineskin:generator:stats:pending_duration:mean');
 
         const statsResult = await statsHelper.execute(redis);
 
@@ -157,7 +165,8 @@ const statsWrapper = new class {
                     global: globalActive
                 },
                 duration: {
-                    mean: Number(durationMean.get())
+                    generate: Math.round(Number(durationMean.get()) / 10) * 10,
+                    pending: Math.round(Number(pendingDurationMean.get()) / 10) * 10
                 }
             },
             accounts: {
