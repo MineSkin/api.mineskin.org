@@ -159,6 +159,7 @@ export async function v2ListRandomSkins(req: MineSkinV2Request, res: Response<V2
 
     const skins = await Skin2.aggregate([
         {$match: anchorQuery},
+        {$skip: Math.floor(Math.random() * 1000)},
         {$limit: (size || 16) * 4},
         {$match: query},
         {$sample: {size: size || 16}},
