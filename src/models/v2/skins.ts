@@ -24,7 +24,7 @@ import { Log } from "../../Log";
 import { stripUuid } from "../../util";
 import { V2MiscResponseBody } from "../../typings/v2/V2MiscResponseBody";
 import { Classification } from "@mineskin/database/dist/schemas/Classification";
-import { GENERIC, Requests } from "../../generator/Requests";
+import { Requests } from "../../generator/Requests";
 
 type QueryCustomizer = (args: {
     query: FilterQuery<ISkin2Document>,
@@ -270,7 +270,7 @@ export async function v2GetSimilarSkins(req: MineSkinV2Request, res: Response<V2
         throw new MineSkinError('skin_not_found', 'Skin not found', {httpCode: 404});
     }
     //TODO: cache this
-    const response = await Requests.dynamicRequestWithRandomProxy(GENERIC, {
+    const response = await Requests.axiosInstance.request({
         url: process.env.EMBEDDINGS_ENDPOINT + '/query',
         method: 'POST',
         data: {
