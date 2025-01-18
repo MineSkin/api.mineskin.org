@@ -270,7 +270,7 @@ export async function v2GetSimilarSkins(req: MineSkinV2Request, res: Response<V2
         throw new MineSkinError('skin_not_found', 'Skin not found', {httpCode: 404});
     }
     //TODO: cache this
-    const response = await Requests.dynamicRequest(GENERIC, {
+    const response = await Requests.dynamicRequestWithRandomProxy(GENERIC, {
         url: process.env.EMBEDDINGS_ENDPOINT + '/query',
         method: 'POST',
         data: {
