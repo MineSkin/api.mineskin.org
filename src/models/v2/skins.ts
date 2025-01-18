@@ -266,7 +266,7 @@ export async function v2GetSimilarSkins(req: MineSkinV2Request, res: Response<V2
         throw new MineSkinError('skin_not_found', 'Skin not found', {httpCode: 404});
     }
     const classification = await Classification.findOne({texture: skin.data?.hash?.skin?.minecraft});
-    if (!classification) {
+    if (!classification || !classification.description) {
         throw new MineSkinError('skin_not_found', 'Skin not found', {httpCode: 404});
     }
     //TODO: cache this
