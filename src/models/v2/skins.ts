@@ -24,7 +24,7 @@ import { Log } from "../../Log";
 import { stripUuid } from "../../util";
 import { V2MiscResponseBody } from "../../typings/v2/V2MiscResponseBody";
 import { Classification } from "@mineskin/database/dist/schemas/Classification";
-import { GENERIC, RequestManager } from "@mineskin/requests";
+import { GENERIC, Requests } from "../../generator/Requests";
 
 type QueryCustomizer = (args: {
     query: FilterQuery<ISkin2Document>,
@@ -269,9 +269,8 @@ export async function v2GetSimilarSkins(req: MineSkinV2Request, res: Response<V2
     if (!classification) {
         throw new MineSkinError('skin_not_found', 'Skin not found', {httpCode: 404});
     }
-    const requestManager = container.get<RequestManager>(CoreTypes.RequestExecutor);
     //TODO: cache this
-    const response = await requestManager.dynamicRequest(GENERIC, {
+    const response = await Requests.dynamicRequest(GENERIC, {
         url: process.env.EMBEDDINGS_ENDPOINT + '/query',
         method: 'POST',
         data: {
@@ -295,10 +294,8 @@ export async function v2GetSimilarSkins(req: MineSkinV2Request, res: Response<V2
         success: true,
         skins: skins.map(skinToSimpleJson),
         pagination: {
-            next: {
-            },
-            current:{
-            }
+            next: {},
+            current: {}
         }
     };
 }
