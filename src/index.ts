@@ -575,7 +575,7 @@ export function shutdown(signal: string, value: number) {
     setInterval(() => {
         console.error("shutdown timeout");
         process.exit(128 + value);
-    }, 20000);
+    }, 25000);
     setTimeout(async () => {
         try {
             await server.close();
@@ -603,7 +603,7 @@ export function shutdown(signal: string, value: number) {
             console.error(e);
         }
         process.exit(128 + value);
-    }, 500 + Math.random() * 1000);
+    }, 500 + Math.random() * 1000 + 1000);
 }
 
 const shutdownCounts: Record<string, number> = {};
