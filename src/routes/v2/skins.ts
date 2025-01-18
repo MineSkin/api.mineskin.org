@@ -1,5 +1,6 @@
 import { Response, Router } from "express";
 import {
+    v2GetSimilarSkins,
     v2GetSkin,
     v2GetSkinTextureRedirect,
     v2LatestSkinList,
@@ -79,6 +80,12 @@ router.post("/:uuid/tags", expressAsyncHandler(async (req: MineSkinV2Request, re
 
 router.get("/:uuid/meta", expressAsyncHandler(async (req: MineSkinV2Request, res: Response<V2MiscResponseBody>) => {
     const result = await getSkinMeta(req, res);
+    res.header('Cache-Control', 'public, max-age=3600');
+    res.json(formatV2Response(req, result));
+}));
+
+router.get("/:uuid/similar", expressAsyncHandler(async (req: MineSkinV2Request, res: Response<V2SkinListResponseBody>) => {
+    const result = await v2GetSimilarSkins(req, res);
     res.header('Cache-Control', 'public, max-age=3600');
     res.json(formatV2Response(req, result));
 }));

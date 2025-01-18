@@ -23,6 +23,8 @@ import { container } from "../../inversify.config";
 import { Log } from "../../Log";
 import { stripUuid } from "../../util";
 import { V2MiscResponseBody } from "../../typings/v2/V2MiscResponseBody";
+import { Classification } from "@mineskin/database/dist/schemas/Classification";
+import { GENERIC, RequestManager } from "@mineskin/requests";
 
 type QueryCustomizer = (args: {
     query: FilterQuery<ISkin2Document>,
@@ -257,6 +259,49 @@ export async function v2GetSkinTextureRedirect(req: MineSkinV2Request, res: Resp
     res.redirect(301, `https://mineskin.org/textures/${ skin.data?.hash?.skin?.minecraft }`)
 }
 
+export async function v2GetSimilarSkins(req: MineSkinV2Request, res: Response<V2SkinListResponseBody>): Promise<V2SkinListResponseBody> {
+    const uuidOrShort = UUIDOrShortId.parse(req.params.uuid);
+    const skin = validateRequestedSkin(req, await findV2SkinForId(req, uuidOrShort));
+    if (!skin.data?.hash?.skin?.minecraft) {
+        throw new MineSkinError('skin_not_found', 'Skin not found', {httpCode: 404});
+    }
+    const classification = await Classification.findOne({texture: skin.data?.hash?.skin?.minecraft});
+    if (!classification) {
+        throw new MineSkinError('skin_not_found', 'Skin not found', {httpCode: 404});
+    }
+    const requestManager = container.get<RequestManager>(CoreTypes.RequestExecutor);
+    //TODO: cache this
+    const response = await requestManager.dynamicRequest(GENERIC, {
+        url: process.env.EMBEDDINGS_ENDPOINT + '/query',
+        method: 'POST',
+        data: {
+            description: classification.description,
+            topK: 5
+        }
+    });
+    if (response.status !== 200) {
+        throw new MineSkinError('internal_error', 'Internal error', {httpCode: 500});
+    }
+    const matchedTextures = response.data.matches?.matches?.map((match: any) => match.id);
+    if (!matchedTextures) {
+        throw new MineSkinError('internal_error', 'Internal error', {httpCode: 500});
+    }
+    const datas = await SkinData.find({hash: {$in: matchedTextures}});
+    const dataIds = datas.map(data => data._id);
+    const skins = await Skin2.find({data: {$in: dataIds}})
+        .select('uuid meta data updatedAt') //TODO
+        .populate('data', 'hash.skin.minecraft');
+    return {
+        success: true,
+        skins: skins.map(skinToSimpleJson),
+        pagination: {
+            next: {
+            },
+            current:{
+            }
+        }
+    };
+}
 
 export async function v2UserLegacySkinList(req: MineSkinV2Request, res: Response<V2SkinListResponseBody>): Promise<V2MiscResponseBody> {
     if (!req.client.hasUser()) {
