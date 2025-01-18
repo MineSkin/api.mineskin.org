@@ -285,7 +285,7 @@ export async function v2GetSimilarSkins(req: MineSkinV2Request, res: Response<V2
     if (!matchedTextures) {
         throw new MineSkinError('internal_error', 'Internal error', {httpCode: 500});
     }
-    const datas = await SkinData.find({hash: {$in: matchedTextures}});
+    const datas = await SkinData.find({'hash.skin.minecraft': {$in: matchedTextures}});
     const dataIds = datas.map(data => data._id);
     const skins = await Skin2.find({data: {$in: dataIds}})
         .select('uuid meta data updatedAt') //TODO
