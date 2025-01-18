@@ -281,7 +281,7 @@ export async function v2GetSimilarSkins(req: MineSkinV2Request, res: Response<V2
     if (response.status !== 200) {
         throw new MineSkinError('internal_error', 'Internal error', {httpCode: 500});
     }
-    const matchedTextures = response.data.matches?.matches?.map((match: any) => match.id);
+    const matchedTextures = response.data.matches?.matches?.map((match: any) => match.id)?.filter((id: string) => id !== skin.data?.hash?.skin?.minecraft);
     if (!matchedTextures) {
         throw new MineSkinError('internal_error', 'Internal error', {httpCode: 500});
     }
