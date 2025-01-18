@@ -287,8 +287,10 @@ export async function v2GetSimilarSkins(req: MineSkinV2Request, res: Response<V2
     }
     const datas = await SkinData.find({'hash.skin.minecraft': {$in: matchedTextures}});
     const dataIds = datas.map(data => data._id);
-    const skins = await Skin2.find({data: {$in: dataIds}})
-        .select('uuid meta data updatedAt') //TODO
+    const skins = await Skin2.find({
+        data: {$in: dataIds},
+        'meta.visibility': SkinVisibility2.PUBLIC
+    }).select('uuid meta data updatedAt') //TODO
         .populate('data', 'hash.skin.minecraft');
     return {
         success: true,
