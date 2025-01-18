@@ -147,6 +147,7 @@ export class Balancer {
                 if (madeChanges && newOriginConfig.length === currentOriginConfig.length) {
                     console.log(JSON.stringify(newOriginConfig));
                     const updateResponse = await this.patchPoolOrigins(config, poolId, newOriginConfig);
+                    console.log(updateResponse);
                     if (!updateResponse.success) {
                         console.warn(warn("failed to update pool config for " + poolId));
                         console.warn(updateResponse);
