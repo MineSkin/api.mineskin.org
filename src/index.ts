@@ -456,17 +456,17 @@ async function init() {
         next();
     });
 
-    if (config.balanceServers?.includes(config.server)) {
-        console.log("Starting balancing task");
-        // Balancer.balance()
-        setInterval(() => {
-            try {
-                Balancer.balance();
-            } catch (e) {
-                Sentry.captureException(e);
-            }
-        }, 1000 * 60 * 5);
-    }
+    // if (config.balanceServers?.includes(config.server)) {
+    //     console.log("Starting balancing task");
+    //     // Balancer.balance()
+    //     setInterval(() => {
+    //         try {
+    //             Balancer.balance();
+    //         } catch (e) {
+    //             Sentry.captureException(e);
+    //         }
+    //     }, 1000 * 60 * 5);
+    // }
 
     if (config.statsServers?.includes(config.server)) {
         console.log("Starting stats task");
