@@ -1,4 +1,4 @@
-ARG GIT_BRANCH="master"
+ARG GIT_BRANCH="main"
 FROM ghcr.io/mineskin/mineskin-api:${GIT_BRANCH}-dependencies AS BUILD_IMAGE
 
 RUN mkdir -p /opt/app

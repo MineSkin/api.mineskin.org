@@ -14,7 +14,7 @@ info:
     email: info@mineskin.org
   license:
     name: MIT
-    url: https://github.com/MineSkin/api.mineskin.org/blob/master/LICENSE
+    url: https://github.com/MineSkin/api.mineskin.org/blob/main/LICENSE
 servers:
   - url: https://api.mineskin.org
 tags:
