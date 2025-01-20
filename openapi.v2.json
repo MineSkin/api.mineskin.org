@@ -1195,7 +1195,14 @@
           "500": {
             "$ref": "#/components/responses/GenerateErrorResponse"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Java",
+            "label": "MineSkin Client",
+            "source": "MineSkinClient client = MineSkinClient.builder()\r\n        .requestHandler(JsoupRequestHandler::new)\r\n        .userAgent(\"MyMineSkinApp/v1.0\")\r\n        .apiKey(\"<api key>\")\r\n        .build();\r\nGenerateRequest request = GenerateRequest.upload(file)\r\n        .name(\"My Skin\")\r\n        .visibility(Visibility.PUBLIC);\r\nclient.queue().submit(request).thenAccept(response -> {\r\n    JobInfo job = response.getJob();\r\n});"
+          }
+        ]
       }
     },
     "/v2/queue/{jobId}": {
@@ -1235,7 +1242,14 @@
           "500": {
             "$ref": "#/components/responses/GenerateErrorResponse"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Java",
+            "label": "MineSkin Client",
+            "source": "MineSkinClient client = MineSkinClient.builder()\r\n        .requestHandler(JsoupRequestHandler::new)\r\n        .userAgent(\"MyMineSkinApp/v1.0\")\r\n        .apiKey(\"<api key>\")\r\n        .build();\r\nGenerateRequest request = GenerateRequest.upload(file)\r\n        .name(\"My Skin\")\r\n        .visibility(Visibility.PUBLIC);\r\nclient.queue().get(\"<job id>\").thenAccept(response -> {\r\n    JobInfo job = response.getJob();\r\n});"
+          }
+        ]
       }
     },
     "/v2/delay": {
@@ -1304,7 +1318,14 @@
           "404": {
             "$ref": "#/components/responses/NotFoundErrorResponse"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Java",
+            "label": "MineSkin Client",
+            "source": "MineSkinClient client = MineSkinClient.builder()\n        .requestHandler(JsoupRequestHandler::new)\n        .userAgent(\"MyMineSkinApp/v1.0\")\n        .apiKey(\"<api key>\")\n        .build();\nclient.skins().get(\"<skin uuid>\").thenAccept(response -> {\n    Skin skin = response.getSkin();\n});"
+          }
+        ]
       }
     },
     "/v2/skins": {
