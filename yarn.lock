@@ -4104,7 +4104,7 @@ __metadata:
     cors: "npm:^2.8.5"
     dotenv: "npm:^16.4.5"
     exif-be-gone: "npm:^1.5.1"
-    express: "npm:^4.19.2"
+    express: "npm:^4.21.2"
     express-async-errors: "npm:^3.1.1"
     express-async-handler: "npm:^1.2.0"
     express-fileupload: "npm:^1.5.0"
@@ -5631,7 +5631,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"express@npm:^4.17.1, express@npm:^4.19.2":
+"express@npm:^4.17.1, express@npm:^4.21.2":
   version: 4.21.2
   resolution: "express@npm:4.21.2"
   dependencies:
