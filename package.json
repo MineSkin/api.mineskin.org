@@ -80,7 +80,7 @@
     "runtypes": "^6.7.0",
     "serialize-error": "8.1.0",
     "source-map-support": "^0.5.19",
-    "tmp": "0.2.1",
+    "tmp": "^0.2.3",
     "tunnel-ssh": "^4.1.4",
     "ua-parser-js": "^1.0.38",
     "unique-names-generator": "^4.7.1",
