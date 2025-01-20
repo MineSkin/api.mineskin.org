@@ -39,7 +39,7 @@
     "@sentry/profiling-node": "8.9.2",
     "@sentry/tracing": "^7.117.0",
     "@xboxreplay/xboxlive-auth": "^3.3.0",
-    "axios": "1.6.0",
+    "axios": "^1.7.9",
     "body-parser": "^1.19.0",
     "chalk": "^4.1.0",
     "cookie-parser": "^1.4.6",

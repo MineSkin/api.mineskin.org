@@ -4097,7 +4097,7 @@ __metadata:
     "@types/ua-parser-js": "npm:^0.7.39"
     "@types/uuid": "npm:^8.3.0"
     "@xboxreplay/xboxlive-auth": "npm:^3.3.0"
-    axios: "npm:1.6.0"
+    axios: "npm:^1.7.9"
     body-parser: "npm:^1.19.0"
     chalk: "npm:^4.1.0"
     cookie-parser: "npm:^1.4.6"
@@ -4290,18 +4290,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"axios@npm:1.6.0":
-  version: 1.6.0
-  resolution: "axios@npm:1.6.0"
-  dependencies:
-    follow-redirects: "npm:^1.15.0"
-    form-data: "npm:^4.0.0"
-    proxy-from-env: "npm:^1.1.0"
-  checksum: 10c0/2879e17b96cbca7e2096d231a44e2d0f03e657d79f8928ea38ec5fbaf5a5b7bf952d580cdb58a66ba328c26eb3528b89d5a32da57cc5cf89813786c044f7e9d6
-  languageName: node
-  linkType: hard
-
-"axios@npm:1.7.9, axios@npm:>=0.18.0, axios@npm:^1.7.2, axios@npm:^1.7.7":
+"axios@npm:1.7.9, axios@npm:>=0.18.0, axios@npm:^1.7.2, axios@npm:^1.7.7, axios@npm:^1.7.9":
   version: 1.7.9
   resolution: "axios@npm:1.7.9"
   dependencies:
@@ -5874,7 +5863,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"follow-redirects@npm:^1.14.0, follow-redirects@npm:^1.15.0, follow-redirects@npm:^1.15.6":
+"follow-redirects@npm:^1.14.0, follow-redirects@npm:^1.15.6":
   version: 1.15.9
   resolution: "follow-redirects@npm:1.15.9"
   peerDependenciesMeta:
