@@ -382,7 +382,8 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
 
     if (req.client.hasUser()) {
         const pendingByUser = await getClient().getPendingCountByUser(req.client.userId!)
-        if (pendingByUser > 5) { // TODO: configurable / client grant
+        const limit = req.client.getQueueLimit();
+        if (pendingByUser > limit) {
             throw new GeneratorError('job_limit', "You have too many jobs in the queue", {
                 httpCode: 429,
                 source: ErrorSource.CLIENT
@@ -390,7 +391,7 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
         }
     } else {
         const pendingByIp = await getClient().getPendingCountByIp(req.client.ip!)
-        if (pendingByIp > 5) { // TODO: configurable / client grant
+        if (pendingByIp > 4) {
             throw new GeneratorError('job_limit', "You have too many jobs in the queue", {
                 httpCode: 429,
                 source: ErrorSource.CLIENT
