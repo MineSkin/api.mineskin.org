@@ -10,6 +10,7 @@ import {
     md5,
     modelToVariant,
     simplifyUserAgent,
+    sleep,
     updateTraffic,
     validateUrl,
     variantToModel
@@ -80,14 +81,17 @@ export const register = (app: Application) => {
         const flags = container.get<IFlagProvider>(CoreTypes.FlagProvider);
         try {
             const apiKey = (req as V2CompatRequest).apiKey;
-            if (apiKey) {
-                if (req.query["v2"]) {
-                    req.v2Compat = true;
-                } else {
-                    if (apiKey.grants && (apiKey.grants as any).v2_compat) {
-                        req.v2Compat = true
-                    } else if (apiKey && await flags.isEnabled('api.v2_compat.all_requests')) {
+            if (req.query["v2"]) {
+                req.v2Compat = true;
+            } else {
+                if (apiKey && apiKey.grants && (apiKey.grants as any).v2_compat) {
+                    req.v2Compat = true
+                } else if (await flags.isEnabled('api.v2_compat.all_requests')) {
+                    if (apiKey || !await flags.isEnabled('api.v2_compat.require_api_key')) {
                         req.v2Compat = true;
+                        if (!apiKey) {
+                            await sleep(300 + Math.random() * 500);
+                        }
                     }
                 }
             }
