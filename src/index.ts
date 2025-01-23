@@ -21,6 +21,7 @@ import {
     renderRoute,
     testerRoute,
     utilRoute,
+    v2CapesRouter,
     v2DelayRouter,
     v2GenerateRouter,
     v2ImagesRouter,
@@ -357,6 +358,7 @@ async function init() {
         app.use("/v2/me", v2MeRouter);
         app.use("/v2/delay", v2DelayRouter);
         app.use("/v2/images", v2ImagesRouter);
+        app.use("/v2/capes", v2CapesRouter);
         app.use("/v2/usage", v2UsageRouter);
         app.use("/v2/stats", v2StatsRouter);
         app.use("/v2/sitemaps", v2SitemapsRouter);
