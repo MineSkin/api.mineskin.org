@@ -54,7 +54,6 @@ import {
     SKINS_UNIQUE,
     Stats
 } from "./Stats";
-import { IPoint } from "influx";
 import { DelayInfo } from "../typings/DelayInfo";
 import { Capes } from "../util/Capes";
 import { requestShutdown } from "../index";
@@ -260,91 +259,91 @@ export class Generator {
         let usableAccounts = usableAccountDocs.length;
         this.usableAccounts = usableAccounts;
 
-        let accountsPerProxy: { [k: string]: number } = {};
-        for (let acc of usableAccountDocs) {
-            let key = acc.requestServer;
-            if (!key || key === "null") {
-                key = "default";
-            }
-            accountsPerProxy[key] = (accountsPerProxy[key] || 0) + 1;
-        }
+        // let accountsPerProxy: { [k: string]: number } = {};
+        // for (let acc of usableAccountDocs) {
+        //     let key = acc.requestServer;
+        //     if (!key || key === "null") {
+        //         key = "default";
+        //     }
+        //     accountsPerProxy[key] = (accountsPerProxy[key] || 0) + 1;
+        // }
 
-        const accountTypes = await Account.aggregate([
-            {
-                "$match": {
-                    requestServer: {$in: ["default", ...await this.getRequestServers()]}
-                }
-            }, {
-                "$group":
-                    {
-                        _id: "$accountType",
-                        count: {$sum: 1}
-                    }
-            }
-        ]).exec().then((res: any[]) => {
-            let counts: { [type: string]: number; } = {};
-            res.forEach(e => {
-                counts[e["_id"]] = e["count"];
-            })
-            return counts;
-        });
+        // const accountTypes = await Account.aggregate([
+        //     {
+        //         "$match": {
+        //             requestServer: {$in: ["default", ...await this.getRequestServers()]}
+        //         }
+        //     }, {
+        //         "$group":
+        //             {
+        //                 _id: "$accountType",
+        //                 count: {$sum: 1}
+        //             }
+        //     }
+        // ]).exec().then((res: any[]) => {
+        //     let counts: { [type: string]: number; } = {};
+        //     res.forEach(e => {
+        //         counts[e["_id"]] = e["count"];
+        //     })
+        //     return counts;
+        // });
 
-        try {
-            const metrics = container.get<IMetricsProvider>(CoreTypes.MetricsProvider);
-            await metrics.getMetrics().influx.writePoints([
-                {
-                    measurement: 'accounts',
-                    tags: {
-                        server: HOSTNAME
-                    },
-                    fields: {
-                        totalServer: serverAccounts,
-                        useable: usableAccounts
-                    }
-                }
-            ], {
-                database: 'mineskin',
-                precision: 's'
-            })
-            for (let p in accountsPerProxy) {
-                await metrics.getMetrics().influx.writePoints([
-                    {
-                        measurement: 'proxy_accounts',
-                        tags: {
-                            server: HOSTNAME,
-                            proxy: p
-                        },
-                        fields: {
-                            useable: accountsPerProxy[p]
-                        }
-                    }
-                ], {
-                    database: 'mineskin',
-                    precision: 's'
-                })
-            }
-
-            let accountsPerTypePoints: IPoint[] = [];
-            for (let accountType in accountTypes) {
-                accountsPerTypePoints.push({
-                    measurement: 'account_types',
-                    tags: {
-                        server: HOSTNAME,
-                        type: accountType
-                    },
-                    fields: {
-                        count: accountTypes[accountType]
-                    }
-                })
-            }
-            await metrics.getMetrics().influx.writePoints(accountsPerTypePoints, {
-                database: 'mineskin',
-                precision: 's'
-            })
-        } catch (e) {
-            console.warn(e);
-            Sentry.captureException(e);
-        }
+        // try {
+        //     const metrics = container.get<IMetricsProvider>(CoreTypes.MetricsProvider);
+        //     await metrics.getMetrics().influx.writePoints([
+        //         {
+        //             measurement: 'accounts',
+        //             tags: {
+        //                 server: HOSTNAME
+        //             },
+        //             fields: {
+        //                 totalServer: serverAccounts,
+        //                 useable: usableAccounts
+        //             }
+        //         }
+        //     ], {
+        //         database: 'mineskin',
+        //         precision: 's'
+        //     })
+        //     for (let p in accountsPerProxy) {
+        //         await metrics.getMetrics().influx.writePoints([
+        //             {
+        //                 measurement: 'proxy_accounts',
+        //                 tags: {
+        //                     server: HOSTNAME,
+        //                     proxy: p
+        //                 },
+        //                 fields: {
+        //                     useable: accountsPerProxy[p]
+        //                 }
+        //             }
+        //         ], {
+        //             database: 'mineskin',
+        //             precision: 's'
+        //         })
+        //     }
+        //
+        //     let accountsPerTypePoints: IPoint[] = [];
+        //     for (let accountType in accountTypes) {
+        //         accountsPerTypePoints.push({
+        //             measurement: 'account_types',
+        //             tags: {
+        //                 server: HOSTNAME,
+        //                 type: accountType
+        //             },
+        //             fields: {
+        //                 count: accountTypes[accountType]
+        //             }
+        //         })
+        //     }
+        //     await metrics.getMetrics().influx.writePoints(accountsPerTypePoints, {
+        //         database: 'mineskin',
+        //         precision: 's'
+        //     })
+        // } catch (e) {
+        //     console.warn(e);
+        //     Sentry.captureException(e);
+        // }
 
         console.log(debug(`Took ${ (Date.now() - start) }ms for account stats`));
     }
