@@ -505,17 +505,17 @@ async function init() {
         }
     }
 
-    setInterval(() => {
-        try {
-            if (Generator.lastSave == 0) return;
-            let diff = Date.now() - Generator.lastSave;
-            if (diff > 60 * 1000 * 10) {
-                Discord.postDiscordMessage(config.server + " hasn't saved any new skins for " + (diff / 1000 / 60) + "m");
-            }
-        } catch (e) {
-            Sentry.captureException(e);
-        }
-    }, 60 * 1000 * 5);
+    // setInterval(() => {
+    //     try {
+    //         if (Generator.lastSave == 0) return;
+    //         let diff = Date.now() - Generator.lastSave;
+    //         if (diff > 60 * 1000 * 10) {
+    //             Discord.postDiscordMessage(config.server + " hasn't saved any new skins for " + (diff / 1000 / 60) + "m");
+    //         }
+    //     } catch (e) {
+    //         Sentry.captureException(e);
+    //     }
+    // }, 60 * 1000 * 5);
 }
 
 function addErrorDetailsToSentry(err: AuthenticationError | GeneratorError): void {
