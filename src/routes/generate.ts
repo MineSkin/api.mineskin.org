@@ -368,32 +368,37 @@ export const register = (app: Application) => {
     }
 
     async function sendV2WrappedSkin(req: GenerateV2Request, res: Response, skin: V2SkinResponse) {
-        const json: any = MigrationHandler.v2SkinInfoToV1Json(skin.skin);
-        const delayInfo = await Generator.getDelay(req.apiKey);
-        json.duplicate = skin.skin.duplicate;
-        delete json.visibility;
-        json.usage = skin.usage;
-        json.rateLimit = skin.rateLimit;
-        if (delayInfo) {
-            json.nextRequest = Math.round(delayInfo.seconds); // deprecated
-            if (req.minDelay) {
-                json.delay = Math.ceil(req.minDelay / 1000);
-                json.delayInfo = {
-                    millis: req.minDelay,
-                    seconds: Math.ceil(req.minDelay / 1000)
-                };
-            } else {
-                json.delay = delayInfo.seconds;
-                json.delayInfo = {
-                    millis: delayInfo.millis,
-                    seconds: delayInfo.seconds
-                };
+        await Sentry.startSpan({
+            op: 'generate_compat',
+            name: 'sendV2WrappedSkin'
+        }, async span => {
+            const json: any = MigrationHandler.v2SkinInfoToV1Json(skin.skin);
+            const delayInfo = await Generator.getDelay(req.apiKey);
+            json.duplicate = skin.skin.duplicate;
+            delete json.visibility;
+            json.usage = skin.usage;
+            json.rateLimit = skin.rateLimit;
+            if (delayInfo) {
+                json.nextRequest = Math.round(delayInfo.seconds); // deprecated
+                if (req.minDelay) {
+                    json.delay = Math.ceil(req.minDelay / 1000);
+                    json.delayInfo = {
+                        millis: req.minDelay,
+                        seconds: Math.ceil(req.minDelay / 1000)
+                    };
+                } else {
+                    json.delay = delayInfo.seconds;
+                    json.delayInfo = {
+                        millis: delayInfo.millis,
+                        seconds: delayInfo.seconds
+                    };
+                }
             }
-        }
-        if (req.warnings) {
-            json.warnings = req.warnings;
-        }
-        res.json(json);
+            if (req.warnings) {
+                json.warnings = req.warnings;
+            }
+            res.json(json);
+        });
     }
 
     function getClientInfo(req: GenerateRequest): ClientInfo {

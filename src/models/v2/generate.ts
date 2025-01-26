@@ -69,145 +69,187 @@ function getClient() {
 }
 
 export async function v2GenerateAndWait(req: GenerateV2Request, res: Response<V2GenerateResponseBody | V2SkinResponse>): Promise<V2GenerateResponseBody | V2SkinResponse> {
-    const {skin, job} = await v2SubmitGeneratorJob(req, res);
-    if (job) {
-        req.links.job = `/v2/queue/${ job.id }`;
-        if (job.request.image) {
-            req.links.image = `/v2/images/${ job.request.image }`;
+    return await Sentry.startSpan({
+        op: 'generate_v2',
+        name: 'v2GenerateAndWait'
+    }, async span => {
+        const {skin, job} = await v2SubmitGeneratorJob(req, res);
+        if (job) {
+            req.links.job = `/v2/queue/${ job.id }`;
+            if (job.request.image) {
+                req.links.image = `/v2/images/${ job.request.image }`;
+            }
         }
-    }
-    if (skin) {
-        req.links.skin = `/v2/skins/${ skin.id }`;
-        const queried = await querySkinOrThrow(skin.id);
-        return {
-            success: true,
-            skin: V2GenerateHandler.skinToJson(queried, skin.duplicate),
-            rateLimit: V2GenerateHandler.makeRateLimitInfo(req)
-        };
-    }
-
-    //TODO: figure out a better way to handle this
-    const checkOnly = (!!(req.body as any)["checkOnly"] || !!req.query["checkOnly"])
-    if (checkOnly) {
-        throw new GeneratorError(GenError.NO_DUPLICATE, "No duplicate found", {httpCode: 400})
-    }
-
-    if (!job) {
-        throw new GeneratorError('job_not_found', "Job not found", {
-            httpCode: 404,
-            source: ErrorSource.CLIENT
-        });
-    }
-    try {
-        const timeoutSeconds = GenerateTimeout.parse(req.query.timeout);
-        const result = await getClient().waitForJob(job.id, timeoutSeconds * 1000) as GenerateResult; //TODO: configure timeout
-        Log.l.debug(JSON.stringify(result, null, 2));
-        await sleep(200);
-        req.links.skin = `/v2/skins/${ result.skin }`;
-        const queried = await querySkinOrThrow(result.skin);
-        return {
-            success: true,
-            skin: V2GenerateHandler.skinToJson(queried, !!result.duplicate),
-            rateLimit: V2GenerateHandler.makeRateLimitInfo(req),
-            usage: result.usage
-        };
-    } catch (e) {
-        if (e instanceof MineSkinError) {
-            throw e;
+        if (skin) {
+            req.links.skin = `/v2/skins/${ skin.id }`;
+            const queried = await querySkinOrThrow(skin.id);
+            return {
+                success: true,
+                skin: V2GenerateHandler.skinToJson(queried, skin.duplicate),
+                rateLimit: V2GenerateHandler.makeRateLimitInfo(req)
+            };
         }
-        if (e.message.includes('timed out before finishing') || e.message.includes('Timeout')) { // this kinda sucks
-            Log.l.warn(e);
-            throw new GeneratorError('generator_timeout', "generator request timed out", {
-                httpCode: 500,
-                error: e,
-                source: ErrorSource.SERVER
+
+        //TODO: figure out a better way to handle this
+        const checkOnly = (!!(req.body as any)["checkOnly"] || !!req.query["checkOnly"])
+        if (checkOnly) {
+            throw new GeneratorError(GenError.NO_DUPLICATE, "No duplicate found", {httpCode: 400})
+        }
+
+        if (!job) {
+            throw new GeneratorError('job_not_found', "Job not found", {
+                httpCode: 404,
+                source: ErrorSource.CLIENT
             });
         }
-        Log.l.error(e);
-        Sentry.captureException(e);
-        throw new GeneratorError('unexpected_error', "unexpected error", {httpCode: 500, error: e});
-    }
+        try {
+            const timeoutSeconds = GenerateTimeout.parse(req.query.timeout);
+            const result = await getClient().waitForJob(job.id, timeoutSeconds * 1000) as GenerateResult; //TODO: configure timeout
+            Log.l.debug(JSON.stringify(result, null, 2));
+            await sleep(200);
+            req.links.skin = `/v2/skins/${ result.skin }`;
+            const queried = await querySkinOrThrow(result.skin);
+            return {
+                success: true,
+                skin: V2GenerateHandler.skinToJson(queried, !!result.duplicate),
+                rateLimit: V2GenerateHandler.makeRateLimitInfo(req),
+                usage: result.usage
+            };
+        } catch (e) {
+            if (e instanceof MineSkinError) {
+                throw e;
+            }
+            if (e.message.includes('timed out before finishing') || e.message.includes('Timeout')) { // this kinda sucks
+                Log.l.warn(e);
+                throw new GeneratorError('generator_timeout', "generator request timed out", {
+                    httpCode: 500,
+                    error: e,
+                    source: ErrorSource.SERVER
+                });
+            }
+            Log.l.error(e);
+            Sentry.captureException(e);
+            throw new GeneratorError('unexpected_error', "unexpected error", {httpCode: 500, error: e});
+        }
+    });
 }
 
 export async function v2GenerateEnqueue(req: GenerateV2Request, res: Response<V2GenerateResponseBody | V2JobResponse>): Promise<V2JobResponse> {
-    const {skin, job} = await v2SubmitGeneratorJob(req, res);
-    if (job) {
-        req.links.job = `/v2/queue/${ job.id }`;
-        if (job.request.image) {
-            req.links.image = `/v2/images/${ job.request.image }`;
-        }
-    }
-    if (skin) {
-        req.links.skin = `/v2/skins/${ skin.id }`;
-        const queried = await querySkinOrThrow(skin.id);
-
-        let jobInfo: JobInfo;
+    return await Sentry.startSpan({
+        op: 'generate_v2',
+        name: 'v2GenerateEnqueue'
+    }, async span => {
+        const {skin, job} = await v2SubmitGeneratorJob(req, res);
         if (job) {
-            jobInfo = {
-                id: job?.id || null,
-                status: job?.status || 'completed',
-                timestamp: job?.createdAt?.getTime() || 0,
-                result: skin.id
+            req.links.job = `/v2/queue/${ job.id }`;
+            if (job.request.image) {
+                req.links.image = `/v2/images/${ job.request.image }`;
+            }
+        }
+        if (skin) {
+            req.links.skin = `/v2/skins/${ skin.id }`;
+            const queried = await querySkinOrThrow(skin.id);
+
+            let jobInfo: JobInfo;
+            if (job) {
+                jobInfo = {
+                    id: job?.id || null,
+                    status: job?.status || 'completed',
+                    timestamp: job?.createdAt?.getTime() || 0,
+                    result: skin.id
+                };
+            } else {
+                jobInfo = await saveFakeJob(skin.id);
+            }
+
+            res.status(200);
+            return {
+                success: true,
+                messages: [{
+                    code: 'skin_found',
+                    message: "Found existing skin"
+                }],
+                job: jobInfo,
+                skin: V2GenerateHandler.skinToJson(queried, skin.duplicate),
+                rateLimit: V2GenerateHandler.makeRateLimitInfo(req)
             };
-        } else {
-            jobInfo = await saveFakeJob(skin.id);
         }
 
-        res.status(200);
+        let eta = undefined;
+        try {
+            const stats = await getCachedV2Stats();
+            const durationEta = (stats?.generator?.duration?.pending + stats?.generator?.duration?.generate) || undefined; //TODO: multiply pending by user's pending job count
+            eta = durationEta && job ? new Date(job?.createdAt?.getTime() + durationEta) : undefined;
+        } catch (e) {
+            Sentry.captureException(e);
+        }
+
+        res.status(202);
         return {
             success: true,
             messages: [{
-                code: 'skin_found',
-                message: "Found existing skin"
+                code: 'job_queued',
+                message: "Job queued"
             }],
-            job: jobInfo,
-            skin: V2GenerateHandler.skinToJson(queried, skin.duplicate),
+            job: {
+                id: job?.id || null,
+                status: job?.status || 'unknown',
+                timestamp: job?.createdAt?.getTime() || 0,
+                eta: eta?.getTime() || undefined
+            },
             rateLimit: V2GenerateHandler.makeRateLimitInfo(req)
         };
-    }
-
-    let eta = undefined;
-    try {
-        const stats = await getCachedV2Stats();
-        const durationEta = (stats?.generator?.duration?.pending + stats?.generator?.duration?.generate) || undefined; //TODO: multiply pending by user's pending job count
-        eta = durationEta && job ? new Date(job?.createdAt?.getTime() + durationEta) : undefined;
-    } catch (e) {
-        Sentry.captureException(e);
-    }
-
-    res.status(202);
-    return {
-        success: true,
-        messages: [{
-            code: 'job_queued',
-            message: "Job queued"
-        }],
-        job: {
-            id: job?.id || null,
-            status: job?.status || 'unknown',
-            timestamp: job?.createdAt?.getTime() || 0,
-            eta: eta?.getTime() || undefined
-        },
-        rateLimit: V2GenerateHandler.makeRateLimitInfo(req)
-    };
+    });
 }
 
 export async function v2GetJob(req: GenerateV2Request, res: Response<V2GenerateResponseBody | V2JobResponse>): Promise<V2JobResponse> {
-    const jobId = ZObjectId.parse(req.params.jobId);
+    return await Sentry.startSpan({
+        op: 'route',
+        name: 'v2GetJob'
+    }, async span => {
+        const jobId = ZObjectId.parse(req.params.jobId);
 
-    req.links.job = `/v2/queue/${ jobId }`;
-    req.links.self = req.links.job;
+        req.links.job = `/v2/queue/${ jobId }`;
+        req.links.self = req.links.job;
 
-    if (jobId.startsWith('f4c3')) {
-        const fakeJob = await getFakeJob(jobId);
-        // if (!fakeJob) {
-        //     throw new GeneratorError('job_not_found', `Fake job not found: ${ jobId }`, {httpCode: 404});
-        // }
+        if (jobId.startsWith('f4c3')) {
+            const fakeJob = await getFakeJob(jobId);
+            // if (!fakeJob) {
+            //     throw new GeneratorError('job_not_found', `Fake job not found: ${ jobId }`, {httpCode: 404});
+            // }
 
-        if (fakeJob && fakeJob.status === 'completed') {
-            const result = fakeJob.result!;
-            req.links.skin = `/v2/skins/${ result }`;
-            const queried = await querySkinOrThrow(result);
+            if (fakeJob && fakeJob.status === 'completed') {
+                const result = fakeJob.result!;
+                req.links.skin = `/v2/skins/${ result }`;
+                const queried = await querySkinOrThrow(result);
+                return {
+                    success: true,
+                    messages: [{
+                        code: 'job_completed',
+                        message: "Job completed"
+                    }],
+                    job: {
+                        id: fakeJob.id,
+                        status: fakeJob.status || 'completed',
+                        timestamp: fakeJob.timestamp || 0,
+                        result: result
+                    },
+                    skin: V2GenerateHandler.skinToJson(queried, false)
+                };
+            }
+        }
+
+        const job = await getClient().getJob(jobId);
+        if (!job) {
+            throw new GeneratorError('job_not_found', `Job not found: ${ jobId }`, {httpCode: 404});
+        }
+
+        req.links.image = `/v2/images/${ job.request.image }`;
+
+        if (job.status === 'completed') {
+            const result = job.result!;
+            req.links.skin = `/v2/skins/${ result.skin }`;
+            const queried = await querySkinOrThrow(result.skin);
             return {
                 success: true,
                 messages: [{
@@ -215,366 +257,349 @@ export async function v2GetJob(req: GenerateV2Request, res: Response<V2GenerateR
                     message: "Job completed"
                 }],
                 job: {
-                    id: fakeJob.id,
-                    status: fakeJob.status || 'completed',
-                    timestamp: fakeJob.timestamp || 0,
-                    result: result
+                    id: job?.id || null,
+                    status: job?.status || 'completed',
+                    timestamp: job?.createdAt?.getTime() || 0,
+                    result: result.skin
                 },
-                skin: V2GenerateHandler.skinToJson(queried, false)
+                skin: V2GenerateHandler.skinToJson(queried, !!result.duplicate),
+                usage: result.usage
             };
         }
-    }
-
-    const job = await getClient().getJob(jobId);
-    if (!job) {
-        throw new GeneratorError('job_not_found', `Job not found: ${ jobId }`, {httpCode: 404});
-    }
-
-    req.links.image = `/v2/images/${ job.request.image }`;
-
-    if (job.status === 'completed') {
-        const result = job.result!;
-        req.links.skin = `/v2/skins/${ result.skin }`;
-        const queried = await querySkinOrThrow(result.skin);
+        if (job.status === 'failed') {
+            let error: Error;
+            if (job.error) {
+                error = MongoGeneratorClient.deserializeCustomError(job.error);
+            } else {
+                error = new GeneratorError('job_failed', "Job failed", {httpCode: 500});
+            }
+            return {
+                success: true,
+                messages: [{
+                    code: 'job_failed',
+                    message: "Job failed"
+                }],
+                job: {
+                    id: job.id,
+                    status: job.status,
+                    timestamp: job.createdAt?.getTime() || 0
+                },
+                errors: [{
+                    code: 'code' in error ? error.code as string : 'unexpected_error',
+                    message: error.message
+                }]
+            };
+        }
         return {
             success: true,
             messages: [{
-                code: 'job_completed',
-                message: "Job completed"
+                code: 'job_pending',
+                message: "Job pending"
             }],
             job: {
                 id: job?.id || null,
-                status: job?.status || 'completed',
-                timestamp: job?.createdAt?.getTime() || 0,
-                result: result.skin
-            },
-            skin: V2GenerateHandler.skinToJson(queried, !!result.duplicate),
-            usage: result.usage
+                status: job?.status || 'unknown',
+                timestamp: job?.createdAt?.getTime() || 0
+            }
         };
-    }
-    if (job.status === 'failed') {
-        let error: Error;
-        if (job.error) {
-            error = MongoGeneratorClient.deserializeCustomError(job.error);
-        } else {
-            error = new GeneratorError('job_failed', "Job failed", {httpCode: 500});
-        }
-        return {
-            success: true,
-            messages: [{
-                code: 'job_failed',
-                message: "Job failed"
-            }],
-            job: {
-                id: job.id,
-                status: job.status,
-                timestamp: job.createdAt?.getTime() || 0
-            },
-            errors: [{
-                code: 'code' in error ? error.code as string : 'unexpected_error',
-                message: error.message
-            }]
-        };
-    }
-    return {
-        success: true,
-        messages: [{
-            code: 'job_pending',
-            message: "Job pending"
-        }],
-        job: {
-            id: job?.id || null,
-            status: job?.status || 'unknown',
-            timestamp: job?.createdAt?.getTime() || 0
-        }
-    };
+    });
 }
 
 export async function v2ListJobs(req: GenerateV2Request, res: Response<V2MiscResponseBody>): Promise<V2JobListResponse> {
-    let jobs;
-    if (req.client.hasApiKey()) {
-        jobs = await getClient().getByApiKey(req.client.apiKeyId!);
-    } else if (req.client.hasUser()) {
-        jobs = await getClient().getByUser(req.client.userId!);
-    } else {
-        throw new GeneratorError('unauthorized', "no client info", {httpCode: 401});
-    }
+    return await Sentry.startSpan({
+        op: 'route',
+        name: 'v2ListJobs'
+    }, async span => {
+        let jobs;
+        if (req.client.hasApiKey()) {
+            jobs = await getClient().getByApiKey(req.client.apiKeyId!);
+        } else if (req.client.hasUser()) {
+            jobs = await getClient().getByUser(req.client.userId!);
+        } else {
+            throw new GeneratorError('unauthorized', "no client info", {httpCode: 401});
+        }
 
-    const threeHoursAgo = new Date();
-    threeHoursAgo.setHours(threeHoursAgo.getHours() - 3);
+        const threeHoursAgo = new Date();
+        threeHoursAgo.setHours(threeHoursAgo.getHours() - 3);
 
-    return {
-        success: true,
-        jobs: jobs
-            .filter(j => j.createdAt > threeHoursAgo)
-            .map(job => {
-                return {
-                    id: job.id,
-                    status: job.status,
-                    timestamp: job?.createdAt?.getTime() || 0,
-                    result: job.result?.skin
-                }
-            })
-    };
+        return {
+            success: true,
+            jobs: jobs
+                .filter(j => j.createdAt > threeHoursAgo)
+                .map(job => {
+                    return {
+                        id: job.id,
+                        status: job.status,
+                        timestamp: job?.createdAt?.getTime() || 0,
+                        result: job.result?.skin
+                    }
+                })
+        };
+    });
 }
 
 //TODO: track stats
 
 async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2GenerateResponseBody | V2SkinResponse>): Promise<JobWithSkin> {
+    return await Sentry.startSpan({
+        op: 'generate_v2',
+        name: 'v2SubmitGeneratorJob'
+    }, async span => {
 
-    // need to call multer stuff first so fields are parsed
-    if (!(req as any)._uploadProcessed) { //TODO: remove
-        if (req.is('multipart/form-data')) {
-            await tryHandleFileUpload(req, res);
-        } else {
-            upload.none();
+        // need to call multer stuff first so fields are parsed
+        if (!(req as any)._uploadProcessed) { //TODO: remove
+            if (req.is('multipart/form-data')) {
+                await tryHandleFileUpload(req, res);
+            } else {
+                upload.none();
+            }
         }
-    }
 
-    const options = getAndValidateOptions(req);
-    //const client = getClientInfo(req);
-    if (!req.clientInfo) {
-        throw new GeneratorError('invalid_client', "no client info", {httpCode: 500});
-    }
-
-    // // check rate limit
-    const trafficService = container.get<TrafficService>(GeneratorTypes.TrafficService);
-    // req.nextRequest = await trafficService.getNextRequest(req.clientInfo);
-    // req.minDelay = await trafficService.getMinDelaySeconds(req.clientInfo, req.apiKey) * 1000;
-    // if (req.nextRequest > req.clientInfo.time) {
-    //     throw new GeneratorError('rate_limit', `request too soon, next request in ${ ((Math.round(req.nextRequest - Date.now()) / 100) * 100) }ms`, {httpCode: 429});
-    // }
-
-    // // check credits
-    // // (always check, even when not enabled, to handle free credits)
-    // if (req.client.canUseCredits()) {
-    //     const billingService = BillingService.getInstance();
-    //     const credit = await billingService.getClientCredits(req.clientInfo);
-    //     if (!credit) {
-    //         req.warnings.push({
-    //             code: 'no_credits',
-    //             message: "no credits"
-    //         });
-    //         req.clientInfo.credits = false;
-    //     } else {
-    //         if (!credit.isValid()) {
-    //             req.warnings.push({
-    //                 code: 'invalid_credits',
-    //                 message: "invalid credits"
-    //             });
-    //             req.clientInfo.credits = false;
-    //         } else if (credit.balance <= 0) {
-    //             req.warnings.push({
-    //                 code: 'insufficient_credits',
-    //                 message: "insufficient credits"
-    //             });
-    //             req.clientInfo.credits = false;
-    //         }
-    //         res.header('MineSkin-Credits-Type', credit.type);
-    //         res.header('MineSkin-Credits-Balance', `${ credit.balance }`);
-    //     }
-    // }
-
-    /*
-    if (!req.apiKey && !req.client.hasUser()) {
-        throw new GeneratorError('unauthorized', "API key or user required", {httpCode: 401});
-    }*/
-
-    if (req.client.hasUser()) {
-        const pendingByUser = await getClient().getPendingCountByUser(req.client.userId!)
-        const limit = req.client.getQueueLimit();
-        if (pendingByUser > limit) {
-            throw new GeneratorError('job_limit', "You have too many jobs in the queue", {
-                httpCode: 429,
-                source: ErrorSource.CLIENT
-            });
+        const options = getAndValidateOptions(req);
+        //const client = getClientInfo(req);
+        if (!req.clientInfo) {
+            throw new GeneratorError('invalid_client', "no client info", {httpCode: 500});
         }
-    } else {
-        const pendingByIp = await getClient().getPendingCountByIp(req.client.ip!)
-        if (pendingByIp > 4) {
-            throw new GeneratorError('job_limit', "You have too many jobs in the queue", {
-                httpCode: 429,
-                source: ErrorSource.CLIENT
-            });
-        }
-        await sleep(200 * Math.random());
-    }
 
-    if (!req.client.hasCredits()) {
-        await sleep(200 * Math.random());
-    }
+        // // check rate limit
+        const trafficService = container.get<TrafficService>(GeneratorTypes.TrafficService);
+        // req.nextRequest = await trafficService.getNextRequest(req.clientInfo);
+        // req.minDelay = await trafficService.getMinDelaySeconds(req.clientInfo, req.apiKey) * 1000;
+        // if (req.nextRequest > req.clientInfo.time) {
+        //     throw new GeneratorError('rate_limit', `request too soon, next request in ${ ((Math.round(req.nextRequest - Date.now()) / 100) * 100) }ms`, {httpCode: 429});
+        // }
 
-    if (options.visibility === SkinVisibility2.PRIVATE) {
+        // // check credits
+        // // (always check, even when not enabled, to handle free credits)
+        // if (req.client.canUseCredits()) {
+        //     const billingService = BillingService.getInstance();
+        //     const credit = await billingService.getClientCredits(req.clientInfo);
+        //     if (!credit) {
+        //         req.warnings.push({
+        //             code: 'no_credits',
+        //             message: "no credits"
+        //         });
+        //         req.clientInfo.credits = false;
+        //     } else {
+        //         if (!credit.isValid()) {
+        //             req.warnings.push({
+        //                 code: 'invalid_credits',
+        //                 message: "invalid credits"
+        //             });
+        //             req.clientInfo.credits = false;
+        //         } else if (credit.balance <= 0) {
+        //             req.warnings.push({
+        //                 code: 'insufficient_credits',
+        //                 message: "insufficient credits"
+        //             });
+        //             req.clientInfo.credits = false;
+        //         }
+        //         res.header('MineSkin-Credits-Type', credit.type);
+        //         res.header('MineSkin-Credits-Balance', `${ credit.balance }`);
+        //     }
+        // }
+
+        /*
         if (!req.apiKey && !req.client.hasUser()) {
-            throw new GeneratorError('unauthorized', "private skins require an API key or User", {
-                httpCode: 401,
-                source: ErrorSource.CLIENT
-            });
-        }
-        if (!req.client.grants?.private_skins) {
-            throw new GeneratorError('insufficient_grants', "you are not allowed to generate private skins", {
-                httpCode: 403,
-                source: ErrorSource.CLIENT
-            });
-        }
-        Log.l.debug(`${ req.breadcrumbC } generating private`);
-    }
+            throw new GeneratorError('unauthorized', "API key or user required", {httpCode: 401});
+        }*/
 
-    let handler: V2GenerateHandler;
-
-    //TODO: support base64
-    if (req.is('multipart/form-data')) {
-        handler = new V2UploadHandler(req, res, options);
-    } else if (req.is('application/json')) {
-        console.debug('application/json') //TODO: remove
-        if ('url' in req.body) {
-            handler = new V2UrlHandler(req, res, options);
-        } else if ('user' in req.body) {
-            //TODO: validate user
-            handler = new V2UserHandler(req, res, options);
-        } else {
-            throw new GeneratorError('invalid_request', `invalid request properties (expected url or user)`, {
-                httpCode: 400,
-                source: ErrorSource.CLIENT
-            });
-        }
-    } else {
-        throw new GeneratorError('invalid_content_type', `invalid content type: ${ req.header('content-type') } (expected multipart/form-data or application/json)`, {httpCode: 400});
-    }
-
-    // preliminary rate limiting
-    if (req.client.useDelayRateLimit()) {
-        req.nextRequest = await trafficService.updateLastAndNextRequest(req.clientInfo, 200);
-        Log.l.debug(`next request at ${ req.nextRequest }`);
-    }
-    if (req.client.usePerMinuteRateLimit()) {
-        req.requestsThisMinute = (req.requestsThisMinute || 0) + 1;
-        await trafficService.incRequest(req.clientInfo);
-    }
-
-    let hashes: Maybe<ImageHashes> = undefined;
-    if (handler.handlesImage()) {
-        const imageResult = await handler.getImageBuffer();
-        if (imageResult.existing) {
-            // await V2GenerateHandler.queryAndSendSkin(req, res, imageResult.existing, true);
-            return {
-                skin: {
-                    id: imageResult.existing,
-                    duplicate: true
-                }
-            };
-        }
-        const imageBuffer = imageResult.buffer;
-        if (!imageBuffer) {
-            throw new GeneratorError(GenError.INVALID_IMAGE, "Failed to get image buffer", {httpCode: 500});
-        }
-
-
-        const validation = await ImageValidation.validateImageBuffer(imageBuffer);
-        Log.l.debug(validation);
-
-        //TODO: ideally don't do this here and in the generator
-        if (options.variant === SkinVariant.UNKNOWN) {
-            if (validation.variant === SkinVariant.UNKNOWN) {
-                throw new GeneratorError(GenError.UNKNOWN_VARIANT, "Unknown variant", {
-                    source: ErrorSource.CLIENT,
-                    httpCode: 400
+        if (req.client.hasUser()) {
+            const pendingByUser = await getClient().getPendingCountByUser(req.client.userId!)
+            const limit = req.client.getQueueLimit();
+            if (pendingByUser > limit) {
+                throw new GeneratorError('job_limit', "You have too many jobs in the queue", {
+                    httpCode: 429,
+                    source: ErrorSource.CLIENT
                 });
             }
-            Log.l.info(req.breadcrumb + " Switching unknown skin variant to " + validation.variant + " from detection");
-            Sentry.setExtra("generate_detected_variant", validation.variant);
-            options.variant = validation.variant;
+        } else {
+            const pendingByIp = await getClient().getPendingCountByIp(req.client.ip!)
+            if (pendingByIp > 4) {
+                throw new GeneratorError('job_limit', "You have too many jobs in the queue", {
+                    httpCode: 429,
+                    source: ErrorSource.CLIENT
+                });
+            }
+            await sleep(200 * Math.random());
         }
 
-
-        try {
-            const imageService = container.get<ImageService>(GeneratorTypes.ImageService);
-            hashes = await imageService.getImageHashes(imageBuffer, validation.dimensions.width || 64, validation.dimensions.height || 64);
-        } catch (e) {
-            // span?.setStatus({
-            //     code: 2,
-            //     message: "invalid_argument"
-            // });
-            throw new GeneratorError(GenError.INVALID_IMAGE, `Failed to get image hash: ${ e.message }`, {
-                httpCode: 400,
-                error: e
-            });
+        if (!req.client.hasCredits()) {
+            await sleep(200 * Math.random());
         }
-        Log.l.debug(req.breadcrumbC + " Image hash: ", hashes);
 
-        // duplicate check V2, same as in generator
-        //  just to avoid unnecessary submissions to generator
-        const duplicateChecker = container.get<DuplicateChecker>(GeneratorTypes.DuplicateChecker);
-        const duplicateV2Data = await duplicateChecker.findDuplicateDataFromImageHash(hashes, options.variant, GenerateType.UPLOAD, req.breadcrumb || "????");
-        if (duplicateV2Data.existing) {
-            // found existing data
-            const skinForDuplicateData = await duplicateChecker.findV2ForData(duplicateV2Data.existing);
-            const result = await duplicateChecker.handleV2DuplicateResult({
-                source: duplicateV2Data.source,
-                existing: skinForDuplicateData,
-                data: duplicateV2Data.existing
-            }, options, req.clientInfo, req.breadcrumb || "????");
-            await duplicateChecker.handleDuplicateResultMetrics(result, GenerateType.UPLOAD, options, req.clientInfo);
-            if (!!result.existing) {
-                // full duplicate, return existing skin
-                //await V2GenerateHandler.queryAndSendSkin(req, res, result.existing.uuid, true);
+        if (options.visibility === SkinVisibility2.PRIVATE) {
+            if (!req.apiKey && !req.client.hasUser()) {
+                throw new GeneratorError('unauthorized', "private skins require an API key or User", {
+                    httpCode: 401,
+                    source: ErrorSource.CLIENT
+                });
+            }
+            if (!req.client.grants?.private_skins) {
+                throw new GeneratorError('insufficient_grants', "you are not allowed to generate private skins", {
+                    httpCode: 403,
+                    source: ErrorSource.CLIENT
+                });
+            }
+            Log.l.debug(`${ req.breadcrumbC } generating private`);
+        }
+
+        let handler: V2GenerateHandler;
+
+        //TODO: support base64
+        if (req.is('multipart/form-data')) {
+            handler = new V2UploadHandler(req, res, options);
+        } else if (req.is('application/json')) {
+            console.debug('application/json') //TODO: remove
+            if ('url' in req.body) {
+                handler = new V2UrlHandler(req, res, options);
+            } else if ('user' in req.body) {
+                //TODO: validate user
+                handler = new V2UserHandler(req, res, options);
+            } else {
+                throw new GeneratorError('invalid_request', `invalid request properties (expected url or user)`, {
+                    httpCode: 400,
+                    source: ErrorSource.CLIENT
+                });
+            }
+        } else {
+            throw new GeneratorError('invalid_content_type', `invalid content type: ${ req.header('content-type') } (expected multipart/form-data or application/json)`, {httpCode: 400});
+        }
+
+        // preliminary rate limiting
+        if (req.client.useDelayRateLimit()) {
+            req.nextRequest = await trafficService.updateLastAndNextRequest(req.clientInfo, 200);
+            Log.l.debug(`next request at ${ req.nextRequest }`);
+        }
+        if (req.client.usePerMinuteRateLimit()) {
+            req.requestsThisMinute = (req.requestsThisMinute || 0) + 1;
+            await trafficService.incRequest(req.clientInfo);
+        }
+
+        let hashes: Maybe<ImageHashes> = undefined;
+        if (handler.handlesImage()) {
+            const imageResult = await handler.getImageBuffer();
+            if (imageResult.existing) {
+                // await V2GenerateHandler.queryAndSendSkin(req, res, imageResult.existing, true);
                 return {
                     skin: {
-                        id: result.existing.uuid,
+                        id: imageResult.existing,
                         duplicate: true
                     }
                 };
             }
-            // otherwise, continue with generator
+            const imageBuffer = imageResult.buffer;
+            if (!imageBuffer) {
+                throw new GeneratorError(GenError.INVALID_IMAGE, "Failed to get image buffer", {httpCode: 500});
+            }
+
+
+            const validation = await ImageValidation.validateImageBuffer(imageBuffer);
+            Log.l.debug(validation);
+
+            //TODO: ideally don't do this here and in the generator
+            if (options.variant === SkinVariant.UNKNOWN) {
+                if (validation.variant === SkinVariant.UNKNOWN) {
+                    throw new GeneratorError(GenError.UNKNOWN_VARIANT, "Unknown variant", {
+                        source: ErrorSource.CLIENT,
+                        httpCode: 400
+                    });
+                }
+                Log.l.info(req.breadcrumb + " Switching unknown skin variant to " + validation.variant + " from detection");
+                Sentry.setExtra("generate_detected_variant", validation.variant);
+                options.variant = validation.variant;
+            }
+
+
+            try {
+                const imageService = container.get<ImageService>(GeneratorTypes.ImageService);
+                hashes = await imageService.getImageHashes(imageBuffer, validation.dimensions.width || 64, validation.dimensions.height || 64);
+            } catch (e) {
+                // span?.setStatus({
+                //     code: 2,
+                //     message: "invalid_argument"
+                // });
+                throw new GeneratorError(GenError.INVALID_IMAGE, `Failed to get image hash: ${ e.message }`, {
+                    httpCode: 400,
+                    error: e
+                });
+            }
+            Log.l.debug(req.breadcrumbC + " Image hash: ", hashes);
+
+            // duplicate check V2, same as in generator
+            //  just to avoid unnecessary submissions to generator
+            const duplicateChecker = container.get<DuplicateChecker>(GeneratorTypes.DuplicateChecker);
+            const duplicateV2Data = await duplicateChecker.findDuplicateDataFromImageHash(hashes, options.variant, GenerateType.UPLOAD, req.breadcrumb || "????");
+            if (duplicateV2Data.existing) {
+                // found existing data
+                const skinForDuplicateData = await duplicateChecker.findV2ForData(duplicateV2Data.existing);
+                const result = await duplicateChecker.handleV2DuplicateResult({
+                    source: duplicateV2Data.source,
+                    existing: skinForDuplicateData,
+                    data: duplicateV2Data.existing
+                }, options, req.clientInfo, req.breadcrumb || "????");
+                await duplicateChecker.handleDuplicateResultMetrics(result, GenerateType.UPLOAD, options, req.clientInfo);
+                if (!!result.existing) {
+                    // full duplicate, return existing skin
+                    //await V2GenerateHandler.queryAndSendSkin(req, res, result.existing.uuid, true);
+                    return {
+                        skin: {
+                            id: result.existing.uuid,
+                            duplicate: true
+                        }
+                    };
+                }
+                // otherwise, continue with generator
+            }
+
+            /*
+            const duplicateResult = await DuplicateChecker.findDuplicateDataFromImageHash(hashes, options.variant, GenerateType.UPLOAD, req.breadcrumb || "????");
+            Log.l.debug(JSON.stringify(duplicateResult, null, 2));
+            if (duplicateResult.existing && isV1SkinDocument(duplicateResult.existing)) {
+                return res.json({
+                    success: true,
+                    skin: v1SkinToV2Json(duplicateResult.existing, true)
+                });
+            } else if (duplicateResult.existing && isPopulatedSkin2Document(duplicateResult.existing)) {
+                return res.json({
+                    success: true,
+                    skin: skinToJson(duplicateResult.existing, true)
+                });
+            }
+             */
+
+            const imageUploaded = await getClient().insertUploadedImage(hashes.minecraft, imageBuffer);
+        } else if (handler.type === GenerateType.USER) {
+            //TODO: check for recent requests on the same user and return duplicate
         }
 
-        /*
-        const duplicateResult = await DuplicateChecker.findDuplicateDataFromImageHash(hashes, options.variant, GenerateType.UPLOAD, req.breadcrumb || "????");
-        Log.l.debug(JSON.stringify(duplicateResult, null, 2));
-        if (duplicateResult.existing && isV1SkinDocument(duplicateResult.existing)) {
-            return res.json({
-                success: true,
-                skin: v1SkinToV2Json(duplicateResult.existing, true)
-            });
-        } else if (duplicateResult.existing && isPopulatedSkin2Document(duplicateResult.existing)) {
-            return res.json({
-                success: true,
-                skin: skinToJson(duplicateResult.existing, true)
-            });
+        handler.cleanupImage();
+
+        if (!req.client.hasUser() || !req.client.hasCredits()) {
+            await sleep(200 * Math.random());
         }
-         */
 
-        const imageUploaded = await getClient().insertUploadedImage(hashes.minecraft, imageBuffer);
-    } else if (handler.type === GenerateType.USER) {
-        //TODO: check for recent requests on the same user and return duplicate
-    }
+        if (req.client.useConcurrencyLimit()) {
+            await trafficService.incrementConcurrent(req.clientInfo);
+            req.concurrentRequests = (req.concurrentRequests || 0) + 1;
+        }
 
-    handler.cleanupImage();
+        const billingService = container.get<BillingService>(BillingTypes.BillingService);
+        await billingService.trackGenerateRequest(req.clientInfo);
 
-    if (!req.client.hasUser() || !req.client.hasCredits()) {
-        await sleep(200 * Math.random());
-    }
-
-    if (req.client.useConcurrencyLimit()) {
-        await trafficService.incrementConcurrent(req.clientInfo);
-        req.concurrentRequests = (req.concurrentRequests || 0) + 1;
-    }
-
-    const billingService = container.get<BillingService>(BillingTypes.BillingService);
-    await billingService.trackGenerateRequest(req.clientInfo);
-
-    const request: GenerateRequest = {
-        breadcrumb: req.breadcrumb || "????",
-        type: handler.type,
-        image: await handler.getImageReference(hashes),
-        options: options,
-        clientInfo: req.clientInfo
-    }
-    const queueOptions: QueueOptions = {
-        priority: req.client.getPriority()
-    };
-    const job = await getClient().submitRequest(request, queueOptions);
-    return {job};
+        const request: GenerateRequest = {
+            breadcrumb: req.breadcrumb || "????",
+            type: handler.type,
+            image: await handler.getImageReference(hashes),
+            options: options,
+            clientInfo: req.clientInfo
+        }
+        const queueOptions: QueueOptions = {
+            priority: req.client.getPriority()
+        };
+        const job = await getClient().submitRequest(request, queueOptions);
+        return {job};
+    });
 }
 
 async function saveFakeJob(result: string, status: JobStatus = 'completed'): Promise<JobInfo> {
@@ -601,7 +626,7 @@ async function getFakeJob(id: string): Promise<Maybe<JobInfo>> {
 
 function getAndValidateOptions(req: GenerateV2Request): GenerateOptions {
     return Sentry.startSpan({
-        op: "v2_generate_getAndValidateOptions",
+        op: "generate_v2",
         name: "getAndValidateOptions"
     }, (span) => {
         console.debug(req.header('content-type'))
@@ -680,32 +705,42 @@ function validateName(name?: string): Maybe<string> {
 
 
 async function tryHandleFileUpload(req: GenerateV2Request, res: Response): Promise<void> {
-    try {
-        return await new Promise<void>((resolve, reject) => {
-            upload.single('file')(req, res, function (err) {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve();
-                }
-            })
-        });
-    } catch (e) {
-        Sentry.captureException(e);
-        if (e instanceof MulterError) {
-            throw new GeneratorError('invalid_file', `invalid file: ${ e.message }`, {httpCode: 400, error: e});
-        } else {
-            throw new GeneratorError('upload_error', `upload error: ${ e.message }`, {httpCode: 500, error: e});
+    return await Sentry.startSpan({
+        op: 'generate_v2',
+        name: 'tryHandleFileUpload'
+    }, async span => {
+        try {
+            return await new Promise<void>((resolve, reject) => {
+                upload.single('file')(req, res, function (err) {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve();
+                    }
+                })
+            });
+        } catch (e) {
+            Sentry.captureException(e);
+            if (e instanceof MulterError) {
+                throw new GeneratorError('invalid_file', `invalid file: ${ e.message }`, {httpCode: 400, error: e});
+            } else {
+                throw new GeneratorError('upload_error', `upload error: ${ e.message }`, {httpCode: 500, error: e});
+            }
         }
-    }
+    });
 }
 
 async function querySkinOrThrow(uuid: UUID): Promise<IPopulatedSkin2Document> {
-    const skin = await container.get<SkinService>(GeneratorTypes.SkinService).findForUuid(uuid);
-    if (!skin || !isPopulatedSkin2Document(skin) || !skin.data) {
-        throw new GeneratorError('skin_not_found', `Skin not found: ${ uuid }`, {httpCode: 404});
-    }
-    return skin;
+    return await Sentry.startSpan({
+        op: 'generate_v2',
+        name: 'querySkinOrThrow'
+    }, async span => {
+        const skin = await container.get<SkinService>(GeneratorTypes.SkinService).findForUuid(uuid);
+        if (!skin || !isPopulatedSkin2Document(skin) || !skin.data) {
+            throw new GeneratorError('skin_not_found', `Skin not found: ${ uuid }`, {httpCode: 404});
+        }
+        return skin;
+    });
 }
 
 interface JobWithSkin {

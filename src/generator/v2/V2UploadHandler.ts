@@ -12,6 +12,7 @@ import * as fs from "node:fs";
 import { Readable } from "stream";
 import { readFile } from "fs/promises";
 import { Log } from "../../Log";
+import * as Sentry from "@sentry/node";
 
 export class V2UploadHandler extends V2GenerateHandler {
 
@@ -22,45 +23,50 @@ export class V2UploadHandler extends V2GenerateHandler {
     }
 
     async getImageBuffer(): Promise<BufferResult> {
-        const file: Maybe<Express.Multer.File> = this.req.file;
-        if (!file) {
-            throw new GeneratorError('missing_file', "No file uploaded", {
-                httpCode: 400,
-                source: ErrorSource.CLIENT
+        return await Sentry.startSpan({
+            op: 'upload_handler',
+            name: 'getImageBuffer'
+        }, async span => {
+            const file: Maybe<Express.Multer.File> = this.req.file;
+            if (!file) {
+                throw new GeneratorError('missing_file', "No file uploaded", {
+                    httpCode: 400,
+                    source: ErrorSource.CLIENT
+                });
+            }
+
+            Log.l.debug(`${ this.req.breadcrumbC } FILE:        "${ file.filename || file.originalname }"`);
+
+            this.tempFile = await Temp.file({
+                dir: UPL_DIR
             });
-        }
 
-        Log.l.debug(`${ this.req.breadcrumbC } FILE:        "${ file.filename || file.originalname }"`);
+            if (file.buffer) {
+                await new Promise((resolve, reject) => {
+                    Readable.from(file.buffer)
+                        .pipe(new ExifTransformer()) // strip metadata
+                        .pipe(fs.createWriteStream(this.tempFile!.path))
+                        .on('finish', resolve)
+                        .on('error', reject);
+                });
+            } else if (file.path) {
+                await new Promise((resolve, reject) => {
+                    fs.createReadStream(file.path)
+                        .pipe(new ExifTransformer()) // strip metadata
+                        .pipe(fs.createWriteStream(this.tempFile!.path))
+                        .on('finish', resolve)
+                        .on('error', reject);
+                });
+            } else {
+                throw new GeneratorError('missing_file', "No file uploaded", {
+                    httpCode: 400,
+                    source: ErrorSource.CLIENT
+                });
+            }
 
-        this.tempFile = await Temp.file({
-            dir: UPL_DIR
+            const buffer = await readFile(this.tempFile.path);
+            return {buffer};
         });
-
-        if (file.buffer) {
-            await new Promise((resolve, reject) => {
-                Readable.from(file.buffer)
-                    .pipe(new ExifTransformer()) // strip metadata
-                    .pipe(fs.createWriteStream(this.tempFile!.path))
-                    .on('finish', resolve)
-                    .on('error', reject);
-            });
-        } else if (file.path) {
-            await new Promise((resolve, reject) => {
-                fs.createReadStream(file.path)
-                    .pipe(new ExifTransformer()) // strip metadata
-                    .pipe(fs.createWriteStream(this.tempFile!.path))
-                    .on('finish', resolve)
-                    .on('error', reject);
-            });
-        } else {
-            throw new GeneratorError('missing_file', "No file uploaded", {
-                httpCode: 400,
-                source: ErrorSource.CLIENT
-            });
-        }
-
-        const buffer = await readFile(this.tempFile.path);
-        return {buffer};
     }
 
     cleanupImage() {
