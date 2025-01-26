@@ -463,7 +463,7 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
                 });
             }
         } else {
-            throw new GeneratorError('invalid_content_type', `invalid content type: ${ req.header('content-type') } (expected multipart/form-data or application/json)`, {httpCode: 400});
+            throw new GeneratorError('invalid_content_type', `invalid content type: ${ req.header('content-type') } (expected multipart/form-data or application/json)`, {httpCode: 415});
         }
 
         // preliminary rate limiting
