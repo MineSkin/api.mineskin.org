@@ -194,7 +194,7 @@ export async function getAndValidateRequestApiKey(req: MineSkinRequest): Promise
         // Either a server IP or a client origin, not both
         if (key.allowedIps && key.allowedIps.length > 0) {
             const ip = getIp(req);
-            if (!ip || key.allowedIps.includes(ip.trim())) {
+            if (!ip || !key.allowedIps.includes(ip.trim())) {
                 console.log(debug(`Client ${ ip } not allowed`));
                 throw new MineSkinError("invalid_api_key", "Client not allowed", {httpCode: 403});
             }
