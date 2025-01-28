@@ -10,6 +10,7 @@ import {
     ImageHashes,
     ImageService,
     ImageValidation,
+    KNOWN_CAPE_IDS,
     MAX_IMAGE_SIZE,
     MongoGeneratorClient,
     QueueOptions,
@@ -634,7 +635,8 @@ function getAndValidateOptions(req: GenerateV2Request): GenerateOptions {
         const {
             variant,
             visibility,
-            name
+            name,
+            cape
         } = GenerateReqOptions.parse(req.body);
         //
         // variant = validateVariant(variant);
@@ -656,16 +658,26 @@ function getAndValidateOptions(req: GenerateV2Request): GenerateOptions {
         //     console.log(debug(`${ breadcrumb } Check Only:  true`));
         // }
 
+        if (cape) {
+            console.log(debug(`${ req.breadcrumbC } Cape:        ${ cape?.substring(0, 8) || '' }`));
+            Sentry.setExtra('cape', cape);
+            if (!KNOWN_CAPE_IDS.includes(cape)) {
+                throw new GeneratorError('invalid_cape', `invalid cape: ${ cape }`, {httpCode: 400});
+            }
+        }
+
         Sentry.setTags({
             // "generate_type": type,
             "generate_variant": variant,
-            "generate_visibility": visibility
+            "generate_visibility": visibility,
+            "generate_with_cape": !!cape
         });
 
         return {
             variant: variant!,
             visibility: visibility!,
-            name: name?.trim()
+            name: name?.trim(),
+            cape: cape
         };
     })
 
