@@ -445,6 +445,21 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
             Log.l.debug(`${ req.breadcrumbC } generating private`);
         }
 
+        if (options.cape) {
+            if (!req.apiKey && !req.client.hasUser()) {
+                throw new GeneratorError('unauthorized', "generating with capes requires an API key or User", {
+                    httpCode: 401,
+                    source: ErrorSource.CLIENT
+                });
+            }
+            if (!req.client.grants?.capes) {
+                throw new GeneratorError('insufficient_grants', "you are not allowed to generate skins with capes", {
+                    httpCode: 403,
+                    source: ErrorSource.CLIENT
+                });
+            }
+        }
+
         let handler: V2GenerateHandler;
 
         //TODO: support base64
