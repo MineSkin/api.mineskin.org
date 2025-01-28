@@ -458,6 +458,7 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
                     source: ErrorSource.CLIENT
                 });
             }
+            //TODO: make sure selected cape is supported and allowed
         }
 
         let handler: V2GenerateHandler;
