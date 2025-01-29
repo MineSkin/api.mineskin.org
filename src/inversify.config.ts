@@ -11,6 +11,7 @@ import {
     TYPES as GeneratorTypes
 } from "@mineskin/generator";
 import { MineSkinMetrics } from "./util/metrics";
+import { WrappedRequestExecutor } from "./WrappedRequestExecutor";
 
 const container = new Container({defaultScope: 'Singleton'});
 try{
@@ -29,5 +30,6 @@ container.load(billingModule);
 container.load(generatorModule);
 
 container.bind(GeneratorTypes.GeneratorClient).to(MongoGeneratorClient).inSingletonScope();
+container.bind(CoreTypes.RequestExecutor).to(WrappedRequestExecutor).inSingletonScope();
 
 export { container };
