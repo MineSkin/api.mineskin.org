@@ -450,8 +450,14 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
         //TODO: support base64
         if (req.is('multipart/form-data')) {
             handler = new V2UploadHandler(req, res, options);
-        } else if (req.is('application/json')) {
+        } else if (req.is('application/json') || req.is('application/x-www-form-urlencoded')) {
             console.debug('application/json') //TODO: remove
+            if (!req.is('application/json')) {
+                req.warnings.push({
+                    code: 'invalid_content_type',
+                    message: `invalid content type: ${ req.header('content-type') } (expected application/json)`,
+                });
+            }
             if ('url' in req.body) {
                 handler = new V2UrlHandler(req, res, options);
             } else if ('user' in req.body) {
