@@ -67,7 +67,6 @@ export class UrlHandler {
                     return res;
                 });
             } catch (e) {
-                Log.l.error(e);
                 Sentry.captureException(e, {
                     extra: {
                         url: urlStr,
