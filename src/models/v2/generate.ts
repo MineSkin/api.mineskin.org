@@ -104,7 +104,7 @@ export async function v2GenerateAndWait(req: GenerateV2Request, res: Response<V2
         }
         try {
             const timeoutSeconds = GenerateTimeout.parse(req.query.timeout);
-            const result = await getClient().waitForJob(job.id, timeoutSeconds * 1000) as GenerateResult; //TODO: configure timeout
+            const result = await getClient().waitForJob(job.id, timeoutSeconds * 1000) as GenerateResult;
             Log.l.debug(JSON.stringify(result, null, 2));
             await sleep(200);
             req.links.skin = `/v2/skins/${ result.skin }`;
@@ -119,7 +119,7 @@ export async function v2GenerateAndWait(req: GenerateV2Request, res: Response<V2
             if (e instanceof MineSkinError) {
                 throw e;
             }
-            if (e.message.includes('timed out before finishing') || e.message.includes('Timeout')) { // this kinda sucks
+            if (e.message === 'mineskin:timeout') {
                 Log.l.warn(e);
                 throw new GeneratorError('generator_timeout', "generator request timed out", {
                     httpCode: 500,
