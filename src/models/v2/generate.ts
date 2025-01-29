@@ -470,7 +470,7 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
         // preliminary rate limiting
         if (req.client.useDelayRateLimit()) {
             req.nextRequest = await trafficService.updateLastAndNextRequest(req.clientInfo, 200);
-            Log.l.debug(`next request at ${ req.nextRequest }`);
+            Log.l.debug(`${ req.breadcrumb } next request at ${ req.nextRequest }`);
         }
         if (req.client.usePerMinuteRateLimit()) {
             req.requestsThisMinute = (req.requestsThisMinute || 0) + 1;
@@ -599,6 +599,7 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
             priority: req.client.getPriority()
         };
         const job = await getClient().submitRequest(request, queueOptions);
+        Log.l.info(`${ req.breadcrumb } Submitted Job ${ job.id } (priority: ${ job.priority })`);
         return {job};
     });
 }
