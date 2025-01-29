@@ -121,6 +121,7 @@ export async function v2GenerateAndWait(req: GenerateV2Request, res: Response<V2
             }
             if (e.message === 'mineskin:timeout') {
                 Log.l.warn(e);
+                Log.l.warn(`${ req.breadcrumb } Job ${ job.id } timed out`);
                 throw new GeneratorError('generator_timeout', "generator request timed out", {
                     httpCode: 500,
                     error: e,
