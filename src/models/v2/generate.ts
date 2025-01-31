@@ -3,6 +3,7 @@ import * as Sentry from "@sentry/node";
 import multer, { MulterError } from "multer";
 import { Maybe, sleep } from "../../util";
 import {
+    CAPE_TO_HASH,
     DuplicateChecker,
     GeneratorError,
     GenError,
@@ -553,7 +554,9 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
             // duplicate check V2, same as in generator
             //  just to avoid unnecessary submissions to generator
             const duplicateChecker = container.get<DuplicateChecker>(GeneratorTypes.DuplicateChecker);
-            const duplicateV2Data = await duplicateChecker.findDuplicateDataFromImageHash(hashes, options.variant, GenerateType.UPLOAD, req.breadcrumb || "????");
+            const duplicateV2Data = await duplicateChecker.findDuplicateDataFromImageHashWithCape(hashes, options.cape ? {
+                minecraft: CAPE_TO_HASH[options.cape]
+            } : null, options.variant, GenerateType.UPLOAD, req.breadcrumb || "????");
             if (duplicateV2Data.existing) {
                 // found existing data
                 const skinForDuplicateData = await duplicateChecker.findV2ForData(duplicateV2Data.existing);
