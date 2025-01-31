@@ -105,7 +105,7 @@ export async function v2GenerateAndWait(req: GenerateV2Request, res: Response<V2
         }
         try {
             const timeoutSeconds = GenerateTimeout.parse(req.query.timeout);
-            const result = await getClient().waitForJob(job.id, timeoutSeconds * 1000) as GenerateResult; //TODO: configure timeout
+            const result = await getClient().waitForJob(job.id, timeoutSeconds * 1000) as GenerateResult;
             Log.l.debug(JSON.stringify(result, null, 2));
             await sleep(200);
             req.links.skin = `/v2/skins/${ result.skin }`;
@@ -120,8 +120,9 @@ export async function v2GenerateAndWait(req: GenerateV2Request, res: Response<V2
             if (e instanceof MineSkinError) {
                 throw e;
             }
-            if (e.message.includes('timed out before finishing') || e.message.includes('Timeout')) { // this kinda sucks
+            if (e.message === 'mineskin:timeout') {
                 Log.l.warn(e);
+                Log.l.warn(`${ req.breadcrumb } Job ${ job.id } timed out`);
                 throw new GeneratorError('generator_timeout', "generator request timed out", {
                     httpCode: 500,
                     error: e,
@@ -466,8 +467,14 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
         //TODO: support base64
         if (req.is('multipart/form-data')) {
             handler = new V2UploadHandler(req, res, options);
-        } else if (req.is('application/json')) {
+        } else if (req.is('application/json') || req.is('application/x-www-form-urlencoded')) {
             console.debug('application/json') //TODO: remove
+            if (!req.is('application/json')) {
+                req.warnings.push({
+                    code: 'invalid_content_type',
+                    message: `invalid content type: ${ req.header('content-type') } (expected application/json)`,
+                });
+            }
             if ('url' in req.body) {
                 handler = new V2UrlHandler(req, res, options);
             } else if ('user' in req.body) {
@@ -486,7 +493,7 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
         // preliminary rate limiting
         if (req.client.useDelayRateLimit()) {
             req.nextRequest = await trafficService.updateLastAndNextRequest(req.clientInfo, 200);
-            Log.l.debug(`next request at ${ req.nextRequest }`);
+            Log.l.debug(`${ req.breadcrumb } next request at ${ req.nextRequest }`);
         }
         if (req.client.usePerMinuteRateLimit()) {
             req.requestsThisMinute = (req.requestsThisMinute || 0) + 1;
@@ -615,6 +622,7 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
             priority: req.client.getPriority()
         };
         const job = await getClient().submitRequest(request, queueOptions);
+        Log.l.info(`${ req.breadcrumb } Submitted Job ${ job.id } (priority: ${ job.priority })`);
         return {job};
     });
 }

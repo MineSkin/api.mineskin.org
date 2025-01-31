@@ -254,9 +254,38 @@ export async function v2GetSkin(req: MineSkinV2Request, res: Response<V2SkinResp
 
 export async function v2GetSkinTextureRedirect(req: MineSkinV2Request, res: Response<V2SkinResponse>): Promise<void> {
     const uuidOrShort = UUIDOrShortId.parse(req.params.uuid);
-    const skin = validateRequestedSkin(req, await findV2SkinForId(req, uuidOrShort));
 
-    res.redirect(301, `https://mineskin.org/textures/${ skin.data?.hash?.skin?.minecraft }`)
+    let skin = await findV2SkinForId(req, uuidOrShort);
+
+    const flags = container.get<IFlagProvider>(CoreTypes.FlagProvider);
+    try {
+        if (!skin && uuidOrShort.length !== 8 && await flags.isEnabled('migrations.api.get')) {
+            const v1Doc = await Caching.getSkinByUuid(uuidOrShort);
+            if (v1Doc) {
+                const migrations = container.get<MigrationHandler>(GeneratorTypes.MigrationHandler);
+                const migratedSkin = await migrations.migrateV1ToV2(v1Doc, "skin-get-texture");
+                migratedSkin.data = await SkinData.findById(migratedSkin.data) || migratedSkin.data;
+                skin = validateRequestedSkin(req, migratedSkin);
+            }
+        }
+    } catch (e) {
+        Sentry.captureException(e);
+        Log.l.error(e);
+    }
+
+    skin = validateRequestedSkin(req, skin);
+
+    Skin2.incRequests(skin.uuid).catch(e => Sentry.captureException(e));
+    try {
+        const metrics = container.get<IMetricsProvider>(CoreTypes.MetricsProvider);
+        metrics.getMetric('interactions')
+            .tag("interaction", "request")
+            .inc();
+    } catch (e) {
+        Sentry.captureException(e);
+    }
+
+    res.redirect(301, `https://mineskin.org/textures/${ (skin as IPopulatedSkin2Document).data?.hash?.skin?.minecraft }`)
 }
 
 export async function v2GetSimilarSkins(req: MineSkinV2Request, res: Response<V2SkinListResponseBody>): Promise<V2SkinListResponseBody> {
