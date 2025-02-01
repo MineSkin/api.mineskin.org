@@ -20,7 +20,7 @@ import {
     TrafficService,
     TYPES as GeneratorTypes
 } from "@mineskin/generator";
-import { BillingService, TYPES as BillingTypes } from "@mineskin/billing";
+import { BillingService, SkinUsageOptions, TYPES as BillingTypes } from "@mineskin/billing";
 import {
     ErrorSource,
     GenerateOptions,
@@ -612,7 +612,10 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
         }
 
         const billingService = container.get<BillingService>(BillingTypes.BillingService);
-        await billingService.trackGenerateRequest(req.clientInfo);
+        const usageOptions: SkinUsageOptions = {
+            cape: !!options.cape
+        };
+        await billingService.trackGenerateRequest(req.clientInfo, usageOptions);
 
         const request: GenerateRequest = {
             breadcrumb: req.breadcrumb || "????",
