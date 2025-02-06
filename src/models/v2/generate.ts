@@ -460,7 +460,6 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
                     source: ErrorSource.CLIENT
                 });
             }
-            //TODO: make sure selected cape is supported and allowed
         }
 
         let handler: V2GenerateHandler;
@@ -469,7 +468,6 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
         if (req.is('multipart/form-data')) {
             handler = new V2UploadHandler(req, res, options);
         } else if (req.is('application/json') || req.is('application/x-www-form-urlencoded')) {
-            console.debug('application/json') //TODO: remove
             if (!req.is('application/json')) {
                 req.warnings.push({
                     code: 'invalid_content_type',
