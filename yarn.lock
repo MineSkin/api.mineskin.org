@@ -1452,7 +1452,7 @@ __metadata:
 
 "@mineskin/database@git+ssh://git@github.com/MineSkin/mineskin-database.git":
   version: 1.0.0
-  resolution: "@mineskin/database@git+ssh://git@github.com/MineSkin/mineskin-database.git#commit=62b53c590e60ca88bce66e2986a09a0f638674a5"
+  resolution: "@mineskin/database@git+ssh://git@github.com/MineSkin/mineskin-database.git#commit=970b4972470222955ebca02d42130a937e7f456b"
   dependencies:
     "@mineskin/types": "git+ssh://git@github.com/MineSkin/mineskin-types.git"
     "@sentry/cli": "npm:^2.32.2"
@@ -1461,13 +1461,13 @@ __metadata:
     dotenv: "npm:^16.4.5"
     mongoose: "npm:^8.5.3"
     uuid: "npm:^10.0.0"
-  checksum: 10c0/7a63e95e8f98a055597ae814d2d0cb1a3404e4b8c3457e5c77f3043368afb103a9d5e1c65d7332eb7d5929ad5344147cb642e62e7ac94539ab0930bbd3b23191
+  checksum: 10c0/20ed82afc95cd2c5c9ad8e613a68442161dba83a1630460c62f1c3758d731e110504f6f10c0d61dc4975bf5bd38dc74066c425a5e53c5a882544fc6eb11c39bf
   languageName: node
   linkType: hard
 
 "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git":
   version: 0.0.0
-  resolution: "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git#commit=3abcb257d3c11c5208948ec91e814f3e9d19026d"
+  resolution: "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git#commit=9c0877467c1659566ffaf9a809477d3db871ecdf"
   dependencies:
     "@hoangducnhuan/redlock": "npm:^6.0.0"
     "@inventivetalent/imghash": "npm:^1.1.1"
@@ -1506,7 +1506,7 @@ __metadata:
     winston: "npm:^3.14.2"
     winston-daily-rotate-file: "npm:^5.0.0"
     winston-transport-sentry-node: "npm:^3.0.0"
-  checksum: 10c0/78e7e63a62effae13121d743778948ecd1ed12f195fe81f21f18d4610c1f88f8dc38246688ae38f8eb847ac80b279fc3291cf5b66cb5bc3f9b9b0fe3085d5964
+  checksum: 10c0/24f5a589830564034132c757e19c4dd33e8a40716e850e4721e879166aa32e0c4df99637d9fcf280891f9aa76a0c9b65e3bd9bbf85d081bf0df26dced2333aca
   languageName: node
   linkType: hard
 
