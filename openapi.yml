@@ -346,7 +346,6 @@ paths:
                         type: integer
                   lastRequest:
                     type: object
-                    required: false,
                     properties:
                       time:
                         type: integer
