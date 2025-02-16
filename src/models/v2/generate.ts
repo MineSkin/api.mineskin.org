@@ -3,6 +3,7 @@ import * as Sentry from "@sentry/node";
 import multer, { MulterError } from "multer";
 import { Maybe, sleep } from "../../util";
 import {
+    CAPE_TO_HASH,
     DuplicateChecker,
     GeneratorError,
     GenError,
@@ -10,6 +11,7 @@ import {
     ImageHashes,
     ImageService,
     ImageValidation,
+    KNOWN_CAPE_IDS,
     MAX_IMAGE_SIZE,
     MongoGeneratorClient,
     QueueOptions,
@@ -18,7 +20,7 @@ import {
     TrafficService,
     TYPES as GeneratorTypes
 } from "@mineskin/generator";
-import { BillingService, TYPES as BillingTypes } from "@mineskin/billing";
+import { BillingService, SkinUsageOptions, TYPES as BillingTypes } from "@mineskin/billing";
 import {
     ErrorSource,
     GenerateOptions,
@@ -445,13 +447,27 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
             Log.l.debug(`${ req.breadcrumbC } generating private`);
         }
 
+        if (options.cape) {
+            if (!req.apiKey && !req.client.hasUser()) {
+                throw new GeneratorError('unauthorized', "generating with capes requires an API key or User", {
+                    httpCode: 401,
+                    source: ErrorSource.CLIENT
+                });
+            }
+            if (!req.client.grants?.capes) {
+                throw new GeneratorError('insufficient_grants', "you are not allowed to generate skins with capes", {
+                    httpCode: 403,
+                    source: ErrorSource.CLIENT
+                });
+            }
+        }
+
         let handler: V2GenerateHandler;
 
         //TODO: support base64
         if (req.is('multipart/form-data')) {
             handler = new V2UploadHandler(req, res, options);
         } else if (req.is('application/json') || req.is('application/x-www-form-urlencoded')) {
-            console.debug('application/json') //TODO: remove
             if (!req.is('application/json')) {
                 req.warnings.push({
                     code: 'invalid_content_type',
@@ -536,7 +552,9 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
             // duplicate check V2, same as in generator
             //  just to avoid unnecessary submissions to generator
             const duplicateChecker = container.get<DuplicateChecker>(GeneratorTypes.DuplicateChecker);
-            const duplicateV2Data = await duplicateChecker.findDuplicateDataFromImageHash(hashes, options.variant, GenerateType.UPLOAD, req.breadcrumb || "????");
+            const duplicateV2Data = await duplicateChecker.findDuplicateDataFromImageHashWithCape(hashes, options.cape ? {
+                minecraft: CAPE_TO_HASH[options.cape]
+            } : null, options.variant, GenerateType.UPLOAD, req.breadcrumb || "????");
             if (duplicateV2Data.existing) {
                 // found existing data
                 const skinForDuplicateData = await duplicateChecker.findV2ForData(duplicateV2Data.existing);
@@ -592,7 +610,10 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
         }
 
         const billingService = container.get<BillingService>(BillingTypes.BillingService);
-        await billingService.trackGenerateRequest(req.clientInfo);
+        const usageOptions: SkinUsageOptions = {
+            cape: !!options.cape
+        };
+        await billingService.trackGenerateRequest(req.clientInfo, usageOptions);
 
         const request: GenerateRequest = {
             breadcrumb: req.breadcrumb || "????",
@@ -642,7 +663,8 @@ function getAndValidateOptions(req: GenerateV2Request): GenerateOptions {
         const {
             variant,
             visibility,
-            name
+            name,
+            cape
         } = GenerateReqOptions.parse(req.body);
         //
         // variant = validateVariant(variant);
@@ -664,16 +686,26 @@ function getAndValidateOptions(req: GenerateV2Request): GenerateOptions {
         //     console.log(debug(`${ breadcrumb } Check Only:  true`));
         // }
 
+        if (cape) {
+            console.log(debug(`${ req.breadcrumbC } Cape:        ${ cape?.substring(0, 8) || '' }`));
+            Sentry.setExtra('cape', cape);
+            if (!KNOWN_CAPE_IDS.includes(cape)) {
+                throw new GeneratorError('invalid_cape', `invalid cape: ${ cape }`, {httpCode: 400});
+            }
+        }
+
         Sentry.setTags({
             // "generate_type": type,
             "generate_variant": variant,
-            "generate_visibility": visibility
+            "generate_visibility": visibility,
+            "generate_with_cape": !!cape
         });
 
         return {
             variant: variant!,
             visibility: visibility!,
-            name: name?.trim()
+            name: name?.trim(),
+            cape: cape
         };
     })
 

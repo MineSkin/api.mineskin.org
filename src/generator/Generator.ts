@@ -600,7 +600,7 @@ export class Generator {
                 statsHandler.trackClientSkinGenerated({
                     key: client.apiKeyId,
                     agent: client.userAgent.ua
-                } as ClientInfoV2, true).catch(e => {
+                } as ClientInfoV2, true, false).catch(e => {
                     Sentry.captureException(e);
                 })
             } catch (e) {
@@ -850,7 +850,7 @@ export class Generator {
                     statsHandler.trackClientSkinGenerated({
                         key: client.apiKeyId,
                         agent: client.userAgent.ua
-                    } as ClientInfoV2, false).catch(e => {
+                    } as ClientInfoV2, false, false).catch(e => {
                         Sentry.captureException(e);
                     })
                 } catch (e) {
