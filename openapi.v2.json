@@ -395,7 +395,7 @@
           "cape": {
             "type": "string",
             "format": "uuid",
-            "description": "Cape UUID to apply to this skin\n\nCurrently supported:\n- 15th Anniversary `ef9e95b6-48a3-4fd7-93d4-7e7d9448d2f1`\n- Migrator `5af20372-79e0-4e1f-80f8-6bd8e3135995`\n- Vanilla `7412868d-7be3-429f-b629-ed5074d2455c`"
+            "description": "[EXPERIMENTAL]\n Cape UUID to apply to this skin\n\nCurrently supported:\n- 15th Anniversary `ef9e95b6-48a3-4fd7-93d4-7e7d9448d2f1`\n- Migrator `5af20372-79e0-4e1f-80f8-6bd8e3135995`\n- Vanilla `7412868d-7be3-429f-b629-ed5074d2455c`"
           }
         },
         "example": {
@@ -1448,7 +1448,7 @@
               "application/json": {
                 "schema": {
                   "required": [
-                    "skins"
+                    "capes"
                   ],
                   "properties": {
                     "capes": {
