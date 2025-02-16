@@ -11,7 +11,7 @@
     },
     "license": {
       "name": "MIT",
-      "url": "https://github.com/MineSkin/api.mineskin.org/blob/main/LICENSE"
+      "url": "https://github.com/MineSkin/api.mineskin.org/blob/master/LICENSE"
     },
     "termsOfService": "https://legal.inventivetalent.org/terms/mineskin"
   },
@@ -391,6 +391,11 @@
           },
           "visibility": {
             "$ref": "#/components/schemas/SkinVisibility"
+          },
+          "cape": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Cape UUID to apply to this skin\n\nCurrently supported:\n- 15th Anniversary `ef9e95b6-48a3-4fd7-93d4-7e7d9448d2f1`\n- Migrator `5af20372-79e0-4e1f-80f8-6bd8e3135995`\n- Vanilla `7412868d-7be3-429f-b629-ed5074d2455c`"
           }
         },
         "example": {
@@ -491,6 +496,34 @@
             "type": "string",
             "description": "If the job is finished, this will return the result of the job (e.g. the skin UUID)"
           }
+        }
+      },
+      "KnownCape": {
+        "type": "object",
+        "required": [
+          "uuid",
+          "alias",
+          "url"
+        ],
+        "properties": {
+          "uuid": {
+            "type": "string"
+          },
+          "alias": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "supported": {
+            "type": "boolean"
+          }
+        },
+        "example": {
+          "uuid": "ef9e95b6-48a3-4fd7-93d4-7e7d9448d2f1",
+          "alias": "15th Anniversary",
+          "url": "http://textures.minecraft.net/texture/cd9d82ab17fd92022dbd4a86cde4c382a7540e117fae7b9a2853658505a80625",
+          "supported": true
         }
       },
       "LimitInfo": {
@@ -1384,6 +1417,45 @@
                     "search": {
                       "description": "search query used for this request",
                       "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/capes": {
+      "get": {
+        "summary": "Get a list of known capes",
+        "description": "Get a list of known capes",
+        "tags": [
+          "capes"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/userAgent"
+          },
+          {
+            "$ref": "#/components/parameters/apiKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cape List",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "required": [
+                    "skins"
+                  ],
+                  "properties": {
+                    "capes": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/KnownCape"
+                      }
                     }
                   }
                 }
