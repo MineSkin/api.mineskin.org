@@ -311,7 +311,7 @@ export async function v2GetSimilarSkins(req: MineSkinV2Request, res: Response<V2
             method: 'POST',
             data: {
                 description: classification.description,
-                topK: 5
+                topK: 8
             }
         });
         if (response.status !== 200) {
