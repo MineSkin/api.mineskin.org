@@ -25,6 +25,8 @@ import { stripUuid } from "../../util";
 import { V2MiscResponseBody } from "../../typings/v2/V2MiscResponseBody";
 import { Classification } from "@mineskin/database/dist/schemas/Classification";
 import { Requests } from "../../generator/Requests";
+import { AsyncLoadingCache, Caches } from "@inventivetalent/loading-cache";
+import { Time } from "@inventivetalent/time";
 
 type QueryCustomizer = (args: {
     query: FilterQuery<ISkin2Document>,
@@ -288,6 +290,11 @@ export async function v2GetSkinTextureRedirect(req: MineSkinV2Request, res: Resp
     res.redirect(301, `https://mineskin.org/textures/${ (skin as IPopulatedSkin2Document).data?.hash?.skin?.minecraft }`)
 }
 
+const similarCache: AsyncLoadingCache<string, string[]> = Caches.builder()
+    .expireAfterAccess(Time.seconds(10))
+    .expirationInterval(Time.seconds(5))
+    .buildAsync();
+
 export async function v2GetSimilarSkins(req: MineSkinV2Request, res: Response<V2SkinListResponseBody>): Promise<V2SkinListResponseBody> {
     const uuidOrShort = UUIDOrShortId.parse(req.params.uuid);
     const skin = validateRequestedSkin(req, await findV2SkinForId(req, uuidOrShort));
@@ -298,22 +305,25 @@ export async function v2GetSimilarSkins(req: MineSkinV2Request, res: Response<V2
     if (!classification || !classification.description) {
         throw new MineSkinError('skin_not_found', 'Skin not found', {httpCode: 404});
     }
-    //TODO: cache this
-    const response = await Requests.genericRequest({
-        url: process.env.EMBEDDINGS_ENDPOINT + '/query',
-        method: 'POST',
-        data: {
-            description: classification.description,
-            topK: 5
+    const matchedTextures = await similarCache.get(classification.description, async () => {
+        const response = await Requests.genericRequest({
+            url: process.env.EMBEDDINGS_ENDPOINT + '/query',
+            method: 'POST',
+            data: {
+                description: classification.description,
+                topK: 5
+            }
+        });
+        if (response.status !== 200) {
+            throw new MineSkinError('internal_error', 'Internal error', {httpCode: 500});
         }
-    });
-    if (response.status !== 200) {
-        throw new MineSkinError('internal_error', 'Internal error', {httpCode: 500});
-    }
-    const matchedTextures = response.data.matches?.matches?.map((match: any) => match.id)?.filter((id: string) => id !== skin.data?.hash?.skin?.minecraft);
-    if (!matchedTextures) {
-        throw new MineSkinError('internal_error', 'Internal error', {httpCode: 500});
-    }
+        const matchedTextures = response.data.matches?.matches?.map((match: any) => match.id)?.filter((id: string) => id !== skin.data?.hash?.skin?.minecraft);
+        if (!matchedTextures) {
+            throw new MineSkinError('internal_error', 'Internal error', {httpCode: 500});
+        }
+        return matchedTextures;
+    })
+
     const datas = await SkinData.find({'hash.skin.minecraft': {$in: matchedTextures}});
     const dataIds = datas.map(data => data._id);
     const skins = await Skin2.find({
