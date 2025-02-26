@@ -326,11 +326,15 @@ export async function v2GetSimilarSkins(req: MineSkinV2Request, res: Response<V2
 
     const datas = await SkinData.find({'hash.skin.minecraft': {$in: matchedTextures}});
     const dataIds = datas.map(data => data._id);
-    const skins = await Skin2.find({
+    let skins = await Skin2.find({
         data: {$in: dataIds},
         'meta.visibility': SkinVisibility2.PUBLIC
     }).select('uuid meta data updatedAt') //TODO
         .populate('data', 'hash.skin.minecraft');
+    // shuffle
+    skins = skins.sort(() => Math.random() - 0.5);
+    // only keep one skin per texture
+    skins = skins.filter((s, i, a) => a.findIndex(ss => (ss as IPopulatedSkin2Document).data?.hash?.skin?.minecraft === (s as IPopulatedSkin2Document).data?.hash?.skin?.minecraft) === i);
     return {
         success: true,
         skins: skins.map(skinToSimpleJson),
