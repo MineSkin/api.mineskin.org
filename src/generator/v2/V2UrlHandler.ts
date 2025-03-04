@@ -1,6 +1,13 @@
 import { BufferResult, V2GenerateHandler } from "./V2GenerateHandler";
 import { Response } from "express";
-import { ALLOWED_IMAGE_TYPES, DuplicateChecker, GeneratorError, GenError, MAX_IMAGE_SIZE } from "@mineskin/generator";
+import {
+    ALLOWED_IMAGE_TYPES,
+    DuplicateChecker,
+    GeneratorError,
+    GenError,
+    MAX_IMAGE_SIZE,
+    TYPES as GeneratorTypes
+} from "@mineskin/generator";
 import { ErrorSource, GenerateOptions, GenerateType, UUID } from "@mineskin/types";
 import { readFile } from "fs/promises";
 import { GenerateV2Request } from "../../routes/v2/types";
@@ -13,7 +20,6 @@ import { GenerateReqUrl } from "../../validation/generate";
 import { Log } from "../../Log";
 import { UrlChecks } from "./UrlChecks";
 import { container } from "../../inversify.config";
-import { TYPES as GeneratorTypes } from "@mineskin/generator/dist/ditypes";
 import * as Sentry from "@sentry/node";
 
 export class V2UrlHandler extends V2GenerateHandler {
