@@ -2,9 +2,10 @@ import { MineSkinV2Request } from "../routes/v2/types";
 import { NextFunction, Response } from "express";
 import { getIp, getVia, simplifyUserAgent } from "../util";
 import * as Sentry from "@sentry/node";
-import { RequestClient } from "@mineskin/generator";
+import { GrantsService, RequestClient, TYPES as GeneratorTypes } from "@mineskin/generator";
 import { Log } from "../Log";
 import process from "node:process";
+import { container } from "../inversify.config";
 
 export const clientMiddleware = async (req: MineSkinV2Request, res: Response, next: NextFunction) => {
     initRequestClient(req, res);
@@ -59,6 +60,11 @@ export const finalizeRequestClient = async (req: MineSkinV2Request, res: Respons
         op: 'middleware',
         name: 'finalizeRequestClient'
     }, async span => {
+        try {
+            await req.client.applyGrants(container.get<GrantsService>(GeneratorTypes.GrantsService));
+        } catch (e) {
+            Sentry.captureException(e);
+        }
         req.clientInfo = await req.client.asClientInfo(req);
         Sentry.setUser({
             id: req.clientInfo.user,
