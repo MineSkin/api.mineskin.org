@@ -407,6 +407,7 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
             throw new GeneratorError('unauthorized', "API key or user required", {httpCode: 401});
         }*/
 
+        let pendingJobs = 0;
         if (req.client.hasUser()) {
             const pendingByUser = await getClient().getPendingCountByUser(req.client.userId!)
             const limit = req.client.getQueueLimit();
@@ -416,6 +417,7 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
                     source: ErrorSource.CLIENT
                 });
             }
+            pendingJobs = pendingByUser;
         } else {
             const pendingByIp = await getClient().getPendingCountByIp(req.client.ip!)
             if (pendingByIp > 4) {
@@ -425,6 +427,7 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
                 });
             }
             await sleep(200 * Math.random());
+            pendingJobs = pendingByIp;
         }
 
         if (!req.client.hasCredits()) {
@@ -615,6 +618,19 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
         };
         await billingService.trackGenerateRequest(req.clientInfo, usageOptions);
 
+        // schedule job to match the per-minute rate limit
+        let notBefore: Date | undefined = undefined
+        if (
+            req.client.usePerMinuteRateLimit() &&
+            pendingJobs > 0 // allow instant if no pending jobs
+        ) {
+            const timeSlotSize = 60 / req.client.getPerMinuteRateLimit();
+            const nowSeconds = Math.floor(Date.now() / 1000);
+            let nextSlotSeconds = Math.ceil(nowSeconds / timeSlotSize) * timeSlotSize;
+            nextSlotSeconds *= pendingJobs; // multiply to adjust for pending jobs
+            notBefore = new Date(nextSlotSeconds * 1000);
+        }
+
         const request: GenerateRequest = {
             breadcrumb: req.breadcrumb || "????",
             type: handler.type,
@@ -623,10 +639,11 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
             clientInfo: req.clientInfo
         }
         const queueOptions: QueueOptions = {
-            priority: req.client.getPriority()
+            priority: req.client.getPriority(),
+            notBefore: notBefore
         };
         const job = await getClient().submitRequest(request, queueOptions);
-        Log.l.info(`${ req.breadcrumb } Submitted Job ${ job.id } (priority: ${ job.priority })`);
+        Log.l.info(`${ req.breadcrumb } Submitted Job ${ job.id } (priority: ${ job.priority }, notBefore: ${ notBefore })`);
         return {job};
     });
 }
