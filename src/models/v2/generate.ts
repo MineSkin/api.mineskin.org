@@ -408,6 +408,7 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
         }*/
 
         let pendingJobs = 0;
+        let lastJob: IQueueDocument | undefined;
         if (req.client.hasUser()) {
             const pendingByUser = await getClient().getPendingCountByUser(req.client.userId!)
             const limit = req.client.getQueueLimit();
@@ -418,6 +419,7 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
                 });
             }
             pendingJobs = pendingByUser;
+            lastJob = await getClient().getLastJobSubmittedByUser(req.client.userId!);
         } else {
             const pendingByIp = await getClient().getPendingCountByIp(req.client.ip!)
             if (pendingByIp > 4) {
@@ -428,6 +430,7 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
             }
             await sleep(200 * Math.random());
             pendingJobs = pendingByIp;
+            lastJob = await getClient().getLastJobSubmittedByUser(req.client.ip!);
         }
 
         if (!req.client.hasCredits()) {
@@ -619,16 +622,20 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
         await billingService.trackGenerateRequest(req.clientInfo, usageOptions);
 
         // schedule job to match the per-minute rate limit
+        let lastJobTime = lastJob?.createdAt?.getTime() || 0;
         let notBefore: Date | undefined = undefined
         if (
             req.client.usePerMinuteRateLimit() &&
-            pendingJobs > 0 // allow instant if no pending jobs
+            (
+                pendingJobs > 0 || // allow instant if no pending jobs
+                Date.now() - lastJobTime < 60000 // check anyway if last job was less than a minute ago
+            )
         ) {
             const timeSlotSize = 60 / req.client.getPerMinuteRateLimit();
-            const nowSeconds = Math.floor(Date.now() / 1000);
-            let nextSlotSeconds = Math.ceil(nowSeconds / timeSlotSize) * timeSlotSize;
-            if (nextSlotSeconds - nowSeconds > 0) {
-                nextSlotSeconds = nowSeconds + (nextSlotSeconds - nowSeconds) * pendingJobs; // multiply to adjust for pending jobs
+            const baseSeconds = Math.floor((lastJobTime || Date.now()) / 1000);
+            let nextSlotSeconds = Math.ceil(baseSeconds / timeSlotSize) * timeSlotSize;
+            if (nextSlotSeconds - baseSeconds > 0) {
+                nextSlotSeconds = baseSeconds + (nextSlotSeconds - baseSeconds) * pendingJobs; // multiply to adjust for pending jobs
             }
             notBefore = new Date(nextSlotSeconds * 1000);
         }
