@@ -45,11 +45,13 @@ export const globalPerMinuteRateLimitMiddleware = async (req: GenerateV2Request,
 
     const trafficService = container.get<TrafficService>(GeneratorTypes.TrafficService);
     if (req.client.usePerMinuteRateLimit()) {
+        const flags = container.get<IFlagProvider>(CoreTypes.FlagProvider);
+        const block = await flags.isEnabled('generator.per_minute.block');
         req.requestsThisMinute = await trafficService.getRequestCounter(req.clientInfo);
         req.maxPerMinute = req.client.getPerMinuteRateLimit();
         res.header('X-RateLimit-Limit', `${ req.maxPerMinute }`);
         res.header('X-RateLimit-Remaining', `${ req.maxPerMinute - req.requestsThisMinute }`);
-        if (req.requestsThisMinute > req.maxPerMinute) {
+        if (block && req.requestsThisMinute > req.maxPerMinute) {
             Log.l.warn(`${ req.client.apiKeyRef }/${ req.client.userAgent } rate limit exceeded, ${ req.requestsThisMinute } > ${ req.maxPerMinute }`);
             throw new GeneratorError('rate_limit', `rate limit exceeded, ${ req.requestsThisMinute } > ${ req.maxPerMinute }`, {httpCode: 429});
         }
@@ -106,11 +108,13 @@ export const verifyRateLimit = async (req: GenerateV2Request, res: Response, wit
     }
 
     if (req.client.usePerMinuteRateLimit()) {
+        const flags = container.get<IFlagProvider>(CoreTypes.FlagProvider);
+        const block = await flags.isEnabled('generator.per_minute.block');
         req.requestsThisMinute = await trafficService.getRequestCounter(req.clientInfo);
         req.maxPerMinute = req.client.getPerMinuteRateLimit();
         res.header('X-RateLimit-Limit', `${ req.maxPerMinute }`);
         res.header('X-RateLimit-Remaining', `${ req.maxPerMinute - req.requestsThisMinute - 1 }`);
-        if (req.requestsThisMinute >= req.maxPerMinute) {
+        if (block && req.requestsThisMinute >= req.maxPerMinute) {
             Log.l.warn(`${ req.client.apiKeyRef }/${ req.client.userAgent } rate limit exceeded, ${ req.requestsThisMinute } > ${ req.maxPerMinute }`);
             throw new GeneratorError('rate_limit', `rate limit exceeded, ${ req.requestsThisMinute } > ${ req.maxPerMinute }`, {httpCode: 429});
         }
