@@ -409,29 +409,34 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
 
         let pendingJobs = 0;
         let lastJob: IQueueDocument | undefined;
-        if (req.client.hasUser()) {
-            const pendingByUser = await getClient().getPendingCountByUser(req.client.userId!)
-            const limit = req.client.getQueueLimit();
-            if (pendingByUser > limit) {
-                throw new GeneratorError('job_limit', "You have too many jobs in the queue", {
-                    httpCode: 429,
-                    source: ErrorSource.CLIENT
-                });
+        await Sentry.startSpan({
+            op: 'generate_v2',
+            name: 'checkPendingJobs'
+        }, async span => {
+            if (req.client.hasUser()) {
+                const pendingByUser = await getClient().getPendingCountByUser(req.client.userId!)
+                const limit = req.client.getQueueLimit();
+                if (pendingByUser > limit) {
+                    throw new GeneratorError('job_limit', "You have too many jobs in the queue", {
+                        httpCode: 429,
+                        source: ErrorSource.CLIENT
+                    });
+                }
+                pendingJobs = pendingByUser;
+                lastJob = await getClient().getLastJobSubmittedByUser(req.client.userId!);
+            } else {
+                const pendingByIp = await getClient().getPendingCountByIp(req.client.ip!)
+                if (pendingByIp > 4) {
+                    throw new GeneratorError('job_limit', "You have too many jobs in the queue", {
+                        httpCode: 429,
+                        source: ErrorSource.CLIENT
+                    });
+                }
+                await sleep(200 * Math.random());
+                pendingJobs = pendingByIp;
+                lastJob = await getClient().getLastJobSubmittedByUser(req.client.ip!);
             }
-            pendingJobs = pendingByUser;
-            lastJob = await getClient().getLastJobSubmittedByUser(req.client.userId!);
-        } else {
-            const pendingByIp = await getClient().getPendingCountByIp(req.client.ip!)
-            if (pendingByIp > 4) {
-                throw new GeneratorError('job_limit', "You have too many jobs in the queue", {
-                    httpCode: 429,
-                    source: ErrorSource.CLIENT
-                });
-            }
-            await sleep(200 * Math.random());
-            pendingJobs = pendingByIp;
-            lastJob = await getClient().getLastJobSubmittedByUser(req.client.ip!);
-        }
+        });
 
         if (!req.client.hasCredits()) {
             await sleep(200 * Math.random());
