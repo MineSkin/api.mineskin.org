@@ -182,7 +182,7 @@ export async function v2GenerateEnqueue(req: GenerateV2Request, res: Response<V2
         try {
             const stats = await getCachedV2Stats();
             const durationEta = (stats?.generator?.duration?.pending + stats?.generator?.duration?.generate) || undefined; //TODO: multiply pending by user's pending job count
-            eta = durationEta && job ? new Date(job?.createdAt?.getTime() + durationEta) : undefined;
+            eta = durationEta && job ? new Date((job?.notBefore?.getTime() || job?.createdAt?.getTime()) + durationEta) : undefined;
         } catch (e) {
             Sentry.captureException(e);
         }
