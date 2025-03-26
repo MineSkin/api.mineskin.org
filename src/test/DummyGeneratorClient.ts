@@ -55,4 +55,12 @@ export class DummyGeneratorClient implements IGeneratorClient<IQueueDocument> {
         return 1;
     }
 
+    getLastJobSubmittedByUser(userId: string): Promise<IQueueDocument> {
+        throw new Error("Method not implemented.");
+    }
+
+    getLastJobSubmittedByIp(ip: string): Promise<IQueueDocument> {
+        throw new Error("Method not implemented.");
+    }
+
 }
