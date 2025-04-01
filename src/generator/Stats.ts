@@ -137,7 +137,7 @@ export class Stats {
         console.log(debug(`Querying stats...`));
         const queryStart = Date.now();
         return Promise.all([
-            this.queryAccountStats(),
+            // this.queryAccountStats(),
             this.queryDurationStats(),
             // this.queryCountDuplicateViewStats(),
             this.queryTimeFrameStats(),
@@ -152,7 +152,7 @@ export class Stats {
         console.log(debug(`Querying stats (slow)...`));
         const queryStart = Date.now();
         return Promise.all([
-            this.queryAccountCapeStats(),
+            // this.queryAccountCapeStats(),
             this.queryMiscStats()
         ]).then((ignored: any) => {
             console.log(debug(`Slow stats query took ${ (Date.now() - queryStart) / 1000 }s`));
