@@ -22,7 +22,7 @@ export class MineSkinMetrics implements IMetricsProvider {
 
     constructor(@inject(CoreTypes.LogProvider) readonly log: ILogProvider) {
         this.metrics = new Metrics();
-        this.flusher = new IntervalFlusher(this.metrics, 10000);
+        this.flusher = new IntervalFlusher(this.metrics, 1000);
         this.metrics.setFlusher(this.flusher);
 
         this.register('api_requests', this.metrics.metric('mineskin', 'api_requests'));
