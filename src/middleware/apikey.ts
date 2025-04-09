@@ -27,7 +27,7 @@ export const verifyApiKey = async (req: MineSkinV2Request, res: Response) => {
         if (keyStr) {
             req._apiKeyStr = keyStr;
 
-            if (keyStr.length !== 64) {
+            if (keyStr.length < 64) {
                 console.log(debug(`Invalid API Key length: ${ keyStr.length }`));
                 throw new MineSkinError("invalid_api_key", "Invalid API Key Length", {
                     httpCode: 403,
