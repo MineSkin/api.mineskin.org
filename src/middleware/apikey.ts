@@ -50,7 +50,8 @@ export const verifyApiKey = async (req: MineSkinV2Request, res: Response) => {
 
             req.apiKey = key;
             req.apiKeyId = key.id;
-            req.apiKeyRef = `${ key.id?.substring(0, 8) } ${ key.name }`;
+            req.apiKeyShortId = key.shortId || req.apiKeyId?.substring(0, 8);
+            req.apiKeyRef = `${ req.apiKeyShortId } ${ key.name }`;
 
             Sentry.setTags({
                 "generate_api_key": req.apiKeyRef ?? "none"

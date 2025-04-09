@@ -12,6 +12,7 @@ export interface MineSkinV2Request extends Request {
 
     _apiKeyStr?: string;
     apiKeyId?: string;
+    apiKeyShortId?: string;
     apiKeyRef?: string; // short id + name
     apiKey?: IApiKeyDocument;
 
