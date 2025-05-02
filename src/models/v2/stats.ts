@@ -8,6 +8,7 @@ import { V2MiscResponseBody } from "../../typings/v2/V2MiscResponseBody";
 import { Log } from "../../Log";
 import { ONE_DAY_SECONDS } from "../../util";
 import * as Sentry from "@sentry/node";
+import { MineSkinMetrics } from "../../util/metrics";
 
 export async function v2GetStats(req: MineSkinV2Request, res: Response<V2ResponseBody>): Promise<V2MiscResponseBody> {
     const stats = await statsWrapper.getCachedV2Stats();
@@ -83,7 +84,7 @@ const statsWrapper = new class {
     }
 
     async _queryStats() {
-        const date = new Date();
+        let date = new Date();
         const redis = container.get<IRedisProvider>(CoreTypes.RedisProvider);
 
         const timeHelper = new MGetHelper();
@@ -134,12 +135,29 @@ const statsWrapper = new class {
 
         Log.l.debug(`redis stats query took ${ Date.now() - date.getTime() }ms`);
 
+        date = new Date();
+
+        const metrics = container.get<MineSkinMetrics>(CoreTypes.MetricsProvider);
+        const [success1h, fail1h] = await metrics.getMetrics().influx.query<{ sum: number }>([
+            `SELECT sum("count") FROM "generate_success" WHERE time > now() - 1h GROUP BY time(1h) fill(null)`,
+            `SELECT sum("count") FROM "generate_fail" WHERE time > now() - 1h GROUP BY time(1h) fill(null)`
+        ], {
+            database: 'mineskin',
+            precision: 's'
+        });
+
+        const total1h = success1h[0]?.sum + fail1h[0]?.sum || 0;
+        const successRate1h = success1h[0]?.sum / total1h * 100 || 0;
+
+        Log.l.debug(`influx stats query took ${ Date.now() - date.getTime() }ms`);
+
         return {
             generated: {
                 time: {
                     hour: {
                         current: thisHour.get(),
-                        last: lastHour.get()
+                        last: lastHour.get(),
+                        successRate: successRate1h
                     },
                     day: {
                         current: thisDay.get(),
