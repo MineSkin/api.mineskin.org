@@ -138,9 +138,11 @@ const statsWrapper = new class {
         date = new Date();
 
         const metrics = container.get<MineSkinMetrics>(CoreTypes.MetricsProvider);
-        const [success1h, fail1h] = await metrics.getMetrics().influx.query<{ sum: number }>([
+        const [success1h, fail1h, success1d, fail1d] = await metrics.getMetrics().influx.query<{ sum: number }>([
             `SELECT sum("count") FROM "generate_success" WHERE time > now() - 1h GROUP BY time(1h) fill(null)`,
-            `SELECT sum("count") FROM "generate_fail" WHERE time > now() - 1h GROUP BY time(1h) fill(null)`
+            `SELECT sum("count") FROM "generate_fail" WHERE time > now() - 1h GROUP BY time(1h) fill(null)`,
+            `SELECT sum("count") FROM "generate_success" WHERE time > now() - 1d GROUP BY time(1d) fill(null)`,
+            `SELECT sum("count") FROM "generate_fail" WHERE time > now() - 1d GROUP BY time(1d) fill(null)`
         ], {
             database: 'mineskin',
             precision: 's'
@@ -148,6 +150,9 @@ const statsWrapper = new class {
 
         const total1h = success1h[0]?.sum + fail1h[0]?.sum || 0;
         const successRate1h = success1h[0]?.sum / total1h * 100 || 0;
+
+        const total1d = success1d[0]?.sum + fail1d[0]?.sum || 0;
+        const successRate1d = success1d[0]?.sum / total1d * 100 || 0;
 
         Log.l.debug(`influx stats query took ${ Date.now() - date.getTime() }ms`);
 
@@ -161,7 +166,8 @@ const statsWrapper = new class {
                     },
                     day: {
                         current: thisDay.get(),
-                        last: lastDay.get()
+                        last: lastDay.get(),
+                        successRate: successRate1d
                     },
                     month: {
                         current: thisMonth.get()
