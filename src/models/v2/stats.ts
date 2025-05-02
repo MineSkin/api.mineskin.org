@@ -149,10 +149,10 @@ const statsWrapper = new class {
         });
 
         const total1h = success1h[0]?.sum + fail1h[0]?.sum || 0;
-        const successRate1h = success1h[0]?.sum / total1h * 100 || 0;
+        const successRate1h = Math.round((success1h[0]?.sum / total1h * 100 || 0) * 10) / 10;
 
         const total1d = success1d[0]?.sum + fail1d[0]?.sum || 0;
-        const successRate1d = success1d[0]?.sum / total1d * 100 || 0;
+        const successRate1d = Math.round((success1d[0]?.sum / total1d * 100 || 0) * 10) / 10;
 
         Log.l.debug(`influx stats query took ${ Date.now() - date.getTime() }ms`);
 
