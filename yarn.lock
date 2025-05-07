@@ -1461,7 +1461,7 @@ __metadata:
 
 "@mineskin/database@git+ssh://git@github.com/MineSkin/mineskin-database.git":
   version: 1.0.0
-  resolution: "@mineskin/database@git+ssh://git@github.com/MineSkin/mineskin-database.git#commit=8a243571150ab941f8163ab40db0deed68bdfe65"
+  resolution: "@mineskin/database@git+ssh://git@github.com/MineSkin/mineskin-database.git#commit=aec01d17389876179083beadb21ccf6e27287116"
   dependencies:
     "@mineskin/types": "git+ssh://git@github.com/MineSkin/mineskin-types.git"
     "@sentry/cli": "npm:^2.32.2"
@@ -1470,13 +1470,13 @@ __metadata:
     dotenv: "npm:^16.4.5"
     mongoose: "npm:^8.5.3"
     uuid: "npm:^10.0.0"
-  checksum: 10c0/52359b3e542d11e5af017cb4a7766e94bc3defd04230c26010e38deae481cc3a43ede23a05662a769b963b7a3f0cb7162e0aaca0a5d597b04400e26f4da4df53
+  checksum: 10c0/7586671b665135d3d5552bbf3de71ab878614ccde62f1368e8e9e3725bea828f105a6a3a0ac3afb7ecf912cf47f67f4a82c10cbb7a3fbbbaa7119492bed29a75
   languageName: node
   linkType: hard
 
 "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git":
   version: 0.0.0
-  resolution: "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git#commit=e51aebd60681ec02077ef2f18d828e410c3bdbcc"
+  resolution: "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git#commit=aa06626f125b51b6d0bf7c1535067c6d3b5aa6ed"
   dependencies:
     "@hoangducnhuan/redlock": "npm:^6.0.0"
     "@inventivetalent/imghash": "npm:^1.1.1"
@@ -1505,7 +1505,7 @@ __metadata:
     https-proxy-agent: "npm:^5.0.1"
     image-size: "npm:^1.1.1"
     inversify: "npm:^6.0.3"
-    metrics-node: "npm:1.3.0-beta.1"
+    metrics-node: "npm:1.3.0-beta.2"
     mongoose: "npm:^8.5.3"
     node-cron: "npm:^3.0.3"
     redis: "npm:^4.7.0"
@@ -1516,7 +1516,7 @@ __metadata:
     winston: "npm:^3.14.2"
     winston-daily-rotate-file: "npm:^5.0.0"
     winston-transport-sentry-node: "npm:^3.0.0"
-  checksum: 10c0/29a528d8b7c7e2aa4b8c76e9ed17573b8b911302493bd625dc467dcaf7753cee2a53be9da852baae750c45e19592174066602b33bafbefe4e1c08d92b3cfa3ba
+  checksum: 10c0/354a7cba5d7ae399c08230f31e0ad085f5a7d81956d91715b6b9597f768f1889b67d692e5bcddf44bdb8b845df2fa08d364ef576fe5b3342ba38a0bd005d89b5
   languageName: node
   linkType: hard
 
@@ -1549,8 +1549,8 @@ __metadata:
 
 "@mineskin/types@git+ssh://git@github.com/MineSkin/mineskin-types.git":
   version: 1.0.1
-  resolution: "@mineskin/types@git+ssh://git@github.com/MineSkin/mineskin-types.git#commit=5612919393683a470228d67c71b31fb24a3ecc84"
-  checksum: 10c0/51a7f03cbc82c4724cd30ce25dbd854cc502f794e37e8132a0a31355320991a2429748a83e6c759bd58b56843354dc7a97fcda65b78599813542407c9b993343
+  resolution: "@mineskin/types@git+ssh://git@github.com/MineSkin/mineskin-types.git#commit=561c26c91ada9f94e6fe44c8444b161cf93e442d"
+  checksum: 10c0/a9ed49305e674eff4fc64d1b2759e000a3073bb4639afc8b97260a1c02398fcc255f2db28b28b0fc9c560791298b17a9313946bc578f98617dc927698f39a424
   languageName: node
   linkType: hard
 
@@ -8365,14 +8365,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"metrics-node@npm:1.3.0-beta.1, metrics-node@npm:^1.3.0-beta.1":
-  version: 1.3.0-beta.1
-  resolution: "metrics-node@npm:1.3.0-beta.1"
+"metrics-node@npm:1.3.0-beta.2":
+  version: 1.3.0-beta.2
+  resolution: "metrics-node@npm:1.3.0-beta.2"
   dependencies:
     "@types/node": "npm:^14.14.12"
     influx: "npm:^5.6.3"
     typescript: "npm:^4.1.2"
-  checksum: 10c0/0de26521cd35b741146bd72c5ec31ebb39404e0b03cc3f882aeb8bdd10c83d897eb80ab84bdf65d472493f88471f7f195e4da79b95c36c16e80ce175e4200b09
+  checksum: 10c0/558cdc009b34507dfa963c9bcca3783b8d30ea5b08da0b0e2b7b8108a6609b4e87346527bd27aadbe7e9e7eb9d2ba6b072d4d20348410616acb098ac402b7447
   languageName: node
   linkType: hard
 
@@ -8384,6 +8384,17 @@ __metadata:
     influx: "npm:^5.6.3"
     typescript: "npm:^4.1.2"
   checksum: 10c0/7052565aa0b8fb34c8e4ea9f3298e03675ada0d1d7a92bf00d61ff533d9d2ea8d62ff97a399904dfa5a5d3003b9c326bc3f0a595915e22d26b6320515a5440b4
+  languageName: node
+  linkType: hard
+
+"metrics-node@npm:^1.3.0-beta.1":
+  version: 1.3.0-beta.1
+  resolution: "metrics-node@npm:1.3.0-beta.1"
+  dependencies:
+    "@types/node": "npm:^14.14.12"
+    influx: "npm:^5.6.3"
+    typescript: "npm:^4.1.2"
+  checksum: 10c0/0de26521cd35b741146bd72c5ec31ebb39404e0b03cc3f882aeb8bdd10c83d897eb80ab84bdf65d472493f88471f7f195e4da79b95c36c16e80ce175e4200b09
   languageName: node
   linkType: hard
 
