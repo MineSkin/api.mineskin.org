@@ -22,6 +22,7 @@ Sentry.init({
         "Invalid image dimensions",
         "Failed to find image from url",
         "Invalid file size",
-        "invalid_image"
+        "invalid_image",
+        "invalid_string"
     ]
 });
