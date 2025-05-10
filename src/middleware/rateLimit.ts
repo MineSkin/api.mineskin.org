@@ -15,18 +15,28 @@ export const rateLimitMiddleware = async (req: GenerateV2Request, res: Response,
     next();
 }
 
-export const globalDelayRateLimitMiddleware = async (req: GenerateV2Request, res: Response, next: NextFunction) => {
+export const globalDelayInitMiddleware = async (req: GenerateV2Request, res: Response, next: NextFunction) => {
     if (!req.clientInfo) {
         throw new GeneratorError('invalid_client', "no client info", {httpCode: 500});
     }
 
     const trafficService = container.get<TrafficService>(GeneratorTypes.TrafficService);
     if (req.client.useDelayRateLimit()) {
-        const credits = await req.client?.getCredits();
         req.nextRequest = await trafficService.getNextRequest(req.clientInfo);
-        req.minDelay = await trafficService.getMinDelaySeconds(req.clientInfo, req.apiKey, credits?.type) * 1000;
+        req.minDelay = await trafficService.getMinDelaySeconds(req.clientInfo, req.apiKey, undefined) * 1000;
         res.header('X-RateLimit-Delay', `${ req.minDelay }`);
         res.header('X-RateLimit-NextRequest', `${ req.nextRequest }`);
+    }
+
+    next();
+}
+
+export const globalDelayRateLimitMiddleware = async (req: GenerateV2Request, res: Response, next: NextFunction) => {
+    if (!req.clientInfo) {
+        throw new GeneratorError('invalid_client', "no client info", {httpCode: 500});
+    }
+
+    if (req.nextRequest && req.client.useDelayRateLimit()) {
         if (req.nextRequest > req.clientInfo.time) {
             res.header('Retry-After', `${ Math.round((req.nextRequest - Date.now()) / 1000) }`);
             Log.l.warn(`${ req.client.apiKeyRef }/${ req.client.userAgent } speed limit exceeded, ${ req.nextRequest } > ${ req.clientInfo.time } (${ req.nextRequest - req.clientInfo.time })`);
@@ -38,27 +48,54 @@ export const globalDelayRateLimitMiddleware = async (req: GenerateV2Request, res
     next();
 }
 
-export const globalPerMinuteRateLimitMiddleware = async (req: GenerateV2Request, res: Response, next: NextFunction) => {
+export const globalPerMinuteInitMiddleware = async (req: GenerateV2Request, res: Response, next: NextFunction) => {
     if (!req.clientInfo) {
         throw new GeneratorError('invalid_client', "no client info", {httpCode: 500});
     }
 
     const trafficService = container.get<TrafficService>(GeneratorTypes.TrafficService);
     if (req.client.usePerMinuteRateLimit()) {
-        const flags = container.get<IFlagProvider>(CoreTypes.FlagProvider);
-         const [block, blockAnonymous] = await Promise.all([
-            flags.isEnabled('generator.per_minute.block'),
-            flags.isEnabled('generator.per_minute.block_anonymous')
-        ]);
-        const shouldBlock = block || (blockAnonymous && !req.client.hasUser() && !req.client.hasApiKey());
         req.requestsThisMinute = await trafficService.getRequestCounter(req.clientInfo);
         req.maxPerMinute = req.client.getPerMinuteRateLimit();
         res.header('X-RateLimit-Limit', `${ req.maxPerMinute }`);
         res.header('X-RateLimit-Remaining', `${ req.maxPerMinute - req.requestsThisMinute }`);
+    }
+
+
+    next();
+}
+
+export const globalPerMinuteRateLimitMiddleware = async (req: GenerateV2Request, res: Response, next: NextFunction) => {
+    if (!req.clientInfo) {
+        throw new GeneratorError('invalid_client', "no client info", {httpCode: 500});
+    }
+
+    if (req.maxPerMinute && req.requestsThisMinute && req.client.usePerMinuteRateLimit()) {
+        const flags = container.get<IFlagProvider>(CoreTypes.FlagProvider);
+        const [block, blockAnonymous] = await Promise.all([
+            flags.isEnabled('generator.per_minute.block'),
+            flags.isEnabled('generator.per_minute.block_anonymous')
+        ]);
+        const shouldBlock = block || (blockAnonymous && !req.client.hasUser() && !req.client.hasApiKey());
         if (shouldBlock && req.requestsThisMinute > req.maxPerMinute) {
             Log.l.warn(`${ req.client.apiKeyRef }/${ req.client.userAgent } rate limit exceeded, ${ req.requestsThisMinute } > ${ req.maxPerMinute }`);
             throw new GeneratorError('rate_limit', `rate limit exceeded, ${ req.requestsThisMinute } > ${ req.maxPerMinute }`, {httpCode: 429});
         }
+    }
+
+
+    next();
+}
+
+export const globalConcurrencyInitMiddleware = async (req: GenerateV2Request, res: Response, next: NextFunction) => {
+    if (!req.clientInfo) {
+        throw new GeneratorError('invalid_client', "no client info", {httpCode: 500});
+    }
+
+    const trafficService = container.get<TrafficService>(GeneratorTypes.TrafficService);
+    if (req.client.useConcurrencyLimit()) {
+        req.concurrentRequests = await trafficService.getConcurrent(req.clientInfo);
+        req.maxConcurrent = req.client.getConcurrencyLimit();
     }
 
 
@@ -70,12 +107,9 @@ export const globalConcurrencyLimitMiddleware = async (req: GenerateV2Request, r
         throw new GeneratorError('invalid_client', "no client info", {httpCode: 500});
     }
 
-    const trafficService = container.get<TrafficService>(GeneratorTypes.TrafficService);
-    if (req.client.useConcurrencyLimit()) {
+    if (req.concurrentRequests && req.maxConcurrent && req.client.useConcurrencyLimit()) {
         const flags = container.get<IFlagProvider>(CoreTypes.FlagProvider);
         const block = await flags.isEnabled('generator.concurrency.block');
-        req.concurrentRequests = await trafficService.getConcurrent(req.clientInfo);
-        req.maxConcurrent = req.client.getConcurrencyLimit();
         if (block && req.concurrentRequests >= req.maxConcurrent) {
             Log.l.warn(`${ req.client.apiKeyRef }/${ req.client.userAgent } concurrency limit exceeded, ${ req.concurrentRequests } > ${ req.maxConcurrent }`);
             throw new GeneratorError('concurrency_limit', `concurrency limit exceeded, ${ req.concurrentRequests } > ${ req.maxConcurrent }`, {httpCode: 429});
