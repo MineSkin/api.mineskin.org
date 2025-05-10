@@ -544,6 +544,11 @@
             "type": "number",
             "description": "Remaining requests in the current window. Same as the 'X-RateLimit-Remaining' header",
             "example": 58
+          },
+          "reset": {
+            "type": "number",
+            "description": "UNIX epoch timestamp (seconds) when the rate limit will reset. Same as the 'X-RateLimit-Reset' header",
+            "example": 1746869295
           }
         }
       },
