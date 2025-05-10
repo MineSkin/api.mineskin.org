@@ -108,6 +108,9 @@ export async function v2GenerateAndWait(req: GenerateV2Request, res: Response<V2
             const timeoutSeconds = GenerateTimeout.parse(req.query.timeout);
             const result = await getClient().waitForJob(job.id, timeoutSeconds * 1000) as GenerateResult;
             Log.l.debug(JSON.stringify(result, null, 2));
+            if (result?.usage?.rate?.next) {
+                req.nextRequest = Math.ceil(result.usage.rate.next / 50) * 50;
+            }
             await sleep(200);
             req.links.skin = `/v2/skins/${ result.skin }`;
             const queried = await querySkinOrThrow(result.skin);
