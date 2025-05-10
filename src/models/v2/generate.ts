@@ -88,7 +88,7 @@ export async function v2GenerateAndWait(req: GenerateV2Request, res: Response<V2
             return {
                 success: true,
                 skin: V2GenerateHandler.skinToJson(queried, skin.duplicate),
-                rateLimit: V2GenerateHandler.makeRateLimitInfo(req)
+                rateLimit: V2GenerateHandler.makeRateLimitInfo(req, res)
             };
         }
 
@@ -117,7 +117,7 @@ export async function v2GenerateAndWait(req: GenerateV2Request, res: Response<V2
             return {
                 success: true,
                 skin: V2GenerateHandler.skinToJson(queried, !!result.duplicate),
-                rateLimit: V2GenerateHandler.makeRateLimitInfo(req),
+                rateLimit: V2GenerateHandler.makeRateLimitInfo(req, res),
                 usage: result.usage
             };
         } catch (e) {
@@ -177,7 +177,7 @@ export async function v2GenerateEnqueue(req: GenerateV2Request, res: Response<V2
                 }],
                 job: jobInfo,
                 skin: V2GenerateHandler.skinToJson(queried, skin.duplicate),
-                rateLimit: V2GenerateHandler.makeRateLimitInfo(req)
+                rateLimit: V2GenerateHandler.makeRateLimitInfo(req, res)
             };
         }
 
@@ -203,7 +203,7 @@ export async function v2GenerateEnqueue(req: GenerateV2Request, res: Response<V2
                 timestamp: job?.createdAt?.getTime() || 0,
                 eta: eta?.getTime() || undefined
             },
-            rateLimit: V2GenerateHandler.makeRateLimitInfo(req)
+            rateLimit: V2GenerateHandler.makeRateLimitInfo(req, res)
         };
     });
 }

@@ -52,7 +52,7 @@ export class V2GenerateHandler {
         return res.json({
             success: true,
             skin: V2GenerateHandler.skinToJson(skin, duplicate),
-            rateLimit: V2GenerateHandler.makeRateLimitInfo(req)
+            rateLimit: V2GenerateHandler.makeRateLimitInfo(req, res)
         });
     }
 
@@ -105,14 +105,13 @@ export class V2GenerateHandler {
         });
     }
 
-    static makeRateLimitInfo(req: GenerateV2Request): RateLimitInfo {
+    static makeRateLimitInfo(req: GenerateV2Request, res?: Response): RateLimitInfo {
         return Sentry.startSpan({
             op: 'generate_handler',
             name: 'makeRateLimitInfo'
         }, span => {
-            //TODO: also update headers
             const now = Date.now();
-            return {
+            const info = {
                 next: {
                     absolute: req.nextRequest || now,
                     relative: Math.max(0, (req.nextRequest || now) - now)
@@ -127,6 +126,15 @@ export class V2GenerateHandler {
                     reset: req.maxPerMinuteReset || Math.floor(now / 1000)
                 }
             };
+            if (res) {
+                res.header('X-RateLimit-Limit', `${ info.limit.limit }`);
+                res.header('X-RateLimit-Remaining', `${ info.limit.remaining }`);
+                res.header('X-RateLimit-Reset', `${ info.limit.reset }`);
+
+                res.header('X-RateLimit-Delay', `${ info.delay.millis }`);
+                res.header('X-RateLimit-NextRequest', `${ info.next.absolute }`);
+            }
+            return info;
         });
     }
 

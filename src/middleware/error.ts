@@ -26,7 +26,7 @@ export function v2ErrorHandler(err: Error, req: GenerateV2Request, res: Response
 
         return res.status(err?.meta?.httpCode || 500).json({
             success: false,
-            rateLimit: V2GenerateHandler.makeRateLimitInfo(req),
+            rateLimit: V2GenerateHandler.makeRateLimitInfo(req, res),
             errors: errors
         });
     }
