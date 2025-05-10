@@ -27,11 +27,14 @@ export interface MineSkinV2Request extends Request {
 }
 
 export interface GenerateV2Request extends MineSkinV2Request {
+    /** in milliseconds **/
     minDelay?: number;
+    /** in milliseconds **/
     nextRequest?: number;
 
     requestsThisMinute?: number;
     maxPerMinute?: number;
+    /** in seconds**/
     maxPerMinuteReset?: number;
 
     maxConcurrent?: number;

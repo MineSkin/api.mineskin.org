@@ -22,7 +22,8 @@ export const globalDelayInitMiddleware = async (req: GenerateV2Request, res: Res
 
     const trafficService = container.get<TrafficService>(GeneratorTypes.TrafficService);
     if (req.client.useDelayRateLimit()) {
-        req.nextRequest = await trafficService.getNextRequest(req.clientInfo);
+        const next = await trafficService.getNextRequest(req.clientInfo);
+        req.nextRequest = Math.max(req.nextRequest || 0, next);
         req.minDelay = await trafficService.getMinDelaySeconds(req.clientInfo, req.apiKey, undefined) * 1000;
         res.header('X-RateLimit-Delay', `${ req.minDelay }`);
         res.header('X-RateLimit-NextRequest', `${ req.nextRequest }`);
@@ -62,6 +63,12 @@ export const globalPerMinuteInitMiddleware = async (req: GenerateV2Request, res:
         res.header('X-RateLimit-Limit', `${ req.maxPerMinute }`);
         res.header('X-RateLimit-Remaining', `${ req.maxPerMinute - req.requestsThisMinute }`);
         res.header('X-RateLimit-Reset', `${ Math.round(req.maxPerMinuteReset) }`);
+
+        const remaining = Math.max(0, (req.maxPerMinute || 0) - (req.requestsThisMinute || 0));
+        if (remaining <= 0) {
+            const now = Date.now();
+            req.nextRequest = Math.max(req.nextRequest || 0, (req.maxPerMinuteReset || 0) * 1000, now)
+        }
     }
 
 
@@ -81,6 +88,9 @@ export const globalPerMinuteRateLimitMiddleware = async (req: GenerateV2Request,
         ]);
         const shouldBlock = block || (blockAnonymous && !req.client.hasUser() && !req.client.hasApiKey());
         if (shouldBlock && req.requestsThisMinute > req.maxPerMinute) {
+            if (req.maxPerMinuteReset) {
+                res.header('Retry-After', `${ Math.ceil(req.maxPerMinuteReset - Date.now() / 1000) }`);
+            }
             Log.l.warn(`${ req.client.apiKeyRef }/${ req.client.userAgent } rate limit exceeded, ${ req.requestsThisMinute } > ${ req.maxPerMinute }`);
             throw new GeneratorError('rate_limit', `rate limit exceeded, ${ req.requestsThisMinute } > ${ req.maxPerMinute }`, {httpCode: 429});
         }

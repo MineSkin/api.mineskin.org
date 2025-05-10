@@ -111,6 +111,12 @@ export class V2GenerateHandler {
             name: 'makeRateLimitInfo'
         }, span => {
             const now = Date.now();
+
+            const remaining = Math.max(0, (req.maxPerMinute || 0) - (req.requestsThisMinute || 0));
+            if (remaining <= 0) {
+                req.nextRequest = Math.max(req.nextRequest || 0, (req.maxPerMinuteReset || 0) * 1000, now)
+            }
+
             const info = {
                 next: {
                     absolute: req.nextRequest || now,
@@ -122,7 +128,7 @@ export class V2GenerateHandler {
                 },
                 limit: {
                     limit: req.maxPerMinute || 0,
-                    remaining: Math.max(0, (req.maxPerMinute || 0) - (req.requestsThisMinute || 0)),
+                    remaining: remaining,
                     reset: req.maxPerMinuteReset || Math.floor(now / 1000)
                 }
             };
@@ -133,6 +139,10 @@ export class V2GenerateHandler {
 
                 res.header('X-RateLimit-Delay', `${ info.delay.millis }`);
                 res.header('X-RateLimit-NextRequest', `${ info.next.absolute }`);
+
+                if (remaining <= 0 && res.statusCode === 429) {
+                    res.header('Retry-After', `${ Math.ceil(info.next.relative / 1000) }`);
+                }
             }
             return info;
         });
