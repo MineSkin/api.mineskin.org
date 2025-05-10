@@ -110,6 +110,7 @@ export class V2GenerateHandler {
             op: 'generate_handler',
             name: 'makeRateLimitInfo'
         }, span => {
+            //TODO: also update headers
             const now = Date.now();
             return {
                 next: {
@@ -122,7 +123,8 @@ export class V2GenerateHandler {
                 },
                 limit: {
                     limit: req.maxPerMinute || 0,
-                    remaining: Math.max(0, (req.maxPerMinute || 0) - (req.requestsThisMinute || 0))
+                    remaining: Math.max(0, (req.maxPerMinute || 0) - (req.requestsThisMinute || 0)),
+                    reset: req.maxPerMinuteReset || Math.floor(now / 1000)
                 }
             };
         });

@@ -510,7 +510,9 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
         }
         if (req.client.usePerMinuteRateLimit()) {
             req.requestsThisMinute = (req.requestsThisMinute || 0) + 1;
-            await trafficService.incRequest(req.clientInfo);
+            const [requestCounter, exp] = await trafficService.incRequest(req.clientInfo);
+            req.requestsThisMinute = requestCounter;
+            req.maxPerMinuteReset = exp;
         }
 
         let hashes: Maybe<ImageHashes> = undefined;

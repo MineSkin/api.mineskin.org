@@ -38,7 +38,8 @@ export async function v2GetDelay(req: MineSkinV2Request, res: Response<V2MiscRes
         },
         limit: {
             limit: req.client.getPerMinuteRateLimit(),
-            remaining: Math.max(0, req.client.getPerMinuteRateLimit() - requestCounter)
+            remaining: Math.max(0, req.client.getPerMinuteRateLimit() - requestCounter),
+            reset: requestCountExp || Math.floor(now / 1000)
         }
     }
 
