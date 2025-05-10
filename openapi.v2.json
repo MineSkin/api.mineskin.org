@@ -343,6 +343,7 @@
         "required": [
           "millis"
         ],
+        "description": "Information about the delay between requests. These numbers will remain the same for all requests with the same API key. You can use this to send requests on a schedule, for example.",
         "properties": {
           "millis": {
             "type": "number",
@@ -532,6 +533,7 @@
           "limit",
           "remaining"
         ],
+        "description": "Information about the rate limit for the current request.",
         "properties": {
           "limit": {
             "type": "number",
@@ -781,6 +783,7 @@
           "absolute",
           "relative"
         ],
+        "description": "Information about when the next request can be made. Use this to determine when to make the next request.",
         "properties": {
           "absolute": {
             "type": "number",
