@@ -55,10 +55,12 @@ export const globalPerMinuteInitMiddleware = async (req: GenerateV2Request, res:
 
     const trafficService = container.get<TrafficService>(GeneratorTypes.TrafficService);
     if (req.client.usePerMinuteRateLimit()) {
-        req.requestsThisMinute = await trafficService.getRequestCounter(req.clientInfo);
+        const [counter, exp] = await trafficService.getRequestCounter(req.clientInfo);
+        req.requestsThisMinute = counter;
         req.maxPerMinute = req.client.getPerMinuteRateLimit();
         res.header('X-RateLimit-Limit', `${ req.maxPerMinute }`);
         res.header('X-RateLimit-Remaining', `${ req.maxPerMinute - req.requestsThisMinute }`);
+        res.header('X-RateLimit-Reset', `${ Math.round(exp) }`);
     }
 
 
@@ -152,10 +154,12 @@ export const verifyRateLimit = async (req: GenerateV2Request, res: Response, wit
             flags.isEnabled('generator.per_minute.block_anonymous')
         ]);
         const shouldBlock = block || (blockAnonymous && !req.client.hasUser() && !req.client.hasApiKey());
-        req.requestsThisMinute = await trafficService.getRequestCounter(req.clientInfo);
+        const [counter, exp] = await trafficService.getRequestCounter(req.clientInfo);
+        req.requestsThisMinute = counter;
         req.maxPerMinute = req.client.getPerMinuteRateLimit();
         res.header('X-RateLimit-Limit', `${ req.maxPerMinute }`);
         res.header('X-RateLimit-Remaining', `${ req.maxPerMinute - req.requestsThisMinute - 1 }`);
+        res.header('X-RateLimit-Reset', `${ Math.round(exp) }`);
         if (shouldBlock && req.requestsThisMinute >= req.maxPerMinute) {
             Log.l.warn(`${ req.client.apiKeyRef }/${ req.client.userAgent } rate limit exceeded, ${ req.requestsThisMinute } > ${ req.maxPerMinute }`);
             throw new GeneratorError('rate_limit', `rate limit exceeded, ${ req.requestsThisMinute } > ${ req.maxPerMinute }`, {httpCode: 429});
