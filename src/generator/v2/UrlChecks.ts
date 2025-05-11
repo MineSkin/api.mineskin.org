@@ -11,7 +11,7 @@ const BLOCKED_URL_HOSTS: RegExp[] = [
     /172\.(1[6-9]|2[0-9]|3[01])\./i
 ]
 
-const MINESKIN_URL_REGEX = /https?:\/\/minesk(\.in|in\.org)\/([0-9a-zA-Z]+)/i;
+const MINESKIN_URL_REGEX = /https?:\/\/minesk(\.in|in\.org)\/(skins\/)?([0-9a-zA-Z]+)/i;
 const MINECRAFT_TEXTURE_REGEX = /https?:\/\/textures\.minecraft\.net\/texture\/([0-9a-z]+)/i;
 
 export class UrlChecks {
