@@ -811,7 +811,7 @@ async function querySkinOrThrow(uuid: UUID): Promise<IPopulatedSkin2Document> {
         op: 'generate_v2',
         name: 'querySkinOrThrow'
     }, async span => {
-        const skin = await container.get<SkinService>(GeneratorTypes.SkinService).findForUuid(uuid);
+        const skin = await container.get<SkinService>(GeneratorTypes.SkinService).findForUuid(uuid, true);
         if (!skin || !isPopulatedSkin2Document(skin) || !skin.data) {
             throw new GeneratorError('skin_not_found', `Skin not found: ${ uuid }`, {httpCode: 404});
         }
