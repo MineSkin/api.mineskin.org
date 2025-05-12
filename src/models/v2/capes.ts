@@ -11,6 +11,7 @@ export async function listKnownCapes(req: MineSkinV2Request, res: Response<V2Res
         capes: capes.map(cape => ({
             uuid: cape.uuid,
             alias: cape.alias,
+            hash: cape.hash,
             url: cape.url,
             supported: cape.supported
         }))
