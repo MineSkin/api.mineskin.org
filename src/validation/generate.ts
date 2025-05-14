@@ -3,7 +3,7 @@ import { SkinVariant, SkinVisibility2 } from "@mineskin/types";
 import { UUID } from "./misc";
 
 export const GenerateReqOptions = z.object({
-    name: z.string().max(24).regex(/^[a-zA-Z0-9_.\- ]+$/).optional(),
+    name: z.string().max(48).regex(/^[a-zA-Z0-9_.\- ]+$/).optional(),
     visibility: z.enum([SkinVisibility2.PUBLIC, SkinVisibility2.UNLISTED, SkinVisibility2.PRIVATE]).default(SkinVisibility2.PUBLIC),
     variant: z.enum([SkinVariant.CLASSIC, SkinVariant.SLIM, SkinVariant.UNKNOWN]).default(SkinVariant.UNKNOWN),
     cape: UUID.optional()
