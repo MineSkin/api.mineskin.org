@@ -445,7 +445,10 @@ async function init() {
                 errorType: err.name,
                 details: err.message,
                 breadcrumb: isBreadRequest(req) ? req.breadcrumbId : null
-            })
+            });
+            if (err.message?.includes("commands failed")) {
+                requestShutdown('REDIS_ERROR', 1);
+            }
         }
     }
     app.use(errorHandler);
