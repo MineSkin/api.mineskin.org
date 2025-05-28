@@ -52,6 +52,7 @@ import { container } from "../../inversify.config";
 import { Log } from "../../Log";
 import { TYPES as CoreTypes } from "@mineskin/core/dist/ditypes";
 import { getCachedV2Stats } from "./stats";
+import { IFlagProvider } from "@mineskin/core";
 
 const upload = multer({
     limits: {
@@ -618,6 +619,18 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
 
         if (!req.client.hasUser() || !req.client.hasCredits()) {
             await sleep(200 * Math.random());
+        }
+
+        // check skin generation killswitch
+        const flags = container.get<IFlagProvider>(CoreTypes.FlagProvider);
+        const [blockSkinGeneration, generationBlockDetailsStr] = await Promise.all([flags.isEnabled('api.block_skin_generation'), flags.getValue('api.block_skin_generation')]);
+        if (blockSkinGeneration) {
+            const generationBlockDetails = generationBlockDetailsStr?.startsWith('{') ? JSON.parse(generationBlockDetailsStr) : undefined;
+            Log.l.warn(`${ req.breadcrumb } Skin generation is blocked`);
+            throw new GeneratorError('service_unavailable', generationBlockDetails?.message || "Skin Generation is currently disabled.", {
+                httpCode: 503,
+                source: ErrorSource.SERVER
+            });
         }
 
         if (req.client.useConcurrencyLimit()) {
