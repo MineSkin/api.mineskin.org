@@ -46,7 +46,7 @@ import { Balancer } from "./generator/Balancer";
 import UAParser from "ua-parser-js";
 import mongoose from "mongoose";
 import { connectToMongo } from "@mineskin/database";
-import { MineSkinError } from "@mineskin/types";
+import { ErrorSource, MineSkinError } from "@mineskin/types";
 import { GeneratorError, RedisProvider } from "@mineskin/generator";
 import process from "node:process";
 import * as http from "node:http";
@@ -60,6 +60,7 @@ import { v2StatsRouter } from "./routes/v2/stats";
 import { v2SitemapsRouter } from "./routes/v2/sitemaps";
 import { requestLogMiddleware } from "./middleware/log";
 import { RequestManager } from "@mineskin/requests";
+import { ZodError } from "zod";
 
 
 sourceMapSupport.install();
@@ -393,6 +394,19 @@ async function init() {
             } else {
                 res.status(500);
             }
+        } else if (err instanceof ZodError) {
+            const zodError = err;
+            Sentry.setTag("error_type", "ZodError");
+            Sentry.setExtra("zod_issues", err.issues);
+            res.status(400);
+            const issuesStr = err.issues.map(issue => {
+                return `${ issue.code }: ${ issue.message }${ issue.path.length > 0 ? ` (${ issue.path.join('.') })` : '' }`;
+            }).join(", ");
+            err = new MineSkinError("validation_error", "Validation error: " + issuesStr, {
+                httpCode: 400,
+                source: ErrorSource.CLIENT,
+                error: zodError
+            });
         } else {
             Sentry.setTag("unhandled_error", err.name)
         }
