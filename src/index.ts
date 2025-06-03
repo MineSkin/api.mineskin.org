@@ -608,7 +608,7 @@ export function shutdown(signal: string, value: number) {
             console.error(e);
         }
         process.exit(128 + value);
-    }, 500 + Math.random() * 1000 + 1000);
+    }, 500 + Math.random() * 1000 + 3000);
 }
 
 const shutdownCounts: Record<string, number> = {};
