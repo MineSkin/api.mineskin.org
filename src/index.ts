@@ -583,7 +583,6 @@ export function shutdown(signal: string, value: number) {
     console.log("shutdown");
     console.warn('========================================');
     Sentry.captureException(new Error(`Shutdown by ${ signal } with value ${ value }`));
-    updatingApp = true;
     try {
         Balancer.disableSelfPoolForMaintenance(config).catch(e => {
             console.error(e);
@@ -598,6 +597,7 @@ export function shutdown(signal: string, value: number) {
         process.exit(128 + value);
     }, 25000);
     setTimeout(async () => {
+        updatingApp = true;
         try {
             await server.close();
         } catch (e) {
