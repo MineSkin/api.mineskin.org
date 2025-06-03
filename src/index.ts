@@ -579,7 +579,9 @@ init().then(() => {
 
 // https://medium.com/@becintec/building-graceful-node-applications-in-docker-4d2cd4d5d392
 export function shutdown(signal: string, value: number) {
+    console.warn('========================================');
     console.log("shutdown");
+    console.warn('========================================');
     Sentry.captureException(new Error(`Shutdown by ${ signal } with value ${ value }`));
     updatingApp = true;
     try {
@@ -656,16 +658,22 @@ const signals: Record<string, number> = {
 };
 Object.keys(signals).forEach((signal) => {
     process.on(signal, () => {
+        console.warn('========================================');
         console.warn(`process received a ${ signal } signal`);
+        console.warn('========================================');
         shutdown(signal, signals[signal]);
     });
 });
 
 process.on('uncaughtException', (err) => {
+    console.warn('========================================');
     console.error('[ERROR] Uncaught Exception:', err);
+    console.warn('========================================');
     process.exit(1);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
+    console.warn('========================================');
     console.error('[ERROR] Unhandled Rejection:', reason);
+    console.warn('========================================');
 });
