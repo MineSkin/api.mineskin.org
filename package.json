@@ -10,7 +10,7 @@
     "compile": "yarn tsc",
     "build": "yarn run compile",
     "test": "yarn jest",
-    "start": "node --trace-uncaught dist/index.js",
+    "start": "node --trace-uncaught --trace-exit dist/index.js",
     "pm2": "pm2 start ecosystem.config.js",
     "licenses": "npx generate-license-file --input package.json --output third-party-licenses.txt --overwrite",
     "redoc": "npx @redocly/cli build-docs openapi.v2.json"
