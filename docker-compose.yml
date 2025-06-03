@@ -20,6 +20,8 @@ services:
         target: /opt/app/.well-known
         bind:
           create_host_path: true
+      - /home/inventivetalent/api.mineskin.org/flagsmith.json:/opt/app/flagsmith.json
+    stop_grace_period: 2m
     healthcheck:
       test: "wget --no-verbose --tries=1 --spider http://localhost:3017/health || exit 1"
       interval: 5m
@@ -27,12 +29,19 @@ services:
       timeout: 3s
       retries: 3
     deploy:
-      replicas: 6
+      replicas: 5
       placement:
+        max_replicas_per_node: 1
         constraints: [node.labels.mineskin-api == true]
+        preferences:
+          - spread: node.id
       update_config:
-          parallelism: 1
-          delay: 10s
+        parallelism: 1
+        delay: 10s
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 450M
 
 networks:
   host:
