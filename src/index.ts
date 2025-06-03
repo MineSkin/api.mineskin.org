@@ -642,7 +642,16 @@ const signals: Record<string, number> = {
 };
 Object.keys(signals).forEach((signal) => {
     process.on(signal, () => {
-        console.log(`process received a ${ signal } signal`);
+        console.warn(`process received a ${ signal } signal`);
         shutdown(signal, signals[signal]);
     });
+});
+
+process.on('uncaughtException', (err) => {
+    console.error('[ERROR] Uncaught Exception:', err);
+    process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('[ERROR] Unhandled Rejection:', reason);
 });
