@@ -28,9 +28,10 @@ COPY --from=BUILD_IMAGE /opt/app/package.json .
 COPY --from=BUILD_IMAGE /opt/app/openapi* .
 COPY --from=BUILD_IMAGE /opt/app/.env.vault .
 
-EXPOSE 3017
-CMD [ "yarn", "start"]
+COPY --from=BUILD_IMAGE /opt/app/start.sh /opt/app/start.sh
 
+EXPOSE 3017
+CMD ["/opt/app/start.sh"]
 
 
 

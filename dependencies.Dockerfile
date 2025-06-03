@@ -8,6 +8,6 @@ RUN mkdir -p -m 0600 ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
 
 # install
 RUN corepack enable
-COPY package.json yarn.lock .yarnrc.yml tsconfig.json .
+COPY package.json yarn.lock .yarnrc.yml tsconfig.json start.sh .
 RUN --mount=type=secret,id=npmrc,target=/opt/app/.npmrc --mount=type=secret,id=yarnrc,target=/opt/app/.yarnrc.yml --mount=type=ssh,id=gh-mineskin --mount=type=cache,target=/root/.yarn yarn install
 RUN --mount=type=secret,id=npmrc,target=/opt/app/.npmrc --mount=type=secret,id=yarnrc,target=/opt/app/.yarnrc.yml --mount=type=ssh,id=gh-mineskin --mount=type=cache,target=/root/.yarn yarn add @mineskin/hash-rust-linux-x64-musl
