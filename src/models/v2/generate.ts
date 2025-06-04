@@ -819,13 +819,18 @@ async function tryHandleFileUpload(req: GenerateV2Request, res: Response): Promi
     });
 }
 
-async function querySkinOrThrow(uuid: UUID): Promise<IPopulatedSkin2Document> {
+async function querySkinOrThrow(uuid: UUID, r = 2): Promise<IPopulatedSkin2Document> {
     return await Sentry.startSpan({
         op: 'generate_v2',
         name: 'querySkinOrThrow'
     }, async span => {
         const skin = await container.get<SkinService>(GeneratorTypes.SkinService).findForUuid(uuid, true);
         if (!skin || !isPopulatedSkin2Document(skin) || !skin.data) {
+            if (r > 0) {
+                Log.l.warn(`Skin not found: ${ uuid }, retrying... (${ r })`);
+                await sleep(200);
+                return await querySkinOrThrow(uuid, r - 1);
+            }
             throw new GeneratorError('skin_not_found', `Skin not found: ${ uuid }`, {httpCode: 404});
         }
         return skin;
