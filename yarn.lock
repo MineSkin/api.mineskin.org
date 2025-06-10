@@ -1476,7 +1476,7 @@ __metadata:
 
 "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git":
   version: 0.0.0
-  resolution: "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git#commit=ffac70007cf61d90d67874a932b0c65080e8bc96"
+  resolution: "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git#commit=019916670bfdd875497494558e6eb0f84c14c143"
   dependencies:
     "@hoangducnhuan/redlock": "npm:^6.0.0"
     "@inventivetalent/imghash": "npm:^1.1.1"
@@ -1529,7 +1529,7 @@ __metadata:
 
 "@mineskin/requests@git+ssh://git@github.com/MineSkin/mineskin-requests.git":
   version: 1.0.1
-  resolution: "@mineskin/requests@git+ssh://git@github.com/MineSkin/mineskin-requests.git#commit=619c7fd8f966445fbad1b15497f947effc9727f0"
+  resolution: "@mineskin/requests@git+ssh://git@github.com/MineSkin/mineskin-requests.git#commit=22f7a7a3073fad67454d45ee4e0ae0f2939454f8"
   dependencies:
     "@inventivetalent/time": "npm:^1.0.3"
     "@mineskin/core": "git+ssh://git@github.com/MineSkin/mineskin-core.git"
@@ -1543,7 +1543,7 @@ __metadata:
     https-proxy-agent: "npm:5.0.1"
     ip-address: "npm:^10.0.0"
     jobqu: "npm:^2.0.5"
-  checksum: 10c0/f46fc92202840ce91dc10de36facb4827c68c9d69c9c156490ada56184825c38b2eda126b89afe3d6a65779b992f878900708e0617ed56677bd37c35429cd502
+  checksum: 10c0/5dae4ff53d290f093836f2076fe7e195b7d28f9df605ddac00dbf38372677a360f10c40e21c067a66eca59f2cdc5b922fa57b6fc02d486b523756c41d507b946
   languageName: node
   linkType: hard
 
