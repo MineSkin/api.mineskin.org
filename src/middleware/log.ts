@@ -74,7 +74,13 @@ function doLog(request: any, response: any, breadcrumb: string) {
         ]);
         if (!enabled) return;
 
-        const sample = Math.random() <= Number(sampleRate);
+        const statusCategory = Math.floor(response.statusCode / 100);
+        const billable = response.headers?.['x-mineskin-billable'] === 'true';
+
+        const sample =
+            (Math.random() <= Number(sampleRate)) ||
+            (billable && statusCategory !== 2)
+        ;
         if (!sample) return;
 
         const status = statusStr === '*' ? null : JSON.parse(statusStr);
@@ -88,7 +94,7 @@ function doLog(request: any, response: any, breadcrumb: string) {
 
         let timestamp = new Date();
         let expiration = undefined;
-        switch (Math.floor(response.statusCode / 100)) {
+        switch (statusCategory) {
             case 2:
                 expiration = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7); // 7 days
                 break;
