@@ -99,10 +99,10 @@ function doLog(request: any, response: any, breadcrumb: string) {
                 expiration = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7); // 7 days
                 break;
             case 4:
-                expiration = new Date(Date.now() + 1000 * 60 * 60 * 24 * 30); // 30 days
+                expiration = new Date(Date.now() + 1000 * 60 * 60 * 24 * 14); // 14 days
                 break;
             case 5:
-                expiration = new Date(Date.now() + 1000 * 60 * 60 * 24 * 90); // 90 days
+                expiration = new Date(Date.now() + 1000 * 60 * 60 * 24 * 30); // 30 days
                 break;
         }
 
