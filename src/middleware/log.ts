@@ -5,6 +5,25 @@ import { container } from "../inversify.config";
 import { IFlagProvider } from "@mineskin/core";
 import { TYPES as CoreTypes } from "@mineskin/core/dist/ditypes";
 
+function getSanitizedAuth(req: any): boolean | string {
+    let auth = !!req.get('Authorization');
+    if (!auth) {
+        return false;
+    }
+    let header = req.get('Authorization');
+    if (header?.startsWith('Bearer ')) {
+        header = header.substring('Bearer '.length);
+        if (header?.startsWith('msk_')) {
+            const split = header.split('_', 3);
+            if (split.length === 3) {
+                // log API key ID
+                auth = `Bearer msk_${ split[1] }_REDACTED`;
+            }
+        }
+    }
+    return auth;
+}
+
 export function requestLogMiddleware(req: Request, res: Response, next: NextFunction) {
     try {
         const request = {
@@ -23,7 +42,7 @@ export function requestLogMiddleware(req: Request, res: Response, next: NextFunc
                 'connection': req.get('Connection'),
                 'referer': req.get('Referer'),
                 'origin': req.get('Origin'),
-                'authorization': !!req.get('Authorization'),
+                'authorization': getSanitizedAuth(req),
             },
             timestamp: new Date(),
         };
