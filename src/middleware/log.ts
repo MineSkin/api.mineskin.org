@@ -86,10 +86,25 @@ function doLog(request: any, response: any, breadcrumb: string) {
         const agents = agentsStr === '*' ? null : JSON.parse(agentsStr);
         if (agents && !agents.includes(request.headers['User-Agent'])) return;
 
+        let timestamp = new Date();
+        let expiration = undefined;
+        switch (Math.floor(response.statusCode / 100)) {
+            case 2:
+                expiration = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7); // 7 days
+                break;
+            case 4:
+                expiration = new Date(Date.now() + 1000 * 60 * 60 * 24 * 30); // 30 days
+                break;
+            case 5:
+                expiration = new Date(Date.now() + 1000 * 60 * 60 * 24 * 90); // 90 days
+                break;
+        }
+
         mongoose.connection.db?.collection('request_logs').insertOne({
             request,
             response,
-            timestamp: new Date(),
+            timestamp,
+            expiration,
             breadcrumb
         });
     }).catch(e => {
