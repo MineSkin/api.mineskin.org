@@ -21,6 +21,7 @@ import { IMetricsProvider } from "@mineskin/core";
 import { TYPES as CoreTypes } from "@mineskin/core/dist/ditypes";
 import { HOSTNAME } from "../util/host";
 import axiosRetry from "axios-retry";
+import { TEXTURE_DOWNLOAD } from "@mineskin/generator/dist/GeneratorRequests";
 
 export const GENERIC = "generic";
 export const IMAGE_FETCH = "imageFetch";
@@ -130,6 +131,17 @@ export class Requests {
         });
         this.setupMultiRequestQueue(GENERIC, config, Time.millis(100), 1);
         this.setupMultiRequestQueue(IMAGE_FETCH, config, Time.millis(100), 1);
+
+         this.setupMultiProxiedAxiosInstance(TEXTURE_DOWNLOAD, config, {}, c => {
+            const instance = axios.create(c);
+            axiosRetry(instance, {
+                retries: 2,
+                retryDelay: axiosRetry.exponentialDelay
+            });
+            return instance;
+        });
+        this.setupMultiRequestQueue(TEXTURE_DOWNLOAD, config, Time.millis(100), 1);
+
 
         this.setupMultiProxiedAxiosInstance(MOJANG_AUTH, config, {
             baseURL: "https://authserver.mojang.com"
