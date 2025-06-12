@@ -46,11 +46,11 @@ export function requestLogMiddleware(req: Request, res: Response, next: NextFunc
             },
             timestamp: new Date(),
         };
-        const breadcrumb = (req as any).breadcrumbId || (req as any).breadcrumb || res.getHeader('mineskin-breadcrumb') || 'unknown';
         const oldJson = res.json;
         res.json = (body) => {
             oldJson.call(res, body);
             try {
+                const breadcrumb = (req as any).breadcrumbId || (req as any).breadcrumb || res.getHeader('mineskin-breadcrumb') || 'unknown';
                 const response = {
                     statusCode: res.statusCode,
                     body: body,
