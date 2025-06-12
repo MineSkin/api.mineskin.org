@@ -88,7 +88,7 @@ export class Temp {
             tmpFile = await this.file();
         }
         try {
-            const response = await Requests.dynamicRequest(IMAGE_FETCH, {
+            const response = await Requests.dynamicRequestWithRandomProxy(IMAGE_FETCH, {
                 method: "GET",
                 url: url,
                 responseType: "stream",

@@ -128,6 +128,8 @@ export class Requests {
             });
             return instance;
         });
+        this.setupMultiRequestQueue(GENERIC, config, Time.millis(100), 1);
+        this.setupMultiRequestQueue(IMAGE_FETCH, config, Time.millis(100), 1);
 
         this.setupMultiProxiedAxiosInstance(MOJANG_AUTH, config, {
             baseURL: "https://authserver.mojang.com"
