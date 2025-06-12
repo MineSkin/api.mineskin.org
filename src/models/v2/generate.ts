@@ -3,6 +3,7 @@ import * as Sentry from "@sentry/node";
 import multer, { MulterError } from "multer";
 import { Maybe, sleep } from "../../util";
 import {
+    BANNED_IMAGE_HASHES,
     CAPE_TO_HASH,
     DuplicateChecker,
     GeneratorError,
@@ -565,6 +566,14 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
                 });
             }
             Log.l.debug(req.breadcrumbC + " Image hash: ", hashes);
+
+            if (BANNED_IMAGE_HASHES.includes(hashes.minecraft)) {
+                Log.l.warn(`${ req.breadcrumb } Banned image hash: ${ hashes.minecraft }`);
+                throw new GeneratorError(GenError.INVALID_IMAGE, "Image is banned", {
+                    httpCode: 403,
+                    source: ErrorSource.CLIENT
+                });
+            }
 
             // duplicate check V2, same as in generator
             //  just to avoid unnecessary submissions to generator
