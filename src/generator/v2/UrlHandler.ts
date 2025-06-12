@@ -53,13 +53,13 @@ export class UrlHandler {
                     return "invalid protocol";
                 }
                 const follow = URL_FOLLOW_WHITELIST.includes(url.host!);
-                return await Requests.dynamicRequestWithRandomProxy(IMAGE_FETCH, {
+                return await Requests.dynamicRequest(IMAGE_FETCH, {
                     method: "HEAD",
                     url: url.href,
                     maxRedirects: follow ? MAX_FOLLOW_REDIRECTS : 0,
                     timeout: 2000,
                     headers: {
-                        "User-Agent": "MineSkin"
+                        "User-Agent": "MineSkin/Url-Follow"
                     },
                     maxBodyLength: MAX_IMAGE_SIZE,
                     maxContentLength: MAX_IMAGE_SIZE
