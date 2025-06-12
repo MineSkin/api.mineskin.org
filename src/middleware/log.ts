@@ -6,7 +6,7 @@ import { IFlagProvider } from "@mineskin/core";
 import { TYPES as CoreTypes } from "@mineskin/core/dist/ditypes";
 
 function getSanitizedAuth(req: any): boolean | string {
-    let auth = !!req.get('Authorization');
+    let auth: boolean | string = !!req.get('Authorization');
     if (!auth) {
         return false;
     }
