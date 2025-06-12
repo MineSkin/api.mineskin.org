@@ -2,7 +2,7 @@ import { URL } from "url";
 import * as Sentry from "@sentry/node";
 import { AxiosError, AxiosResponse } from "axios";
 import { Breadcrumb, Maybe } from "@mineskin/types";
-import { Requests } from "../Requests";
+import { IMAGE_FETCH, Requests } from "../Requests";
 import { Log } from "../../Log";
 import { MAX_IMAGE_SIZE } from "@mineskin/generator";
 
@@ -53,11 +53,11 @@ export class UrlHandler {
                     return "invalid protocol";
                 }
                 const follow = URL_FOLLOW_WHITELIST.includes(url.host!);
-                return await Requests.genericRequest({
+                return await Requests.dynamicRequestWithRandomProxy(IMAGE_FETCH, {
                     method: "HEAD",
                     url: url.href,
                     maxRedirects: follow ? MAX_FOLLOW_REDIRECTS : 0,
-                    timeout: 1000,
+                    timeout: 2000,
                     headers: {
                         "User-Agent": "MineSkin"
                     },

@@ -40,6 +40,7 @@
     "@sentry/tracing": "^7.117.0",
     "@xboxreplay/xboxlive-auth": "^3.3.0",
     "axios": "^1.7.9",
+    "axios-retry": "^4.5.0",
     "body-parser": "^1.19.0",
     "chalk": "^4.1.0",
     "cookie-parser": "^1.4.6",

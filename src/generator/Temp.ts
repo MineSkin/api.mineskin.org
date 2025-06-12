@@ -3,7 +3,7 @@ import * as path from "path";
 import * as tmp from "tmp";
 import { DirOptions, FileOptions } from "tmp";
 import { Stream } from "stream";
-import { Requests } from "./Requests";
+import { IMAGE_FETCH, Requests } from "./Requests";
 import { isTempFile, PathHolder } from "../util";
 import ExifTransformer from "exif-be-gone/index";
 
@@ -88,7 +88,7 @@ export class Temp {
             tmpFile = await this.file();
         }
         try {
-            const response = await Requests.genericRequest({
+            const response = await Requests.dynamicRequestWithRandomProxy(IMAGE_FETCH, {
                 method: "GET",
                 url: url,
                 responseType: "stream",

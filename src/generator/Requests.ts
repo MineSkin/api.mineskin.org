@@ -20,8 +20,10 @@ import { container } from "../inversify.config";
 import { IMetricsProvider } from "@mineskin/core";
 import { TYPES as CoreTypes } from "@mineskin/core/dist/ditypes";
 import { HOSTNAME } from "../util/host";
+import axiosRetry from "axios-retry";
 
 export const GENERIC = "generic";
+export const IMAGE_FETCH = "imageFetch";
 export const MOJANG_AUTH = "mojangAuth";
 export const MOJANG_API = "mojangApi";
 export const MOJANG_API_PROFILE = "mojangApiProfile";
@@ -118,6 +120,14 @@ export class Requests {
         axios.defaults.headers["User-Agent"] = "MineSkin/" + config.server;
 
         this.setupMultiProxiedAxiosInstance(GENERIC, config, {});
+        this.setupMultiProxiedAxiosInstance(IMAGE_FETCH, config, {}, c => {
+            const instance = axios.create(c);
+            axiosRetry(instance, {
+                retries: 2,
+                retryDelay: axiosRetry.exponentialDelay
+            });
+            return instance;
+        });
 
         this.setupMultiProxiedAxiosInstance(MOJANG_AUTH, config, {
             baseURL: "https://authserver.mojang.com"
