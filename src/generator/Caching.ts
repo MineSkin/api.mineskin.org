@@ -80,8 +80,8 @@ export class Caching {
                     name: name
                 } as User;
                 if (Requests.isOk(response)) {
-                    if (response.data && response.data.hasOwnProperty("id")) {
-                        const body = response.data;
+                    if (response.data && response.data.data && response.data.data.hasOwnProperty("id")) {
+                        const body = response.data.data;
                         d = {
                             valid: true,
                             uuid: body["id"],
