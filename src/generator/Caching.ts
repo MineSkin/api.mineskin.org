@@ -1,6 +1,6 @@
 import "reflect-metadata";
 
-import { MOJANG_API, MOJANG_SESSION, Requests } from "./Requests";
+import { MOJANG_SESSION, Requests } from "./Requests";
 import {
     AsyncLoadingCache,
     Caches,
@@ -71,8 +71,8 @@ export class Caching {
         .expireAfterWrite(Time.minutes(10))
         .expirationInterval(Time.minutes(1))
         .buildAsync<string, User>(name => {
-            return Requests.dynamicRequestWithRandomProxy(MOJANG_API, {
-                url: "/users/profiles/minecraft/" + name,
+            return Requests.genericRequest({
+                url: "https://mcproxy.dev/name-to-uuid/" + name,
             }).then(response => {
                 let d = {
                     valid: false,

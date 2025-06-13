@@ -148,21 +148,6 @@ export class Requests {
         });
         this.setupMultiRequestQueue(MOJANG_AUTH, config, Time.millis(200), 1);
 
-        this.setupMultiProxiedAxiosInstance(MOJANG_API, config, {
-            baseURL: "https://api.mojang.com",
-            headers: {}
-        }, c => rateLimit(axios.create(c), Requests.defaultRateLimit));
-        this.setupMultiRequestQueue(MOJANG_API, config, Time.millis(200), 1);
-
-        this.setupMultiProxiedAxiosInstance(MOJANG_API_PROFILE, config, {
-            baseURL: "https://api.mojang.com",
-            headers: {}
-        }, c => rateLimit(axios.create(c), {
-            maxRequests: 600,
-            perMilliseconds: 10 * 60 * 1000
-        }));
-        this.setupMultiRequestQueue(MOJANG_API_PROFILE, config, Time.millis(400), 1);
-
         this.setupMultiProxiedAxiosInstance(MOJANG_SESSION, config, {
             baseURL: "https://sessionserver.mojang.com",
             headers: {}
