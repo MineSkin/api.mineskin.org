@@ -27,7 +27,6 @@ export const GENERIC = "generic";
 export const IMAGE_FETCH = "imageFetch";
 export const MOJANG_AUTH = "mojangAuth";
 export const MOJANG_API = "mojangApi";
-export const MOJANG_API_PROFILE = "mojangApiProfile";
 export const MOJANG_SESSION = "mojangSession";
 export const MINECRAFT_SERVICES = "minecraftServices";
 export const MINECRAFT_SERVICES_PROFILE = "minecraftServicesProfile";
@@ -500,14 +499,6 @@ export class Requests {
 
     public static async mojangAuthRequest(request: AxiosRequestConfig, bread?: string): Promise<AxiosResponse> {
         return this.dynamicRequest(MOJANG_AUTH, request, bread);
-    }
-
-    public static async mojangApiRequest(request: AxiosRequestConfig, bread?: string): Promise<AxiosResponse> {
-        return this.dynamicRequest(MOJANG_API, request, bread);
-    }
-
-    public static async mojangApiProfileRequest(request: AxiosRequestConfig, bread?: string): Promise<AxiosResponse> {
-        return this.dynamicRequest(MOJANG_API_PROFILE, request, bread);
     }
 
     public static async mojangSessionRequest(request: AxiosRequestConfig, bread?: string): Promise<AxiosResponse> {

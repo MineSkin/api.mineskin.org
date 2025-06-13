@@ -5,7 +5,6 @@ import {
     AuthError,
     BasicMojangProfile,
     Microsoft,
-    Mojang,
     MojangSecurityAnswer,
     XboxInfo
 } from "../generator/Authentication";
@@ -54,96 +53,6 @@ export const register = (app: Application, config: MineSkinConfig) => {
             domain: "api.mineskin.org"
         }
     }))
-
-    /// MOJANG
-
-    app.post("/accountManager/mojang/login", async (req: AccountManagerRequest, res: Response) => {
-        await regenerateSession(req);
-        if (!req.body["email"] || !req.body["password"]) {
-            res.status(400).json({error: "missing login data"});
-            return;
-        }
-
-        const config = await getConfig();
-        const existingServer = await Authentication.getExistingAccountServer(req.body["email"]);
-        if (existingServer && existingServer !== config.server) {
-            res.json({
-                success: false,
-                switchToServer: {
-                    server: existingServer,
-                    host: `${ existingServer }.api.mineskin.org`
-                }
-            })
-            return;
-        }
-
-        const ip = getIp(req);
-
-        const loginResponse = await Mojang.loginWithCredentials(req.body["email"], base64decode(req.body["password"]), md5(req.body["email"] + "_" + ip)).catch(err => {
-            if (err.response) {
-                throw new AuthenticationError(AuthError.MOJANG_AUTH_FAILED, "Failed to authenticate via mojang", {error: err});
-            }
-            throw err;
-        })
-        if (loginResponse.selectedProfile!.legacy) {
-            res.status(400).json({error: "cannot add legacy profile"});
-            return;
-        }
-        if (loginResponse.selectedProfile!.suspended) {
-            res.status(400).json({error: "cannot add suspended profile"});
-            return;
-        }
-        req.session.account = {
-            type: AccountType.MOJANG,
-            email: req.body["email"],
-            passwordHash: sha512(req.body["password"]),
-            token: loginResponse.accessToken
-        };
-        res.json({
-            success: !!loginResponse.accessToken,
-            token: loginResponse.accessToken,
-            profile: loginResponse.selectedProfile
-        });
-    });
-
-    app.post("/accountManager/mojang/getChallenges", async (req: AccountManagerRequest, res: Response) => {
-        if (!validateSessionAndToken(req, res)) return;
-
-        const challengeResponse = await Mojang.getChallenges(req.session.account!.token!).catch(err => {
-            if (err.response) {
-                throw new AuthenticationError(AuthError.MOJANG_CHALLENGES_FAILED, "Failed to get security challenges", {error:err});
-            }
-            throw err;
-        });
-        res.json({
-            success: true,
-            needToSolveChallenges: challengeResponse.needSolving && challengeResponse.questions,
-            questions: challengeResponse.questions
-        });
-    });
-
-    app.post("/accountManager/mojang/solveChallenges", async (req: AccountManagerRequest, res: Response) => {
-        if (!validateSessionAndToken(req, res)) return;
-
-        if (!req.body["securityAnswers"]) {
-            res.status(400).json({error: "missing answers"});
-            return;
-        }
-        if (!validateMultiSecurityAnswers(req.body["securityAnswers"], req, res)) return;
-        const answers = req.body["securityAnswers"] as MojangSecurityAnswer[];
-
-        const solveResponse = await Mojang.submitChallengeAnswers(req.session.account!.token!, answers).catch(err => {
-            if (err.response) {
-                throw new AuthenticationError(AuthError.MOJANG_CHALLENGES_FAILED, "Failed to complete security challenges", {error:err});
-            }
-            throw err;
-        })
-        res.json({
-            success: true,
-            msg: "Challenges solved"
-        });
-    })
-
 
     /// MICROSOFT
 

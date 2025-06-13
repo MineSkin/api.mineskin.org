@@ -3,9 +3,8 @@ import * as Sentry from "@sentry/node";
 import * as XboxLiveAuth from "@xboxreplay/xboxlive-auth"
 import { AuthenticateResponse, ExchangeRpsTicketResponse } from "@xboxreplay/xboxlive-auth"
 import qs from "querystring";
-import { AxiosResponse } from "axios";
 import { getConfig } from "../typings/Configs";
-import { debug, warn } from "../util/colors";
+import { debug } from "../util/colors";
 import { Bread } from "../typings/Bread";
 import { Notifications } from "../util/Notifications";
 import { Account, IAccountDocument } from "@mineskin/database";
@@ -28,163 +27,6 @@ const ACCESS_TOKEN_EXPIRATION_FALLBACK = 60 * 60 * 24;
 
 const MC_XSTSRelyingParty = 'rp://api.minecraftservices.com/'
 const XBOX_XSTSRelyingParty = 'http://xboxlive.com'
-
-/**@deprecated**/
-export class Mojang {
-
-    /**@deprecated**/
-    public static async authenticate(account: IAccountDocument, bread?: Bread): Promise<IAccountDocument> {
-        if (account.accountType !== AccountType.MOJANG) {
-            throw new AuthenticationError(AuthError.UNSUPPORTED_ACCOUNT, "Can't authenticate microsoft account via mojang auth", {account});
-        }
-
-        if (!account.accessToken) { // Needs login
-            console.log(warn(bread?.breadcrumb + " [Auth] Account #" + account.id + " doesn't have access token"));
-            return await Mojang.login(account, bread);
-        }
-
-        // Check token expiration
-        if (account.accessTokenExpiration && account.accessTokenExpiration - Math.round(Date.now() / 1000) < ACCESS_TOKEN_EXPIRATION_THRESHOLD) {
-            console.log(debug(bread?.breadcrumb + " [Auth] (#" + account.id + ") Force-refreshing accessToken, since it will expire in less than 20 minutes"));
-            return await Mojang.refreshAccessTokenOrLogin(account, bread);
-        }
-
-        // Validate token which shouldn't be expired yet
-        if (await Mojang.validateAccessToken(account, bread)) {
-            // Still valid!
-            console.log(debug(bread?.breadcrumb + " [Auth] (#" + account.id + ") Token still valid!"));
-            return account;
-        }
-
-        // Fallback to refresh / login
-        return await Mojang.refreshAccessTokenOrLogin(account, bread);
-    }
-
-    /// LOGIN
-
-    /**@deprecated**/
-    static async loginWithCredentials(email: string, password: string, clientToken: string): Promise<MojangLoginResponse> {
-        const body = {
-            agent: {
-                name: "Minecraft",
-                version: 1
-            },
-            username: email,
-            password: password,
-            clientToken: clientToken,
-            requestUser: true,
-            _timestamp: Date.now()
-        };
-        const authResponse = await Requests.mojangAuthRequest({
-            method: "POST",
-            url: "/authenticate",
-            data: JSON.stringify(body)
-        });
-        const authBody = authResponse.data;
-        return authBody as MojangLoginResponse;
-    }
-
-    /**@deprecated**/
-    static async login(account: IAccountDocument, bread?: Bread): Promise<IAccountDocument> {
-        const config = await getConfig();
-        if (account.accountType !== AccountType.MOJANG) {
-            throw new AuthenticationError(AuthError.UNSUPPORTED_ACCOUNT, "Can't login microsoft account via mojang auth", {account});
-        }
-
-        throw new Error("not implemented");
-    }
-
-    /// TOKENS
-
-    /**@deprecated**/
-    static async validateAccessToken(account: IAccountDocument, bread?: Bread): Promise<boolean> {
-        if (account && account.accountType !== AccountType.MOJANG) {
-            throw new AuthenticationError(AuthError.UNSUPPORTED_ACCOUNT, "Can't validate microsoft account access token via mojang auth", {account});
-        }
-
-        throw new Error("not implemented");
-    }
-
-    /**@deprecated**/
-    static async refreshAccessTokenOrLogin(account: IAccountDocument, bread?: Bread): Promise<IAccountDocument> {
-        throw new Error("not implemented");
-    }
-
-    /**@deprecated**/
-    static async refreshAccessToken(account: IAccountDocument, bread?: Bread): Promise<IAccountDocument> {
-        const config = await getConfig();
-        if (account.accountType !== AccountType.MOJANG) {
-            throw new AuthenticationError(AuthError.UNSUPPORTED_ACCOUNT, "Can't refresh microsoft account access token via mojang auth", {account});
-        }
-
-        throw new Error("not implemented");
-    }
-
-    /// CHALLENGES
-
-    /**@deprecated**/
-    static async getChallenges(accessToken: string): Promise<MojangChallengesResponse> {
-        // Check if location is secured
-        const locationResponse: boolean = await Requests.mojangApiRequest({
-            method: "GET",
-            url: "/user/security/location",
-            headers: {
-                "Authorization": `Bearer ${ accessToken }`
-            }
-        }).then(res => {
-            return Requests.isOk(res);
-        }).catch(() => {
-            return false;
-        })
-        if (locationResponse) {
-            // Already answered
-            return {
-                needSolving: false
-            };
-        }
-
-        // Get security questions
-        const challengesResponse = await Requests.mojangApiRequest({
-            method: "GET",
-            url: "/user/security/challenges",
-            headers: {
-                "Authorization": `Bearer ${ accessToken }`
-            }
-        });
-        const challengesBody = challengesResponse.data;
-        if (!challengesBody || challengesBody.length <= 0) {
-            // Probably no questions?
-            return {
-                needSolving: false
-            };
-        }
-        const questions: MojangSecurityQuestion[] = challengesBody;
-
-        return {
-            needSolving: true,
-            questions: questions
-        }
-    }
-
-    /**@deprecated**/
-    static async submitChallengeAnswers(accessToken: string, answers: MojangSecurityAnswer[]): Promise<AxiosResponse<any>> {
-        return await Requests.mojangApiRequest({
-            method: "POST",
-            url: "/user/security/location",
-            headers: {
-                "Authorization": `Bearer ${ accessToken }`
-            },
-            data: answers
-        });
-    }
-
-    /**@deprecated**/
-    static async completeChallenges(account: IAccountDocument, bread?: Bread): Promise<IAccountDocument> {
-        throw new Error("not implemented");
-    }
-
-
-}
 
 export class Microsoft {
 
@@ -619,8 +461,7 @@ export class Authentication {
                 if (account.accountType === AccountType.MICROSOFT) {
                     result = await Microsoft.authenticate(account, bread);
                 } else {
-                    result = await Mojang.authenticate(account, bread)
-                        .then(account => Mojang.completeChallenges(account, bread));
+                    throw new Error("invalid account type");
                 }
                 metric
                     .tag("result", "success")
