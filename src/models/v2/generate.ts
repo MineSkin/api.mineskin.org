@@ -54,6 +54,7 @@ import { Log } from "../../Log";
 import { TYPES as CoreTypes } from "@mineskin/core/dist/ditypes";
 import { getCachedV2Stats } from "./stats";
 import { IFlagProvider } from "@mineskin/core";
+import { V2Base64Handler } from "../../generator/v2/V2Base64Handler";
 
 const upload = multer({
     limits: {
@@ -491,9 +492,12 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
                 });
             }
             if ('url' in req.body) {
-                handler = new V2UrlHandler(req, res, options);
+                if (req.body?.url?.startsWith('data:image/png;base64,')) {
+                    handler = new V2Base64Handler(req, res, options);
+                } else {
+                    handler = new V2UrlHandler(req, res, options);
+                }
             } else if ('user' in req.body) {
-                //TODO: validate user
                 handler = new V2UserHandler(req, res, options);
             } else {
                 throw new GeneratorError('invalid_request', `invalid request properties (expected url or user)`, {
