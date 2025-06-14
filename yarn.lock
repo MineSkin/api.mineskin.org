@@ -4565,7 +4565,7 @@ __metadata:
     "@types/ua-parser-js": "npm:^0.7.39"
     "@types/uuid": "npm:^8.3.0"
     "@xboxreplay/xboxlive-auth": "npm:^3.3.0"
-    axios: "npm:^1.7.9"
+    axios: "npm:^1.9.0"
     axios-retry: "npm:^4.5.0"
     body-parser: "npm:^1.19.0"
     chalk: "npm:^4.1.0"
@@ -4597,7 +4597,7 @@ __metadata:
     jose: "npm:^5.9.3"
     jsonwebtoken: "npm:9.0.0"
     metrics-node: "npm:^1.3.0-beta.1"
-    mongoose: "npm:^8.4.1"
+    mongoose: "npm:^8.15.2"
     morgan: "npm:^1.10.0"
     multer: "npm:^1.4.5-lts.1"
     nodemailer: "npm:^6.5.0"
@@ -4798,6 +4798,17 @@ __metadata:
   dependencies:
     follow-redirects: "npm:^1.14.0"
   checksum: 10c0/fbcff55ec68f71f02d3773d467db2fcecdf04e749826c82c2427a232f9eba63242150a05f15af9ef15818352b814257541155de0281f8fb2b7e8a5b79f7f2142
+  languageName: node
+  linkType: hard
+
+"axios@npm:^1.9.0":
+  version: 1.9.0
+  resolution: "axios@npm:1.9.0"
+  dependencies:
+    follow-redirects: "npm:^1.15.6"
+    form-data: "npm:^4.0.0"
+    proxy-from-env: "npm:^1.1.0"
+  checksum: 10c0/9371a56886c2e43e4ff5647b5c2c3c046ed0a3d13482ef1d0135b994a628c41fbad459796f101c655e62f0c161d03883454474d2e435b2e021b1924d9f24994c
   languageName: node
   linkType: hard
 
@@ -5041,6 +5052,13 @@ __metadata:
   version: 6.10.1
   resolution: "bson@npm:6.10.1"
   checksum: 10c0/89f0ee7a45211648afa5a32d7f4d7ce436e20614b7c5d37c9fd6bc6e9464eec0ddeab8432a836d819bef1f4896256d874044603cf5f4b2123c00734842799601
+  languageName: node
+  linkType: hard
+
+"bson@npm:^6.10.3":
+  version: 6.10.4
+  resolution: "bson@npm:6.10.4"
+  checksum: 10c0/6c6819ce642516901349f42c5d9d131d5a4e84352a3859c814d4abf6b2b9249e3685b57fc4cf7b5737fb5c71252f65900a41826c1429815a93e43f0f5bb3c173
   languageName: node
   linkType: hard
 
@@ -8694,7 +8712,56 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mongoose@npm:^8.4.1, mongoose@npm:^8.5.3":
+"mongodb@npm:~6.16.0":
+  version: 6.16.0
+  resolution: "mongodb@npm:6.16.0"
+  dependencies:
+    "@mongodb-js/saslprep": "npm:^1.1.9"
+    bson: "npm:^6.10.3"
+    mongodb-connection-string-url: "npm:^3.0.0"
+  peerDependencies:
+    "@aws-sdk/credential-providers": ^3.188.0
+    "@mongodb-js/zstd": ^1.1.0 || ^2.0.0
+    gcp-metadata: ^5.2.0
+    kerberos: ^2.0.1
+    mongodb-client-encryption: ">=6.0.0 <7"
+    snappy: ^7.2.2
+    socks: ^2.7.1
+  peerDependenciesMeta:
+    "@aws-sdk/credential-providers":
+      optional: true
+    "@mongodb-js/zstd":
+      optional: true
+    gcp-metadata:
+      optional: true
+    kerberos:
+      optional: true
+    mongodb-client-encryption:
+      optional: true
+    snappy:
+      optional: true
+    socks:
+      optional: true
+  checksum: 10c0/daf54347181d50ff6207a78f545bd1bea856505efa61a1bb29fc200b412fad84971c49e7d8a57e96a09bb6eab9625a6d6ad1d84884afa3a16041d5dba1b18b38
+  languageName: node
+  linkType: hard
+
+"mongoose@npm:^8.15.2":
+  version: 8.15.2
+  resolution: "mongoose@npm:8.15.2"
+  dependencies:
+    bson: "npm:^6.10.3"
+    kareem: "npm:2.6.3"
+    mongodb: "npm:~6.16.0"
+    mpath: "npm:0.9.0"
+    mquery: "npm:5.0.0"
+    ms: "npm:2.1.3"
+    sift: "npm:17.1.3"
+  checksum: 10c0/c1b8e4c7a7ec9d3042340f172cdd186ed8432031d2e098e56bc557e7c3b0bc3755a5d95406e2ce16455095911c0fc005c8005a1d6fb21d66fc0fe68a4a8867a0
+  languageName: node
+  linkType: hard
+
+"mongoose@npm:^8.5.3":
   version: 8.9.3
   resolution: "mongoose@npm:8.9.3"
   dependencies:
