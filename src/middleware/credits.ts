@@ -1,6 +1,5 @@
 import { MineSkinV2Request } from "../routes/v2/types";
 import { NextFunction, Response } from "express";
-import { BillingService, TYPES as BillingTypes, UserCreditHolder } from "@mineskin/billing";
 import { IFlagProvider, TYPES as CoreTypes } from "@mineskin/core";
 import { container } from "../inversify.config";
 import * as Sentry from "@sentry/node";
@@ -21,10 +20,10 @@ export const verifyCredits = async (req: MineSkinV2Request, res: Response) => {
 
         const flags = container.get<IFlagProvider>(CoreTypes.FlagProvider);
         if (!(await flags.isEnabled('generator.credits.enabled'))) {
-            // req.clientInfo.usePaidCredits = false;
             return;
         }
 
+        /*
         // check credits
         // (always check, even when not enabled, to handle free credits)
         if (req.client.canUseCredits() && req.client.userId) {
@@ -56,6 +55,6 @@ export const verifyCredits = async (req: MineSkinV2Request, res: Response) => {
                 res.header('MineSkin-Credits-Type', credit.type);
                 res.header('MineSkin-Credits-Balance', `${ credit.balance }`);
             }
-        }
+        }*/
     })
 }

@@ -1,6 +1,6 @@
 import { v2Router } from "./router";
 import { TrafficService, TYPES as GeneratorTypes } from "@mineskin/generator";
-import { BillingService, TYPES as BillingTypes, UserCreditHolder } from "@mineskin/billing";
+import { BillingService, TYPES as BillingTypes } from "@mineskin/billing";
 import { MineSkinV2Request } from "./types";
 import { Response } from "express";
 import {
@@ -22,13 +22,6 @@ router.get("/client", async (req: MineSkinV2Request, res: Response) => {
 router.get("/apikey", async (req: MineSkinV2Request, res: Response) => {
     const key = req.apiKey;
     res.json({key});
-});
-
-router.get("/billing/credits", async (req: MineSkinV2Request, res: Response) => {
-    const billingService = container.get<BillingService>(BillingTypes.BillingService);
-    const holder = await billingService.creditService.getHolder(req.client.userId!) as UserCreditHolder;
-    const credit = await holder.findFirstApplicableMongoCredit(await req.client.usePaidCredits());
-    res.json({holder, credit});
 });
 
 router.post("/billing/simulate-new-skin", async (req: MineSkinV2Request, res: Response) => {

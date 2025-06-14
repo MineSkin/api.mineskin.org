@@ -15,9 +15,9 @@ export async function v2GetMe(req: MineSkinV2Request, res: Response<V2MiscRespon
     if (req.clientInfo) {
         req.links.client = `/v2/me/client`;
     }
-    if (req.client.canUseCredits()) {
-        req.links.credits = `/v2/me/credits`;
-    }
+    // if (req.client.canUseCredits()) {
+    //     req.links.credits = `/v2/me/credits`;
+    // }
     if (req.client.hasUser()) {
         req.links.user = `/v2/me`;
         res.json(formatV2Response<V2MiscResponseBody>(req, {
@@ -85,7 +85,7 @@ export async function v2GetCreditsInfo(req: MineSkinV2Request, res: Response<V2M
     }
     const billingService = container.get<BillingService>(BillingTypes.BillingService);
     const holder = await billingService.creditService.getHolder(req.client.userId) as UserCreditHolder;
-    const credit = await holder.findFirstApplicableMongoCredit(await req.client.usePaidCredits());
+    const credit = await holder.findFirstApplicableMongoCredit(false);
     if (!credit) {
         req.warnings.push({
             code: 'no_credits',

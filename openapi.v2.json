@@ -320,6 +320,7 @@
         }
       },
       "CreditsUsageInfo": {
+        "deprecated": true,
         "type": "object",
         "required": [
           "used",
@@ -599,6 +600,7 @@
         }
       },
       "MeCreditsInfo": {
+        "deprecated": true,
         "type": "object",
         "required": [
           "credit"
@@ -770,6 +772,7 @@
         }
       },
       "MeteredUsageInfo": {
+        "deprecated": true,
         "type": "object",
         "required": [
           "used"
@@ -1583,6 +1586,7 @@
     },
     "/v2/me/credits": {
       "get": {
+        "deprecated": true,
         "summary": "Get user credits",
         "description": "Get information about the current user's credits",
         "tags": [
