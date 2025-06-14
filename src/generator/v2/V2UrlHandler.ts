@@ -16,7 +16,7 @@ import { V2SkinResponse } from "../../typings/v2/V2SkinResponse";
 import { isTempFile, PathHolder } from "../../util";
 import { Temp, URL_DIR } from "../Temp";
 import { UrlHandler } from "./UrlHandler";
-import { GenerateReqUrl } from "../../validation/generate";
+import { GenerateReqUrlHttp } from "../../validation/generate";
 import { Log } from "../../Log";
 import { UrlChecks } from "./UrlChecks";
 import { container } from "../../inversify.config";
@@ -35,7 +35,7 @@ export class V2UrlHandler extends V2GenerateHandler {
             op: 'url_handler',
             name: 'getImageBuffer'
         }, async span => {
-            const {url: originalUrl} = GenerateReqUrl.parse(this.req.body);
+            const {url: originalUrl} = GenerateReqUrlHttp.parse(this.req.body);
             Log.l.debug(`${ this.req.breadcrumbC } URL:         "${ originalUrl }"`);
 
             if (UrlChecks.isBlockedHost(originalUrl)) {
