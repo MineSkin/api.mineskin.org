@@ -61,6 +61,7 @@ import { v2SitemapsRouter } from "./routes/v2/sitemaps";
 import { requestLogMiddleware } from "./middleware/log";
 import { RequestManager } from "@mineskin/requests";
 import { ZodError } from "zod";
+import { v2GetStats } from "./models/v2/stats";
 
 
 sourceMapSupport.install();
@@ -317,6 +318,21 @@ async function init() {
                     ok: redis === "PONG",
                     res: redis
                 }
+            });
+        });
+
+        app.get("/health/upstream", async function (req, res) {
+            const stats = await v2GetStats(undefined as any, undefined as any);
+            const errors: Record<string, number> = stats.stats.upstream.errors;
+
+            let hasErrors = Object.values(errors).some(e => e > 0);
+            if (hasErrors) {
+                res.status(503);
+            }
+
+            return res.json({
+                server: config.server,
+                errors: errors
             });
         });
 

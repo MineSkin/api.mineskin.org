@@ -160,7 +160,7 @@ const statsWrapper = new class {
         const total1d = success1d[0]?.sum + fail1d[0]?.sum || 0;
         const successRate1d = Math.round((success1d[0]?.sum / total1d * 100 || 0) * 10) / 10;
 
-        const upstreamErrorsByTag: Record<string, number> = upstreamErrors5m.reduce((acc, cur) => {
+        const upstreamErrorsByTag: Record<string, number> = Array.from(upstreamErrors5m).reduce((acc, cur) => {
             if (!cur.tag) {
                 return acc;
             }
