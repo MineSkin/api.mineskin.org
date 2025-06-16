@@ -321,13 +321,21 @@ async function init() {
             });
         });
 
-        app.get("/health/upstream", async function (req, res) {
+        app.get("/health/upstream/:type?", async function (req, res) {
             const stats = await v2GetStats(undefined as any, undefined as any);
             const errors: Record<string, number> = stats.stats.upstream.errors;
 
-            let hasErrors = Object.values(errors).some(e => e > 0);
-            if (hasErrors) {
-                res.status(503);
+            const threshold = 5;
+
+            if (req.params.type) {
+                if (errors[req.params.type] && errors[req.params.type] > threshold) {
+                    res.status(503);
+                }
+            } else {
+                let hasErrors = Object.values(errors).some(e => e > threshold);
+                if (hasErrors) {
+                    res.status(503);
+                }
             }
 
             return res.json({
@@ -335,6 +343,7 @@ async function init() {
                 errors: errors
             });
         });
+
 
         app.get("/openapi.yml", corsMiddleware, (req, res) => {
             res.sendFile("/openapi.yml", {root: `${ __dirname }/..`});
