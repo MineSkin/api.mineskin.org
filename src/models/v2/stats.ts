@@ -147,7 +147,7 @@ const statsWrapper = new class {
             database: 'mineskin',
             precision: 's'
         });
-        const [upstreamErrors5m] = await metrics.getMetrics().influx.query<{ sum: number; tag: string; }>([
+        let [upstreamErrors5m] = await metrics.getMetrics().influx.query<{ sum: number; tag: string; }>([
             `SELECT sum("count") FROM "one_month"."upstream_errors" WHERE time > now() - 10m GROUP BY time(10m), "tag"::tag fill(0)`
         ], {
             database: 'mineskin',
@@ -160,16 +160,26 @@ const statsWrapper = new class {
         const total1d = success1d[0]?.sum + fail1d[0]?.sum || 0;
         const successRate1d = Math.round((success1d[0]?.sum / total1d * 100 || 0) * 10) / 10;
 
-        const upstreamErrorsByTag: Record<string, number> = Array.from(upstreamErrors5m).reduce((acc, cur) => {
-            if (!cur.tag) {
-                return acc;
+        console.debug(JSON.stringify(upstreamErrors5m));
+        if(!Array.isArray(upstreamErrors5m) && typeof upstreamErrors5m === 'object') {
+            // @ts-ignore
+            upstreamErrors5m = [upstreamErrors5m];
+        }
+        const upstreamErrorsByTag: Record<string, number> = {};
+        try {
+            for (let cur of upstreamErrors5m) {
+                if (!cur.tag) {
+                    continue;
+                }
+                if (!upstreamErrorsByTag[cur.tag]) {
+                    upstreamErrorsByTag[cur.tag] = 0;
+                }
+                upstreamErrorsByTag[cur.tag] += cur.sum || 0;
             }
-            if (!acc[cur.tag]) {
-                acc[cur.tag] = 0;
-            }
-            acc[cur.tag] += cur.sum || 0;
-            return acc;
-        }, {} as Record<string, number>);
+        } catch (e) {
+            Log.l.error('Error processing upstream errors', e);
+            Sentry.captureException(e);
+        }
 
         Log.l.debug(`influx stats query took ${ Date.now() - date.getTime() }ms`);
 
