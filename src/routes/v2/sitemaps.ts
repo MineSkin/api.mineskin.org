@@ -5,6 +5,9 @@ import { MineSkinV2Request } from "./types";
 import { ISkin2Document, Skin2 } from "@mineskin/database";
 import { RootFilterQuery } from "mongoose";
 import { SkinVisibility2 } from "@mineskin/types";
+import { container } from "../../inversify.config";
+import { IRedisProvider } from "@mineskin/core";
+import { TYPES as CoreTypes } from "@mineskin/core/dist/ditypes";
 
 const router: Router = v2Router();
 
@@ -96,6 +99,26 @@ router.get("/web-skins-popular-30d.xml", expressAsyncHandler(async (req: MineSki
         xml += '  <url>\n';
         xml += `    <loc>https://mineskin.org/skins/${ skin.uuid }</loc>\n`;
         xml += `    <lastmod>${ skin.updatedAt.toISOString() }</lastmod>\n`;
+        xml += '  </url>\n';
+    }
+    xml += '</urlset>\n';
+
+    res.send(xml);
+}));
+
+router.get("/web-search-common.xml", expressAsyncHandler(async (req: MineSkinV2Request, res: Response) => {
+    res.header('Cache-Control', 'public, max-age=3600');
+    res.header('Content-Type', 'application/xml');
+
+    const redis = container.get<IRedisProvider>(CoreTypes.RedisProvider);
+    const terms = await redis.client.zRange('mineskin:search_terms', 0, 499);
+
+    let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+    xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
+    for (let term of terms) {
+        term = encodeURIComponent(term.trim());
+        xml += '  <url>\n';
+        xml += `    <loc>https://mineskin.org/skins/?search=${ term }</loc>\n`;
         xml += '  </url>\n';
     }
     xml += '</urlset>\n';
