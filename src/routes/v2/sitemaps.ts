@@ -111,7 +111,9 @@ router.get("/web-search-common.xml", expressAsyncHandler(async (req: MineSkinV2R
     res.header('Content-Type', 'application/xml');
 
     const redis = container.get<IRedisProvider>(CoreTypes.RedisProvider);
-    const terms = await redis.client.zRange('mineskin:search_terms', 0, 499);
+    const terms = await redis.client.zRange('mineskin:search_terms', 3, 999, {
+        BY: 'SCORE'
+    });
 
     let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
     xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
