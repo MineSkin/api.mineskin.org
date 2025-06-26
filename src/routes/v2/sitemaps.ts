@@ -30,6 +30,7 @@ router.get("/web-skins.xml", expressAsyncHandler(async (req: MineSkinV2Request, 
         xml += '  <url>\n';
         xml += `    <loc>https://mineskin.org/skins/${ skin.uuid }</loc>\n`;
         xml += `    <lastmod>${ skin.updatedAt.toISOString() }</lastmod>\n`;
+        xml += `    <priority>0.4</priority>\n`;
         xml += '  </url>\n';
     }
     xml += '</urlset>\n';
@@ -67,6 +68,7 @@ router.get("/web-skins-popular-24h.xml", expressAsyncHandler(async (req: MineSki
         xml += '  <url>\n';
         xml += `    <loc>https://mineskin.org/skins/${ skin.uuid }</loc>\n`;
         xml += `    <lastmod>${ skin.updatedAt.toISOString() }</lastmod>\n`;
+        xml += `    <priority>0.6</priority>\n`;
         xml += '  </url>\n';
     }
     xml += '</urlset>\n';
@@ -99,6 +101,7 @@ router.get("/web-skins-popular-30d.xml", expressAsyncHandler(async (req: MineSki
         xml += '  <url>\n';
         xml += `    <loc>https://mineskin.org/skins/${ skin.uuid }</loc>\n`;
         xml += `    <lastmod>${ skin.updatedAt.toISOString() }</lastmod>\n`;
+        xml += `    <priority>0.6</priority>\n`;
         xml += '  </url>\n';
     }
     xml += '</urlset>\n';
@@ -121,6 +124,8 @@ router.get("/web-search-common.xml", expressAsyncHandler(async (req: MineSkinV2R
         term = encodeURIComponent(term.trim());
         xml += '  <url>\n';
         xml += `    <loc>https://mineskin.org/skins/?search=${ term }</loc>\n`;
+        xml += `    <lastmod>${ new Date().toISOString() }</lastmod>\n`;
+        xml += `    <priority>0.7</priority>\n`;
         xml += '  </url>\n';
     }
     xml += '</urlset>\n';
