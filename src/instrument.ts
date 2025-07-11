@@ -23,6 +23,7 @@ Sentry.init({
         "Failed to find image from url",
         "Invalid file size",
         "invalid_image",
-        "invalid_string"
+        "invalid_string",
+        "Request failed with status code 404",
     ]
 });
