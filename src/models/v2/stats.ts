@@ -161,20 +161,22 @@ const statsWrapper = new class {
         const successRate1d = Math.round((success1d[0]?.sum / total1d * 100 || 0) * 10) / 10;
 
         console.debug(JSON.stringify(upstreamErrors5m));
-        if(!Array.isArray(upstreamErrors5m) && typeof upstreamErrors5m === 'object') {
+        if (!Array.isArray(upstreamErrors5m) && typeof upstreamErrors5m === 'object') {
             // @ts-ignore
             upstreamErrors5m = [upstreamErrors5m];
         }
         const upstreamErrorsByTag: Record<string, number> = {};
         try {
-            for (let cur of upstreamErrors5m) {
-                if (!cur.tag) {
-                    continue;
+            if (Array.isArray(upstreamErrors5m)) {
+                for (let cur of upstreamErrors5m) {
+                    if (!cur.tag) {
+                        continue;
+                    }
+                    if (!upstreamErrorsByTag[cur.tag]) {
+                        upstreamErrorsByTag[cur.tag] = 0;
+                    }
+                    upstreamErrorsByTag[cur.tag] += cur.sum || 0;
                 }
-                if (!upstreamErrorsByTag[cur.tag]) {
-                    upstreamErrorsByTag[cur.tag] = 0;
-                }
-                upstreamErrorsByTag[cur.tag] += cur.sum || 0;
             }
         } catch (e) {
             Log.l.error('Error processing upstream errors', e);
