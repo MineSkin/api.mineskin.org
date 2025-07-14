@@ -85,7 +85,7 @@ async function v2ListSkins(req: MineSkinV2Request, res: Response<V2SkinListRespo
     };
 
     if (filter) {
-        query['$text'] = {$search: filter};
+        query['$text'] = {$search: filter.toLowerCase()};
     }
 
     const sort: Record<string, SortOrder> = {_id: -1};
