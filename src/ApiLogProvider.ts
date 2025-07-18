@@ -19,7 +19,7 @@ export class ApiLogProvider implements ILogProvider {
             datePattern: 'YYYY-MM-DD-HH',
             zippedArchive: true,
             maxSize: '20m',
-            maxFiles: '7d',
+            maxFiles: '2d',
             createSymlink: true,
             symlinkName: 'mineskin.log',
         });
