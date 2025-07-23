@@ -125,12 +125,20 @@ function doLog(request: any, response: any, breadcrumb: string) {
                 break;
         }
 
-        mongoose.connection.db?.collection('request_logs').insertOne({
+        if (!mongoose.connection) {
+            console.warn("Mongoose connection is not ready, skipping request log.");
+            return;
+        }
+
+        mongoose.connection.collection('request_logs').insertOne({
             request,
             response,
             timestamp,
             expiration,
             breadcrumb
+        }).catch(e => {
+            console.error("Failed to log request in mongo:", e);
+            Sentry.captureException(e);
         });
     }).catch(e => {
         console.error(e);
