@@ -55,6 +55,8 @@ import { TYPES as CoreTypes } from "@mineskin/core/dist/ditypes";
 import { getCachedV2Stats } from "./stats";
 import { IFlagProvider } from "@mineskin/core";
 import { V2Base64Handler } from "../../generator/v2/V2Base64Handler";
+import { setBreadcrumb } from "../../middleware/breadcrumb";
+import { nextBreadColor } from "../../typings/Bread";
 
 const upload = multer({
     limits: {
@@ -251,6 +253,11 @@ export async function v2GetJob(req: GenerateV2Request, res: Response<V2GenerateR
         const job = await getClient().getJob(jobId);
         if (!job) {
             throw new GeneratorError('job_not_found', `Job not found: ${ jobId }`, {httpCode: 404});
+        }
+
+        // re-apply existing breadcrumb
+        if (job.request.breadcrumb) {
+            setBreadcrumb(req, res, job.request.breadcrumb, nextBreadColor());
         }
 
         req.links.image = `/v2/images/${ job.request.image }`;
