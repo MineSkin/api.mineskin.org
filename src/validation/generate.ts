@@ -5,9 +5,17 @@ import { UUID } from "./misc";
 export const URL_MAX_LENGTH = 256;
 export const BASE64_MAX_LENGTH = 26668; // roughly 20KB encoded PNG
 
+export const GenerateReqName = z.string().max(48).regex(/^[a-zA-Z0-9_.\- ]+$/);
+export const GenerateReqVisibility = z.enum([SkinVisibility2.PUBLIC, SkinVisibility2.UNLISTED, SkinVisibility2.PRIVATE]);
+
+export const GenerateReqNameAndVisibility = z.object({
+    name: GenerateReqName.optional(),
+    visibility: GenerateReqVisibility.optional()
+});
+
 export const GenerateReqOptions = z.object({
-    name: z.string().max(48).regex(/^[a-zA-Z0-9_.\- ]+$/).optional(),
-    visibility: z.enum([SkinVisibility2.PUBLIC, SkinVisibility2.UNLISTED, SkinVisibility2.PRIVATE]).default(SkinVisibility2.PUBLIC),
+    name: GenerateReqName.optional(),
+    visibility: GenerateReqVisibility.default(SkinVisibility2.PUBLIC),
     variant: z.enum([SkinVariant.CLASSIC, SkinVariant.SLIM, SkinVariant.UNKNOWN]).default(SkinVariant.UNKNOWN),
     cape: UUID.optional()
 });

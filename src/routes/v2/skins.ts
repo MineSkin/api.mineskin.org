@@ -5,7 +5,8 @@ import {
     v2GetSkinTextureRedirect,
     v2LatestSkinList,
     v2ListRandomSkins,
-    v2PopularSkinList
+    v2PopularSkinList,
+    v2UpdateSkin
 } from "../../models/v2/skins";
 import { v2Router } from "./router";
 import expressAsyncHandler from "express-async-handler";
@@ -98,5 +99,9 @@ router.post("/:uuid/report", expressAsyncHandler(async (req: MineSkinV2Request, 
     }));
 }));
 
+router.patch("/:uuid",expressAsyncHandler(async (req: MineSkinV2Request, res: Response<V2MiscResponseBody>) => {
+    const result = await v2UpdateSkin(req, res);
+    res.json(formatV2Response(req, result));
+}));
 
 export const v2SkinsRouter: Router = router;

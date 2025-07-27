@@ -10,7 +10,7 @@ import {
     User
 } from "@mineskin/database";
 import { FilterQuery, SortOrder } from "mongoose";
-import { Maybe, MineSkinError, SkinVisibility2 } from "@mineskin/types";
+import { ErrorSource, Maybe, MineSkinError, SkinVisibility2 } from "@mineskin/types";
 import { ListedSkin, V2SkinListResponseBody } from "../../typings/v2/V2SkinListResponseBody";
 import { V2SkinResponse } from "../../typings/v2/V2SkinResponse";
 import { V2GenerateHandler } from "../../generator/v2/V2GenerateHandler";
@@ -27,6 +27,7 @@ import { Classification } from "@mineskin/database/dist/schemas/Classification";
 import { Requests } from "../../generator/Requests";
 import { AsyncLoadingCache, Caches } from "@inventivetalent/loading-cache";
 import { Time } from "@inventivetalent/time";
+import { GenerateReqNameAndVisibility } from "../../validation/generate";
 
 type QueryCustomizer = (args: {
     query: FilterQuery<ISkin2Document>,
@@ -252,6 +253,104 @@ export async function v2GetSkin(req: MineSkinV2Request, res: Response<V2SkinResp
         success: true,
         skin: V2GenerateHandler.skinToJson(skin as IPopulatedSkin2Document)
     };
+}
+
+export async function v2UpdateSkin(req: MineSkinV2Request, res: Response<V2SkinResponse>): Promise<V2SkinResponse> {
+    const uuidOrShort = UUIDOrShortId.parse(req.params.uuid);
+
+    req.links.skin = `/v2/skins/${ uuidOrShort }`;
+    req.links.self = req.links.skin;
+
+    let skin = await findV2SkinForId(req, uuidOrShort);
+    skin = validateRequestedSkin(req, skin);
+
+    const body = GenerateReqNameAndVisibility.parse(req.body);
+
+    let canEdit = true;
+    let editFail = "You are not allowed to edit this skin";
+
+    // allow editing for x hours after creation
+    const skinEditDurationHours = Number(req.client.grants?.skin_edit_duration || 12);
+    if (canEdit && skin.createdAt.getTime() + Time.hours(skinEditDurationHours) < Date.now()) {
+        canEdit = false;
+        editFail = `You can only edit skins within ${ skinEditDurationHours } hours of creation`;
+    }
+
+    // double-check visibility & user
+    if (canEdit && skin.meta.visibility === SkinVisibility2.PRIVATE) {
+        let usersMatch = false;
+        if (req.client.hasUser()) {
+            usersMatch = skin.clients.some(c => c.user === req.client.userId);
+        }
+        if (!usersMatch) {
+            Log.l.warn(`User ${ req.client.userId } tried to edit private skin ${ skin.uuid } without permission`);
+            canEdit = false;
+            editFail = "You are not allowed to edit this skin";
+        }
+    }
+
+    // only let the user who first uploaded the skin edit it
+    if (canEdit) {
+        if (skin.clients.length <= 0) {
+            Log.l.warn(`Skin ${ skin.uuid } has no clients, cannot edit`);
+            canEdit = false;
+        } else if (skin.clients.length > 1) {
+            canEdit = false;
+            editFail = "Multiple users have uploaded this skin, you cannot edit it";
+        } else if (skin.clients[0].user !== req.client.userId) {
+            Log.l.warn(`User ${ req.client.userId } tried to edit skin ${ skin.uuid } uploaded by user ${ skin.clients[0].user }`);
+            canEdit = false;
+            editFail = "You are not allowed to edit this skin";
+        }
+    }
+
+    if (!canEdit) {
+        throw new MineSkinError('unauthorized', editFail, {httpCode: 401});
+    }
+
+    // update skin
+    if (body.name) {
+        skin.meta.name = body.name;
+        try {
+            const metrics = container.get<IMetricsProvider>(CoreTypes.MetricsProvider);
+            metrics.getMetric('interactions')
+                .tag("interaction", "update-name")
+                .inc();
+        } catch (e) {
+            Sentry.captureException(e);
+        }
+    }
+    if (body.visibility) {
+        if (body.visibility === SkinVisibility2.PRIVATE) {
+            if (!req.client.grants?.private_skins) {
+                throw new MineSkinError('insufficient_grants', "you are not allowed to create private skins", {
+                    httpCode: 403,
+                    source: ErrorSource.CLIENT
+                });
+            }
+        }
+
+        skin.meta.visibility = body.visibility;
+        try {
+            const metrics = container.get<IMetricsProvider>(CoreTypes.MetricsProvider);
+            metrics.getMetric('interactions')
+                .tag("interaction", "update-visibility")
+                .inc();
+        } catch (e) {
+            Sentry.captureException(e);
+        }
+    }
+
+    await skin.save();
+
+    return {
+        success: true,
+        skin: V2GenerateHandler.skinToJson(skin as IPopulatedSkin2Document),
+        messages: [{
+            code: "updated",
+            message: "Skin updated successfully"
+        }]
+    }
 }
 
 export async function v2GetSkinTextureRedirect(req: MineSkinV2Request, res: Response<V2SkinResponse>): Promise<void> {
