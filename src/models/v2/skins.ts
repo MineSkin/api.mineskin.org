@@ -304,13 +304,30 @@ export async function v2UpdateSkin(req: MineSkinV2Request, res: Response<V2SkinR
         }
     }
 
+    // limit number of edits
+    if (canEdit && skin.edits && skin.edits.length >= 6) {
+        canEdit = false;
+        editFail = "You have reached the maximum number of edits for this skin";
+    }
+
     if (!canEdit) {
         throw new MineSkinError('unauthorized', editFail, {httpCode: 401});
     }
 
     // update skin
     if (body.name) {
+        if (!skin.edits) {
+            skin.edits = [];
+        }
+        skin.edits.push({
+            time: new Date(),
+            field: 'meta.name',
+            from: skin.meta.name || null,
+            to: body.name
+        });
+
         skin.meta.name = body.name;
+
         try {
             const metrics = container.get<IMetricsProvider>(CoreTypes.MetricsProvider);
             metrics.getMetric('interactions')
@@ -329,6 +346,16 @@ export async function v2UpdateSkin(req: MineSkinV2Request, res: Response<V2SkinR
                 });
             }
         }
+
+        if (!skin.edits) {
+            skin.edits = [];
+        }
+        skin.edits.push({
+            time: new Date(),
+            field: 'meta.visibility',
+            from: skin.meta.visibility || null,
+            to: body.visibility
+        });
 
         skin.meta.visibility = body.visibility;
         try {
