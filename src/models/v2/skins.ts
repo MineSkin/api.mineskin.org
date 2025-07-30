@@ -270,8 +270,8 @@ export async function v2UpdateSkin(req: MineSkinV2Request, res: Response<V2SkinR
     let editFail = "You are not allowed to edit this skin";
 
     // allow editing for x hours after creation
-    const skinEditDurationHours = Number(req.client.grants?.skin_edit_duration || 12);
-    if (canEdit && skin.createdAt.getTime() + Time.hours(skinEditDurationHours) < Date.now()) {
+    const skinEditDurationHours = Number(req.client.grants?.skin_edit_duration || 1);
+    if (canEdit && skinEditDurationHours > 0 && skin.createdAt.getTime() + Time.hours(skinEditDurationHours) < Date.now()) {
         canEdit = false;
         editFail = `You can only edit skins within ${ skinEditDurationHours } hours of creation`;
     }
