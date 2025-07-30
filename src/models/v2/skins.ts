@@ -15,7 +15,7 @@ import { ListedSkin, V2SkinListResponseBody } from "../../typings/v2/V2SkinListR
 import { V2SkinResponse } from "../../typings/v2/V2SkinResponse";
 import { V2GenerateHandler } from "../../generator/v2/V2GenerateHandler";
 import { ListReqQuery } from "../../validation/skins";
-import { UUIDOrShortId } from "../../validation/misc";
+import { UUID, UUIDOrShortId } from "../../validation/misc";
 import { Caching } from "../../generator/Caching";
 import * as Sentry from "@sentry/node";
 import { IFlagProvider, IMetricsProvider, TYPES as CoreTypes } from "@mineskin/core";
@@ -28,6 +28,7 @@ import { Requests } from "../../generator/Requests";
 import { AsyncLoadingCache, Caches } from "@inventivetalent/loading-cache";
 import { Time } from "@inventivetalent/time";
 import { GenerateReqNameAndVisibility } from "../../validation/generate";
+import { V2ResponseBody } from "../../typings/v2/V2ResponseBody";
 
 type QueryCustomizer = (args: {
     query: FilterQuery<ISkin2Document>,
@@ -378,6 +379,48 @@ export async function v2UpdateSkin(req: MineSkinV2Request, res: Response<V2SkinR
             message: "Skin updated successfully"
         }]
     }
+}
+
+export async function v2GetSkinUser(req: MineSkinV2Request, res: Response<V2ResponseBody>): Promise<V2MiscResponseBody> {
+    const uuid = UUID.parse(req.params.uuid);
+
+    let skin = await container.get<SkinService>(GeneratorTypes.SkinService).findForUuid(uuid);
+    skin = validateRequestedSkin(req, skin);
+
+    if (!req.client.hasUser()) {
+        throw new MineSkinError('unauthorized', 'Unauthorized', {httpCode: 401});
+    }
+
+    const userMeta: any = {
+        isOwner: false,
+        hasGenerated: false,
+        canEdit: false,
+    };
+
+    if (skin.clients.some(c => c.user === req.client.userId)) {
+        userMeta.hasGenerated = true;
+    }
+    if (skin.clients.length === 1 && skin.clients[0].user === req.client.userId) {
+        userMeta.isOwner = true;
+        userMeta.hasGenerated = true;
+        userMeta.canEdit = true;
+
+        if (skin.edits && skin.edits.length >= 6) {
+            userMeta.canEdit = false; // no more edits allowed
+            userMeta.editReason = 'max_edits_reached';
+        }
+        const skinEditDurationHours = Number(req.client.grants?.skin_edit_duration || 1);
+        if (skinEditDurationHours > 0 && skin.createdAt.getTime() + Time.hours(skinEditDurationHours) < Date.now()) {
+            userMeta.canEdit = false; // no more edits allowed
+            userMeta.editReason = 'edit_duration_expired';
+        }
+    }
+
+
+    return {
+        success: true,
+        user: userMeta
+    };
 }
 
 export async function v2GetSkinTextureRedirect(req: MineSkinV2Request, res: Response<V2SkinResponse>): Promise<void> {

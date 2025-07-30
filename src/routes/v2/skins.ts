@@ -3,6 +3,7 @@ import {
     v2GetSimilarSkins,
     v2GetSkin,
     v2GetSkinTextureRedirect,
+    v2GetSkinUser,
     v2LatestSkinList,
     v2ListRandomSkins,
     v2PopularSkinList,
@@ -101,6 +102,12 @@ router.post("/:uuid/report", expressAsyncHandler(async (req: MineSkinV2Request, 
 
 router.patch("/:uuid",expressAsyncHandler(async (req: MineSkinV2Request, res: Response<V2MiscResponseBody>) => {
     const result = await v2UpdateSkin(req, res);
+    res.json(formatV2Response(req, result));
+}));
+
+router.get("/:uuid/user",expressAsyncHandler(async (req: MineSkinV2Request, res: Response<V2MiscResponseBody>) => {
+    const result = await v2GetSkinUser(req, res);
+    res.header('Cache-Control', 'private, max-age=60');
     res.json(formatV2Response(req, result));
 }));
 
