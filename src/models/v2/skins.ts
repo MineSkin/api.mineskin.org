@@ -326,6 +326,7 @@ export async function v2UpdateSkin(req: MineSkinV2Request, res: Response<V2SkinR
             from: skin.meta.name || null,
             to: body.name
         });
+        skin.markModified('edits');
 
         skin.meta.name = body.name;
 
@@ -357,6 +358,7 @@ export async function v2UpdateSkin(req: MineSkinV2Request, res: Response<V2SkinR
             from: skin.meta.visibility || null,
             to: body.visibility
         });
+        skin.markModified('edits');
 
         skin.meta.visibility = body.visibility;
         try {
