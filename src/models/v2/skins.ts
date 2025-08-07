@@ -442,6 +442,15 @@ export async function v2DeleteSkin(req: MineSkinV2Request, res: Response<V2MiscR
         throw new MineSkinError('unauthorized', deleteFail, {httpCode: 401});
     }
 
+    try {
+        const metrics = container.get<IMetricsProvider>(CoreTypes.MetricsProvider);
+        metrics.getMetric('interactions')
+            .tag("interaction", "delete-skin")
+            .inc();
+    } catch (e) {
+        Sentry.captureException(e);
+    }
+
     // mark deleted
     skin.deletedAt = new Date();
 
