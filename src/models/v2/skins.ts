@@ -625,6 +625,10 @@ export function validateRequestedSkin(req: MineSkinV2Request, skin: Maybe<ISkin2
         }
     }
 
+    if (skin.deletedAt) {
+        throw new MineSkinError('skin_not_found', 'Skin not found', {httpCode: 404});
+    }
+
     return skin!;
 }
 
