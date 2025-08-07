@@ -441,7 +441,6 @@ export async function v2DeleteSkin(req: MineSkinV2Request, res: Response<V2SkinR
 
     return {
         success: true,
-        skin: V2GenerateHandler.skinToJson(skin as IPopulatedSkin2Document),
         messages: [{
             code: "deleted",
             message: "Skin marked for deletion"
