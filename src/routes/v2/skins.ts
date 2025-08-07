@@ -1,5 +1,6 @@
 import { Response, Router } from "express";
 import {
+    v2DeleteSkin,
     v2GetSimilarSkins,
     v2GetSkin,
     v2GetSkinTextureRedirect,
@@ -102,6 +103,11 @@ router.post("/:uuid/report", expressAsyncHandler(async (req: MineSkinV2Request, 
 
 router.patch("/:uuid",expressAsyncHandler(async (req: MineSkinV2Request, res: Response<V2MiscResponseBody>) => {
     const result = await v2UpdateSkin(req, res);
+    res.json(formatV2Response(req, result));
+}));
+
+router.delete("/:uuid",expressAsyncHandler(async (req: MineSkinV2Request, res: Response<V2MiscResponseBody>) => {
+    const result = await v2DeleteSkin(req, res);
     res.json(formatV2Response(req, result));
 }));
 

@@ -383,6 +383,72 @@ export async function v2UpdateSkin(req: MineSkinV2Request, res: Response<V2SkinR
     }
 }
 
+export async function v2DeleteSkin(req: MineSkinV2Request, res: Response<V2SkinResponse>): Promise<V2SkinResponse> {
+    const uuidOrShort = UUIDOrShortId.parse(req.params.uuid);
+
+    req.links.skin = `/v2/skins/${ uuidOrShort }`;
+    req.links.self = req.links.skin;
+
+    let skin = await findV2SkinForId(req, uuidOrShort);
+    skin = validateRequestedSkin(req, skin);
+
+    let canDelete = true;
+    let deleteFail = "You are not allowed to delete this skin";
+
+    // allow deleting for x hours after creation
+    const skinDeleteDurationHours = Number(req.client.grants?.skin_delete_duration || 1);
+    if (canDelete && skinDeleteDurationHours > 0 && skin.createdAt.getTime() + Time.hours(skinDeleteDurationHours) < Date.now()) {
+        canDelete = false;
+        deleteFail = `You can only delete skins within ${ skinDeleteDurationHours } hours of creation`;
+    }
+
+    // double-check visibility & user
+    if (canDelete && skin.meta.visibility === SkinVisibility2.PRIVATE) {
+        let usersMatch = false;
+        if (req.client.hasUser()) {
+            usersMatch = skin.clients.some(c => c.user === req.client.userId);
+        }
+        if (!usersMatch) {
+            Log.l.warn(`User ${ req.client.userId } tried to delete private skin ${ skin.uuid } without permission`);
+            canDelete = false;
+            deleteFail = "You are not allowed to delete this skin";
+        }
+    }
+
+    // only let the user who first uploaded the skin edit it
+    if (canDelete) {
+        if (skin.clients.length <= 0) {
+            Log.l.warn(`Skin ${ skin.uuid } has no clients, cannot delete`);
+            canDelete = false;
+        } else if (skin.clients.length > 1) {
+            canDelete = false;
+            deleteFail = "Multiple users have uploaded this skin, you cannot delete it";
+        } else if (skin.clients[0].user !== req.client.userId) {
+            Log.l.warn(`User ${ req.client.userId } tried to delete skin ${ skin.uuid } uploaded by user ${ skin.clients[0].user }`);
+            canDelete = false;
+            deleteFail = "You are not allowed to delete this skin";
+        }
+    }
+
+    if (!canDelete) {
+        throw new MineSkinError('unauthorized', deleteFail, {httpCode: 401});
+    }
+
+    // mark deleted
+    skin.deletedAt = new Date();
+
+    await skin.save();
+
+    return {
+        success: true,
+        skin: V2GenerateHandler.skinToJson(skin as IPopulatedSkin2Document),
+        messages: [{
+            code: "deleted",
+            message: "Skin marked for deletion"
+        }]
+    }
+}
+
 export async function v2GetSkinUser(req: MineSkinV2Request, res: Response<V2ResponseBody>): Promise<V2MiscResponseBody> {
     const uuid = UUID.parse(req.params.uuid);
 
