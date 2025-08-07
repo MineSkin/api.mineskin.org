@@ -257,6 +257,10 @@ export async function v2GetSkin(req: MineSkinV2Request, res: Response<V2SkinResp
 }
 
 export async function v2UpdateSkin(req: MineSkinV2Request, res: Response<V2SkinResponse>): Promise<V2SkinResponse> {
+    if (!req.client.hasUser()) {
+        throw new MineSkinError('unauthorized', 'Unauthorized', {httpCode: 401});
+    }
+
     const uuidOrShort = UUIDOrShortId.parse(req.params.uuid);
 
     req.links.skin = `/v2/skins/${ uuidOrShort }`;
@@ -384,6 +388,10 @@ export async function v2UpdateSkin(req: MineSkinV2Request, res: Response<V2SkinR
 }
 
 export async function v2DeleteSkin(req: MineSkinV2Request, res: Response<V2MiscResponseBody>): Promise<V2MiscResponseBody> {
+    if (!req.client.hasUser()) {
+        throw new MineSkinError('unauthorized', 'Unauthorized', {httpCode: 401});
+    }
+
     const uuidOrShort = UUIDOrShortId.parse(req.params.uuid);
 
     req.links.skin = `/v2/skins/${ uuidOrShort }`;
@@ -484,7 +492,7 @@ export async function v2GetSkinUser(req: MineSkinV2Request, res: Response<V2Resp
             userMeta.editReason = 'edit_duration_expired';
         }
 
-         const skinDeleteDurationHours = Number(req.client.grants?.skin_delete_duration || 1);
+        const skinDeleteDurationHours = Number(req.client.grants?.skin_delete_duration || 1);
         if (skinDeleteDurationHours > 0 && skin.createdAt.getTime() + Time.hours(skinDeleteDurationHours) < Date.now()) {
             userMeta.canDelete = false;
             userMeta.deleteReason = 'delete_duration_expired';
