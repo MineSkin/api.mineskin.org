@@ -463,6 +463,7 @@ export async function v2GetSkinUser(req: MineSkinV2Request, res: Response<V2Resp
         isOwner: false,
         hasGenerated: false,
         canEdit: false,
+        canDelete: false,
     };
 
     if (skin.clients.some(c => c.user === req.client.userId)) {
@@ -472,6 +473,7 @@ export async function v2GetSkinUser(req: MineSkinV2Request, res: Response<V2Resp
         userMeta.isOwner = true;
         userMeta.hasGenerated = true;
         userMeta.canEdit = true;
+        userMeta.canDelete = true;
 
         if (skin.edits && skin.edits.length >= 6) {
             userMeta.canEdit = false; // no more edits allowed
@@ -481,6 +483,12 @@ export async function v2GetSkinUser(req: MineSkinV2Request, res: Response<V2Resp
         if (skinEditDurationHours > 0 && skin.createdAt.getTime() + Time.hours(skinEditDurationHours) < Date.now()) {
             userMeta.canEdit = false; // no more edits allowed
             userMeta.editReason = 'edit_duration_expired';
+        }
+
+         const skinDeleteDurationHours = Number(req.client.grants?.skin_delete_duration || 1);
+        if (skinDeleteDurationHours > 0 && skin.createdAt.getTime() + Time.hours(skinDeleteDurationHours) < Date.now()) {
+            userMeta.canDelete = false;
+            userMeta.deleteReason = 'delete_duration_expired';
         }
     }
 
