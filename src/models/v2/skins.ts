@@ -383,7 +383,7 @@ export async function v2UpdateSkin(req: MineSkinV2Request, res: Response<V2SkinR
     }
 }
 
-export async function v2DeleteSkin(req: MineSkinV2Request, res: Response<V2SkinResponse>): Promise<V2SkinResponse> {
+export async function v2DeleteSkin(req: MineSkinV2Request, res: Response<V2MiscResponseBody>): Promise<V2MiscResponseBody> {
     const uuidOrShort = UUIDOrShortId.parse(req.params.uuid);
 
     req.links.skin = `/v2/skins/${ uuidOrShort }`;
