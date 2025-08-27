@@ -152,7 +152,7 @@ async function init() {
         console.log("Creating logger")
 
         // setup the logger
-        app.use(morgan('combined', {
+        app.use(morgan(':remote-addr [:date[iso]] :method :url :status :res[content-length] ":user-agent" - :response-time ms', {
             stream: {
                 write(str: string) {
                     httpLogger.http(str.trim())
