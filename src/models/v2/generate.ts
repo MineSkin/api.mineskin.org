@@ -844,7 +844,7 @@ async function querySkinOrThrow(uuid: UUID, r = 2): Promise<IPopulatedSkin2Docum
         op: 'generate_v2',
         name: 'querySkinOrThrow'
     }, async span => {
-        const skin = await container.get<SkinService>(GeneratorTypes.SkinService).findForUuid(uuid, true);
+        const skin = await container.get<SkinService>(GeneratorTypes.SkinService).findForUuid(uuid, r < 2);
         if (!skin || !isPopulatedSkin2Document(skin) || !skin.data) {
             if (r > 0) {
                 Log.l.warn(`Skin not found: ${ uuid }, retrying... (${ r })`);
