@@ -15,7 +15,7 @@ import { ListedSkin, V2SkinListResponseBody } from "../../typings/v2/V2SkinListR
 import { V2SkinResponse } from "../../typings/v2/V2SkinResponse";
 import { V2GenerateHandler } from "../../generator/v2/V2GenerateHandler";
 import { ListReqQuery } from "../../validation/skins";
-import { UUIDOrShortId } from "../../validation/misc";
+import { UUID, UUIDOrShortId } from "../../validation/misc";
 import { Caching } from "../../generator/Caching";
 import * as Sentry from "@sentry/node";
 import { IFlagProvider, IMetricsProvider, TYPES as CoreTypes } from "@mineskin/core";
@@ -28,6 +28,7 @@ import { Requests } from "../../generator/Requests";
 import { AsyncLoadingCache, Caches } from "@inventivetalent/loading-cache";
 import { Time } from "@inventivetalent/time";
 import { GenerateReqNameAndVisibility } from "../../validation/generate";
+import { V2ResponseBody } from "../../typings/v2/V2ResponseBody";
 
 type QueryCustomizer = (args: {
     query: FilterQuery<ISkin2Document>,
@@ -256,6 +257,10 @@ export async function v2GetSkin(req: MineSkinV2Request, res: Response<V2SkinResp
 }
 
 export async function v2UpdateSkin(req: MineSkinV2Request, res: Response<V2SkinResponse>): Promise<V2SkinResponse> {
+    if (!req.client.hasUser()) {
+        throw new MineSkinError('unauthorized', 'Unauthorized', {httpCode: 401});
+    }
+
     const uuidOrShort = UUIDOrShortId.parse(req.params.uuid);
 
     req.links.skin = `/v2/skins/${ uuidOrShort }`;
@@ -270,8 +275,8 @@ export async function v2UpdateSkin(req: MineSkinV2Request, res: Response<V2SkinR
     let editFail = "You are not allowed to edit this skin";
 
     // allow editing for x hours after creation
-    const skinEditDurationHours = Number(req.client.grants?.skin_edit_duration || 12);
-    if (canEdit && skin.createdAt.getTime() + Time.hours(skinEditDurationHours) < Date.now()) {
+    const skinEditDurationHours = Number(req.client.grants?.skin_edit_duration || 1);
+    if (canEdit && skinEditDurationHours > 0 && skin.createdAt.getTime() + Time.hours(skinEditDurationHours) < Date.now()) {
         canEdit = false;
         editFail = `You can only edit skins within ${ skinEditDurationHours } hours of creation`;
     }
@@ -325,6 +330,7 @@ export async function v2UpdateSkin(req: MineSkinV2Request, res: Response<V2SkinR
             from: skin.meta.name || null,
             to: body.name
         });
+        skin.markModified('edits');
 
         skin.meta.name = body.name;
 
@@ -356,6 +362,7 @@ export async function v2UpdateSkin(req: MineSkinV2Request, res: Response<V2SkinR
             from: skin.meta.visibility || null,
             to: body.visibility
         });
+        skin.markModified('edits');
 
         skin.meta.visibility = body.visibility;
         try {
@@ -378,6 +385,125 @@ export async function v2UpdateSkin(req: MineSkinV2Request, res: Response<V2SkinR
             message: "Skin updated successfully"
         }]
     }
+}
+
+export async function v2DeleteSkin(req: MineSkinV2Request, res: Response<V2MiscResponseBody>): Promise<V2MiscResponseBody> {
+    if (!req.client.hasUser()) {
+        throw new MineSkinError('unauthorized', 'Unauthorized', {httpCode: 401});
+    }
+
+    const uuidOrShort = UUIDOrShortId.parse(req.params.uuid);
+
+    req.links.skin = `/v2/skins/${ uuidOrShort }`;
+    req.links.self = req.links.skin;
+
+    let skin = await findV2SkinForId(req, uuidOrShort);
+    skin = validateRequestedSkin(req, skin);
+
+    let canDelete = true;
+    let deleteFail = "You are not allowed to delete this skin";
+
+    // allow deleting for x hours after creation
+    const skinDeleteDurationHours = Number(req.client.grants?.skin_delete_duration || 1);
+    if (canDelete && skinDeleteDurationHours > 0 && skin.createdAt.getTime() + Time.hours(skinDeleteDurationHours) < Date.now()) {
+        canDelete = false;
+        deleteFail = `You can only delete skins within ${ skinDeleteDurationHours } hours of creation`;
+    }
+
+    // double-check visibility & user
+    if (canDelete && skin.meta.visibility === SkinVisibility2.PRIVATE) {
+        let usersMatch = false;
+        if (req.client.hasUser()) {
+            usersMatch = skin.clients.some(c => c.user === req.client.userId);
+        }
+        if (!usersMatch) {
+            Log.l.warn(`User ${ req.client.userId } tried to delete private skin ${ skin.uuid } without permission`);
+            canDelete = false;
+            deleteFail = "You are not allowed to delete this skin";
+        }
+    }
+
+    // only let the user who first uploaded the skin edit it
+    if (canDelete) {
+        if (skin.clients.length <= 0) {
+            Log.l.warn(`Skin ${ skin.uuid } has no clients, cannot delete`);
+            canDelete = false;
+        } else if (skin.clients.length > 1) {
+            canDelete = false;
+            deleteFail = "Multiple users have uploaded this skin, you cannot delete it";
+        } else if (skin.clients[0].user !== req.client.userId) {
+            Log.l.warn(`User ${ req.client.userId } tried to delete skin ${ skin.uuid } uploaded by user ${ skin.clients[0].user }`);
+            canDelete = false;
+            deleteFail = "You are not allowed to delete this skin";
+        }
+    }
+
+    if (!canDelete) {
+        throw new MineSkinError('unauthorized', deleteFail, {httpCode: 401});
+    }
+
+    // mark deleted
+    skin.deletedAt = new Date();
+
+    await skin.save();
+
+    return {
+        success: true,
+        messages: [{
+            code: "deleted",
+            message: "Skin marked for deletion"
+        }]
+    }
+}
+
+export async function v2GetSkinUser(req: MineSkinV2Request, res: Response<V2ResponseBody>): Promise<V2MiscResponseBody> {
+    const uuid = UUID.parse(req.params.uuid);
+
+    let skin = await container.get<SkinService>(GeneratorTypes.SkinService).findForUuid(uuid);
+    skin = validateRequestedSkin(req, skin);
+
+    if (!req.client.hasUser()) {
+        throw new MineSkinError('unauthorized', 'Unauthorized', {httpCode: 401});
+    }
+
+    const userMeta: any = {
+        isOwner: false,
+        hasGenerated: false,
+        canEdit: false,
+        canDelete: false,
+    };
+
+    if (skin.clients.some(c => c.user === req.client.userId)) {
+        userMeta.hasGenerated = true;
+    }
+    if (skin.clients.length === 1 && skin.clients[0].user === req.client.userId) {
+        userMeta.isOwner = true;
+        userMeta.hasGenerated = true;
+        userMeta.canEdit = true;
+        userMeta.canDelete = true;
+
+        if (skin.edits && skin.edits.length >= 6) {
+            userMeta.canEdit = false; // no more edits allowed
+            userMeta.editReason = 'max_edits_reached';
+        }
+        const skinEditDurationHours = Number(req.client.grants?.skin_edit_duration || 1);
+        if (skinEditDurationHours > 0 && skin.createdAt.getTime() + Time.hours(skinEditDurationHours) < Date.now()) {
+            userMeta.canEdit = false; // no more edits allowed
+            userMeta.editReason = 'edit_duration_expired';
+        }
+
+        const skinDeleteDurationHours = Number(req.client.grants?.skin_delete_duration || 1);
+        if (skinDeleteDurationHours > 0 && skin.createdAt.getTime() + Time.hours(skinDeleteDurationHours) < Date.now()) {
+            userMeta.canDelete = false;
+            userMeta.deleteReason = 'delete_duration_expired';
+        }
+    }
+
+
+    return {
+        success: true,
+        user: userMeta
+    };
 }
 
 export async function v2GetSkinTextureRedirect(req: MineSkinV2Request, res: Response<V2SkinResponse>): Promise<void> {
@@ -512,6 +638,10 @@ export function validateRequestedSkin(req: MineSkinV2Request, skin: Maybe<ISkin2
         if (!usersMatch) {
             throw new MineSkinError('skin_not_found', 'Skin not found', {httpCode: 404});
         }
+    }
+
+    if (skin.deletedAt) {
+        throw new MineSkinError('skin_not_found', 'Skin not found', {httpCode: 404});
     }
 
     return skin!;

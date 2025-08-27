@@ -17,7 +17,7 @@ export const wildcardCorsWithCredentials = cors({
         callback(null, requestOrigin);
     },
     credentials: true,
-    methods: ["GET", "POST", "DELETE"],
+    methods: ["GET", "POST", "PATCH", "DELETE"],
     allowedHeaders: ALLOWED_HEADERS,
     exposedHeaders: ["Content-Type"]
 });

@@ -33,5 +33,5 @@ export async function getSkinMeta(req: MineSkinV2Request, res: Response<V2Respon
     return {
         success: true,
         meta: meta
-    }
+    };
 }
