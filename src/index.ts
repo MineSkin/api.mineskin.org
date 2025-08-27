@@ -62,6 +62,7 @@ import { requestLogMiddleware } from "./middleware/log";
 import { RequestManager } from "@mineskin/requests";
 import { ZodError } from "zod";
 import { v2GetStats } from "./models/v2/stats";
+import { MineSkinV2Request } from "./routes/v2/types";
 
 
 sourceMapSupport.install();
@@ -152,16 +153,29 @@ async function init() {
         console.log("Creating logger")
 
         // setup the logger
-        app.use(morgan(':remote-addr [:date[iso]] :method :url :status :res[content-length] ":user-agent" - :response-time ms', {
+        morgan.token('user', function (req: MineSkinV2Request, res) {
+            if (req.client && req.client.userId) {
+                return req.client.userId;
+            }
+            return 'none';
+        });
+        morgan.token('breadcrumb', function (req: MineSkinV2Request, res) {
+            if (req.breadcrumb) {
+                return req.breadcrumb;
+            }
+            return '-';
+        });
+        morgan.token('remote-addr', (req, res): string => {
+            return req.headers['x-real-ip'] as string || req.headers['x-forwarded-for'] as string || req.connection.remoteAddress || "";
+        });
+        app.use(morgan(':remote-addr :user [:date[iso]] :breadcrumb :method :url :status :res[content-length] ":user-agent" - :response-time ms', {
             stream: {
                 write(str: string) {
                     httpLogger.http(str.trim())
                 }
             }
         }))
-        morgan.token('remote-addr', (req, res): string => {
-            return req.headers['x-real-ip'] as string || req.headers['x-forwarded-for'] as string || req.connection.remoteAddress || "";
-        });
+
     }
 
 
