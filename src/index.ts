@@ -157,7 +157,7 @@ async function init() {
             if (req.client && req.client.userId) {
                 return req.client.userId;
             }
-            return 'none';
+            return 'anonymous';
         });
         morgan.token('breadcrumb', function (req: MineSkinV2Request, res) {
             if (req.breadcrumb) {
@@ -168,7 +168,7 @@ async function init() {
         morgan.token('remote-addr', (req, res): string => {
             return req.headers['x-real-ip'] as string || req.headers['x-forwarded-for'] as string || req.connection.remoteAddress || "";
         });
-        app.use(morgan(':remote-addr :user [:date[iso]] :breadcrumb :method :url :status :res[content-length] ":user-agent" - :response-time ms', {
+        app.use(morgan(':remote-addr :user :breadcrumb :method :url :status :res[content-length] ":user-agent" - :response-time ms', {
             stream: {
                 write(str: string) {
                     httpLogger.http(str.trim())
