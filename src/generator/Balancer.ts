@@ -260,10 +260,10 @@ export class Balancer {
                         newOriginConfig.push(origin);
                         continue;
                     }
-                    console.info(`Restoring ${ origin.name } after maintenance`);
+                    console.info(`Restoring ${ origin.name } after maintenance (to weight ${ preMaintenanceWeight })`);
                     let newOrigin: Origin = {
                         ...origin,
-                        weight: parseFloat(preMaintenanceWeight)
+                        weight: parseFloat(preMaintenanceWeight) || 1
                     }
                     newOriginConfig.push(newOrigin);
                     if (newOrigin.weight !== origin.weight) {
