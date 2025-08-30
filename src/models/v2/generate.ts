@@ -658,6 +658,10 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
             req.concurrentRequests = (req.concurrentRequests || 0) + 1;
         }
 
+        if (pendingJobs > 1) {
+            req.nextRequest = Math.max(req.nextRequest || 0, Date.now() + pendingJobs * 200);
+        }
+
         const billingService = container.get<BillingService>(BillingTypes.BillingService);
         const usageOptions: SkinUsageOptions = {
             cape: !!options.cape
