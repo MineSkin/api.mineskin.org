@@ -669,7 +669,7 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
         await billingService.trackGenerateRequest(req.clientInfo, usageOptions);
 
         // schedule job to match the per-minute rate limit
-        let lastJobTime = lastJob?.createdAt?.getTime() || 0;
+        let lastJobTime = lastJob?.updatedAt?.getTime() || 0;
         let notBefore: Date | undefined = undefined
         if (
             req.client.usePerMinuteRateLimit() &&
@@ -678,12 +678,13 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
                 Date.now() - lastJobTime < 60000 // check anyway if last job was less than a minute ago
             )
         ) {
+            Log.l.debug(`${ req.breadcrumb } pending=${ pendingJobs }, lastJobTime=${ new Date(lastJobTime).toISOString() }`);
             const timeSlotSize = 60 / req.client.getPerMinuteRateLimit();
-            const baseSeconds = Math.floor((lastJobTime || Date.now()) / 1000);
+            const baseSeconds = Math.ceil((lastJobTime || Date.now()) / 1000);
             let nextSlotSeconds = Math.ceil(baseSeconds / timeSlotSize) * timeSlotSize;
-            if (nextSlotSeconds - baseSeconds > 0) {
-                nextSlotSeconds = baseSeconds + (nextSlotSeconds - baseSeconds) * pendingJobs; // multiply to adjust for pending jobs
-            }
+            // if (nextSlotSeconds - baseSeconds > 0) {
+            nextSlotSeconds = baseSeconds + (Math.max((nextSlotSeconds - baseSeconds), 1) * pendingJobs); // multiply to adjust for pending jobs
+            // }
             notBefore = new Date(nextSlotSeconds * 1000);
         }
 
