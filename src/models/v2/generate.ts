@@ -682,9 +682,9 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
             const timeSlotSize = 60 / req.client.getPerMinuteRateLimit();
             const baseSeconds = Math.ceil((lastJobTime || Date.now()) / 1000);
             let nextSlotSeconds = Math.ceil(baseSeconds / timeSlotSize) * timeSlotSize;
-            // if (nextSlotSeconds - baseSeconds > 0) {
-            nextSlotSeconds = baseSeconds + (Math.max((nextSlotSeconds - baseSeconds), 1) * pendingJobs); // multiply to adjust for pending jobs
-            // }
+            if (nextSlotSeconds - baseSeconds > 0) {
+                nextSlotSeconds = baseSeconds + (nextSlotSeconds - baseSeconds) * pendingJobs; // multiply to adjust for pending jobs
+            }
             notBefore = new Date(nextSlotSeconds * 1000);
         }
 
