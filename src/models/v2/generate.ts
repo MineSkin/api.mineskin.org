@@ -659,7 +659,7 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
         }
 
         if (pendingJobs > 1) {
-            req.nextRequest = Math.max(req.nextRequest || 0, Date.now() + pendingJobs * 200);
+            req.nextRequest = Math.max(req.nextRequest || 0, Date.now() + pendingJobs * 50);
         }
 
         const billingService = container.get<BillingService>(BillingTypes.BillingService);
