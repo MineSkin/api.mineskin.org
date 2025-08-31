@@ -669,7 +669,7 @@ async function v2SubmitGeneratorJob(req: GenerateV2Request, res: Response<V2Gene
         await billingService.trackGenerateRequest(req.clientInfo, usageOptions);
 
         // schedule job to match the per-minute rate limit
-        let lastJobTime = lastJob?.updatedAt?.getTime() || 0;
+        let lastJobTime = lastJob?.createdAt?.getTime() || 0;
         let notBefore: Date | undefined = undefined
         if (
             req.client.usePerMinuteRateLimit() &&
