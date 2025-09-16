@@ -448,13 +448,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@inventivetalent/gitconfig@npm:^1.0.9":
-  version: 1.0.9
-  resolution: "@inventivetalent/gitconfig@npm:1.0.9"
+"@inventivetalent/gitconfig@npm:^1.0.10":
+  version: 1.0.10
+  resolution: "@inventivetalent/gitconfig@npm:1.0.10"
   dependencies:
-    axios: "npm:^0.21.1"
-    ts-deepmerge: "npm:^1.0.8"
-  checksum: 10c0/54661d96722138e819f95578ed1e1ad3503f8a8460398d0e832a3e034d2361513dfcd9f99e8b1d45aef837ad4022d150f8976fc11ceae64c89109927162360e6
+    axios: "npm:^1.12.2"
+    ts-deepmerge: "npm:^7.0.3"
+  checksum: 10c0/572cbb7308413492e7bb2066ba2dada27efcd25ca36a18ce99f51fb2b570b275575475567799a0fa4734cf27fdcff4e276d2ccf82ada652788f2d88e4c17da7a
   languageName: node
   linkType: hard
 
@@ -4457,7 +4457,7 @@ __metadata:
   dependencies:
     "@inventivetalent/axios-rate-limit": "npm:^1.3.5"
     "@inventivetalent/express-github-webhook": "npm:^1.0.3"
-    "@inventivetalent/gitconfig": "npm:^1.0.9"
+    "@inventivetalent/gitconfig": "npm:^1.0.10"
     "@inventivetalent/gitsha": "npm:^1.0.0"
     "@inventivetalent/imghash": "npm:1.1.1"
     "@inventivetalent/loading-cache": "npm:^0.4.0"
@@ -11044,10 +11044,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ts-deepmerge@npm:^1.0.8":
-  version: 1.1.0
-  resolution: "ts-deepmerge@npm:1.1.0"
-  checksum: 10c0/efa7036c2d06b70f2bea2350f7634dfeefa8f9d89b8abd67cbe39c4e8944fb6118715e98bd4587608d250c1bcbb6bc3c52e22cce1317797b6ec73a4b71063c66
+"ts-deepmerge@npm:^7.0.3":
+  version: 7.0.3
+  resolution: "ts-deepmerge@npm:7.0.3"
+  checksum: 10c0/f466a8c5fb65c568cd45e537ab42deb032842e34fc175973edf7771a8b8b4094a2ede65af07bc287e58cb241da82f48f10fb38e41c74dc9a3951fc85b2ec1522
   languageName: node
   linkType: hard
 
