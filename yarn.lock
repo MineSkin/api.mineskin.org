@@ -1476,7 +1476,7 @@ __metadata:
 
 "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git":
   version: 0.0.0
-  resolution: "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git#commit=201c87436c67afb19ef81b3d1a3056bd5ba7125c"
+  resolution: "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git#commit=ea7536660332ee3bbd14df20ed92dc4fd65b439e"
   dependencies:
     "@hoangducnhuan/redlock": "npm:^6.0.0"
     "@inventivetalent/imghash": "npm:^1.1.1"
