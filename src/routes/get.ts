@@ -177,6 +177,7 @@ export const register = (app: Application) => {
                 .limit(size)
                 .select({'_id': 0, id: 1, uuid: 1, skinUuid: 1, name: 1, url: 1, time: 1})
                 .sort({time: -1})
+                .comment("v1 pagination list")
                 .lean()
                 .exec();
         });
@@ -255,6 +256,7 @@ export const register = (app: Application) => {
                 .limit(size)
                 .select({'_id': 0, id: 1, uuid: 1, skinUuid: 1, name: 1, url: 1, time: 1, variant: 1, model: 1})
                 .sort({time: -1})
+                .comment("v1 pagination anchor list")
                 .lean()
                 .exec();
         });

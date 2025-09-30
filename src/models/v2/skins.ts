@@ -108,6 +108,7 @@ async function v2ListSkins(req: MineSkinV2Request, res: Response<V2SkinListRespo
         .select('uuid meta data updatedAt') //TODO
         .populate('data', 'hash.skin.minecraft')
         .sort(sort)
+        .comment("v2 list skins")
         .exec();
 
     let lastSkin = skins[skins.length - 1];
@@ -585,13 +586,15 @@ export async function v2GetSimilarSkins(req: MineSkinV2Request, res: Response<V2
         return matchedTextures;
     })
 
-    const datas = await SkinData.find({'hash.skin.minecraft': {$in: matchedTextures}});
+    const datas = await SkinData.find({'hash.skin.minecraft': {$in: matchedTextures}, $comment: "v2 similar skins"});
     const dataIds = datas.map(data => data._id);
     let skins = await Skin2.find({
         data: {$in: dataIds},
         'meta.visibility': SkinVisibility2.PUBLIC
-    }).select('uuid meta data updatedAt') //TODO
-        .populate('data', 'hash.skin.minecraft');
+    })
+        .select('uuid meta data updatedAt') //TODO
+        .populate('data', 'hash.skin.minecraft')
+        .comment("v2 similar skins");
     // shuffle
     skins = skins.sort(() => Math.random() - 0.5);
     // only keep one skin per texture

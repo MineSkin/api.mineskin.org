@@ -22,6 +22,7 @@ router.get("/web-skins.xml", expressAsyncHandler(async (req: MineSkinV2Request, 
         .limit(2048)
         .select('uuid meta updatedAt')
         .sort({_id: -1})
+        .comment("v2 sitemap /web-skins.xml")
         .exec();
 
     let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
@@ -60,6 +61,7 @@ router.get("/web-skins-popular-24h.xml", expressAsyncHandler(async (req: MineSki
         .limit(2048)
         .select('uuid meta updatedAt')
         .sort({_id: -1, 'interaction.views': -1})
+        .comment("v2 sitemap /web-skins-popular-24h.xml")
         .exec();
 
     let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
@@ -94,6 +96,7 @@ router.get("/web-skins-popular-30d.xml", expressAsyncHandler(async (req: MineSki
         .limit(2048)
         .select('uuid meta updatedAt')
         .sort({_id: -1, 'interaction.views': -1})
+        .comment("v2 sitemap /web-skins-popular-30d.xml")
         .exec();
 
     let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
