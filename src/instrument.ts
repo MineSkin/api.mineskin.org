@@ -25,5 +25,7 @@ Sentry.init({
         "invalid_image",
         "invalid_string",
         "Request failed with status code 404",
+        "Request failed with status code 403",
+        "rate limit exceeded",
     ]
 });
