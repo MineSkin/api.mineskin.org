@@ -114,9 +114,6 @@ export class Requests {
 
         SERVER = config.server;
         PROXIES = [config.server];
-        if (config.server in config.requestServers) {
-            PROXIES = config.requestServers[config.server];
-        }
         axios.defaults.headers["User-Agent"] = "MineSkin/" + config.server;
 
         this.setupMultiProxiedAxiosInstance(GENERIC, config, {});
@@ -140,12 +137,6 @@ export class Requests {
             return instance;
         });
         this.setupMultiRequestQueue(TEXTURE_DOWNLOAD, config, Time.millis(100), 1);
-
-
-        this.setupMultiProxiedAxiosInstance(MOJANG_AUTH, config, {
-            baseURL: "https://authserver.mojang.com"
-        });
-        this.setupMultiRequestQueue(MOJANG_AUTH, config, Time.millis(200), 1);
 
         this.setupMultiProxiedAxiosInstance(MOJANG_SESSION, config, {
             baseURL: "https://sessionserver.mojang.com",
@@ -495,14 +486,6 @@ export class Requests {
         return await this.trackSentryQueued(request, async span => {
             return await this.runAxiosRequest(request, this.axiosInstance);
         });
-    }
-
-    public static async mojangAuthRequest(request: AxiosRequestConfig, bread?: string): Promise<AxiosResponse> {
-        return this.dynamicRequest(MOJANG_AUTH, request, bread);
-    }
-
-    public static async mojangSessionRequest(request: AxiosRequestConfig, bread?: string): Promise<AxiosResponse> {
-        return this.dynamicRequest(MOJANG_SESSION, request, bread);
     }
 
     public static async minecraftServicesRequest(request: AxiosRequestConfig, bread?: string): Promise<AxiosResponse> {
