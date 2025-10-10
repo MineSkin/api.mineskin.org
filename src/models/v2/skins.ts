@@ -105,7 +105,7 @@ async function v2ListSkins(req: MineSkinV2Request, res: Response<V2SkinListRespo
 
     const skins = await Skin2.find(query)
         .limit(size || 16)
-        .select('uuid meta data updatedAt') //TODO
+        .select('uuid shortId meta data updatedAt') //TODO
         .populate('data', 'hash.skin.minecraft')
         .sort(sort)
         .comment("v2 list skins")
@@ -662,6 +662,7 @@ export function validateRequestedSkin(req: MineSkinV2Request, skin: Maybe<ISkin2
 function skinToSimpleJson(skin: ISkin2Document | IPopulatedSkin2Document): ListedSkin {
     return {
         uuid: skin.uuid,
+        shortId: skin.shortId,
         name: skin.meta.name,
         texture: isPopulatedSkin2Document(skin) ? skin.data?.hash?.skin?.minecraft : undefined,
         timestamp: skin.updatedAt?.getTime()
