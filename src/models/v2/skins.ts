@@ -100,6 +100,12 @@ async function v2ListSkins(req: MineSkinV2Request, res: Response<V2SkinListRespo
         const anchor = await container.get<SkinService>(GeneratorTypes.SkinService).findForUuid(after);
         if (anchor) {
             query._id = {$lt: anchor._id};
+        } else {
+            Sentry.captureMessage("Pagination anchor not found: " + stripUuid(after));
+            req.warnings.push({
+                code: 'anchor_not_found',
+                message: "pagination anchor not found"
+            });
         }
     }
 
