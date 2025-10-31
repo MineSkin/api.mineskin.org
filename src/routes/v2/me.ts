@@ -3,14 +3,14 @@ import { v2Router } from "./router";
 import expressAsyncHandler from "express-async-handler";
 import { v2GetClientInfo, v2GetCreditsInfo, v2GetKeyInfo, v2GetMe, v2ListKeys } from "../../models/v2/me";
 import { MineSkinV2Request } from "./types";
-import { webOnlyCorsWithCredentials } from "../../middleware/cors";
+import { wildcardCorsWithCredentials } from "../../middleware/cors";
 import { V2SkinListResponseBody } from "../../typings/v2/V2SkinListResponseBody";
 import { v2UserLegacySkinList, v2UserSkinList } from "../../models/v2/skins";
 import { formatV2Response } from "../../middleware/response";
 import { V2MiscResponseBody } from "../../typings/v2/V2MiscResponseBody";
 
 const router: Router = v2Router();
-router.use(webOnlyCorsWithCredentials);
+router.use(wildcardCorsWithCredentials);
 
 router.use((req: MineSkinV2Request, res, next) => {
     res.header("Cache-Control", "private, no-store, max-age=0");
