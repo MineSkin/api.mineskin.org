@@ -68,10 +68,12 @@ export async function v2UserSkinList(req: MineSkinV2Request, res: Response<V2Ski
             ]
         };
 
-        // limit results
-        const threeMonthsAgo = new Date();
-        threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-        query['createdAt'] = {$gte: threeMonthsAgo};
+        if (req.client.grants?.skin_history_unlimited !== true) {
+            // limit results
+            const threeMonthsAgo = new Date();
+            threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+            query['createdAt'] = {$gte: threeMonthsAgo};
+        }
     });
 }
 
