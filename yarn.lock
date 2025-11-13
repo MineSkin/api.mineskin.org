@@ -1476,7 +1476,7 @@ __metadata:
 
 "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git":
   version: 0.0.0
-  resolution: "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git#commit=ea7536660332ee3bbd14df20ed92dc4fd65b439e"
+  resolution: "@mineskin/generator@git+ssh://git@github.com/MineSkin/mineskin-generator.git#commit=838e9a46bb0d91c9e7e14f10e3e8794ea213212d"
   dependencies:
     "@hoangducnhuan/redlock": "npm:^6.0.0"
     "@inventivetalent/imghash": "npm:^1.1.1"
@@ -1517,7 +1517,7 @@ __metadata:
     winston: "npm:^3.14.2"
     winston-daily-rotate-file: "npm:^5.0.0"
     winston-transport-sentry-node: "npm:^3.0.0"
-  checksum: 10c0/638b17ed8fd84473a5da34bea645151c9bb097d08df26f3084435582b0a559904c5b229e83bdb6c62a97f22aea45782c5cabec63a6630a2b66cbd6b9b3787cb0
+  checksum: 10c0/14ad67ea1061a47f0221b38c1b87054465a2065405ce991dde4399d9c035711d3913904abd4436527f4a86bc69d5694f16c9315fe95dff0c3e971022c9f795c8
   languageName: node
   linkType: hard
 
@@ -1530,7 +1530,7 @@ __metadata:
 
 "@mineskin/requests@git+ssh://git@github.com/MineSkin/mineskin-requests.git":
   version: 1.0.1
-  resolution: "@mineskin/requests@git+ssh://git@github.com/MineSkin/mineskin-requests.git#commit=66859bbd97b596872f68692fc56e30898270b6de"
+  resolution: "@mineskin/requests@git+ssh://git@github.com/MineSkin/mineskin-requests.git#commit=35b5eb1e9c1b8a6b0918f149f661e7c6451564c5"
   dependencies:
     "@inventivetalent/time": "npm:^1.0.3"
     "@mineskin/core": "git+ssh://git@github.com/MineSkin/mineskin-core.git"
@@ -1545,7 +1545,7 @@ __metadata:
     https-proxy-agent: "npm:5.0.1"
     ip-address: "npm:^10.0.0"
     jobqu: "npm:^2.0.5"
-  checksum: 10c0/c5f95b24d3a3f70e6ca044aa15953c320cb648fadb8ed3a25d5d2ebb96fdc7aab96c9244f6d467fcbfff78f8d949cc0cfe5b8e3301706f2c5d7432f76182c0d6
+  checksum: 10c0/1d6631aa61f087cb0456cc7f4b0d44ae66d63e8d41e7898ba4d126aa695c39f9a064875b77846049db0f81dc4fa5db34cc4bb268581d2ad6496e4dbb7faa1052
   languageName: node
   linkType: hard
 
