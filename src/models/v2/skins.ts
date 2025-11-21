@@ -85,7 +85,8 @@ async function v2ListSkins(req: MineSkinV2Request, res: Response<V2SkinListRespo
     } = ListReqQuery.parse(req.query);
 
     const query: FilterQuery<ISkin2Document> = {
-        'meta.visibility': SkinVisibility2.PUBLIC
+        'meta.visibility': SkinVisibility2.PUBLIC,
+        'deletedAt': {$exists: false}
     };
 
     if (filter) {
@@ -162,7 +163,8 @@ export async function v2ListRandomSkins(req: MineSkinV2Request, res: Response<V2
 
     const anchorQuery: FilterQuery<ISkin2Document> = {};
     const query: FilterQuery<ISkin2Document> = {
-        'meta.visibility': SkinVisibility2.PUBLIC
+        'meta.visibility': SkinVisibility2.PUBLIC,
+        'deletedAt': {$exists: false}
     };
 
     if (after) {
