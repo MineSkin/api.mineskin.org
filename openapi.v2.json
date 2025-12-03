@@ -240,6 +240,27 @@
           }
         }
       },
+      "QueueListResponse": {
+        "description": "Queue List",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "required": [
+                "jobs"
+              ],
+              "properties": {
+                "jobs": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/JobInfo"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
       "QueueProcessingResponse": {
         "description": "Job Processing",
         "content": {
@@ -497,6 +518,17 @@
           "result": {
             "type": "string",
             "description": "If the job is finished, this will return the result of the job (e.g. the skin UUID)"
+          },
+          "timestamp": {
+            "type": "number",
+            "description": "Timestamp (in milliseconds) when the job was created",
+            "example": 1726829503123
+          },
+          "eta": {
+            "required": false,
+            "type": "number",
+            "description": "Estimated timestamp (in milliseconds) when the job will be completed. Only present after first submitting the job.",
+            "example": 1726829603123
           }
         }
       },
@@ -1037,6 +1069,7 @@
             ],
             "properties": {
               "url": {
+                "description": "URL to a PNG image. Also supports data URLs (base64-encoded images).",
                 "type": "string"
               }
             },
@@ -1172,6 +1205,35 @@
       }
     },
     "/v2/queue": {
+      "get": {
+        "summary": "List queue jobs",
+        "description": "Get a list of recent queue jobs submitted by the current user.",
+        "tags": [
+          "queue"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/userAgent"
+          },
+          {
+            "$ref": "#/components/parameters/apiKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/QueueListResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/GenerateUserErrorResponse"
+          },
+          "429": {
+            "$ref": "#/components/responses/GenerateRateLimitResponse"
+          },
+          "500": {
+            "$ref": "#/components/responses/GenerateErrorResponse"
+          }
+        }
+      },
       "post": {
         "summary": "Queue skin generation",
         "description": "Add a generation request to the queue.\n\nGenerating a single skin usually takes around 2 seconds, but can take longer depending API load and the number of generator jobs ahead of you in the queue.\n\nUse multipart/form-data to upload image files or application/json for url and user requests.",
