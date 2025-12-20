@@ -49,6 +49,7 @@ export function v2ErrorHandler(err: Error, req: GenerateV2Request, res: Response
         });
     }
 
+    Log.l.error("uncaught error in v2:");
     Log.l.error(err.name);
     Log.l.error(err);
     Sentry.captureException(err, {
