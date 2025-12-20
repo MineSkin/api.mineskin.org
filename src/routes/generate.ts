@@ -11,10 +11,9 @@ import {
     modelToVariant,
     simplifyUserAgent,
     updateTraffic,
-    validateUrl,
     variantToModel
 } from "../util";
-import { Generator, MAX_IMAGE_SIZE, SavedSkin, URL_REGEX } from "../generator/Generator";
+import { Generator, MAX_IMAGE_SIZE, SavedSkin } from "../generator/Generator";
 import { generateLimiter } from "../util/rateLimiters";
 import { ClientInfo } from "../typings/ClientInfo";
 import { GenerateOptions } from "../typings/GenerateOptions";
@@ -75,119 +74,33 @@ export const register = (app: Application) => {
     // v2 compatibility layers
     const v2CompatMiddleware = async (req: V2CompatRequest & MineSkinV2Request, res: Response, next: NextFunction) => {
         req.v2Compat = true;
-        // const flags = container.get<IFlagProvider>(CoreTypes.FlagProvider);
-        // try {
-        //     const apiKey = (req as V2CompatRequest).apiKey;
-        //     if (req.query["v2"]) {
-        //         req.v2Compat = true;
-        //     } else {
-        //         if (apiKey && apiKey.grants && (apiKey.grants as any).v2_compat) {
-        //             req.v2Compat = true
-        //         } else if (await flags.isEnabled('api.v2_compat.all_requests')) {
-        //             if (apiKey || !await flags.isEnabled('api.v2_compat.require_api_key')) {
-        //                 req.v2Compat = true;
-        //                 if (!apiKey) {
-        //                     await sleep(300 + Math.random() * 500);
-        //                 }
-        //             }
-        //         }
-        //     }
-        // } catch (e) {
-        //     Sentry.captureException(e);
-        //     Log.l.error(e);
-        // }
 
-        // if (req.v2Compat) {
-        //     if (!req.warnings) {
-        //         req.warnings = [];
-        //     }
-        //     try {
-        //         const [enabled, chance] = await Promise.all([
-        //             flags.isEnabled('api.v2_compat.chance'),
-        //             flags.getValue('api.v2_compat.chance')
-        //         ]);
-        //         if (!enabled) {
-        //             req.v2Compat = false;
-        //             req.warnings.push({
-        //                 code: "compat_disabled",
-        //                 message: "v2 compatibility is currently disabled"
-        //             });
-        //         } else if (chance) {
-        //             const random = Math.random();
-        //             if (random > Number(chance)) {
-        //                 req.v2Compat = false;
-        //                 req.warnings.push({
-        //                     code: "compat_disabled",
-        //                     message: "v2 compatibility is currently disabled"
-        //                 });
-        //             }
-        //         }
-        //     } catch (e) {
-        //         Sentry.captureException(e);
-        //         Log.l.error(e);
-        //     }
-        // }
-
-        if (req.v2Compat) {
-            Log.l.info(`${ req.breadcrumbC } Redirecting to v2 compatibility layer`);
-            res.header("MineSkin-Api-Version", "v1-with-v2-compat");
-            res.header("MineSkin-Api-Deprecated", "true");
-            Sentry.setExtra('v2_compat', true);
-            if (!req.warnings) {
-                req.warnings = [];
-            }
-            req.warnings.push({
-                code: "deprecated",
-                message: "this endpoint is deprecated, please use the v2 API"
-            });
-            return await mineSkinV2InitialMiddleware(req, res, next);
+        Log.l.info(`${ req.breadcrumbC } Redirecting to v2 compatibility layer`);
+        res.header("MineSkin-Api-Version", "v1-with-v2-compat");
+        res.header("MineSkin-Api-Deprecated", "true");
+        Sentry.setExtra('v2_compat', true);
+        if (!req.warnings) {
+            req.warnings = [];
         }
+        req.warnings.push({
+            code: "deprecated",
+            message: "this endpoint is deprecated, please use the v2 API"
+        });
+        return await mineSkinV2InitialMiddleware(req, res, next);
 
-        next();
     }
     const v2CompatDelayMiddleware = async (req: V2CompatRequest & MineSkinV2Request, res: Response, next: NextFunction) => {
-        if (req.v2Compat) {
-            return await rateLimitMiddlewareWithDelay(req, res, next);
-        }
-        next();
+        return await rateLimitMiddlewareWithDelay(req, res, next);
     }
 
     //// URL
 
     app.post("/generate/url", [v2CompatMiddleware, v2CompatDelayMiddleware, upload.none()], async (req: GenerateRequest & V2CompatRequest, res: Response) => {
-        if (req.v2Compat) {
-            rewriteV2Options(req);
-            const result = await v2GenerateAndWait(req as any as GenerateV2Request, res);
-            if ('skin' in result) {
-                await sendV2WrappedSkin(req as any as GenerateV2Request, res, (result as V2SkinResponse));
-            }
-            return;
+        rewriteV2Options(req);
+        const result = await v2GenerateAndWait(req as any as GenerateV2Request, res);
+        if ('skin' in result) {
+            await sendV2WrappedSkin(req as any as GenerateV2Request, res, (result as V2SkinResponse));
         }
-
-        const url = validateUrl(req.body["url"] || req.query["url"]);
-        if (!url || !URL_REGEX.test(url)) {
-            res.status(400).json({error: "invalid url"});
-            return;
-        }
-
-        const options = getAndValidateOptions(GenerateType.URL, req, res);
-        const client = getClientInfo(req);
-
-        if (!options.checkOnly || !client.apiKey) {
-            const requestAllowed = await checkTraffic(client, req, res);
-            if (!requestAllowed) {
-                return;
-            }
-        }
-
-        console.log(debug(`${ options.breadcrumb } URL:         ${ url }`));
-
-        if (!options.checkOnly || !client.apiKey) {
-            await updateTraffic(client);
-        }
-
-        const skin = await Generator.generateFromUrlAndSave(url, options, client);
-        await sendSkin(req, res, skin, client);
     })
 
 
@@ -216,43 +129,12 @@ export const register = (app: Application) => {
             }
         }
 
-        if (req.v2Compat) {
-            rewriteV2Options(req);
-            const result = await v2GenerateAndWait(req as any as GenerateV2Request, res);
-            if ('skin' in result) {
-                await sendV2WrappedSkin(req as any as GenerateV2Request, res, (result as V2SkinResponse));
-            }
-            return;
+        rewriteV2Options(req);
+        const result = await v2GenerateAndWait(req as any as GenerateV2Request, res);
+        if ('skin' in result) {
+            await sendV2WrappedSkin(req as any as GenerateV2Request, res, (result as V2SkinResponse));
         }
-
-        const options = getAndValidateOptions(GenerateType.UPLOAD, req, res);
-        const client = getClientInfo(req);
-
-        if (!options.checkOnly || !client.apiKey) {
-            const requestAllowed = await checkTraffic(client, req, res);
-            if (!requestAllowed) {
-                return;
-            }
-        }
-
-        if (!req.file) {
-            res.status(400).json({error: "missing files"});
-            return;
-        }
-        const file: Express.Multer.File = req.file;
-        if (!file) {
-            res.status(400).json({error: "missing file"});
-            return;
-        }
-
-        console.log(debug(`${ options.breadcrumb } FILE:        "${ file.filename }"`))
-
-        if (!options.checkOnly || !client.apiKey) {
-            await updateTraffic(client);
-        }
-
-        const skin = await Generator.generateFromUploadAndSave(file, options, client);
-        await sendSkin(req, res, skin, client);
+        return;
     })
 
 

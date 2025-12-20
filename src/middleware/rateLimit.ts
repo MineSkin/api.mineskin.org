@@ -146,7 +146,7 @@ export const verifyRateLimit = async (req: GenerateV2Request, res: Response, wit
         req.minDelay = await trafficService.getMinDelaySeconds(req.clientInfo, req.apiKey) * 1000;
         res.header('X-RateLimit-Delay', `${ req.minDelay }`);
         res.header('X-RateLimit-NextRequest', `${ req.nextRequest }`);
-        if ((req as any).v2Compat) {
+        if (true) {
             res.header('MineSkin-Delay-Millis', `${ req.minDelay }`); // deprecated
             res.header('MineSkin-Delay-Seconds', `${ Math.ceil(req.minDelay / 1000) }`); // deprecated
             res.header('MineSkin-Delay', `${ Math.ceil(req.minDelay / 1000) }`); // deprecated
