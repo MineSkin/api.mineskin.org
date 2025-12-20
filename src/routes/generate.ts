@@ -10,7 +10,6 @@ import {
     md5,
     modelToVariant,
     simplifyUserAgent,
-    sleep,
     updateTraffic,
     validateUrl,
     variantToModel
@@ -37,8 +36,6 @@ import { v2GenerateAndWait } from "../models/v2/generate";
 import { V2SkinResponse } from "../typings/v2/V2SkinResponse";
 import { mineSkinV2InitialMiddleware } from "../middleware/combined";
 import { rateLimitMiddlewareWithDelay } from "../middleware/rateLimit";
-import { IFlagProvider, TYPES as CoreTypes } from "@mineskin/core";
-import { container } from "../inversify.config";
 import { Log } from "../Log";
 import { validateModel, validateName, validateVariant, validateVisibility } from "../util/validate";
 import { rewriteV2Options } from "../util/compat";
@@ -77,59 +74,59 @@ export const register = (app: Application) => {
 
     // v2 compatibility layers
     const v2CompatMiddleware = async (req: V2CompatRequest & MineSkinV2Request, res: Response, next: NextFunction) => {
-        req.v2Compat = false;
-        const flags = container.get<IFlagProvider>(CoreTypes.FlagProvider);
-        try {
-            const apiKey = (req as V2CompatRequest).apiKey;
-            if (req.query["v2"]) {
-                req.v2Compat = true;
-            } else {
-                if (apiKey && apiKey.grants && (apiKey.grants as any).v2_compat) {
-                    req.v2Compat = true
-                } else if (await flags.isEnabled('api.v2_compat.all_requests')) {
-                    if (apiKey || !await flags.isEnabled('api.v2_compat.require_api_key')) {
-                        req.v2Compat = true;
-                        if (!apiKey) {
-                            await sleep(300 + Math.random() * 500);
-                        }
-                    }
-                }
-            }
-        } catch (e) {
-            Sentry.captureException(e);
-            Log.l.error(e);
-        }
+        req.v2Compat = true;
+        // const flags = container.get<IFlagProvider>(CoreTypes.FlagProvider);
+        // try {
+        //     const apiKey = (req as V2CompatRequest).apiKey;
+        //     if (req.query["v2"]) {
+        //         req.v2Compat = true;
+        //     } else {
+        //         if (apiKey && apiKey.grants && (apiKey.grants as any).v2_compat) {
+        //             req.v2Compat = true
+        //         } else if (await flags.isEnabled('api.v2_compat.all_requests')) {
+        //             if (apiKey || !await flags.isEnabled('api.v2_compat.require_api_key')) {
+        //                 req.v2Compat = true;
+        //                 if (!apiKey) {
+        //                     await sleep(300 + Math.random() * 500);
+        //                 }
+        //             }
+        //         }
+        //     }
+        // } catch (e) {
+        //     Sentry.captureException(e);
+        //     Log.l.error(e);
+        // }
 
-        if (req.v2Compat) {
-            if (!req.warnings) {
-                req.warnings = [];
-            }
-            try {
-                const [enabled, chance] = await Promise.all([
-                    flags.isEnabled('api.v2_compat.chance'),
-                    flags.getValue('api.v2_compat.chance')
-                ]);
-                if (!enabled) {
-                    req.v2Compat = false;
-                    req.warnings.push({
-                        code: "compat_disabled",
-                        message: "v2 compatibility is currently disabled"
-                    });
-                } else if (chance) {
-                    const random = Math.random();
-                    if (random > Number(chance)) {
-                        req.v2Compat = false;
-                        req.warnings.push({
-                            code: "compat_disabled",
-                            message: "v2 compatibility is currently disabled"
-                        });
-                    }
-                }
-            } catch (e) {
-                Sentry.captureException(e);
-                Log.l.error(e);
-            }
-        }
+        // if (req.v2Compat) {
+        //     if (!req.warnings) {
+        //         req.warnings = [];
+        //     }
+        //     try {
+        //         const [enabled, chance] = await Promise.all([
+        //             flags.isEnabled('api.v2_compat.chance'),
+        //             flags.getValue('api.v2_compat.chance')
+        //         ]);
+        //         if (!enabled) {
+        //             req.v2Compat = false;
+        //             req.warnings.push({
+        //                 code: "compat_disabled",
+        //                 message: "v2 compatibility is currently disabled"
+        //             });
+        //         } else if (chance) {
+        //             const random = Math.random();
+        //             if (random > Number(chance)) {
+        //                 req.v2Compat = false;
+        //                 req.warnings.push({
+        //                     code: "compat_disabled",
+        //                     message: "v2 compatibility is currently disabled"
+        //                 });
+        //             }
+        //         }
+        //     } catch (e) {
+        //         Sentry.captureException(e);
+        //         Log.l.error(e);
+        //     }
+        // }
 
         if (req.v2Compat) {
             Log.l.info(`${ req.breadcrumbC } Redirecting to v2 compatibility layer`);
