@@ -118,6 +118,7 @@ async function v2ListSkins(req: MineSkinV2Request, res: Response<V2SkinListRespo
         .populate('data', 'hash.skin.minecraft')
         .sort(sort)
         .comment("v2 list skins")
+        .maxTimeMS(10_000)
         .exec();
 
     let lastSkin = skins[skins.length - 1];
