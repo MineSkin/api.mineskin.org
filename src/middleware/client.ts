@@ -34,11 +34,14 @@ export const initRequestClient = (req: MineSkinV2Request, res: Response) => {
             })
         }
 
-        Log.l.debug(`${ req.breadcrumbC } Agent:       ${ req.headers["mineskin-user-agent"] || '' } ${ req.headers["user-agent"] }`);
-        if (req.headers['origin']) {
-            Log.l.debug(`${ req.breadcrumbC } Origin:      ${ req.headers['origin'] }`);
+        if (req.path.includes('generate') || req.path.includes('queue')) {
+            Log.l.debug(`${ req.breadcrumbC } Path:        ${ req.path }`);
+            Log.l.debug(`${ req.breadcrumbC } Agent:       ${ req.headers["mineskin-user-agent"] || '' } ${ req.headers["user-agent"] }`);
+            if (req.headers['origin']) {
+                Log.l.debug(`${ req.breadcrumbC } Origin:      ${ req.headers['origin'] }`);
+            }
+            Log.l.debug(`${ req.breadcrumbC } IP:          ${ ip }`);
         }
-        Log.l.debug(`${ req.breadcrumbC } IP:          ${ ip }`);
 
         if (!res.hasHeader("MineSkin-Api-Version")) {
             res.header("MineSkin-Api-Version", "v2");
