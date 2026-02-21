@@ -117,6 +117,8 @@ export class V2GenerateHandler {
                 req.nextRequest = Math.max(req.nextRequest || 0, (req.maxPerMinuteReset || 0) * 1000, now)
             }
 
+            const remainingHour = Math.max(0, (req.maxPerHour || 0) - (req.requestsThisHour || 0));
+
             const info = {
                 next: {
                     absolute: req.nextRequest || now,
@@ -127,9 +129,24 @@ export class V2GenerateHandler {
                     seconds: req.minDelay ? req.minDelay / 1000 : 0
                 },
                 limit: {
+                    //TODO: remove redundant fields
+                    used: req.requestsThisMinute || 0,
                     limit: req.maxPerMinute || 0,
                     remaining: remaining,
-                    reset: req.maxPerMinuteReset || Math.floor(now / 1000)
+                    reset: req.maxPerMinuteReset || Math.floor(now / 1000),
+
+                    minute: {
+                        used: req.requestsThisMinute || 0,
+                        limit: req.maxPerMinute || 0,
+                        remaining: remaining,
+                        reset: req.maxPerMinuteReset || Math.floor(now / 1000)
+                    },
+                    hour: {
+                        used: req.requestsThisHour || 0,
+                        limit: req.maxPerHour || 0,
+                        remaining: remainingHour,
+                        reset: req.maxPerHourReset || Math.floor(now / 1000)
+                    }
                 }
             };
             if (res) {

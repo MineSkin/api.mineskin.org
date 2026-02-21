@@ -37,6 +37,11 @@ export interface GenerateV2Request extends MineSkinV2Request {
     /** in seconds**/
     maxPerMinuteReset?: number;
 
+    requestsThisHour?: number;
+    maxPerHour?: number;
+    /** in seconds**/
+    maxPerHourReset?: number;
+
     maxConcurrent?: number;
     concurrentRequests?: number;
 

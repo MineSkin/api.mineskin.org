@@ -69,6 +69,10 @@ export const globalPerMinuteInitMiddleware = async (req: GenerateV2Request, res:
             const now = Date.now();
             req.nextRequest = Math.max(req.nextRequest || 0, (req.maxPerMinuteReset || 0) * 1000, now)
         }
+
+        const [hourlyCounter, hourlyExp] = await trafficService.getHourlyRequestCounter(req.clientInfo);
+        req.requestsThisHour = hourlyCounter;
+        req.maxPerHourReset = hourlyExp;
     }
 
 
