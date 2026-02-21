@@ -99,10 +99,31 @@ const statsWrapper = new class {
 
         let timeResult = await timeHelper.execute(redis);
 
-        const [statsKeys, accountsKeys] = await Promise.all([
-            redis.client.keys('mineskin:generator:stats:*'),
-            redis.client.keys('mineskin:accounts:usable:*'),
-        ]);
+        // const [statsKeys, accountsKeys] = await Promise.all([
+        //     redis.client.keys('mineskin:generator:stats:*'),
+        //     redis.client.keys('mineskin:accounts:usable:*'),
+        // ]);
+        // use SCAN instead of KEYS to avoid blocking redis
+        const statsKeys: string[] = [];
+        const accountsKeys: string[] = [];
+        let cursor = 0;
+        do {
+            const result = await redis.client.scan(cursor, {
+                MATCH: 'mineskin:generator:stats:*',
+                COUNT: 100
+            });
+            cursor = result.cursor;
+            statsKeys.push(...result.keys);
+        } while (cursor !== 0);
+        cursor = 0;
+        do {
+            const result = await redis.client.scan(cursor, {
+                MATCH: 'mineskin:accounts:usable:*',
+                COUNT: 100
+            });
+            cursor = result.cursor;
+            accountsKeys.push(...result.keys);
+        } while (cursor !== 0);
 
         const statsHelper = new MGetHelper();
         const capacities: MGetGetter[] = [];
