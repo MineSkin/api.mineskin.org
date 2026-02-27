@@ -52,7 +52,7 @@ router.get("/random", expressAsyncHandler(async (req: MineSkinV2Request, res: Re
 
 router.get("/:uuid", expressAsyncHandler(async (req: MineSkinV2Request, res: Response<V2SkinResponse>) => {
     const result = await v2GetSkin(req, res);
-    res.header('Cache-Control', 'public, max-age=10800');
+    if (!result) return;
     res.json(formatV2Response(req, result));
 }));
 
@@ -83,7 +83,7 @@ router.post("/:uuid/tags", expressAsyncHandler(async (req: MineSkinV2Request, re
 
 router.get("/:uuid/meta", expressAsyncHandler(async (req: MineSkinV2Request, res: Response<V2MiscResponseBody>) => {
     const result = await getSkinMeta(req, res);
-    res.header('Cache-Control', 'public, max-age=3600');
+    if (!result) return;
     res.json(formatV2Response(req, result));
 }));
 
@@ -101,17 +101,17 @@ router.post("/:uuid/report", expressAsyncHandler(async (req: MineSkinV2Request, 
     }));
 }));
 
-router.patch("/:uuid",expressAsyncHandler(async (req: MineSkinV2Request, res: Response<V2MiscResponseBody>) => {
+router.patch("/:uuid", expressAsyncHandler(async (req: MineSkinV2Request, res: Response<V2MiscResponseBody>) => {
     const result = await v2UpdateSkin(req, res);
     res.json(formatV2Response(req, result));
 }));
 
-router.delete("/:uuid",expressAsyncHandler(async (req: MineSkinV2Request, res: Response<V2MiscResponseBody>) => {
+router.delete("/:uuid", expressAsyncHandler(async (req: MineSkinV2Request, res: Response<V2MiscResponseBody>) => {
     const result = await v2DeleteSkin(req, res);
     res.json(formatV2Response(req, result));
 }));
 
-router.get("/:uuid/user",expressAsyncHandler(async (req: MineSkinV2Request, res: Response<V2MiscResponseBody>) => {
+router.get("/:uuid/user", expressAsyncHandler(async (req: MineSkinV2Request, res: Response<V2MiscResponseBody>) => {
     const result = await v2GetSkinUser(req, res);
     res.header('Cache-Control', 'private, max-age=60');
     res.json(formatV2Response(req, result));

@@ -11,7 +11,7 @@ import { isPopulatedSkin2Document } from "@mineskin/database";
 import { Classification } from "@mineskin/database/dist/schemas/Classification";
 
 //TODO
-export async function getSkinMeta(req: MineSkinV2Request, res: Response<V2ResponseBody>): Promise<V2MiscResponseBody> {
+export async function getSkinMeta(req: MineSkinV2Request, res: Response<V2ResponseBody>): Promise<V2MiscResponseBody | null> {
     const uuid = UUID.parse(req.params.uuid);
 
     let skin = await container.get<SkinService>(GeneratorTypes.SkinService).findForUuid(uuid);
@@ -27,8 +27,20 @@ export async function getSkinMeta(req: MineSkinV2Request, res: Response<V2Respon
         }).exec();
         if (classification) {
             meta['description'] = classification.description;
+
+            // cache headers
+            res.header('Last-Modified', classification.updatedAt.toUTCString());
+            if (req.headers['if-modified-since']) {
+                const ifModifiedSince = new Date(req.headers['if-modified-since']);
+                if (classification.updatedAt <= ifModifiedSince) {
+                    res.status(304).end();
+                    return null;
+                }
+            }
         }
     }
+
+    res.header('Cache-Control', 'public, max-age=3600');
 
     return {
         success: true,

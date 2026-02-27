@@ -223,7 +223,7 @@ export async function v2ListRandomSkins(req: MineSkinV2Request, res: Response<V2
 }
 
 
-export async function v2GetSkin(req: MineSkinV2Request, res: Response<V2SkinResponse>): Promise<V2SkinResponse> {
+export async function v2GetSkin(req: MineSkinV2Request, res: Response<V2SkinResponse>): Promise<V2SkinResponse | null> {
     const uuidOrShort = UUIDOrShortId.parse(req.params.uuid);
 
     req.links.skin = `/v2/skins/${ uuidOrShort }`;
@@ -248,6 +248,17 @@ export async function v2GetSkin(req: MineSkinV2Request, res: Response<V2SkinResp
     }
 
     skin = validateRequestedSkin(req, skin);
+
+    // cache headers
+    res.header('Cache-Control', 'public, max-age=10800');
+    res.header('Last-Modified', skin.updatedAt ? skin.updatedAt.toUTCString() : new Date().toUTCString());
+    if (req.headers['if-modified-since'] && skin.updatedAt) {
+        const ifModifiedSince = new Date(req.headers['if-modified-since']);
+        if (skin.updatedAt <= ifModifiedSince) {
+            res.status(304).end();
+            return null;
+        }
+    }
 
     Skin2.incRequests(skin.uuid).catch(e => Sentry.captureException(e));
     try {

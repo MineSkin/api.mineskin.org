@@ -10,7 +10,7 @@ const router: Router = v2Router();
 router.use(wildcardCors);
 
 router.get("/:hash", expressAsyncHandler(async (req: MineSkinV2Request, res: Response<V2SkinResponse>) => {
-    res.header('Cache-Control', 'public, max-age=31536000');
+    res.header('Cache-Control', 'public, max-age=31536000, immutable');
     await v2GetImage(req, res);
 }));
 
